@@ -63,6 +63,12 @@ reproduzido por outra pessoa, em outra máquina.
 - **Dados de entrada versionados:** fixtures de teste ficam em
   `tests/fixtures/` ou inline no teste, nunca em caminhos da máquina de quem
   escreveu.
+- **Gerações gravadas:** `npu-commit --trace FILE` grava uma geração e
+  `npu-commit replay FILE` a refaz. Um caso ruim encontrado no uso real vira
+  fixture em `tests/fixtures/traces/`, que o `tests/replay_fixtures.rs`
+  reproduz. Mudanças que alteram o pipeline de propósito regeneram as
+  fixtures com `tests/fixtures/make-traces.sh`, no mesmo commit, e o diff das
+  fixtures é revisado. Fixtures nunca são editadas à mão.
 
 ## Commits
 
