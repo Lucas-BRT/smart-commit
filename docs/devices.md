@@ -115,7 +115,9 @@ the replies to the five fixture prompts are the same in both modes.
 anything. `smart-commit setup` first lists the hardware (the CPU, each GPU with its
 vendor, kernel driver and the devices it gives, and the NPU), then prints a
 plan of what that hardware needs, and only that, then asks before each step
-that needs `sudo`. On a Ryzen 5 5500 with an RTX 3050:
+that needs `sudo` (in a terminal, as a full-screen checklist where each
+step can be turned off; see [usage](usage.md#install)). On a Ryzen 5 5500
+with an RTX 3050:
 
 ```text
 ==> Hardware

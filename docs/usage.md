@@ -19,6 +19,14 @@ without `sudo`. It then runs `smart-commit setup`, which:
    download against its hash;
 4. benchmarks the devices and says which one will be used.
 
+In a terminal, `smart-commit setup` is a full-screen interface: the hardware,
+then the plan, where Space turns each step on or off and `m` chooses another
+[model](models.md), then each step's output, with a progress bar for
+downloads, and the live benchmark at the end. Steps that use `sudo` run
+outside the full screen, where `sudo` can ask for the password. Steps
+already done are listed but off. With `--yes`, or without a terminal, the
+same plan runs as text (`scripts/setup.sh`).
+
 Installer options (after `bash -s --` when piping):
 
 | Option | Effect |

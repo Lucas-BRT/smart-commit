@@ -27,6 +27,7 @@ use smart_commit::tui::{self, Screen};
 mod bench_cmd;
 mod config_cmd;
 mod model_cmd;
+mod setup_cmd;
 
 /// Writes a commit message for the staged changes, in the style of the
 /// repository, with a small LLM running locally.
@@ -313,7 +314,7 @@ fn main() -> ExitCode {
             yes,
             no_drivers,
             no_bench,
-        }) => run_setup(yes, no_drivers, no_bench),
+        }) => setup_cmd::run(yes, no_drivers, no_bench),
         None => run_generate(&cli.generate),
     };
     match result {
@@ -614,33 +615,6 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
 
 /// Runs `setup.sh`: installed next to the binary (`../share/smart-commit`)
 /// or, from a checkout, in `scripts/`.
-fn run_setup(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
-    let exe = std::env::current_exe()?.canonicalize()?;
-    let bin = exe.parent().ok_or("the binary has no directory")?;
-    let script = [
-        bin.join("../share/smart-commit/scripts/setup.sh"),
-        bin.join("../../scripts/setup.sh"),
-    ]
-    .into_iter()
-    .find(|p| p.is_file())
-    .ok_or("setup.sh not found next to the binary; reinstall smart-commit")?;
-    let flags = [
-        (yes, "--yes"),
-        (no_drivers, "--no-drivers"),
-        (no_bench, "--no-bench"),
-    ];
-    let status = std::process::Command::new(&script)
-        .args(flags.iter().filter(|(on, _)| *on).map(|(_, flag)| flag))
-        // So the setup benchmarks this very binary.
-        .env("SMART_COMMIT_BIN", &exe)
-        .status()
-        .map_err(|err| format!("cannot run {}: {err}", script.display()))?;
-    if !status.success() {
-        return Err(format!("setup failed ({status})").into());
-    }
-    Ok(())
-}
-
 /// The real machine, or the fake one tests point at (the variables
 /// `scripts/hardware.sh` reads too).
 fn hardware_sources() -> hardware::Sources {

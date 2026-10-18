@@ -118,6 +118,35 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
 /// choice of device; the summary is printed afterwards, so it stays on
 /// screen.
 fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
+    let mut screen = Screen::new()?;
+    let benchmarked = bench_in(&mut screen, &settings);
+    drop(screen);
+    let Benchmarked {
+        report,
+        path,
+        choice,
+    } = benchmarked?;
+    let settings = match apply(choice)? {
+        Some((line, settings)) => {
+            println!("{line}");
+            settings
+        }
+        None => settings,
+    };
+    print_summary(&report, &settings, &path)
+}
+
+/// A finished benchmark, saved, and the device the user chose, if any.
+pub struct Benchmarked {
+    pub report: Report,
+    pub path: PathBuf,
+    pub choice: Option<String>,
+}
+
+/// Measures every device on `screen`, live, saves the report and lets the
+/// user choose a device. Ctrl+C stops after the device being measured and
+/// saves nothing.
+pub fn bench_in(screen: &mut Screen, settings: &Settings) -> Result<Benchmarked, Box<dyn Error>> {
     let auto = settings.device == DeviceSetting::Auto;
     let mut view = BenchView::measuring(
         format!("Benchmark on {}", Machine::current().cpu),
@@ -134,7 +163,6 @@ fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
             })
         })
     };
-    let mut screen = Screen::new()?;
     let report = loop {
         while let Ok(p) = progress.try_recv() {
             match p {
@@ -145,10 +173,7 @@ fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
         if worker.is_finished() {
             match worker.join().map_err(|_| "the benchmark crashed")? {
                 Some(report) => break report,
-                None => {
-                    drop(screen);
-                    return Err("benchmark stopped; nothing was saved".into());
-                }
+                None => return Err("benchmark stopped; nothing was saved".into()),
             }
         }
         view.tick();
@@ -167,10 +192,12 @@ fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
         effective(&report, settings.device),
         fast_load_lines(&report, settings.fast_load),
     );
-    let choice = choose(&mut screen, &mut view)?;
-    drop(screen);
-    let settings = apply(choice)?.unwrap_or(settings);
-    print_summary(&report, &settings, &path)
+    let choice = choose(screen, &mut view)?;
+    Ok(Benchmarked {
+        report,
+        path,
+        choice,
+    })
 }
 
 /// Waits for the user to pick a device, or none.
@@ -188,15 +215,19 @@ fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, B
 
 /// Sets model.device to what the screen chose, and returns the settings
 /// after it.
-fn apply(choice: Option<String>) -> Result<Option<Settings>, Box<dyn Error>> {
+/// Sets model.device to what the screen chose; returns what it did and the
+/// settings after it.
+pub fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>, Box<dyn Error>> {
     let Some(name) = choice else {
         return Ok(None);
     };
     let path = paths::default_config_file(env).ok_or("HOME is not set")?;
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", &name, None)?;
-    println!("model.device = {name}  ({origin})");
-    Ok(Some(crate::resolve(None, Vec::new())?.settings()))
+    Ok(Some((
+        format!("model.device = {name}  ({origin})"),
+        crate::resolve(None, Vec::new())?.settings(),
+    )))
 }
 
 fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<(), Box<dyn Error>> {
@@ -294,10 +325,11 @@ fn show_device() -> Result<(), Box<dyn Error>> {
             fast_load_lines(&report, settings.fast_load),
         );
         let mut screen = Screen::new()?;
-        let choice = choose(&mut screen, &mut view)?;
+        let choice = choose(&mut screen, &mut view);
         drop(screen);
-        if apply(choice)?.is_none() {
-            return Ok(());
+        match apply(choice?)? {
+            Some((line, _)) => println!("{line}"),
+            None => return Ok(()),
         }
     }
     let resolved = crate::resolve(None, Vec::new())?;

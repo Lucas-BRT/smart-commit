@@ -9,6 +9,7 @@
 pub mod bench;
 pub mod models;
 pub mod review;
+pub mod setup;
 
 use std::io::{self, IsTerminal};
 use std::time::Duration;
@@ -68,8 +69,10 @@ impl Screen {
     pub fn suspend<T>(&mut self, f: impl FnOnce() -> T) -> io::Result<T> {
         ratatui::restore();
         let result = f();
+        // A new terminal draws everything on its first frame; clearing
+        // would ask the terminal for the cursor position, which some never
+        // answer.
         self.terminal = ratatui::try_init()?;
-        self.terminal.clear()?;
         Ok(result)
     }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs scripts/setup-llamacpp.sh --dry-run, then with llama.cpp already in
-# place: it downloads the pinned build and model into the data directory and
-# skips what is there. No network or sudo.
+# place, then with --server-only: it downloads the pinned build and model
+# into the data directory and skips what is there. No network or sudo.
 #
 #   tests/scripts/test-setup-llamacpp.sh
 set -euo pipefail
@@ -52,6 +52,11 @@ XDG_DATA_HOME=$data bash "$SCRIPT" --dry-run >"$work/installed.out" 2>&1
 expect installed "already installed"
 refute installed "llama-b11381-bin-ubuntu-vulkan-x64.tar.gz"
 expect installed "q4_k_m.gguf (sha256"
+
+# --server-only: llama.cpp, not the model.
+XDG_DATA_HOME=$work/data2 bash "$SCRIPT" --dry-run --server-only >"$work/server.out" 2>&1
+expect server "llama-b11381-bin-ubuntu-vulkan-x64.tar.gz"
+refute server "gguf"
 
 bash "$SCRIPT" --frobnicate >"$work/usage.out" 2>&1 && status=0 || status=$?
 if [ "$status" = 2 ]; then

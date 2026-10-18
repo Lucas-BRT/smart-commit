@@ -9,9 +9,11 @@
 #
 # Every download is checked against a pinned SHA-256.
 #
-#   scripts/setup-llamacpp.sh [--dry-run]
+#   scripts/setup-llamacpp.sh [--dry-run] [--server-only]
 #
-#   --dry-run  print what would be done, change nothing
+#   --dry-run      print what would be done, change nothing
+#   --server-only  only llama.cpp, not the model (`smart-commit model use`
+#                  downloads the one chosen)
 #
 # SMART_COMMIT_LLAMACPP_URL and SMART_COMMIT_GGUF_URL replace the download
 # URLs, for tests; the pinned SHA-256 is still required.
@@ -27,9 +29,11 @@ GGUF_SHA256=cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
 
 DATA=${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit
 DRY_RUN=0
+MODEL=1
 for arg in "$@"; do
     case $arg in
         --dry-run) DRY_RUN=1 ;;
+        --server-only) MODEL=0 ;;
         -h | --help)
             sed -n '2,/^set -euo/p' "$0" | sed '$d; s/^# \{0,1\}//'
             exit 0
@@ -74,16 +78,18 @@ else
     run rm -f "$archive"
 fi
 
-say "fetching the GGUF model in $DATA/models"
-model=$DATA/models/$GGUF_NAME
-if [ -f "$model" ] && echo "$GGUF_SHA256  $model" | sha256sum --check --quiet - 2>/dev/null; then
-    echo "    already there"
-else
-    fetch "$GGUF_URL" "$GGUF_SHA256" "$model"
+if [ "$MODEL" = 1 ]; then
+    say "fetching the GGUF model in $DATA/models"
+    model=$DATA/models/$GGUF_NAME
+    if [ -f "$model" ] && echo "$GGUF_SHA256  $model" | sha256sum --check --quiet - 2>/dev/null; then
+        echo "    already there"
+    else
+        fetch "$GGUF_URL" "$GGUF_SHA256" "$model"
+    fi
+    [ "$DRY_RUN" = 1 ] || echo "$GGUF_SHA256  $GGUF_NAME" >"$model.sha256"
 fi
 
 if [ "$DRY_RUN" = 0 ]; then
-    echo "$GGUF_SHA256  $GGUF_NAME" >"$model.sha256"
     say "devices seen by llama.cpp (besides the CPU):"
     "$DATA/llama.cpp/llama-$LLAMA_BUILD/llama-server" --list-devices 2>&1 | sed -n '/Available devices/,$p' || true
 fi

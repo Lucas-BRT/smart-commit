@@ -119,27 +119,8 @@ fn installed(model: &Model, dir: &Path) -> Vec<&'static str> {
 /// The model picker, in a terminal; what it chooses is then used as with
 /// `model use`.
 fn pick() -> Result<(), Box<dyn Error>> {
-    let resolved = crate::resolve(None, Vec::new())?;
-    let settings = resolved.settings();
     let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
-    let entries = models::REGISTRY
-        .iter()
-        .map(|model| {
-            let parts = installed(model, &dir);
-            Entry {
-                model,
-                gguf: parts.contains(&"gguf"),
-                openvino: parts.contains(&"openvino"),
-            }
-        })
-        .collect();
-    let custom = ["model.gguf", "model.dir"].iter().find_map(|key| {
-        resolved
-            .get(key)
-            .filter(|(_, origin)| *origin != Origin::Default)
-            .map(|(value, _)| format!("{key} = {value} replaces the model on its devices"))
-    });
-    let mut picker = Picker::new(entries, settings.model.id, custom, env("HOME"));
+    let mut picker = picker(&dir)?;
     let base = hugging_face();
     let mut screen = Screen::new()?;
     let mut download: Option<Download> = None;
@@ -194,6 +175,51 @@ fn pick() -> Result<(), Box<dyn Error>> {
     }
 }
 
+/// What the picker chose in the setup, which downloads later.
+pub enum Chosen {
+    Model(&'static Model),
+    File(PathBuf),
+}
+
+/// The picker on `screen`, choosing without downloading.
+pub fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Error>> {
+    let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
+    let mut picker = picker(&dir)?;
+    loop {
+        screen.draw(|frame| picker.render(frame))?;
+        match picker.on_key(screen.key()?) {
+            Action::None => {}
+            Action::Quit => return Ok(None),
+            Action::Use(model) | Action::Download(model) => return Ok(Some(Chosen::Model(model))),
+            Action::UseFile(path) => return Ok(Some(Chosen::File(path))),
+        }
+    }
+}
+
+/// The picker, on the models in `dir`.
+fn picker(dir: &Path) -> Result<Picker, Box<dyn Error>> {
+    let resolved = crate::resolve(None, Vec::new())?;
+    let settings = resolved.settings();
+    let entries = models::REGISTRY
+        .iter()
+        .map(|model| {
+            let parts = installed(model, dir);
+            Entry {
+                model,
+                gguf: parts.contains(&"gguf"),
+                openvino: parts.contains(&"openvino"),
+            }
+        })
+        .collect();
+    let custom = ["model.gguf", "model.dir"].iter().find_map(|key| {
+        resolved
+            .get(key)
+            .filter(|(_, origin)| *origin != Origin::Default)
+            .map(|(value, _)| format!("{key} = {value} replaces the model on its devices"))
+    });
+    Ok(Picker::new(entries, settings.model.id, custom, env("HOME")))
+}
+
 /// A download running in its own thread, so the screen keeps drawing.
 struct Download {
     model: &'static Model,
@@ -228,14 +254,8 @@ fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
         eprintln!("checked against the pinned SHA-256: {}", file.display());
     }
 
-    let path = global_config()?;
-    let origin = Origin::Global(path.clone());
-    config::set_in_file(&path, &origin, "model.name", model.id, None)?;
-    println!("model.name = {}  ({origin})", model.id);
-    for key in ["model.gguf", "model.dir"] {
-        if config::unset_in_file(&path, key)? {
-            println!("{key} removed, so {} is used on every device", model.id);
-        }
+    for line in select(model)? {
+        println!("{line}");
     }
     let resolved = crate::resolve(None, Vec::new())?;
     warn_overridden(&resolved, &["model.name", "model.gguf", "model.dir"]);
@@ -252,6 +272,24 @@ fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
     }
     suggest_bench();
     Ok(())
+}
+
+/// Makes `model` the one in use (model.name, without model.gguf or
+/// model.dir pointing elsewhere); returns what changed.
+pub fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error>> {
+    let path = global_config()?;
+    let origin = Origin::Global(path.clone());
+    config::set_in_file(&path, &origin, "model.name", model.id, None)?;
+    let mut lines = vec![format!("model.name = {}  ({origin})", model.id)];
+    for key in ["model.gguf", "model.dir"] {
+        if config::unset_in_file(&path, key)? {
+            lines.push(format!(
+                "{key} removed, so {} is used on every device",
+                model.id
+            ));
+        }
+    }
+    Ok(lines)
 }
 
 fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {
@@ -277,24 +315,47 @@ fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {
         models::check_gguf(&path)?;
         "model.gguf"
     };
+    for line in select_file(&path, key)? {
+        println!("{line}");
+    }
+    let resolved = crate::resolve(None, Vec::new())?;
+    warn_overridden(&resolved, &[key]);
+    suggest_bench();
+    Ok(())
+}
+
+/// Sets `key` (model.gguf or model.dir) to `path`; returns what changed.
+fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
     let config_path = global_config()?;
     let origin = Origin::Global(config_path.clone());
     let text = path.to_string_lossy();
     config::set_in_file(&config_path, &origin, key, &text, None)?;
-    println!("{key} = {text}  ({origin})");
     let devices = if key == "model.gguf" {
         "vulkan and cpu"
     } else {
         "npu, intel-gpu and openvino-cpu"
     };
-    println!(
-        "{devices} now run this file, unverified: smart-commit did not choose it and \
-         cannot check it. `smart-commit model use <id>` goes back to a recommended model."
-    );
-    let resolved = crate::resolve(None, Vec::new())?;
-    warn_overridden(&resolved, &[key]);
-    suggest_bench();
-    Ok(())
+    Ok(vec![
+        format!("{key} = {text}  ({origin})"),
+        format!(
+            "{devices} now run this file, unverified: smart-commit did not choose it and \
+             cannot check it. `smart-commit model use <id>` goes back to a recommended model."
+        ),
+    ])
+}
+
+/// Uses a model file or directory chosen in the setup's picker.
+pub fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {
+    let path = path.canonicalize()?;
+    if path.is_dir() {
+        if !path.join("openvino_model.xml").is_file() {
+            return Err(format!("{} has no openvino_model.xml", path.display()).into());
+        }
+        select_file(&path, "model.dir")
+    } else {
+        models::check_gguf(&path)?;
+        select_file(&path, "model.gguf")
+    }
 }
 
 fn global_config() -> Result<PathBuf, Box<dyn Error>> {

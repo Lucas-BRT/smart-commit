@@ -1,0 +1,30 @@
+---
+source: src/tui/setup.rs
+expression: "draw(90, 26, |f| view().render(f))"
+---
+┌ smart-commit setup: hardware ──────────────────────────────────────────────────────────┐
+│  CPU  AMD Ryzen 5 5500 (x86_64)                                                        │
+│       -> cpu (llama.cpp)                                                               │
+│  GPU  NVIDIA device 2507 [0000:01:00.0], driver nvidia 595.104.02                      │
+│       -> vulkan (the NVIDIA driver's Vulkan ICD)                                       │
+│  NPU  none                                                                             │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+┌ Plan ──────────────────────────────────────────────────────────────────────────────────┐
+│> [ ] llama.cpp b11381  installed                                                       │
+│      the cpu device, and vulkan on the GPUs; no sudo                                   │
+│  [x] Model qwen2.5-coder-1.5b                                                          │
+│      1.1 GB from huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF, Apache-2.0      │
+│  [x] GPU drivers (sudo)                                                                │
+│      NVIDIA GPU (0000:01:00.0, proprietary driver 595.104.02): its own Vulkan ICD      │
+│  [x] Benchmark                                                                         │
+│      measures every device; auto then uses the fastest                                 │
+│  Not needed: OpenVINO, since there is no Intel NPU or GPU here.                        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+┌ Output ────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                        │
+│                                                                                        │
+│                                                                                        │
+│                                                                                        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+[Up/Down] choose  [Space] on/off  [m] model  [Enter] start  [q] quit

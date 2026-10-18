@@ -195,7 +195,13 @@ case ":$PATH:" in
 esac
 
 if [ "$SETUP" = 1 ]; then
-    "$PREFIX/share/smart-commit/scripts/setup.sh" "${setup_args[@]}"
+    # With a terminal, `smart-commit setup` opens the full-screen setup; with
+    # curl | bash, stdin is the pipe, so it is given the terminal instead.
+    if [ "${#setup_args[@]}" -eq 0 ] && { : </dev/tty; } 2>/dev/null; then
+        "$PREFIX/bin/smart-commit" setup </dev/tty
+    else
+        "$PREFIX/share/smart-commit/scripts/setup.sh" "${setup_args[@]}"
+    fi
 else
     echo "Run \`smart-commit setup\` to set up the devices and models."
 fi
