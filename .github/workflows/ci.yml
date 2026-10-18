@@ -22,3 +22,4 @@ jobs:
       - run: shellcheck scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh
       - run: tests/scripts/test-setup-gpu.sh
       - run: tests/scripts/test-fetch-model.sh
+      - run: tests/scripts/test-setup.sh

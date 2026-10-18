@@ -13,10 +13,23 @@
 #
 # Run as your own user; it calls sudo where needed:
 #
-#   scripts/setup-npu.sh
+#   scripts/setup-npu.sh [--openvino-only]
+#
+# --openvino-only installs just OpenVINO GenAI (for the CPU and Intel GPUs),
+# for machines without an NPU.
 #
 # Then log out and back in (for the group), and run scripts/check-npu.sh.
 set -euo pipefail
+
+OPENVINO_ONLY=0
+case ${1:-} in
+    --openvino-only) OPENVINO_ONLY=1 ;;
+    "") ;;
+    *)
+        echo "unknown option: $1" >&2
+        exit 2
+        ;;
+esac
 
 NPU_DRIVER_URL=https://github.com/intel/linux-npu-driver/releases/download/v1.38.0/linux-npu-driver-v1.38.0.20260910-34487311128-ubuntu2404.tar.gz
 NPU_DRIVER_SHA256=1efcd4b60c22abee751d8f2705962cbcc2a569de45c7e0e670cf08afbfcdc1d2
@@ -50,28 +63,35 @@ fetch() {
     echo "$2  $work/$3" | sha256sum --check --quiet -
 }
 
-fetch "$NPU_DRIVER_URL" "$NPU_DRIVER_SHA256" npu-driver.tar.gz
-fetch "$LIBZE1_URL" "$LIBZE1_SHA256" libze1.deb
+install_npu_driver() {
+    fetch "$NPU_DRIVER_URL" "$NPU_DRIVER_SHA256" npu-driver.tar.gz
+    fetch "$LIBZE1_URL" "$LIBZE1_SHA256" libze1.deb
+
+    echo "==> installing libtbb12 (needed by the NPU compiler)"
+    sudo apt-get update -qq
+    sudo apt-get install -y libtbb12
+
+    echo "==> installing the NPU driver 1.38.0"
+    # Older versions go first, as the release notes ask.
+    local package
+    for package in intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu intel-level-zero-npu-dbgsym; do
+        if dpkg-query -W "$package" >/dev/null 2>&1; then
+            sudo dpkg --purge --force-remove-reinstreq "$package"
+        fi
+    done
+    mkdir "$work/npu-driver"
+    tar -xzf "$work/npu-driver.tar.gz" -C "$work/npu-driver"
+    # Only the .deb packages; the .ddeb is debug symbols.
+    sudo dpkg -i "$work"/npu-driver/*.deb
+
+    echo "==> installing libze1 1.32.0"
+    sudo dpkg -i "$work/libze1.deb"
+}
+
 fetch "$GENAI_URL" "$GENAI_SHA256" genai.tar.gz
-
-echo "==> installing libtbb12 (needed by the NPU compiler)"
-sudo apt-get update -qq
-sudo apt-get install -y libtbb12
-
-echo "==> installing the NPU driver 1.38.0"
-# Older versions go first, as the release notes ask.
-for package in intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu intel-level-zero-npu-dbgsym; do
-    if dpkg-query -W "$package" >/dev/null 2>&1; then
-        sudo dpkg --purge --force-remove-reinstreq "$package"
-    fi
-done
-mkdir "$work/npu-driver"
-tar -xzf "$work/npu-driver.tar.gz" -C "$work/npu-driver"
-# Only the .deb packages; the .ddeb is debug symbols.
-sudo dpkg -i "$work"/npu-driver/*.deb
-
-echo "==> installing libze1 1.32.0"
-sudo dpkg -i "$work/libze1.deb"
+if [ "$OPENVINO_ONLY" = 0 ]; then
+    install_npu_driver
+fi
 
 echo "==> installing OpenVINO GenAI 2026.3.1 in $INSTALL_DIR"
 tar -xzf "$work/genai.tar.gz" -C "$work"
@@ -86,6 +106,12 @@ sudo ln -sfn "$INSTALL_DIR" "$INSTALL_ROOT/openvino"
 printf '%s\n' "$INSTALL_ROOT/openvino/runtime/lib/intel64" "$INSTALL_ROOT/openvino/runtime/3rdparty/tbb/lib" |
     sudo tee /etc/ld.so.conf.d/npu-commit-openvino.conf >/dev/null
 sudo ldconfig
+
+if [ "$OPENVINO_ONLY" = 1 ]; then
+    echo
+    echo "Done: OpenVINO GenAI is installed (CPU; Intel GPUs also need scripts/setup-gpu.sh)."
+    exit 0
+fi
 
 echo "==> adding $USER to the render group"
 sudo gpasswd -a "$USER" render
