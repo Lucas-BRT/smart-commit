@@ -3,6 +3,12 @@ name = "npu-commit"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"
+description = "Commit messages in your repository's style, from a small LLM running locally (NPU, GPU or CPU)"
+license = "MIT"
+repository = "https://github.com/Lucas-BRT/npu-commit"
+readme = "README.md"
+keywords = ["git", "commit", "llm", "npu", "openvino"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 clap = { version = "4", features = ["derive", "env"] }
