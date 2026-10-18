@@ -1,8 +1,8 @@
 # Experimentos exploratórios (2026-10-18)
 
 Scripts que geraram as medições de `docs/08-plano-proximas-fases.md`. São
-exploratórios: rodam em Python, fora do `npu-commit`, só para decidir o que
-implementar. Os números oficiais vão sair do `npu-commit bench` (item C do
+exploratórios: rodam em Python, fora do `smart-commit`, só para decidir o que
+implementar. Os números oficiais vão sair do `smart-commit bench` (item C do
 plano).
 
 Todos usam os prompts das fixtures (`tests/fixtures/traces`), então as

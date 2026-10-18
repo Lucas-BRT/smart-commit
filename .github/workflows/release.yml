@@ -52,5 +52,5 @@ jobs:
         run: |
           gh release create "v${{ steps.version.outputs.version }}" dist/* \
             --target "$GITHUB_SHA" \
-            --title "npu-commit ${{ steps.version.outputs.version }}" \
+            --title "smart-commit ${{ steps.version.outputs.version }}" \
             --notes-file notes.md

@@ -38,9 +38,9 @@ Onde cada teste fica:
 | Unitário | `#[cfg(test)] mod tests` no próprio módulo em `src/` |
 | Snapshot de prompt | `insta::assert_snapshot!`, com arquivos em `src/snapshots/`. Atualize com `INSTA_UPDATE=always cargo test` e revise o diff |
 | Integração com git | `tests/git_context.rs`, usando o `TestRepo` de `tests/common/` (repositório temporário isolado da config do desenvolvedor) |
-| CLI de ponta a ponta | `tests/cli.rs`, rodando o binário via `CARGO_BIN_EXE_npu-commit` |
+| CLI de ponta a ponta | `tests/cli.rs`, rodando o binário via `CARGO_BIN_EXE_smart-commit` |
 | Scripts | `tests/scripts/test-*.sh`, contra sysfs, releases e binários falsos (sem rede, sudo ou hardware); `shellcheck` em todos |
-| Hardware (modelo real) | `tests/hardware.rs`, `#[ignore]`: `cargo test --test hardware -- --ignored --test-threads 1` (`NPU_COMMIT_TEST_DEVICE=cpu` sem NPU). Use os prompts das fixtures, nunca entradas ad hoc |
+| Hardware (modelo real) | `tests/hardware.rs`, `#[ignore]`: `cargo test --test hardware -- --ignored --test-threads 1` (`SMART_COMMIT_TEST_DEVICE=cpu` sem NPU). Use os prompts das fixtures, nunca entradas ad hoc |
 
 `cargo test` nunca pode depender da NPU, de rede ou da config git de quem
 roda os testes.
@@ -55,7 +55,7 @@ reproduzido por outra pessoa, em outra máquina.
   junto com outras mudanças; isso tem um commit próprio.
 - **Testes determinísticos:** sem rede, sem NPU, sem relógio, sem
   aleatoriedade, sem a config git de quem roda e sem a config, os modelos e
-  as variáveis `NPU_COMMIT_*` da máquina (veja `tests/common::isolate`). Nada que
+  as variáveis `SMART_COMMIT_*` da máquina (veja `tests/common::isolate`). Nada que
   vá para a saída pode depender da ordem de iteração de um `HashMap`.
 - **Geração determinística:** decodificação gulosa e parâmetros de geração
   explícitos (`GenerationConfig`), nunca padrões implícitos da biblioteca. Se
@@ -65,8 +65,8 @@ reproduzido por outra pessoa, em outra máquina.
 - **Dados de entrada versionados:** fixtures de teste ficam em
   `tests/fixtures/` ou inline no teste, nunca em caminhos da máquina de quem
   escreveu.
-- **Gerações gravadas:** `npu-commit --trace FILE` grava uma geração e
-  `npu-commit replay FILE` a refaz. Um caso ruim encontrado no uso real vira
+- **Gerações gravadas:** `smart-commit --trace FILE` grava uma geração e
+  `smart-commit replay FILE` a refaz. Um caso ruim encontrado no uso real vira
   fixture em `tests/fixtures/traces/`, que o `tests/replay_fixtures.rs`
   reproduz. Mudanças que alteram o pipeline de propósito regeneram as
   fixtures com `tests/fixtures/make-traces.sh`, no mesmo commit, e o diff das

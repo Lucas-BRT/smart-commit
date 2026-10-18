@@ -96,7 +96,7 @@ rankings genéricos.
 - `scripts/check-npu.sh` vira `check-devices.sh`, com as checagens da GPU
   (`/dev/dri/renderD128` acessível, ICD da Intel registrado).
 - O teste de hardware passa a rodar nos três devices.
-- **Pronto quando:** `npu-commit --device gpu` funciona sem variáveis de
+- **Pronto quando:** `smart-commit --device gpu` funciona sem variáveis de
   ambiente e os testes de hardware passam na GPU.
 
 ### B. Ajustes da NPU (pequeno)
@@ -111,7 +111,7 @@ rankings genéricos.
 
 ### C. Benchmark e energia (passo 2) (médio)
 
-- `npu-commit bench [--device …] [--runs N]`: roda os prompts das fixtures
+- `smart-commit bench [--device …] [--runs N]`: roda os prompts das fixtures
   e grava um JSON com TTFT, TPOT, tempo total, tempo de CPU, pico de
   memória e o ambiente (kernel, driver da NPU, runtime da GPU, OpenVINO,
   modelo pelo manifest).
@@ -131,7 +131,7 @@ rankings genéricos.
   permissiva, fixados por SHA de commit, cobrindo Conventional, gitmoji e
   livre, em pt e en, além de casos difíceis (só lockfile, só renomeação,
   diff enorme). Só entram commits cuja mensagem humana é boa.
-- **`npu-commit eval`**, com métricas determinísticas primeiro:
+- **`smart-commit eval`**, com métricas determinísticas primeiro:
   - formato: segue a convenção pedida, assunto ≤ 72, idioma certo, ticket
     quando pedido;
   - taxa de nova tentativa e de fallback;
@@ -155,7 +155,7 @@ rankings genéricos.
 - Exportar e avaliar, nesta ordem: **Qwen3-1.7B** (`enable_thinking=false`
   via `ChatHistory::set_extra_context`), **LFM2.5-1.2B**, **SmolLM3-3B**,
   **Qwen3-4B-Instruct-2507**, **Phi-4-mini**.
-- `npu-commit model list | fetch | use <nome>` (o `model fetch` estava no
+- `smart-commit model list | fetch | use <nome>` (o `model fetch` estava no
   design), com a chave de config `model.name`.
 - **Pronto quando:** pelo menos três modelos avaliados e um padrão
   escolhido pelos números de C e D.
@@ -191,7 +191,7 @@ melhorar o `eval` sem piorar o formato.
 
 - Atualizar para OpenVINO 2026.4 quando houver um driver da NPU validado
   com ele (permite Qwen3.5 e as versões convertidas mais novas).
-- Empacotamento (`cargo install`, `.deb`) e `npu-commit doctor`, que junta
+- Empacotamento (`cargo install`, `.deb`) e `smart-commit doctor`, que junta
   o `check-devices` e a config.
 - Daemon: com o cache, a carga é de 1,7 s (NPU) ou ~1 s (GPU) por commit.
   Só se pagaria se o hook incomodar.

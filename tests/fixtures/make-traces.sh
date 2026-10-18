@@ -9,7 +9,7 @@
 set -euo pipefail
 ROOT="$(pwd)"
 cargo build --quiet --locked
-BIN="$ROOT/target/debug/npu-commit"
+BIN="$ROOT/target/debug/smart-commit"
 OUT="$ROOT/tests/fixtures/traces"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT

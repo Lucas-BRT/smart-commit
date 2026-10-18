@@ -37,7 +37,7 @@ scenario() {
     mkdir -p "$sysfs/bus/pci/devices" "$work/icd-$name"
     $setup "$sysfs"
     # Nothing counts as installed, so the plan does not depend on the machine.
-    NPU_COMMIT_SYSFS=$sysfs NPU_COMMIT_VULKAN_ICD_DIRS=$work/icd-$name NPU_COMMIT_DPKG_QUERY=false \
+    SMART_COMMIT_SYSFS=$sysfs SMART_COMMIT_VULKAN_ICD_DIRS=$work/icd-$name SMART_COMMIT_DPKG_QUERY=false \
         XDG_DATA_HOME=$work/data-$name bash "$SCRIPT" --dry-run >"$work/$name.out" 2>&1 || {
         echo "FAIL  $name: exited with $?"
         cat "$work/$name.out"
@@ -123,7 +123,7 @@ printf '#!/bin/sh\necho "install ok installed 26.1"\n' >"$fake_dpkg"
 chmod +x "$fake_dpkg"
 mkdir -p "$work/already/bus/pci/devices" "$work/icd-already"
 amd "$work/already"
-NPU_COMMIT_SYSFS=$work/already NPU_COMMIT_VULKAN_ICD_DIRS=$work/icd-already NPU_COMMIT_DPKG_QUERY=$fake_dpkg \
+SMART_COMMIT_SYSFS=$work/already SMART_COMMIT_VULKAN_ICD_DIRS=$work/icd-already SMART_COMMIT_DPKG_QUERY=$fake_dpkg \
     XDG_DATA_HOME=$work/data-already bash "$SCRIPT" --dry-run >"$work/already.out" 2>&1
 refute already "apt-get install"
 expect already "llama-b11381-bin-ubuntu-vulkan-x64.tar.gz"

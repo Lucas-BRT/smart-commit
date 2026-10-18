@@ -8,10 +8,10 @@
 ## 1. O que entrega
 
 ```console
-$ npu-commit                        # NPU, modelo padrão
-$ npu-commit --device cpu           # ou gpu
-$ npu-commit --model-dir DIR
-$ npu-commit replay t.json --with-model --device cpu
+$ smart-commit                        # NPU, modelo padrão
+$ smart-commit --device cpu           # ou gpu
+$ smart-commit --model-dir DIR
+$ smart-commit replay t.json --with-model --device cpu
 ```
 
 Exemplo real (CPU, clone do `coffe-builder`, histórico livre em português):
@@ -19,17 +19,17 @@ Exemplo real (CPU, clone do `coffe-builder`, histórico livre em português):
 ```console
 $ git diff --staged --stat
  src/camera.py | 1 +
-$ npu-commit --device cpu --trace t.json
+$ smart-commit --device cpu --trace t.json
 Atualiza a câmera para incluir uma função `speed()` que retorna 2.5
-$ npu-commit replay t.json --with-model --device cpu
+$ smart-commit replay t.json --with-model --device cpu
 reproduced: 1 attempt(s), Model message
 ```
 
 | Variável | Flag | Padrão |
 |---|---|---|
-| `NPU_COMMIT_DEVICE` | `--device npu\|gpu\|cpu` | `npu` |
-| `NPU_COMMIT_MODEL_DIR` | `--model-dir` | `$XDG_DATA_HOME/npu-commit/models/qwen2.5-coder-1.5b-instruct-int4-sym-g128` |
-| — | — | cache de compilação em `$XDG_CACHE_HOME/npu-commit/openvino` |
+| `SMART_COMMIT_DEVICE` | `--device npu\|gpu\|cpu` | `npu` |
+| `SMART_COMMIT_MODEL_DIR` | `--model-dir` | `$XDG_DATA_HOME/smart-commit/models/qwen2.5-coder-1.5b-instruct-int4-sym-g128` |
+| — | — | cache de compilação em `$XDG_CACHE_HOME/smart-commit/openvino` |
 
 ## 2. Setup da máquina (uma vez)
 
@@ -114,7 +114,7 @@ O `MANIFEST.sha256` do modelo também é a identidade dele nos traces
 ```bash
 cargo test --locked                                    # 145, sem hardware
 cargo test --test hardware -- --ignored --test-threads 1   # modelo real
-NPU_COMMIT_TEST_DEVICE=cpu cargo test --test hardware -- --ignored --test-threads 1
+SMART_COMMIT_TEST_DEVICE=cpu cargo test --test hardware -- --ignored --test-threads 1
 ```
 
 Os testes de hardware usam os prompts das fixtures de trace, então toda
@@ -130,7 +130,7 @@ execução vê as mesmas entradas:
 
 Sem hardware: propriedades por device, identidade pelo manifest, descrição,
 modelo ausente reportado antes de carregar o OpenVINO, diretórios XDG, e
-CLI (`--model-dir`, `NPU_COMMIT_MODEL_DIR`, `--device` inválido,
+CLI (`--model-dir`, `SMART_COMMIT_MODEL_DIR`, `--device` inválido,
 `replay --with-model` sem modelo). Os testes isolam `XDG_DATA_HOME` e
 `XDG_CACHE_HOME`, para nunca usar o modelo exportado na máquina de quem os
 roda.
@@ -177,7 +177,7 @@ todos os prompts das fixtures. Um trace gravado na CPU se reproduz com
 | gitmoji-fallback #2 | 221 | 2459 ms | 78,0 |
 
 **Carga do modelo:** 11,7 s com o cache vazio (compila o grafo); **1,7 s**
-com o cache cheio (246 MB em `~/.cache/npu-commit/openvino`). O `CACHE_DIR`
+com o cache cheio (246 MB em `~/.cache/smart-commit/openvino`). O `CACHE_DIR`
 funciona e é indispensável.
 
 **Ponta a ponta pela CLI** (binário release, cache cheio, clone do
@@ -196,7 +196,7 @@ funciona e é indispensável.
   tamanho do prompt: ela compila para o `MAX_PROMPT_LEN` fixo e processa os
   1024 tokens sempre. Por isso reduzir para 512 economiza ~1,4 s, em troca
   de menos diff no prompt. Fica a critério de quem usa
-  (`npu-commit config set model.max_prompt_tokens 512`); mudar o valor
+  (`smart-commit config set model.max_prompt_tokens 512`); mudar o valor
   custa uma recompilação (~10 s) na primeira vez.
 - **A NPU é mais lenta que a CPU** neste processador (Core Ultra 5 225H)
   com um modelo de 1,5B: 6,6 s contra 4,0 s. Em compensação, usa **2,6×

@@ -1,4 +1,4 @@
-//! Where npu-commit keeps models and caches, following the XDG base
+//! Where smart-commit keeps models and caches, following the XDG base
 //! directory spec.
 //!
 //! Functions take the environment as a lookup so they can be tested
@@ -6,53 +6,53 @@
 
 use std::path::PathBuf;
 
-/// The OpenVINO model that `npu-commit setup` downloads (and
+/// The OpenVINO model that `smart-commit setup` downloads (and
 /// `scripts/export-model.sh` reproduces).
 pub const DEFAULT_MODEL: &str = "qwen2.5-coder-1.5b-instruct-int4-sym-g128";
 
-/// `$XDG_DATA_HOME/npu-commit/models/<DEFAULT_MODEL>`.
+/// `$XDG_DATA_HOME/smart-commit/models/<DEFAULT_MODEL>`.
 pub fn default_model_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(
         xdg(&env, "XDG_DATA_HOME", ".local/share")?
-            .join("npu-commit/models")
+            .join("smart-commit/models")
             .join(DEFAULT_MODEL),
     )
 }
 
-/// `$XDG_DATA_HOME/npu-commit/models/<DEFAULT_GGUF>`, the model of the
+/// `$XDG_DATA_HOME/smart-commit/models/<DEFAULT_GGUF>`, the model of the
 /// llama.cpp backend.
 pub fn default_gguf_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(
         xdg(&env, "XDG_DATA_HOME", ".local/share")?
-            .join("npu-commit/models")
+            .join("smart-commit/models")
             .join(crate::llamacpp::DEFAULT_GGUF),
     )
 }
 
-/// `$XDG_DATA_HOME/npu-commit/llama.cpp/llama-<build>/llama-server`, as
-/// `npu-commit setup` installs it.
+/// `$XDG_DATA_HOME/smart-commit/llama.cpp/llama-<build>/llama-server`, as
+/// `smart-commit setup` installs it.
 pub fn default_llama_server(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(
         xdg(&env, "XDG_DATA_HOME", ".local/share")?
-            .join("npu-commit/llama.cpp")
+            .join("smart-commit/llama.cpp")
             .join(format!("llama-{}", crate::llamacpp::LLAMA_CPP_BUILD))
             .join("llama-server"),
     )
 }
 
-/// `$XDG_DATA_HOME/npu-commit/bench.json`, the last `npu-commit bench`.
+/// `$XDG_DATA_HOME/smart-commit/bench.json`, the last `smart-commit bench`.
 pub fn default_bench_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
-    Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("npu-commit/bench.json"))
+    Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("smart-commit/bench.json"))
 }
 
-/// `$XDG_CACHE_HOME/npu-commit/openvino`, where compiled NPU blobs go.
+/// `$XDG_CACHE_HOME/smart-commit/openvino`, where compiled NPU blobs go.
 pub fn default_cache_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
-    Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("npu-commit/openvino"))
+    Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("smart-commit/openvino"))
 }
 
-/// `$XDG_CONFIG_HOME/npu-commit/config.toml`, the global config.
+/// `$XDG_CONFIG_HOME/smart-commit/config.toml`, the global config.
 pub fn default_config_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
-    Some(xdg(&env, "XDG_CONFIG_HOME", ".config")?.join("npu-commit/config.toml"))
+    Some(xdg(&env, "XDG_CONFIG_HOME", ".config")?.join("smart-commit/config.toml"))
 }
 
 /// The XDG variable if set to an absolute path (relative ones are invalid
@@ -82,28 +82,28 @@ mod tests {
         let vars = [("HOME", "/home/me")];
         assert_eq!(
             default_model_dir(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.local/share/npu-commit/models").join(DEFAULT_MODEL)
+            PathBuf::from("/home/me/.local/share/smart-commit/models").join(DEFAULT_MODEL)
         );
         assert_eq!(
             default_cache_dir(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.cache/npu-commit/openvino")
+            PathBuf::from("/home/me/.cache/smart-commit/openvino")
         );
         assert_eq!(
             default_config_file(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.config/npu-commit/config.toml")
+            PathBuf::from("/home/me/.config/smart-commit/config.toml")
         );
         assert_eq!(
             default_gguf_file(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.local/share/npu-commit/models")
+            PathBuf::from("/home/me/.local/share/smart-commit/models")
                 .join(crate::llamacpp::DEFAULT_GGUF)
         );
         assert_eq!(
             default_bench_file(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.local/share/npu-commit/bench.json")
+            PathBuf::from("/home/me/.local/share/smart-commit/bench.json")
         );
         assert_eq!(
             default_llama_server(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.local/share/npu-commit/llama.cpp/llama-b11381/llama-server")
+            PathBuf::from("/home/me/.local/share/smart-commit/llama.cpp/llama-b11381/llama-server")
         );
     }
 
@@ -117,15 +117,15 @@ mod tests {
         ];
         assert_eq!(
             default_config_file(env(&vars)).unwrap(),
-            PathBuf::from("/config/npu-commit/config.toml")
+            PathBuf::from("/config/smart-commit/config.toml")
         );
         assert_eq!(
             default_model_dir(env(&vars)).unwrap(),
-            PathBuf::from("/data/npu-commit/models").join(DEFAULT_MODEL)
+            PathBuf::from("/data/smart-commit/models").join(DEFAULT_MODEL)
         );
         assert_eq!(
             default_cache_dir(env(&vars)).unwrap(),
-            PathBuf::from("/cache/npu-commit/openvino")
+            PathBuf::from("/cache/smart-commit/openvino")
         );
     }
 
@@ -134,7 +134,7 @@ mod tests {
         let vars = [("HOME", "/home/me"), ("XDG_CACHE_HOME", "cache")];
         assert_eq!(
             default_cache_dir(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.cache/npu-commit/openvino")
+            PathBuf::from("/home/me/.cache/smart-commit/openvino")
         );
     }
 

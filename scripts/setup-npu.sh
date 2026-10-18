@@ -7,7 +7,7 @@
 #     was validated with
 #   - OpenVINO GenAI 2026.3.1 archive (runtime + GenAI + tokenizers),
 #     also the version validated with the driver, in /opt/intel
-#   - /etc/ld.so.conf.d/npu-commit-openvino.conf, so its libraries resolve
+#   - /etc/ld.so.conf.d/smart-commit-openvino.conf, so its libraries resolve
 #     without LD_LIBRARY_PATH
 #   - membership of the `render` group, which owns /dev/accel/accel0
 #
@@ -104,7 +104,7 @@ sudo ln -sfn "$INSTALL_DIR" "$INSTALL_ROOT/openvino"
 # GUI clients) never get. Registering them with the dynamic linker instead
 # makes them resolve everywhere.
 printf '%s\n' "$INSTALL_ROOT/openvino/runtime/lib/intel64" "$INSTALL_ROOT/openvino/runtime/3rdparty/tbb/lib" |
-    sudo tee /etc/ld.so.conf.d/npu-commit-openvino.conf >/dev/null
+    sudo tee /etc/ld.so.conf.d/smart-commit-openvino.conf >/dev/null
 sudo ldconfig
 
 if [ "$OPENVINO_ONLY" = 1 ]; then

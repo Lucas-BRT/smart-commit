@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sets up the GPUs of this machine for npu-commit, whatever the vendor:
+# Sets up the GPUs of this machine for smart-commit, whatever the vendor:
 #
 #   Intel  (i915/xe)  OpenVINO GPU runtime (intel-opencl-icd & co., pinned,
 #                     from the PPA snapshot the NPU driver release was
@@ -11,8 +11,8 @@
 #   NVIDIA (nouveau)  Mesa NVK (Vulkan; Turing / GTX 16xx or newer)
 #
 # and, for the Vulkan backend on any of them, without sudo:
-#   llama.cpp b11381 (Vulkan build) in $XDG_DATA_HOME/npu-commit/llama.cpp
-#   the GGUF model in $XDG_DATA_HOME/npu-commit/models
+#   llama.cpp b11381 (Vulkan build) in $XDG_DATA_HOME/smart-commit/llama.cpp
+#   the GGUF model in $XDG_DATA_HOME/smart-commit/models
 # Every download is checked against a pinned SHA-256.
 #
 #   scripts/setup-gpu.sh [--dry-run] [--yes]
@@ -22,8 +22,8 @@
 #
 # System packages need apt (Ubuntu, Debian, Pop!_OS); elsewhere the script
 # says which packages to install and still sets up the user-space parts.
-# NPU_COMMIT_SYSFS overrides /sys, NPU_COMMIT_VULKAN_ICD_DIRS the Vulkan ICD
-# directories and NPU_COMMIT_DPKG_QUERY the installed-package check, for
+# SMART_COMMIT_SYSFS overrides /sys, SMART_COMMIT_VULKAN_ICD_DIRS the Vulkan ICD
+# directories and SMART_COMMIT_DPKG_QUERY the installed-package check, for
 # tests.
 set -euo pipefail
 
@@ -45,8 +45,8 @@ INTEL_DEBS=(
     "i/intel-gmmlib/libigdgmm12_22.10.0-1~24.04~ppa1_amd64.deb 63fe9e124c3394193226c6cb8398dcabdc9306b5a10f63668118f7c799f5d792"
 )
 
-SYSFS=${NPU_COMMIT_SYSFS:-/sys}
-DATA=${XDG_DATA_HOME:-$HOME/.local/share}/npu-commit
+SYSFS=${SMART_COMMIT_SYSFS:-/sys}
+DATA=${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit
 DRY_RUN=0
 ASSUME_YES=0
 for arg in "$@"; do
@@ -112,7 +112,7 @@ installed() {
     local status
     # The format is dpkg-query's, not the shell's.
     # shellcheck disable=SC2016
-    status=$(${NPU_COMMIT_DPKG_QUERY:-dpkg-query} -W -f='${Status} ${Version}' "$1" 2>/dev/null) || return 1
+    status=$(${SMART_COMMIT_DPKG_QUERY:-dpkg-query} -W -f='${Status} ${Version}' "$1" 2>/dev/null) || return 1
     case $status in
         "install ok installed ${2:-}"*) return 0 ;;
         *) return 1 ;;
@@ -146,7 +146,7 @@ nvidia_driver_version() {
 
 nvidia_vulkan_icd_present() {
     local dir
-    for dir in ${NPU_COMMIT_VULKAN_ICD_DIRS:-/usr/share/vulkan/icd.d /etc/vulkan/icd.d}; do
+    for dir in ${SMART_COMMIT_VULKAN_ICD_DIRS:-/usr/share/vulkan/icd.d /etc/vulkan/icd.d}; do
         [ -e "$dir/nvidia_icd.json" ] && return 0
     done
     return 1
@@ -213,7 +213,7 @@ setup_nvidia() {
 
 gpus=$(list_gpus)
 if [ -z "$gpus" ]; then
-    echo "No GPU found; npu-commit will use the NPU or the CPU."
+    echo "No GPU found; smart-commit will use the NPU or the CPU."
     exit 0
 fi
 while read -r vendor driver slot; do
@@ -296,4 +296,4 @@ fi
 
 echo
 echo "Done. If you were added to the render group, log out and back in."
-echo "Then \`npu-commit bench\` measures every device and picks the fastest."
+echo "Then \`smart-commit bench\` measures every device and picks the fastest."

@@ -1,8 +1,8 @@
 //! Settings from config files, the environment and flags.
 //!
 //! Precedence, highest first: command-line flags, environment variables,
-//! the repository's `.npu-commit.toml`, the global
-//! `$XDG_CONFIG_HOME/npu-commit/config.toml`, and the defaults.
+//! the repository's `.smart-commit.toml`, the global
+//! `$XDG_CONFIG_HOME/smart-commit/config.toml`, and the defaults.
 //!
 //! Every key is declared once in [`KEYS`], which drives parsing, validation,
 //! `config set`, listing and the `config init` template alike. Unknown keys
@@ -24,7 +24,7 @@ use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions};
 use crate::style::{Convention, Language};
 
 /// The per-repository file, at the root of the work tree.
-pub const REPO_FILE: &str = ".npu-commit.toml";
+pub const REPO_FILE: &str = ".smart-commit.toml";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
@@ -59,7 +59,7 @@ pub const KEYS: &[Key] = &[
         name: "backend",
         kind: Kind::Choice(&["auto", "openvino", "llamacpp", "mock"]),
         scope: Scope::User,
-        env: Some("NPU_COMMIT_BACKEND"),
+        env: Some("SMART_COMMIT_BACKEND"),
         description: "What runs the model: `openvino` (Intel NPU, GPU and CPU), `llamacpp` \
                       (any GPU through Vulkan), `auto` (whichever model.device needs) or \
                       `mock`, which replies with --mock-response (for tests).",
@@ -68,39 +68,39 @@ pub const KEYS: &[Key] = &[
         name: "model.device",
         kind: Kind::Choice(&["auto", "npu", "gpu", "cpu", "vulkan"]),
         scope: Scope::User,
-        env: Some("NPU_COMMIT_DEVICE"),
+        env: Some("SMART_COMMIT_DEVICE"),
         description: "Where the model runs: `npu`, `gpu` (Intel) and `cpu` through OpenVINO, \
                       `vulkan` (AMD, NVIDIA or Intel GPU) through llama.cpp, or `auto`: \
-                      the fastest in the last `npu-commit bench`, else the first that works \
+                      the fastest in the last `smart-commit bench`, else the first that works \
                       of gpu, npu, vulkan, cpu.",
     },
     Key {
         name: "model.dir",
         kind: Kind::Path,
         scope: Scope::User,
-        env: Some("NPU_COMMIT_MODEL_DIR"),
-        description: "The OpenVINO model, downloaded by `npu-commit setup`.",
+        env: Some("SMART_COMMIT_MODEL_DIR"),
+        description: "The OpenVINO model, downloaded by `smart-commit setup`.",
     },
     Key {
         name: "model.cache_dir",
         kind: Kind::Path,
         scope: Scope::User,
-        env: Some("NPU_COMMIT_CACHE_DIR"),
+        env: Some("SMART_COMMIT_CACHE_DIR"),
         description: "Where OpenVINO keeps compiled models, so loads after the first are fast.",
     },
     Key {
         name: "model.gguf",
         kind: Kind::Path,
         scope: Scope::User,
-        env: Some("NPU_COMMIT_GGUF"),
-        description: "The GGUF model of the llama.cpp backend, downloaded by `npu-commit setup`.",
+        env: Some("SMART_COMMIT_GGUF"),
+        description: "The GGUF model of the llama.cpp backend, downloaded by `smart-commit setup`.",
     },
     Key {
         name: "model.llama_server",
         kind: Kind::Path,
         scope: Scope::User,
-        env: Some("NPU_COMMIT_LLAMA_SERVER"),
-        description: "The llama-server binary, installed by `npu-commit setup`.",
+        env: Some("SMART_COMMIT_LLAMA_SERVER"),
+        description: "The llama-server binary, installed by `smart-commit setup`.",
     },
     Key {
         name: "model.vulkan_device",
@@ -818,13 +818,13 @@ fn save_document(path: &Path, doc: &DocumentMut) -> Result<(), ConfigError> {
 /// with its description and default.
 pub fn template(for_repo: bool, resolved_defaults: &Resolved) -> String {
     let mut out = String::from(if for_repo {
-        "# npu-commit settings for this repository, shared through git.\n\
+        "# smart-commit settings for this repository, shared through git.\n\
          # They override the global config; flags and environment variables\n\
          # override them. Uncomment a line to change it.\n"
     } else {
-        "# npu-commit global settings. A repository's .npu-commit.toml overrides\n\
+        "# smart-commit global settings. A repository's .smart-commit.toml overrides\n\
          # the style.* keys; flags and environment variables override both.\n\
-         # `npu-commit config list --show-origin` shows where each value comes\n\
+         # `smart-commit config list --show-origin` shows where each value comes\n\
          # from. Uncomment a line to change it.\n"
     });
     let mut section = None;
@@ -935,7 +935,7 @@ mod tests {
     fn layers_override_in_order() {
         let global = "backend = \"mock\"\n[model]\ndevice = \"gpu\"\n[style]\nlanguage = \"english\"\nhistory_depth = 10\n";
         let repo = "[style]\nlanguage = \"portuguese\"\n";
-        let vars = [("HOME", "/home/me"), ("NPU_COMMIT_DEVICE", "cpu")];
+        let vars = [("HOME", "/home/me"), ("SMART_COMMIT_DEVICE", "cpu")];
         let resolved = resolve(
             Some(global),
             Some(repo),
@@ -946,7 +946,7 @@ mod tests {
         let origin = |name| resolved.get(name).unwrap().1.clone();
         assert!(matches!(origin("style.history_depth"), Origin::Global(_)));
         assert!(matches!(origin("style.language"), Origin::Repo(_)));
-        assert_eq!(origin("model.device"), Origin::Env("NPU_COMMIT_DEVICE"));
+        assert_eq!(origin("model.device"), Origin::Env("SMART_COMMIT_DEVICE"));
         assert_eq!(origin("backend"), Origin::Flag);
         assert_eq!(origin("style.convention"), Origin::Default);
 
@@ -996,13 +996,13 @@ mod tests {
         let err = resolve(
             None,
             None,
-            &[("HOME", "/h"), ("NPU_COMMIT_BACKEND", "gpt")],
+            &[("HOME", "/h"), ("SMART_COMMIT_BACKEND", "gpt")],
             vec![],
         )
         .unwrap_err();
         assert!(
             err.to_string()
-                .contains("environment variable NPU_COMMIT_BACKEND"),
+                .contains("environment variable SMART_COMMIT_BACKEND"),
             "{err}"
         );
     }
@@ -1035,7 +1035,7 @@ mod tests {
 
     #[test]
     fn empty_environment_variables_are_ignored() {
-        let vars = [("HOME", "/h"), ("NPU_COMMIT_DEVICE", "")];
+        let vars = [("HOME", "/h"), ("SMART_COMMIT_DEVICE", "")];
         let resolved = resolve(None, None, &vars, vec![]).unwrap();
         assert_eq!(resolved.get("model.device").unwrap().1, Origin::Default);
     }
@@ -1122,10 +1122,10 @@ mod tests {
         set_in_file(&path, &origin, "style.history_depth", "12", None).unwrap();
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(
-            text.contains("# Environment: NPU_COMMIT_DEVICE.\ndevice = \"cpu\"\n"),
+            text.contains("# Environment: SMART_COMMIT_DEVICE.\ndevice = \"cpu\"\n"),
             "{text}"
         );
-        assert!(text.contains("# Environment: NPU_COMMIT_BACKEND.\nbackend = \"mock\"\n"));
+        assert!(text.contains("# Environment: SMART_COMMIT_BACKEND.\nbackend = \"mock\"\n"));
         assert!(text.contains("history_depth = 12\n"));
         assert!(
             !text.contains("# device = "),
@@ -1140,7 +1140,7 @@ mod tests {
         set_in_file(&path, &origin, "model.device", "gpu", None).unwrap();
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(
-            text.contains("NPU_COMMIT_DEVICE.\ndevice = \"gpu\""),
+            text.contains("SMART_COMMIT_DEVICE.\ndevice = \"gpu\""),
             "{text}"
         );
     }

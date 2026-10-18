@@ -3,20 +3,20 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use npu_commit::backend::{Backend, BackendError, MockBackend};
-use npu_commit::config::{self, BackendKind, DeviceSetting, Resolved, Settings, Sources};
-use npu_commit::context::RepoContext;
-use npu_commit::device::{self, Target};
-use npu_commit::diff;
-use npu_commit::genai::{Device, GenaiBackend};
-use npu_commit::generate::{self, Source};
-use npu_commit::git::Repo;
-use npu_commit::hook;
-use npu_commit::llamacpp::LlamaCppBackend;
-use npu_commit::message::CommitMessage;
-use npu_commit::paths;
-use npu_commit::prompt;
-use npu_commit::trace::Trace;
+use smart_commit::backend::{Backend, BackendError, MockBackend};
+use smart_commit::config::{self, BackendKind, DeviceSetting, Resolved, Settings, Sources};
+use smart_commit::context::RepoContext;
+use smart_commit::device::{self, Target};
+use smart_commit::diff;
+use smart_commit::genai::{Device, GenaiBackend};
+use smart_commit::generate::{self, Source};
+use smart_commit::git::Repo;
+use smart_commit::hook;
+use smart_commit::llamacpp::LlamaCppBackend;
+use smart_commit::message::CommitMessage;
+use smart_commit::paths;
+use smart_commit::prompt;
+use smart_commit::trace::Trace;
 
 mod bench_cmd;
 mod config_cmd;
@@ -92,7 +92,7 @@ enum HookCommand {
     Install {
         #[arg(short = 'C', long = "path", default_value = ".")]
         path: PathBuf,
-        /// Replace a hook that was not installed by npu-commit; it is kept
+        /// Replace a hook that was not installed by smart-commit; it is kept
         /// as a backup and restored by `uninstall`.
         #[arg(long)]
         force: bool,
@@ -129,10 +129,10 @@ struct GenerateArgs {
 }
 
 /// How messages are generated. Unset options come from the environment,
-/// then the config files (see `npu-commit config list --show-origin`).
+/// then the config files (see `smart-commit config list --show-origin`).
 #[derive(Debug, Args)]
 struct BackendArgs {
-    /// [config: backend; env: NPU_COMMIT_BACKEND]
+    /// [config: backend; env: SMART_COMMIT_BACKEND]
     #[arg(long, value_enum)]
     backend: Option<BackendArg>,
     #[command(flatten)]
@@ -141,13 +141,13 @@ struct BackendArgs {
     /// The environment variable holds a single reply.
     #[arg(
         long = "mock-response",
-        env = "NPU_COMMIT_MOCK_RESPONSE",
+        env = "SMART_COMMIT_MOCK_RESPONSE",
         value_name = "TEXT"
     )]
     mock_responses: Vec<String>,
     /// Record inputs, prompts and replies to FILE, for `replay`. It
     /// includes the staged diff and recent commit subjects.
-    #[arg(long, env = "NPU_COMMIT_TRACE", value_name = "FILE")]
+    #[arg(long, env = "SMART_COMMIT_TRACE", value_name = "FILE")]
     trace: Option<PathBuf>,
 }
 
@@ -166,10 +166,10 @@ enum BackendArg {
 /// Which model runs where, for the OpenVINO backend.
 #[derive(Debug, Args)]
 struct ModelArgs {
-    /// [config: model.device; env: NPU_COMMIT_DEVICE]
+    /// [config: model.device; env: SMART_COMMIT_DEVICE]
     #[arg(long, value_enum)]
     device: Option<DeviceArg>,
-    /// [config: model.dir; env: NPU_COMMIT_MODEL_DIR]
+    /// [config: model.dir; env: SMART_COMMIT_MODEL_DIR]
     #[arg(long, value_name = "DIR")]
     model_dir: Option<PathBuf>,
 }
@@ -323,7 +323,7 @@ fn load_model(settings: &Settings) -> Result<Box<dyn Backend>, Box<dyn Error>> {
     if settings.device == DeviceSetting::Auto && !selection.skipped.is_empty() {
         let skipped: Vec<&str> = selection.skipped.iter().map(|(t, _)| t.name()).collect();
         eprintln!(
-            "note: running on {}; {} unavailable (`npu-commit device` shows why)",
+            "note: running on {}; {} unavailable (`smart-commit device` shows why)",
             selection.target,
             skipped.join(", ")
         );
@@ -417,7 +417,7 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
             eprintln!("differs: {difference}");
         }
         return Err(format!(
-            "not reproduced (trace written by npu-commit {}, this is {})",
+            "not reproduced (trace written by smart-commit {}, this is {})",
             trace.tool_version,
             env!("CARGO_PKG_VERSION")
         )
@@ -432,18 +432,18 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
     Ok(())
 }
 
-/// Runs `setup.sh`: installed next to the binary (`../share/npu-commit`)
+/// Runs `setup.sh`: installed next to the binary (`../share/smart-commit`)
 /// or, from a checkout, in `scripts/`.
 fn run_setup(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
     let exe = std::env::current_exe()?.canonicalize()?;
     let bin = exe.parent().ok_or("the binary has no directory")?;
     let script = [
-        bin.join("../share/npu-commit/scripts/setup.sh"),
+        bin.join("../share/smart-commit/scripts/setup.sh"),
         bin.join("../../scripts/setup.sh"),
     ]
     .into_iter()
     .find(|p| p.is_file())
-    .ok_or("setup.sh not found next to the binary; reinstall npu-commit")?;
+    .ok_or("setup.sh not found next to the binary; reinstall smart-commit")?;
     let flags = [
         (yes, "--yes"),
         (no_drivers, "--no-drivers"),
@@ -452,7 +452,7 @@ fn run_setup(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn 
     let status = std::process::Command::new(&script)
         .args(flags.iter().filter(|(on, _)| *on).map(|(_, flag)| flag))
         // So the setup benchmarks this very binary.
-        .env("NPU_COMMIT_BIN", &exe)
+        .env("SMART_COMMIT_BIN", &exe)
         .status()
         .map_err(|err| format!("cannot run {}: {err}", script.display()))?;
     if !status.success() {
@@ -462,7 +462,7 @@ fn run_setup(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn 
 }
 
 const HOOK_NAME: &str = "prepare-commit-msg";
-const HOOK_BACKUP: &str = "prepare-commit-msg.npu-commit-backup";
+const HOOK_BACKUP: &str = "prepare-commit-msg.smart-commit-backup";
 
 fn run_hook_install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {
     let dir = Repo::discover(path)?.hooks_dir()?;
@@ -472,7 +472,7 @@ fn run_hook_install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {
     {
         if !force {
             return Err(format!(
-                "{} already exists and was not installed by npu-commit; \
+                "{} already exists and was not installed by smart-commit; \
                  use --force to replace it (it will be kept as a backup)",
                 hook.display()
             )
@@ -504,7 +504,7 @@ fn run_hook_uninstall(path: &Path) -> Result<(), Box<dyn Error>> {
         .map_err(|_| format!("no {HOOK_NAME} hook in {}", dir.display()))?;
     if !hook::is_ours(&existing) {
         return Err(format!(
-            "{} was not installed by npu-commit; leaving it alone",
+            "{} was not installed by smart-commit; leaving it alone",
             hook.display()
         )
         .into());
@@ -537,7 +537,7 @@ fn run_hook(message_file: &Path, source: Option<&str>, backend: &BackendArgs) {
         return;
     }
     if let Err(err) = fill_message_file(message_file, backend) {
-        eprintln!("npu-commit: {err}; the commit message was left as is");
+        eprintln!("smart-commit: {err}; the commit message was left as is");
     }
 }
 

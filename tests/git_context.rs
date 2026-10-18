@@ -2,11 +2,11 @@
 
 use std::fs;
 
-use npu_commit::context::RepoContext;
-use npu_commit::diff;
-use npu_commit::git::{ChangeStatus, FileChange, GitError, Repo};
-use npu_commit::prompt::{self, PromptOptions};
-use npu_commit::style::{Convention, Language};
+use smart_commit::context::RepoContext;
+use smart_commit::diff;
+use smart_commit::git::{ChangeStatus, FileChange, GitError, Repo};
+use smart_commit::prompt::{self, PromptOptions};
+use smart_commit::style::{Convention, Language};
 use tempfile::TempDir;
 
 mod common;

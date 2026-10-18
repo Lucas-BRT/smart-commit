@@ -5,17 +5,17 @@
 ## O que entrega
 
 ```console
-$ npu-commit config init                       # ~/.config/npu-commit/config.toml, tudo comentado
-$ npu-commit config set model.device cpu       # global
-$ npu-commit config set --repo style.convention conventional   # .npu-commit.toml, vai pro git
-$ npu-commit config get style.language
-$ npu-commit config list --show-origin
+$ smart-commit config init                       # ~/.config/smart-commit/config.toml, tudo comentado
+$ smart-commit config set model.device cpu       # global
+$ smart-commit config set --repo style.convention conventional   # .smart-commit.toml, vai pro git
+$ smart-commit config get style.language
+$ smart-commit config list --show-origin
 backend = openvino  (default)
-model.device = cpu  (global /home/me/.config/npu-commit/config.toml)
-style.convention = conventional  (repository /home/me/proj/.npu-commit.toml)
+model.device = cpu  (global /home/me/.config/smart-commit/config.toml)
+style.convention = conventional  (repository /home/me/proj/.smart-commit.toml)
 ...
-$ npu-commit config unset model.device
-$ npu-commit config path [--repo]
+$ smart-commit config unset model.device
+$ smart-commit config path [--repo]
 ```
 
 ## Camadas
@@ -23,11 +23,11 @@ $ npu-commit config path [--repo]
 Da mais forte para a mais fraca:
 
 1. **flags** (`--backend`, `--device`, `--model-dir`);
-2. **ambiente** (`NPU_COMMIT_BACKEND`, `NPU_COMMIT_DEVICE`,
-   `NPU_COMMIT_MODEL_DIR`, `NPU_COMMIT_CACHE_DIR`);
-3. **repositório**: `.npu-commit.toml` na raiz da work tree, versionado
+2. **ambiente** (`SMART_COMMIT_BACKEND`, `SMART_COMMIT_DEVICE`,
+   `SMART_COMMIT_MODEL_DIR`, `SMART_COMMIT_CACHE_DIR`);
+3. **repositório**: `.smart-commit.toml` na raiz da work tree, versionado
    junto com o código;
-4. **global**: `$XDG_CONFIG_HOME/npu-commit/config.toml` (padrão
+4. **global**: `$XDG_CONFIG_HOME/smart-commit/config.toml` (padrão
    `~/.config/...`);
 5. **padrões**.
 
@@ -42,8 +42,8 @@ define a mesma chave).
 |---|---|---|---|
 | `backend` | `openvino`, `mock` | `openvino` | só global |
 | `model.device` | `npu`, `gpu`, `cpu` | `npu` | só global |
-| `model.dir` | caminho absoluto ou `~/…` | `$XDG_DATA_HOME/npu-commit/models/<padrão>` | só global |
-| `model.cache_dir` | caminho | `$XDG_CACHE_HOME/npu-commit/openvino` | só global |
+| `model.dir` | caminho absoluto ou `~/…` | `$XDG_DATA_HOME/smart-commit/models/<padrão>` | só global |
+| `model.cache_dir` | caminho | `$XDG_CACHE_HOME/smart-commit/openvino` | só global |
 | `model.max_prompt_tokens` | 256–8192 | 1024 | só global |
 | `model.max_new_tokens` | 16–1024 | 128 | só global |
 | `style.convention` | `auto`, `conventional`, `gitmoji`, `free` | `auto` | global ou repositório |
@@ -69,7 +69,7 @@ histórico para aprender, ou não consegue decidir o idioma.
   o erro vira aviso, como os outros: um arquivo quebrado não bloqueia
   commits.
 - **Chaves de máquina só no global.** `backend` e `model.*` são recusados
-  no `.npu-commit.toml`, seja pelo `set --repo` ou editando o arquivo à
+  no `.smart-commit.toml`, seja pelo `set --repo` ou editando o arquivo à
   mão. Clonar um repositório não pode mudar qual modelo roda na sua máquina
   nem fazer você carregar um modelo de um caminho escolhido por outra
   pessoa.
@@ -95,7 +95,7 @@ histórico para aprender, ou não consegue decidir o idioma.
   só são gravados quando têm valor, então os traces antigos continuam lidos
   igual e as fixtures regeneradas ficaram idênticas.
 - Os testes isolam `XDG_CONFIG_HOME` (além de `XDG_DATA_HOME` e
-  `XDG_CACHE_HOME`) e removem todas as `NPU_COMMIT_*`. A suíte passa igual
+  `XDG_CACHE_HOME`) e removem todas as `SMART_COMMIT_*`. A suíte passa igual
   com essas variáveis exportadas e com uma config global real na máquina.
   Testes que escrevem config usam um diretório temporário próprio.
 

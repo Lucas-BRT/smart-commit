@@ -6,7 +6,7 @@
 ## O que entrega
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/npu-commit/main/install.sh | bash
+$ curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ...
 ==> Benchmark
 Benchmark on Intel(R) Core(TM) Ultra 5 225H: 5 prompts, after one warm-up load.
@@ -17,11 +17,11 @@ Benchmark on Intel(R) Core(TM) Ultra 5 225H: 5 prompts, after one warm-up load.
   vulkan         1.6 s    0.8 s     0.8 s    0.5x
   cpu            2.1 s    1.3 s     0.9 s    2.9x
 
-npu-commit will use gpu on this machine (~1.0 s per message): the fastest, model.device = auto.
-To use another device: npu-commit device use <npu|gpu|cpu|vulkan>, or `auto` for the fastest.
+smart-commit will use gpu on this machine (~1.0 s per message): the fastest, model.device = auto.
+To use another device: smart-commit device use <npu|gpu|cpu|vulkan>, or `auto` for the fastest.
 
-$ npu-commit device use npu
-model.device = npu  (global /home/me/.config/npu-commit/config.toml)
+$ smart-commit device use npu
+model.device = npu  (global /home/me/.config/smart-commit/config.toml)
 ~3.4 s per message on this machine, in the last benchmark.
 ```
 
@@ -64,14 +64,14 @@ determinísticas, e ponta a ponta leva 2,5 s.
   **gpu → npu → vulkan → cpu**. O primeiro que carrega vence, com um aviso
   dizendo quais foram pulados. Sem nenhum device, o erro lista o motivo de
   cada um.
-- **`npu-commit bench`** mede os quatro devices nos **5 prompts das
+- **`smart-commit bench`** mede os quatro devices nos **5 prompts das
   fixtures, embutidos no binário** (as mesmas entradas em qualquer máquina),
   depois de uma carga de aquecimento: carga, geração, custo por mensagem e
   núcleos de CPU usados. O relatório vai para
-  `~/.local/share/npu-commit/bench.json`, com CPU, kernel, versão e a
+  `~/.local/share/smart-commit/bench.json`, com CPU, kernel, versão e a
   descrição de cada backend. Os critérios são o tempo e a CPU; a energia
   ainda não entra (o RAPL exige root).
-- **`npu-commit device`** mostra a tabela, o device escolhido e de onde vem a
+- **`smart-commit device`** mostra a tabela, o device escolhido e de onde vem a
   escolha. **`device use <x>`** grava a config global e mostra o tempo
   estimado (ou avisa se aquele device falhou no último benchmark).
 
@@ -144,7 +144,7 @@ tests/scripts/test-setup.sh               # setup guiado, com release falsa
 tests/scripts/test-normalize-ir.sh        # contadores diferentes, mesmo arquivo
 tests/scripts/test-install.sh             # pacote reproduzível + instalação + desinstalação
 tests/scripts/test-release-notes.sh       # notas agrupadas por tipo
-cargo test --test hardware -- --ignored --test-threads 1   # NPU_COMMIT_TEST_DEVICE=npu|gpu|cpu|vulkan
+cargo test --test hardware -- --ignored --test-threads 1   # SMART_COMMIT_TEST_DEVICE=npu|gpu|cpu|vulkan
 ```
 
 - **Sem hardware:** seleção de device (ordem, backend fixo, device fixo,
@@ -160,7 +160,7 @@ cargo test --test hardware -- --ignored --test-threads 1   # NPU_COMMIT_TEST_DEV
 - **AMD e NVIDIA** foram testados só pelos cenários do `setup-gpu.sh`: não
   há essas GPUs nesta máquina. O caminho Vulkan é o mesmo testado na Intel,
   mas o primeiro uso real numa AMD ou NVIDIA deve ser conferido com
-  `npu-commit bench`.
+  `smart-commit bench`.
 
 ## Limitações
 
@@ -168,6 +168,6 @@ cargo test --test hardware -- --ignored --test-threads 1   # NPU_COMMIT_TEST_DEV
 - Só Linux x86_64 e `apt`. Em outras distribuições, o setup lista os
   pacotes.
 - O benchmark é por máquina. Depois de trocar driver, GPU ou modelo, rode
-  `npu-commit bench` de novo.
+  `smart-commit bench` de novo.
 - Em máquinas com várias GPUs Vulkan, usa-se a `model.vulkan_device`
   (padrão 0), e o `bench` mede só ela.

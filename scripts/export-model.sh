@@ -9,7 +9,7 @@
 #
 # Needs uv (https://docs.astral.sh/uv/) and about 10 GB of disk for the
 # download, the Python environment and the export. Only this step uses
-# Python; npu-commit itself does not.
+# Python; smart-commit itself does not.
 #
 # Exporting twice gives identical files; scripts/export/MANIFEST.sha256 holds
 # the expected result, and the script fails if the export differs from it.
@@ -35,9 +35,9 @@ LOCK=$ROOT/scripts/export/requirements.lock
 # What the export produced when the pinned inputs were committed; any other
 # result means it is not reproducible and must not be used silently.
 EXPECTED=$ROOT/scripts/export/MANIFEST.sha256
-OUT=$(realpath -m "${1:-${XDG_DATA_HOME:-$HOME/.local/share}/npu-commit/models/$NAME}")
-CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/npu-commit
-VENV=${NPU_COMMIT_EXPORT_VENV:-$CACHE/export-venv}
+OUT=$(realpath -m "${1:-${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit/models/$NAME}")
+CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/smart-commit
+VENV=${SMART_COMMIT_EXPORT_VENV:-$CACHE/export-venv}
 SOURCE=$CACHE/sources/$MODEL_ID@$MODEL_REVISION
 
 if ! command -v uv >/dev/null; then
@@ -75,7 +75,7 @@ rm -rf "${staging:?}"
 "$VENV/bin/python" -I "$ROOT/scripts/export/normalize_ir.py" "$staging"/openvino_*.xml
 
 lock_sha256=$(sha256sum "$LOCK" | cut -d' ' -f1)
-cat >"$staging/npu-commit-export.json" <<JSON
+cat >"$staging/smart-commit-export.json" <<JSON
 {
   "model": "$MODEL_ID",
   "revision": "$MODEL_REVISION",

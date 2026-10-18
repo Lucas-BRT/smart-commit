@@ -1,16 +1,16 @@
-//! `npu-commit bench` and `npu-commit device`, without hardware: devices
+//! `smart-commit bench` and `smart-commit device`, without hardware: devices
 //! are unavailable (no models), and saved reports are written by hand.
 
 use std::fs;
 use std::path::Path;
 use std::process::Output;
 
-use npu_commit::bench::{self, Entry, Machine, Measurement, Report};
-use npu_commit::device::Target;
+use smart_commit::bench::{self, Entry, Machine, Measurement, Report};
+use smart_commit::device::Target;
 use tempfile::TempDir;
 
 mod common;
-use common::{TestRepo, npu_commit};
+use common::{TestRepo, smart_commit};
 
 struct Home {
     config: TempDir,
@@ -26,7 +26,7 @@ impl Home {
     }
 
     fn run(&self, args: &[&str], dir: &Path) -> Output {
-        npu_commit(
+        smart_commit(
             args,
             dir,
             &[
@@ -37,7 +37,7 @@ impl Home {
     }
 
     fn bench_file(&self) -> std::path::PathBuf {
-        self.data.path().join("npu-commit/bench.json")
+        self.data.path().join("smart-commit/bench.json")
     }
 
     /// Saves a report where `per_message` is None for unavailable devices.
@@ -143,7 +143,7 @@ fn device_shows_the_fastest_as_selected() {
         "{out}"
     );
     assert!(
-        out.contains("npu-commit will use gpu on this machine (~1.8 s per message): the fastest"),
+        out.contains("smart-commit will use gpu on this machine (~1.8 s per message): the fastest"),
         "{out}"
     );
 }

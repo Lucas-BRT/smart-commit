@@ -36,7 +36,7 @@ refute() {
         failures=$((failures + 1))
     else echo "ok    no $1"; fi
 }
-expect "## npu-commit 0.2.0"
+expect "## smart-commit 0.2.0"
 expect "Mudanças desde v0.1.0."
 expect "### Novidades"
 expect "- **cli** adiciona o comando bench"

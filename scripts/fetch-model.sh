@@ -8,14 +8,14 @@
 #   scripts/fetch-model.sh [--dry-run]
 #
 # If the download is not possible, export locally with scripts/export-model.sh.
-# NPU_COMMIT_RELEASE_BASE overrides where releases are downloaded from.
+# SMART_COMMIT_RELEASE_BASE overrides where releases are downloaded from.
 set -euo pipefail
 
 NAME=qwen2.5-coder-1.5b-instruct-int4-sym-g128
 HERE=$(cd "$(dirname "$0")" && pwd)
 EXPECTED=$HERE/export/MANIFEST.sha256
-BASE=${NPU_COMMIT_RELEASE_BASE:-https://github.com/Lucas-BRT/npu-commit/releases}
-MODELS=${XDG_DATA_HOME:-$HOME/.local/share}/npu-commit/models
+BASE=${SMART_COMMIT_RELEASE_BASE:-https://github.com/Lucas-BRT/smart-commit/releases}
+MODELS=${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit/models
 DRY_RUN=0
 [ "${1:-}" = --dry-run ] && DRY_RUN=1
 

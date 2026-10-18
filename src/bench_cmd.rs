@@ -1,14 +1,14 @@
-//! `npu-commit bench` and `npu-commit device`: measure the devices of this
+//! `smart-commit bench` and `smart-commit device`: measure the devices of this
 //! machine, show which one is used, and change it.
 
 use std::error::Error;
 use std::path::PathBuf;
 
 use clap::{Subcommand, ValueEnum};
-use npu_commit::bench::{self, Machine, Report};
-use npu_commit::config::{self, DeviceSetting, Origin};
-use npu_commit::device::{DEFAULT_ORDER, Target};
-use npu_commit::paths;
+use smart_commit::bench::{self, Machine, Report};
+use smart_commit::config::{self, DeviceSetting, Origin};
+use smart_commit::device::{DEFAULT_ORDER, Target};
+use smart_commit::paths;
 
 #[derive(Debug, Subcommand)]
 pub enum DeviceCommand {
@@ -61,7 +61,7 @@ pub fn last_report() -> Option<Report> {
     Report::from_json(&text)
 }
 
-const HOW_TO_CHANGE: &str = "To use another device: npu-commit device use <npu|gpu|cpu|vulkan>, \
+const HOW_TO_CHANGE: &str = "To use another device: smart-commit device use <npu|gpu|cpu|vulkan>, \
                              or `auto` for the fastest.";
 
 pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
@@ -102,7 +102,7 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
         Some(target) => println!("{}", using_message(&report, target, settings.device)),
         None => {
             return Err(
-                "no device could run the model; `npu-commit setup` installs \
+                "no device could run the model; `smart-commit setup` installs \
                         the drivers and models"
                     .into(),
             );
@@ -134,7 +134,7 @@ fn using_message(report: &Report, target: Target, device: DeviceSetting) -> Stri
         DeviceSetting::Auto => "the fastest, model.device = auto",
         _ => "set in model.device",
     };
-    format!("npu-commit will use {target} on this machine{estimate}: {why}.")
+    format!("smart-commit will use {target} on this machine{estimate}: {why}.")
 }
 
 pub fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> {
@@ -162,7 +162,7 @@ fn show_device() -> Result<(), Box<dyn Error>> {
             }
         }
         None => println!(
-            "No benchmark yet: `npu-commit bench` measures the devices of this machine.\n\
+            "No benchmark yet: `smart-commit bench` measures the devices of this machine.\n\
              Until then, auto uses the first that works of gpu, npu, vulkan, cpu."
         ),
     }
@@ -176,11 +176,11 @@ fn use_device(device: DeviceChoice) -> Result<(), Box<dyn Error>> {
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", device.name(), None)?;
     println!("model.device = {}  ({origin})", device.name());
-    if env("NPU_COMMIT_DEVICE").is_some_and(|v| !v.is_empty()) {
-        eprintln!("note: NPU_COMMIT_DEVICE is set and overrides the config.");
+    if env("SMART_COMMIT_DEVICE").is_some_and(|v| !v.is_empty()) {
+        eprintln!("note: SMART_COMMIT_DEVICE is set and overrides the config.");
     }
     let Some(report) = last_report() else {
-        println!("Run `npu-commit bench` to compare the devices of this machine.");
+        println!("Run `smart-commit bench` to compare the devices of this machine.");
         return Ok(());
     };
     match device.target() {

@@ -1,12 +1,12 @@
-//! `npu-commit config`: read and change settings.
+//! `smart-commit config`: read and change settings.
 
 use std::error::Error;
 use std::path::PathBuf;
 
 use clap::{Args, Subcommand};
-use npu_commit::config::{self, Origin, Resolved, Sources};
-use npu_commit::git::Repo;
-use npu_commit::paths;
+use smart_commit::config::{self, Origin, Resolved, Sources};
+use smart_commit::git::Repo;
+use smart_commit::paths;
 
 #[derive(Debug, Subcommand)]
 pub enum ConfigCommand {
@@ -55,7 +55,7 @@ pub enum ConfigCommand {
     },
 }
 
-/// The repository whose `.npu-commit.toml` applies, if any.
+/// The repository whose `.smart-commit.toml` applies, if any.
 #[derive(Debug, Args)]
 pub struct At {
     #[arg(short = 'C', long = "path", default_value = ".")]
@@ -65,7 +65,7 @@ pub struct At {
 /// Which config file to change.
 #[derive(Debug, Args)]
 pub struct Target {
-    /// The repository's .npu-commit.toml (shared through git) instead of
+    /// The repository's .smart-commit.toml (shared through git) instead of
     /// the global config; only style.* settings are allowed there.
     #[arg(long)]
     repo: bool,

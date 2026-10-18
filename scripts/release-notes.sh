@@ -22,7 +22,7 @@ section() {
     fi
 }
 
-echo "## npu-commit ${TAG#v}"
+echo "## smart-commit ${TAG#v}"
 echo
 if [ -n "$previous" ]; then
     echo "Mudanças desde $previous."
@@ -44,7 +44,7 @@ cat <<'EOF'
 ### Instalação
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/npu-commit/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ```
 
 O tarball é reproduzível: `scripts/package.sh` nesta tag gera os mesmos bytes

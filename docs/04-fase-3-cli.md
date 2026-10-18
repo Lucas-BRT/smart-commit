@@ -9,27 +9,27 @@ trait. Como o backend da NPU só chega na fase 4, por enquanto a CLI roda com
 `--backend mock`, que responde com textos dados na linha de comando:
 
 ```console
-$ npu-commit --backend mock --mock-response $'```\natualiza dependências e a câmera\n```'
+$ smart-commit --backend mock --mock-response $'```\natualiza dependências e a câmera\n```'
 atualiza dependências e a câmera
 
-$ npu-commit --commit --backend mock --mock-response 'feat: ...'   # abre o editor e commita
+$ smart-commit --commit --backend mock --mock-response 'feat: ...'   # abre o editor e commita
 
-$ npu-commit --backend mock --mock-response '...' --trace trace.json
-$ npu-commit replay trace.json
+$ smart-commit --backend mock --mock-response '...' --trace trace.json
+$ smart-commit replay trace.json
 reproduced: 1 attempt(s), Model message
 atualiza dependências e a câmera
 
-$ npu-commit
+$ smart-commit
 error: the NPU backend is not available yet; use --backend mock
 ```
 
 | Comando | O que faz |
 |---|---|
-| `npu-commit [-C PATH]` | gera a mensagem para o que está staged e a imprime |
-| `npu-commit --commit` | abre o editor com a mensagem (`git commit --edit`) |
-| `npu-commit --trace FILE` | grava a geração para `replay` |
-| `npu-commit replay FILE` | refaz a geração gravada e confere se é idêntica |
-| `npu-commit context [PATH]`, `prompt [PATH]` | inspeção (fases 1 e 2) |
+| `smart-commit [-C PATH]` | gera a mensagem para o que está staged e a imprime |
+| `smart-commit --commit` | abre o editor com a mensagem (`git commit --edit`) |
+| `smart-commit --trace FILE` | grava a geração para `replay` |
+| `smart-commit replay FILE` | refaz a geração gravada e confere se é idêntica |
+| `smart-commit context [PATH]`, `prompt [PATH]` | inspeção (fases 1 e 2) |
 
 Uso inválido sai com código 2 (clap); erros, com código 1.
 
@@ -113,6 +113,6 @@ cargo test --locked   # 111 testes, nenhum precisa de NPU
 - O backend da NPU (fase 4) ainda não existe; sem `--backend mock`, a
   geração falha com uma mensagem clara.
 - `PromptOptions` e `GenerationConfig` ainda usam só os valores padrão; a
-  config em `~/.config/npu-commit/` é da fase 6. Os dois já entram no trace.
-- O trace guarda a versão do npu-commit, mas não o hash do modelo; isso
+  config em `~/.config/smart-commit/` é da fase 6. Os dois já entram no trace.
+- O trace guarda a versão do smart-commit, mas não o hash do modelo; isso
   entra com o backend real.

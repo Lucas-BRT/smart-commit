@@ -1,4 +1,4 @@
-//! `npu-commit config` and how settings reach generation.
+//! `smart-commit config` and how settings reach generation.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -7,7 +7,7 @@ use std::process::Output;
 use tempfile::TempDir;
 
 mod common;
-use common::{TestRepo, npu_commit};
+use common::{TestRepo, smart_commit};
 
 /// A global config home of its own for each test.
 struct Env {
@@ -22,7 +22,7 @@ impl Env {
     }
 
     fn global_file(&self) -> PathBuf {
-        self.config_home.path().join("npu-commit/config.toml")
+        self.config_home.path().join("smart-commit/config.toml")
     }
 
     fn run(&self, args: &[&str], dir: &Path) -> Output {
@@ -32,7 +32,7 @@ impl Env {
     fn run_with(&self, args: &[&str], dir: &Path, extra: &[(&str, &str)]) -> Output {
         let mut env = vec![("XDG_CONFIG_HOME", self.config_home.path().to_str().unwrap())];
         env.extend_from_slice(extra);
-        npu_commit(args, dir, &env)
+        smart_commit(args, dir, &env)
     }
 
     /// Runs and expects success, returning stdout.
@@ -64,7 +64,7 @@ fn init_writes_a_template_once() {
     assert_eq!(out, format!("wrote {}\n", env.global_file().display()));
     let template = fs::read_to_string(env.global_file()).unwrap();
     assert!(template.contains("# device = \"auto\""), "{template}");
-    assert!(template.contains("# Environment: NPU_COMMIT_DEVICE."));
+    assert!(template.contains("# Environment: SMART_COMMIT_DEVICE."));
 
     let again = env.run(&["config", "init"], dir.path());
     assert_eq!(again.status.code(), Some(1));
@@ -81,7 +81,7 @@ fn repository_template_has_only_shared_settings() {
     let env = Env::new();
     let repo = TestRepo::new();
     env.ok(&["config", "init", "--repo"], repo.path());
-    let template = fs::read_to_string(repo.path().join(".npu-commit.toml")).unwrap();
+    let template = fs::read_to_string(repo.path().join(".smart-commit.toml")).unwrap();
     assert!(template.contains("# convention = \"auto\""));
     assert!(!template.contains("device"), "{template}");
 }
@@ -165,7 +165,7 @@ fn repository_settings_override_global_ones_inside_it() {
         repo.path(),
     );
     assert!(out.contains("(repository "), "{out}");
-    assert!(repo.path().join(".npu-commit.toml").exists());
+    assert!(repo.path().join(".smart-commit.toml").exists());
 
     assert_eq!(
         env.ok(&["config", "get", "style.language"], repo.path()),
@@ -205,7 +205,7 @@ fn machine_settings_cannot_go_in_the_repository() {
     assert!(stderr(&output).contains("can only be set in the global config"));
 
     // Nor by editing the file by hand.
-    repo.write(".npu-commit.toml", "backend = \"mock\"\n");
+    repo.write(".smart-commit.toml", "backend = \"mock\"\n");
     let output = env.run(&["config", "list"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(stderr(&output).contains("`backend` can only be set in the global config"));
@@ -216,11 +216,11 @@ fn environment_overrides_files_and_is_shown() {
     let env = Env::new();
     let dir = TempDir::new().unwrap();
     env.ok(&["config", "set", "model.device", "gpu"], dir.path());
-    let device = [("NPU_COMMIT_DEVICE", "cpu")];
+    let device = [("SMART_COMMIT_DEVICE", "cpu")];
     let output = env.run_with(&["config", "list", "--show-origin"], dir.path(), &device);
     assert!(
         String::from_utf8_lossy(&output.stdout)
-            .contains("model.device = cpu  (environment NPU_COMMIT_DEVICE)")
+            .contains("model.device = cpu  (environment SMART_COMMIT_DEVICE)")
     );
     let output = env.run_with(
         &["config", "set", "model.device", "npu"],
@@ -327,11 +327,11 @@ fn history_depth_setting_reaches_the_context() {
 fn broken_config_files_are_reported_with_their_path() {
     let env = Env::new();
     let repo = staged_repo();
-    repo.write(".npu-commit.toml", "[style\n");
+    repo.write(".smart-commit.toml", "[style\n");
     let output = env.run(&["--backend", "mock"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(
-        stderr(&output).contains("cannot parse") && stderr(&output).contains(".npu-commit.toml"),
+        stderr(&output).contains("cannot parse") && stderr(&output).contains(".smart-commit.toml"),
         "{}",
         stderr(&output)
     );

@@ -1,7 +1,7 @@
-# npu-commit
+# smart-commit
 
-[![CI](https://github.com/Lucas-BRT/npu-commit/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucas-BRT/npu-commit/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/tag/Lucas-BRT/npu-commit?filter=v*&label=release&sort=semver)](https://github.com/Lucas-BRT/npu-commit/releases/latest)
+[![CI](https://github.com/Lucas-BRT/smart-commit/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucas-BRT/smart-commit/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/Lucas-BRT/smart-commit?filter=v*&label=release&sort=semver)](https://github.com/Lucas-BRT/smart-commit/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.99-orange?logo=rust)](rust-toolchain.toml)
 [![Shell](https://img.shields.io/badge/shell-bash-4EAA25?logo=gnubash&logoColor=white)](scripts/)
@@ -15,7 +15,7 @@ licença MIT.
 
 ```console
 $ git add -p
-$ npu-commit
+$ smart-commit
 feat(diff): adiciona a compactação por prioridade de arquivos
 ```
 
@@ -27,7 +27,7 @@ feat(diff): adiciona a compactação por prioridade de arquivos
 - **Roda em qualquer acelerador.** OpenVINO para NPU, GPU Intel e CPU;
   llama.cpp com Vulkan para GPUs AMD e NVIDIA, com driver proprietário ou
   aberto. O `auto` mede a máquina e escolhe o mais rápido.
-- **Funciona com qualquer cliente git.** `npu-commit hook install` preenche a
+- **Funciona com qualquer cliente git.** `smart-commit hook install` preenche a
   mensagem de todo `git commit`, do terminal, do editor ou do lazygit, e
   nunca bloqueia um commit.
 - **Reproduzível.** Toolchain, dependências, drivers, runtimes e modelos são
@@ -38,7 +38,7 @@ feat(diff): adiciona a compactação por prioridade de arquivos
 ## Instalação
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/npu-commit/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ```
 
 Instala em `~/.local`, sem `sudo`, e roda o setup guiado. O setup pergunta
@@ -54,7 +54,7 @@ equivalentes.
 <summary>A partir do código-fonte</summary>
 
 ```bash
-git clone https://github.com/Lucas-BRT/npu-commit && cd npu-commit
+git clone https://github.com/Lucas-BRT/smart-commit && cd smart-commit
 cargo build --release --locked     # o toolchain vem do rust-toolchain.toml
 scripts/setup.sh                   # drivers, modelos e benchmark
 ```
@@ -64,15 +64,15 @@ scripts/setup.sh                   # drivers, modelos e benchmark
 
 | Comando | O que faz |
 |---|---|
-| `npu-commit` | gera a mensagem para o que está staged |
-| `npu-commit --commit` | abre o editor com a mensagem e commita |
-| `npu-commit hook install` | gera a mensagem em todo `git commit` do repositório |
-| `npu-commit device` | mostra o device em uso e os tempos medidos |
-| `npu-commit device use <npu\|gpu\|cpu\|vulkan\|auto>` | troca o device |
-| `npu-commit bench` | mede os devices desta máquina |
-| `npu-commit config list --show-origin` | mostra as configurações e de onde cada uma vem |
-| `npu-commit context` / `prompt` | mostra o estilo detectado e o prompt exato |
-| `npu-commit --trace t.json` / `replay t.json` | grava e refaz uma geração |
+| `smart-commit` | gera a mensagem para o que está staged |
+| `smart-commit --commit` | abre o editor com a mensagem e commita |
+| `smart-commit hook install` | gera a mensagem em todo `git commit` do repositório |
+| `smart-commit device` | mostra o device em uso e os tempos medidos |
+| `smart-commit device use <npu\|gpu\|cpu\|vulkan\|auto>` | troca o device |
+| `smart-commit bench` | mede os devices desta máquina |
+| `smart-commit config list --show-origin` | mostra as configurações e de onde cada uma vem |
+| `smart-commit context` / `prompt` | mostra o estilo detectado e o prompt exato |
+| `smart-commit --trace t.json` / `replay t.json` | grava e refaz uma geração |
 
 ## Devices
 
@@ -84,7 +84,7 @@ scripts/setup.sh                   # drivers, modelos e benchmark
 | `npu` | OpenVINO | NPU Intel (Core Ultra) | 5,1 s, usando menos CPU |
 
 \* Core Ultra 5 225H, Qwen2.5-Coder-1.5B, uma mensagem pela CLI. Na sua
-máquina, `npu-commit bench` mede e escolhe.
+máquina, `smart-commit bench` mede e escolhe.
 
 ## Como funciona
 
@@ -113,7 +113,7 @@ documento:
 
 ```bash
 cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked
-cargo test --test hardware -- --ignored --test-threads 1    # modelo real (NPU_COMMIT_TEST_DEVICE=cpu|gpu|vulkan)
+cargo test --test hardware -- --ignored --test-threads 1    # modelo real (SMART_COMMIT_TEST_DEVICE=cpu|gpu|vulkan)
 tests/scripts/test-setup-gpu.sh                              # scripts, sem hardware
 ```
 

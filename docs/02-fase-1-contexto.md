@@ -8,7 +8,7 @@ Tudo que o gerador vai precisar saber sobre o repositório **antes** de montar o
 prompt. Para inspecionar à mão:
 
 ```console
-$ npu-commit context ~/Projects/coffe-builder
+$ smart-commit context ~/Projects/coffe-builder
 repository:  /home/lucasbrt/Projects/coffe-builder
 branch:      scenes
 ticket:      -

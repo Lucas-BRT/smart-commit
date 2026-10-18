@@ -71,8 +71,8 @@ tenta uma vez mais; depois disso, usa como fallback um resumo baseado só no
 
 | Modo | Como | Observação |
 |---|---|---|
-| CLI | `npu-commit` → imprime a mensagem; `npu-commit --commit` → abre o editor com ela | o mais simples, primeiro a existir |
-| Hook git | `npu-commit hook install` cria `prepare-commit-msg` | funciona com qualquer editor ou cliente git (Zed, terminal, lazygit). O hook **não faz nada** se a mensagem já veio com `-m`, no merge ou no amend |
+| CLI | `smart-commit` → imprime a mensagem; `smart-commit --commit` → abre o editor com ela | o mais simples, primeiro a existir |
+| Hook git | `smart-commit hook install` cria `prepare-commit-msg` | funciona com qualquer editor ou cliente git (Zed, terminal, lazygit). O hook **não faz nada** se a mensagem já veio com `-m`, no merge ou no amend |
 | Daemon (opcional) | mantém o modelo carregado, e a CLI e o hook falam com ele por socket Unix | só se a carga do modelo for lenta demais **com** `CACHE_DIR`, decisão a tomar depois do benchmark |
 
 ## 4. Backend e portabilidade
@@ -85,10 +85,10 @@ tenta uma vez mais; depois disso, usa como fallback um resumo baseado só no
 - Link com o OpenVINO **em runtime** (feature `runtime-linking`): o binário
   compila e roda sem o OpenVINO instalado, e nesse caso mostra uma mensagem
   clara de como instalar.
-- Cache de compilação da NPU em `~/.cache/npu-commit/` e config em
-  `~/.config/npu-commit/config.toml` (modelo, device, idioma, limites).
+- Cache de compilação da NPU em `~/.cache/smart-commit/` e config em
+  `~/.config/smart-commit/config.toml` (modelo, device, idioma, limites).
 - Modelo: Qwen2.5-Coder-1.5B-Instruct ou Qwen3-1.7B em INT4 simétrico (formato
-  exigido pela NPU). Comando `npu-commit model fetch` para baixar um modelo já
+  exigido pela NPU). Comando `smart-commit model fetch` para baixar um modelo já
   exportado; verificar se existe versão compatível com NPU no Hugging Face ou
   publicar a nossa.
 

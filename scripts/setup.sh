@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Guided setup, run by install.sh and `npu-commit setup`: finds the NPU and
+# Guided setup, run by install.sh and `smart-commit setup`: finds the NPU and
 # GPUs of this machine, offers to install what each needs, fetches the
 # models, and benchmarks the devices so `model.device = auto` uses the
 # fastest one.
@@ -11,12 +11,12 @@
 #   --no-bench    skip the benchmark
 #
 # Every step is optional and can be run again later on its own:
-# setup-npu.sh, setup-gpu.sh, fetch-model.sh and `npu-commit bench`.
-# NPU_COMMIT_BIN names the npu-commit binary to benchmark.
+# setup-npu.sh, setup-gpu.sh, fetch-model.sh and `smart-commit bench`.
+# SMART_COMMIT_BIN names the smart-commit binary to benchmark.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-SYSFS=${NPU_COMMIT_SYSFS:-/sys}
+SYSFS=${SMART_COMMIT_SYSFS:-/sys}
 ASSUME_YES=0
 DRIVERS=1
 BENCH=1
@@ -34,14 +34,14 @@ done
 
 # The binary: the one that called us, installed next to share/, on PATH, or
 # this checkout's.
-if [ -n "${NPU_COMMIT_BIN:-}" ]; then
-    NPU_COMMIT=$NPU_COMMIT_BIN
-elif [ -x "$HERE/../../../bin/npu-commit" ]; then
-    NPU_COMMIT=$HERE/../../../bin/npu-commit
-elif command -v npu-commit >/dev/null; then
-    NPU_COMMIT=npu-commit
+if [ -n "${SMART_COMMIT_BIN:-}" ]; then
+    SMART_COMMIT=$SMART_COMMIT_BIN
+elif [ -x "$HERE/../../../bin/smart-commit" ]; then
+    SMART_COMMIT=$HERE/../../../bin/smart-commit
+elif command -v smart-commit >/dev/null; then
+    SMART_COMMIT=smart-commit
 else
-    NPU_COMMIT=$HERE/../target/release/npu-commit
+    SMART_COMMIT=$HERE/../target/release/smart-commit
 fi
 
 say() { printf '\n==> %s\n' "$*"; }
@@ -111,15 +111,15 @@ if [ "$BENCH" = 1 ]; then
     if ! id -nG | grep -qw render && getent group render | grep -qw "$USER"; then
         say "Benchmark postponed"
         echo "  You were just added to the render group, which only applies after"
-        echo "  logging out and back in. Then run: npu-commit bench"
+        echo "  logging out and back in. Then run: smart-commit bench"
     else
         say "Benchmark"
-        "$NPU_COMMIT" bench || echo "  Nothing could run the model yet; see above."
+        "$SMART_COMMIT" bench || echo "  Nothing could run the model yet; see above."
     fi
 fi
 
 say "Done"
-echo "  Generate a message:   git add -p && npu-commit"
-echo "  Commit with it:       npu-commit --commit"
-echo "  On every git commit:  npu-commit hook install"
-echo "  Change the device:    npu-commit device use <npu|gpu|cpu|vulkan|auto>"
+echo "  Generate a message:   git add -p && smart-commit"
+echo "  Commit with it:       smart-commit --commit"
+echo "  On every git commit:  smart-commit hook install"
+echo "  Change the device:    smart-commit device use <npu|gpu|cpu|vulkan|auto>"

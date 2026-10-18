@@ -1,7 +1,7 @@
 //! The real backend: an OpenVINO GenAI `LLMPipeline` on the NPU (or GPU or
 //! CPU).
 //!
-//! The OpenVINO GenAI library is loaded at run time, so npu-commit builds
+//! The OpenVINO GenAI library is loaded at run time, so smart-commit builds
 //! and runs without it and reports how to install it when it is missing.
 //! The binding's errors carry no message, so everything the user can fix
 //! (missing model, missing library) is checked here first.
@@ -44,7 +44,7 @@ impl fmt::Display for Device {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GenaiOptions {
-    /// The OpenVINO model (`npu-commit setup` downloads it).
+    /// The OpenVINO model (`smart-commit setup` downloads it).
     pub model_dir: PathBuf,
     pub device: Device,
     /// Where OpenVINO keeps compiled models; without it every load on the
@@ -91,14 +91,14 @@ impl GenaiBackend {
         let model_xml = options.model_dir.join("openvino_model.xml");
         if !model_xml.is_file() {
             return Err(BackendError::Unavailable(format!(
-                "no model in {}; `npu-commit setup` downloads it",
+                "no model in {}; `smart-commit setup` downloads it",
                 options.model_dir.display()
             )));
         }
         let identity = model_identity(&options.model_dir)?;
         openvino_genai::load().map_err(|err| {
             BackendError::Unavailable(format!(
-                "OpenVINO GenAI not found ({err}); `npu-commit setup` installs it"
+                "OpenVINO GenAI not found ({err}); `smart-commit setup` installs it"
             ))
         })?;
         std::fs::create_dir_all(&options.cache_dir).map_err(|err| {
@@ -117,7 +117,7 @@ impl GenaiBackend {
                 .map_err(|err| {
                 BackendError::Unavailable(format!(
                     "cannot load the model on the {} ({err:?}); \
-                         `npu-commit setup` installs and checks the drivers",
+                         `smart-commit setup` installs and checks the drivers",
                     options.device
                 ))
             })?;
@@ -261,7 +261,7 @@ mod tests {
         GenaiOptions {
             model_dir: model_dir.to_path_buf(),
             device,
-            cache_dir: PathBuf::from("/cache/npu-commit/openvino"),
+            cache_dir: PathBuf::from("/cache/smart-commit/openvino"),
             max_prompt_tokens: 1024,
             max_new_tokens: 128,
             npu: NpuTuning::default(),
@@ -274,7 +274,7 @@ mod tests {
         assert_eq!(
             npu,
             [
-                ("CACHE_DIR", "/cache/npu-commit/openvino".to_owned()),
+                ("CACHE_DIR", "/cache/smart-commit/openvino".to_owned()),
                 ("MAX_PROMPT_LEN", "1024".to_owned()),
                 ("MIN_RESPONSE_LEN", "128".to_owned()),
                 ("NPUW_LLM_PREFILL_CHUNK_SIZE", "512".to_owned()),
@@ -292,7 +292,7 @@ mod tests {
             let props = pipeline_properties(&options(Path::new("/m"), device));
             assert_eq!(
                 props,
-                [("CACHE_DIR", "/cache/npu-commit/openvino".to_owned())]
+                [("CACHE_DIR", "/cache/smart-commit/openvino".to_owned())]
             );
         }
     }
@@ -340,7 +340,7 @@ mod tests {
         assert_eq!(
             err,
             BackendError::Unavailable(format!(
-                "no model in {}; `npu-commit setup` downloads it",
+                "no model in {}; `smart-commit setup` downloads it",
                 dir.path().display()
             ))
         );

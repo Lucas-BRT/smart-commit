@@ -3,9 +3,9 @@
 //!
 //!   cargo test --test hardware -- --ignored --test-threads 1
 //!
-//! `NPU_COMMIT_TEST_DEVICE` picks the device: `npu` (the default), `gpu` or
+//! `SMART_COMMIT_TEST_DEVICE` picks the device: `npu` (the default), `gpu` or
 //! `cpu` through OpenVINO, or `vulkan` through llama.cpp.
-//! `NPU_COMMIT_MODEL_DIR`, `NPU_COMMIT_GGUF` and `NPU_COMMIT_LLAMA_SERVER`
+//! `SMART_COMMIT_MODEL_DIR`, `SMART_COMMIT_GGUF` and `SMART_COMMIT_LLAMA_SERVER`
 //! override where the models and the server are. The prompts
 //! come from the recorded traces in tests/fixtures/traces, so every run sees
 //! the same inputs.
@@ -13,13 +13,13 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use npu_commit::backend::{Backend, GenerationConfig};
-use npu_commit::diff::estimate_tokens;
-use npu_commit::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};
-use npu_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
-use npu_commit::paths;
-use npu_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
-use npu_commit::trace::Trace;
+use smart_commit::backend::{Backend, GenerationConfig};
+use smart_commit::diff::estimate_tokens;
+use smart_commit::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};
+use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
+use smart_commit::paths;
+use smart_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
+use smart_commit::trace::Trace;
 
 fn backend() -> Box<dyn Backend> {
     let env = |name: &str| std::env::var(name).ok();
@@ -29,11 +29,14 @@ fn backend() -> Box<dyn Backend> {
             .or(default)
             .expect("HOME or the override variable")
     };
-    let device = match env("NPU_COMMIT_TEST_DEVICE").as_deref() {
+    let device = match env("SMART_COMMIT_TEST_DEVICE").as_deref() {
         Some("vulkan") => {
             let backend = LlamaCppBackend::start(&LlamaCppOptions {
-                server: path("NPU_COMMIT_LLAMA_SERVER", paths::default_llama_server(env)),
-                model: path("NPU_COMMIT_GGUF", paths::default_gguf_file(env)),
+                server: path(
+                    "SMART_COMMIT_LLAMA_SERVER",
+                    paths::default_llama_server(env),
+                ),
+                model: path("SMART_COMMIT_GGUF", paths::default_gguf_file(env)),
                 vulkan_device: 0,
                 max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
                 max_new_tokens: GenerationConfig::default().max_new_tokens,
@@ -44,10 +47,10 @@ fn backend() -> Box<dyn Backend> {
         Some("cpu") => Device::Cpu,
         Some("gpu") => Device::Gpu,
         Some("npu") | None => Device::Npu,
-        Some(other) => panic!("unknown NPU_COMMIT_TEST_DEVICE {other:?}"),
+        Some(other) => panic!("unknown SMART_COMMIT_TEST_DEVICE {other:?}"),
     };
     let backend = GenaiBackend::load(&GenaiOptions {
-        model_dir: path("NPU_COMMIT_MODEL_DIR", paths::default_model_dir(env)),
+        model_dir: path("SMART_COMMIT_MODEL_DIR", paths::default_model_dir(env)),
         device,
         cache_dir: paths::default_cache_dir(env).expect("HOME"),
         max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
@@ -134,13 +137,13 @@ fn token_estimate_never_undercounts() {
 #[test]
 #[ignore = "needs an NPU, OpenVINO GenAI and an exported model"]
 fn npu_tuning_does_not_change_replies() {
-    if std::env::var("NPU_COMMIT_TEST_DEVICE").is_ok_and(|d| d != "npu") {
+    if std::env::var("SMART_COMMIT_TEST_DEVICE").is_ok_and(|d| d != "npu") {
         return;
     }
     let env = |name: &str| std::env::var(name).ok();
     let load = |npu: NpuTuning| {
         GenaiBackend::load(&GenaiOptions {
-            model_dir: env("NPU_COMMIT_MODEL_DIR")
+            model_dir: env("SMART_COMMIT_MODEL_DIR")
                 .map(PathBuf::from)
                 .or_else(|| paths::default_model_dir(env))
                 .unwrap(),

@@ -26,14 +26,14 @@ publish() {
 }
 
 fetch() {
-    NPU_COMMIT_RELEASE_BASE=file://$work/releases XDG_DATA_HOME=$work/data \
+    SMART_COMMIT_RELEASE_BASE=file://$work/releases XDG_DATA_HOME=$work/data \
         bash "$work/scripts/fetch-model.sh" >"$work/out" 2>&1
 }
 
 publish
 fetch
 grep -q "every file checked against the manifest" "$work/out"
-test -f "$work/data/npu-commit/models/$NAME/openvino_model.bin"
+test -f "$work/data/smart-commit/models/$NAME/openvino_model.bin"
 echo "ok    a published model installs"
 
 fetch
@@ -48,5 +48,5 @@ if fetch; then
     exit 1
 fi
 grep -q "does not match" "$work/out"
-test ! -e "$work/data/npu-commit/models/$NAME"
+test ! -e "$work/data/smart-commit/models/$NAME"
 echo "ok    a model that does not match the manifest is refused"

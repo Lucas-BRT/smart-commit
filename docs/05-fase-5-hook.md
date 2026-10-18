@@ -13,12 +13,12 @@ A mensagem gerada aparece no editor de qualquer `git commit`, vindo do
 terminal, do Zed, do lazygit ou de outro cliente:
 
 ```console
-$ npu-commit hook install
+$ smart-commit hook install
 installed /home/me/project/.git/hooks/prepare-commit-msg
 
 $ git add . && git commit        # o editor abre com a mensagem já escrita
 
-$ npu-commit hook uninstall
+$ smart-commit hook uninstall
 removed /home/me/project/.git/hooks/prepare-commit-msg
 ```
 
@@ -26,14 +26,14 @@ Enquanto o backend da NPU não existe, o hook usa o mock pelas variáveis de
 ambiente (é assim que os testes funcionam):
 
 ```console
-$ NPU_COMMIT_BACKEND=mock NPU_COMMIT_MOCK_RESPONSE='feat: ...' git commit
+$ SMART_COMMIT_BACKEND=mock SMART_COMMIT_MOCK_RESPONSE='feat: ...' git commit
 ```
 
 | Variável | Equivale a |
 |---|---|
-| `NPU_COMMIT_BACKEND` | `--backend` |
-| `NPU_COMMIT_MOCK_RESPONSE` | `--mock-response` (uma resposta só) |
-| `NPU_COMMIT_TRACE` | `--trace`: grava um trace de cada commit, para `replay` |
+| `SMART_COMMIT_BACKEND` | `--backend` |
+| `SMART_COMMIT_MOCK_RESPONSE` | `--mock-response` (uma resposta só) |
+| `SMART_COMMIT_TRACE` | `--trace`: grava um trace de cada commit, para `replay` |
 
 As flags têm precedência sobre as variáveis, que valem para todos os
 comandos.
@@ -59,7 +59,7 @@ de tesoura não conta.
 ## Decisões
 
 - **O hook nunca bloqueia o commit.** Backend indisponível, nada staged,
-  erro do git: tudo vira `npu-commit: <erro>; the commit message was left as
+  erro do git: tudo vira `smart-commit: <erro>; the commit message was left as
   is` no stderr, e o hook sai com 0. O commit segue como se o hook não
   existisse.
 - **O hook usa o índice que está sendo commitado.** O git roda o hook com
@@ -71,8 +71,8 @@ de tesoura não conta.
   `sh`. Clientes gráficos costumam rodar hooks sem o `PATH` do shell do
   usuário. Se o binário mudar de lugar, basta rodar `hook install` de novo.
 - **Hooks de terceiros são protegidos.** O script tem uma linha marcadora
-  (`# npu-commit prepare-commit-msg hook`). Sem ela, `install` recusa,
-  `--force` guarda o original em `prepare-commit-msg.npu-commit-backup`
+  (`# smart-commit prepare-commit-msg hook`). Sem ela, `install` recusa,
+  `--force` guarda o original em `prepare-commit-msg.smart-commit-backup`
   (sem nunca sobrescrever um backup anterior), e `uninstall` só remove o
   nosso e restaura o backup.
 - **`core.hooksPath` é respeitado** (`git rev-parse --git-path hooks`), e
@@ -82,13 +82,13 @@ de tesoura não conta.
 
 ## Reprodutibilidade
 
-- `NPU_COMMIT_TRACE` permite gravar um trace de commits reais feitos por
-  qualquer cliente, e esse trace se reproduz com `npu-commit replay` (há
+- `SMART_COMMIT_TRACE` permite gravar um trace de commits reais feitos por
+  qualquer cliente, e esse trace se reproduz com `smart-commit replay` (há
   teste cobrindo). É o caminho para transformar uma mensagem ruim vista no
   dia a dia em fixture.
 - Os testes commitam pelo git de verdade, isolados com
   `tests/common::isolate`. Ele aplica `GIT_ENV` (config, identidade e datas
-  fixas) e remove as `NPU_COMMIT_*` do ambiente de quem roda os testes.
+  fixas) e remove as `SMART_COMMIT_*` do ambiente de quem roda os testes.
   Rodar `cargo test` com essas variáveis exportadas dá o mesmo resultado.
 - O editor de teste é um `sh` portável, não `sed -i`, que só funciona com o
   sed do GNU.
@@ -116,7 +116,7 @@ cargo test --locked   # 135 testes, nenhum precisa de NPU
 
 ## Limitações conhecidas
 
-- Até a fase 4, o hook instalado sem `NPU_COMMIT_BACKEND=mock` só mostra o
+- Até a fase 4, o hook instalado sem `SMART_COMMIT_BACKEND=mock` só mostra o
   aviso a cada commit.
 - O hook gera a mensagem a cada commit, sem cache. Se a carga do modelo for
   lenta, o daemon da fase 7 resolve.

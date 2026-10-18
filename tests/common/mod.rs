@@ -7,8 +7,8 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Output};
 
-use npu_commit::context::RepoContext;
-use npu_commit::git::Repo;
+use smart_commit::context::RepoContext;
+use smart_commit::git::Repo;
 use tempfile::TempDir;
 
 /// Keeps git away from the developer's config and pins identities and dates,
@@ -26,20 +26,20 @@ pub const GIT_ENV: &[(&str, &str)] = &[
 
 /// Our own settings, which the developer may have exported.
 const OWN_ENV: &[&str] = &[
-    "NPU_COMMIT_BACKEND",
-    "NPU_COMMIT_MOCK_RESPONSE",
-    "NPU_COMMIT_TRACE",
-    "NPU_COMMIT_DEVICE",
-    "NPU_COMMIT_MODEL_DIR",
-    "NPU_COMMIT_CACHE_DIR",
+    "SMART_COMMIT_BACKEND",
+    "SMART_COMMIT_MOCK_RESPONSE",
+    "SMART_COMMIT_TRACE",
+    "SMART_COMMIT_DEVICE",
+    "SMART_COMMIT_MODEL_DIR",
+    "SMART_COMMIT_CACHE_DIR",
 ];
 
 /// Where the binary looks for config, models and caches during tests:
 /// nowhere real, so the developer's own config and exported model are never
 /// picked up. Tests that write config pass their own XDG_CONFIG_HOME.
-pub const CONFIG_HOME: &str = "/nonexistent/npu-commit-tests/config";
-pub const DATA_HOME: &str = "/nonexistent/npu-commit-tests/data";
-pub const CACHE_HOME: &str = "/nonexistent/npu-commit-tests/cache";
+pub const CONFIG_HOME: &str = "/nonexistent/smart-commit-tests/config";
+pub const DATA_HOME: &str = "/nonexistent/smart-commit-tests/data";
+pub const CACHE_HOME: &str = "/nonexistent/smart-commit-tests/cache";
 
 /// Applies [`GIT_ENV`], drops [`OWN_ENV`] and points the XDG directories at
 /// [`CONFIG_HOME`], [`DATA_HOME`] and [`CACHE_HOME`], so the command behaves
@@ -55,10 +55,10 @@ pub fn isolate(command: &mut Command) -> &mut Command {
         .envs(GIT_ENV.iter().copied())
 }
 
-/// Runs the `npu-commit` binary, isolated like [`TestRepo::git`].
-pub fn npu_commit(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
+/// Runs the `smart-commit` binary, isolated like [`TestRepo::git`].
+pub fn smart_commit(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
     isolate(
-        Command::new(env!("CARGO_BIN_EXE_npu-commit"))
+        Command::new(env!("CARGO_BIN_EXE_smart-commit"))
             .args(args)
             .current_dir(dir),
     )

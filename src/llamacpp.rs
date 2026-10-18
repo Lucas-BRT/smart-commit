@@ -21,9 +21,9 @@ use serde_json::{Value, json};
 use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};
 use crate::prompt::Prompt;
 
-/// The llama.cpp release `npu-commit setup` installs.
+/// The llama.cpp release `smart-commit setup` installs.
 pub const LLAMA_CPP_BUILD: &str = "b11381";
-/// The GGUF model `npu-commit setup` downloads.
+/// The GGUF model `smart-commit setup` downloads.
 pub const DEFAULT_GGUF: &str = "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf";
 
 /// UNIX socket paths are limited to 108 bytes on Linux.
@@ -66,13 +66,13 @@ impl LlamaCppBackend {
         let unavailable = BackendError::Unavailable;
         if !options.model.is_file() {
             return Err(unavailable(format!(
-                "no GGUF model at {}; `npu-commit setup` downloads it",
+                "no GGUF model at {}; `smart-commit setup` downloads it",
                 options.model.display()
             )));
         }
         if !options.server.is_file() {
             return Err(unavailable(format!(
-                "no llama-server at {}; `npu-commit setup` installs it",
+                "no llama-server at {}; `smart-commit setup` installs it",
                 options.server.display()
             )));
         }
@@ -348,7 +348,7 @@ fn private_dir() -> std::io::Result<PathBuf> {
         base = PathBuf::from("/tmp");
     }
     let name = format!(
-        "npu-commit-{}-{}",
+        "smart-commit-{}-{}",
         std::process::id(),
         COUNTER.fetch_add(1, Ordering::Relaxed)
     );

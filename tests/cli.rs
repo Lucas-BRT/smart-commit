@@ -1,4 +1,4 @@
-//! Runs the `npu-commit` binary end to end.
+//! Runs the `smart-commit` binary end to end.
 
 use std::path::Path;
 use std::process::Output;
@@ -6,12 +6,12 @@ use std::process::Output;
 mod common;
 use common::TestRepo;
 
-fn npu_commit(args: &[&str], dir: &Path) -> Output {
-    npu_commit_with(args, dir, &[])
+fn smart_commit(args: &[&str], dir: &Path) -> Output {
+    smart_commit_with(args, dir, &[])
 }
 
-fn npu_commit_with(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
-    common::npu_commit(args, dir, env)
+fn smart_commit_with(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
+    common::smart_commit(args, dir, env)
 }
 
 /// A repository with a conventional history and one staged file.
@@ -42,7 +42,7 @@ fn invalid_arguments_are_usage_errors() {
         &["--device", "tpu"],
         &["context", "--commit"],
     ] {
-        let output = npu_commit(args, repo.path());
+        let output = smart_commit(args, repo.path());
         assert_eq!(output.status.code(), Some(2), "{args:?}");
         assert!(stderr(&output).starts_with("error:"), "{args:?}");
     }
@@ -51,7 +51,7 @@ fn invalid_arguments_are_usage_errors() {
 #[test]
 fn context_outside_a_repository_fails() {
     let dir = tempfile::TempDir::new().unwrap();
-    let output = npu_commit(&["context"], dir.path());
+    let output = smart_commit(&["context"], dir.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(stderr(&output).contains("not a git repository"));
 }
@@ -63,7 +63,7 @@ fn context_reports_the_detected_style() {
     repo.commit("feat(cli): adiciona o comando context");
     repo.commit("fix(git): corrige a leitura da branch");
 
-    let output = npu_commit(&["context"], repo.path());
+    let output = smart_commit(&["context"], repo.path());
     assert!(output.status.success(), "{}", stderr(&output));
     let out = stdout(&output);
     assert!(out.contains("branch:      feature/NPU-7-x"));
@@ -78,7 +78,7 @@ fn context_accepts_a_path() {
     let repo = TestRepo::new();
     let elsewhere = tempfile::TempDir::new().unwrap();
     let path = repo.path().to_str().unwrap();
-    let output = npu_commit(&["context", path], elsewhere.path());
+    let output = smart_commit(&["context", path], elsewhere.path());
     assert!(output.status.success(), "{}", stderr(&output));
 }
 
@@ -86,7 +86,7 @@ fn context_accepts_a_path() {
 fn prompt_without_staged_changes_fails() {
     let repo = TestRepo::new();
     repo.commit("init");
-    let output = npu_commit(&["prompt"], repo.path());
+    let output = smart_commit(&["prompt"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(stderr(&output), "error: nothing staged\n");
 }
@@ -99,7 +99,7 @@ fn prompt_shows_style_and_staged_diff() {
     repo.write("main.rs", "fn main() {}\n");
     repo.git(&["add", "main.rs"]);
 
-    let output = npu_commit(&["prompt"], repo.path());
+    let output = smart_commit(&["prompt"], repo.path());
     assert!(output.status.success(), "{}", stderr(&output));
     let out = stdout(&output);
     assert!(out.contains("Write in English"));
@@ -113,7 +113,7 @@ fn prompt_shows_style_and_staged_diff() {
 fn generate_prints_the_sanitized_reply() {
     let repo = staged_repo();
     let reply = "Here is the commit message:\n```\nFeat(cli): add the main entry point.\n```";
-    let output = npu_commit(
+    let output = smart_commit(
         &["--backend", "mock", "--mock-response", reply],
         repo.path(),
     );
@@ -125,7 +125,7 @@ fn generate_prints_the_sanitized_reply() {
 #[test]
 fn generate_retries_then_falls_back_with_a_warning() {
     let repo = staged_repo();
-    let output = npu_commit(
+    let output = smart_commit(
         &[
             "--backend",
             "mock",
@@ -142,7 +142,7 @@ fn generate_retries_then_falls_back_with_a_warning() {
 #[test]
 fn generate_uses_the_second_reply_when_the_first_is_rejected() {
     let repo = staged_repo();
-    let output = npu_commit(
+    let output = smart_commit(
         &[
             "--backend",
             "mock",
@@ -160,24 +160,24 @@ fn generate_uses_the_second_reply_when_the_first_is_rejected() {
 #[test]
 fn auto_without_any_model_lists_every_device() {
     let repo = staged_repo();
-    let output = npu_commit(&[], repo.path());
+    let output = smart_commit(&[], repo.path());
     assert_eq!(output.status.code(), Some(1));
     let ir = format!(
-        "{}/npu-commit/models/{}",
+        "{}/smart-commit/models/{}",
         common::DATA_HOME,
-        npu_commit::paths::DEFAULT_MODEL
+        smart_commit::paths::DEFAULT_MODEL
     );
     let gguf = format!(
-        "{}/npu-commit/models/{}",
+        "{}/smart-commit/models/{}",
         common::DATA_HOME,
-        npu_commit::llamacpp::DEFAULT_GGUF
+        smart_commit::llamacpp::DEFAULT_GGUF
     );
-    let no_ir = format!("backend unavailable: no model in {ir}; `npu-commit setup` downloads it");
+    let no_ir = format!("backend unavailable: no model in {ir}; `smart-commit setup` downloads it");
     assert_eq!(
         stderr(&output),
         format!(
             "error: no device could run the model:\n  gpu: {no_ir}\n  npu: {no_ir}\n  \
-             vulkan: backend unavailable: no GGUF model at {gguf}; `npu-commit setup` \
+             vulkan: backend unavailable: no GGUF model at {gguf}; `smart-commit setup` \
              downloads it\n  cpu: {no_ir}\n"
         )
     );
@@ -186,19 +186,19 @@ fn auto_without_any_model_lists_every_device() {
 #[test]
 fn a_fixed_device_reports_only_its_own_problem() {
     let repo = staged_repo();
-    let output = npu_commit(&["--device", "cpu"], repo.path());
+    let output = smart_commit(&["--device", "cpu"], repo.path());
     assert!(
         stderr(&output).starts_with("error: backend unavailable: no model in"),
         "{}",
         stderr(&output)
     );
-    let output = npu_commit(&["--device", "vulkan"], repo.path());
+    let output = smart_commit(&["--device", "vulkan"], repo.path());
     assert!(
         stderr(&output).starts_with("error: backend unavailable: no GGUF model at"),
         "{}",
         stderr(&output)
     );
-    let output = npu_commit(
+    let output = smart_commit(
         &["--backend", "openvino", "--device", "vulkan"],
         repo.path(),
     );
@@ -215,9 +215,9 @@ fn model_dir_can_be_given() {
     let dir = empty.path().to_str().unwrap();
     for (args, env) in [
         (vec!["--model-dir", dir], vec![]),
-        (vec![], vec![("NPU_COMMIT_MODEL_DIR", dir)]),
+        (vec![], vec![("SMART_COMMIT_MODEL_DIR", dir)]),
     ] {
-        let output = npu_commit_with(&args, repo.path(), &env);
+        let output = smart_commit_with(&args, repo.path(), &env);
         assert_eq!(output.status.code(), Some(1));
         assert!(
             stderr(&output).contains(&format!("no model in {dir};")),
@@ -232,7 +232,7 @@ fn replay_with_model_needs_the_model() {
     let repo = staged_repo();
     let trace = repo.path().join("trace.json");
     let path = trace.to_str().unwrap();
-    npu_commit(
+    smart_commit(
         &[
             "--backend",
             "mock",
@@ -243,7 +243,7 @@ fn replay_with_model_needs_the_model() {
         ],
         repo.path(),
     );
-    let output = npu_commit(&["replay", path, "--with-model"], repo.path());
+    let output = smart_commit(&["replay", path, "--with-model"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(
         stderr(&output).contains("no model in"),
@@ -256,7 +256,7 @@ fn replay_with_model_needs_the_model() {
 fn generate_with_nothing_staged_fails() {
     let repo = TestRepo::new();
     repo.commit("init");
-    let output = npu_commit(&["--backend", "mock"], repo.path());
+    let output = smart_commit(&["--backend", "mock"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(stderr(&output), "error: nothing staged\n");
 }
@@ -266,7 +266,7 @@ fn generate_accepts_a_path() {
     let repo = staged_repo();
     let elsewhere = tempfile::TempDir::new().unwrap();
     let path = repo.path().to_str().unwrap();
-    let output = npu_commit(
+    let output = smart_commit(
         &[
             "-C",
             path,
@@ -284,7 +284,7 @@ fn generate_accepts_a_path() {
 fn commit_goes_through_the_editor() {
     let repo = staged_repo();
     // `true` accepts the pre-filled message unchanged.
-    let output = npu_commit_with(
+    let output = smart_commit_with(
         &[
             "--commit",
             "--backend",
@@ -306,7 +306,7 @@ fn commit_goes_through_the_editor() {
 #[test]
 fn failed_editor_aborts_the_commit() {
     let repo = staged_repo();
-    let output = npu_commit_with(
+    let output = smart_commit_with(
         &[
             "--commit",
             "--backend",
@@ -326,7 +326,7 @@ fn failed_editor_aborts_the_commit() {
 fn trace_is_written_and_replays() {
     let repo = staged_repo();
     let trace = repo.path().join("trace.json");
-    let output = npu_commit(
+    let output = smart_commit(
         &[
             "--backend",
             "mock",
@@ -346,7 +346,7 @@ fn trace_is_written_and_replays() {
 
     // Replays anywhere, without the repository.
     let elsewhere = tempfile::TempDir::new().unwrap();
-    let output = npu_commit(&["replay", trace.to_str().unwrap()], elsewhere.path());
+    let output = smart_commit(&["replay", trace.to_str().unwrap()], elsewhere.path());
     assert!(output.status.success(), "{}", stderr(&output));
     assert_eq!(
         stdout(&output),
@@ -359,7 +359,7 @@ fn replay_reports_differences() {
     let repo = staged_repo();
     let trace = repo.path().join("trace.json");
     let path = trace.to_str().unwrap();
-    npu_commit(
+    smart_commit(
         &[
             "--backend",
             "mock",
@@ -379,7 +379,7 @@ fn replay_reports_differences() {
     assert_ne!(tampered, json);
     std::fs::write(&trace, tampered).unwrap();
 
-    let output = npu_commit(&["replay", path], repo.path());
+    let output = smart_commit(&["replay", path], repo.path());
     assert_eq!(output.status.code(), Some(1));
     let err = stderr(&output);
     assert!(err.contains("differs: message: recorded"), "{err}");
@@ -389,7 +389,7 @@ fn replay_reports_differences() {
 #[test]
 fn replay_of_a_missing_file_fails() {
     let repo = TestRepo::new();
-    let output = npu_commit(&["replay", "missing.json"], repo.path());
+    let output = smart_commit(&["replay", "missing.json"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(stderr(&output).starts_with("error: cannot read missing.json"));
 }
@@ -398,16 +398,16 @@ fn replay_of_a_missing_file_fails() {
 fn backend_options_can_come_from_the_environment() {
     let repo = staged_repo();
     let trace = repo.path().join("env-trace.json");
-    let output = npu_commit_with(
+    let output = smart_commit_with(
         &[],
         repo.path(),
         &[
-            ("NPU_COMMIT_BACKEND", "mock"),
+            ("SMART_COMMIT_BACKEND", "mock"),
             (
-                "NPU_COMMIT_MOCK_RESPONSE",
+                "SMART_COMMIT_MOCK_RESPONSE",
                 "feat: add the entry point\n\nWith a body, too.",
             ),
-            ("NPU_COMMIT_TRACE", trace.to_str().unwrap()),
+            ("SMART_COMMIT_TRACE", trace.to_str().unwrap()),
         ],
     );
     assert!(output.status.success(), "{}", stderr(&output));
@@ -421,12 +421,12 @@ fn backend_options_can_come_from_the_environment() {
 #[test]
 fn flags_override_the_environment() {
     let repo = staged_repo();
-    let output = npu_commit_with(
+    let output = smart_commit_with(
         &["--mock-response", "fix: from the flag"],
         repo.path(),
         &[
-            ("NPU_COMMIT_BACKEND", "mock"),
-            ("NPU_COMMIT_MOCK_RESPONSE", "feat: from the environment"),
+            ("SMART_COMMIT_BACKEND", "mock"),
+            ("SMART_COMMIT_MOCK_RESPONSE", "feat: from the environment"),
         ],
     );
     assert_eq!(stdout(&output), "fix: from the flag\n");
@@ -438,11 +438,11 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {
     let data = tempfile::TempDir::new().unwrap();
     // No drivers, no benchmark, and a release that does not exist: the model
     // download fails gracefully and nothing touches the network.
-    let output = npu_commit_with(
+    let output = smart_commit_with(
         &["setup", "--no-drivers", "--no-bench"],
         dir.path(),
         &[
-            ("NPU_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
+            ("SMART_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
             ("XDG_DATA_HOME", data.path().to_str().unwrap()),
         ],
     );
@@ -453,5 +453,5 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {
         out.contains("Could not download the OpenVINO model"),
         "{out}"
     );
-    assert!(out.contains("npu-commit hook install"), "{out}");
+    assert!(out.contains("smart-commit hook install"), "{out}");
 }

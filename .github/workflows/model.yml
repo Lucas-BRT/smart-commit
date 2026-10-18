@@ -42,7 +42,7 @@ jobs:
           set -euo pipefail
           tag="model-$NAME-$(sha256sum scripts/export/MANIFEST.sha256 | cut -c1-16)"
           echo "TAG=$tag" >>"$GITHUB_ENV"
-          source_dir=$(ls -d ~/.cache/npu-commit/sources/Qwen/Qwen2.5-Coder-1.5B-Instruct@*)
+          source_dir=$(ls -d ~/.cache/smart-commit/sources/Qwen/Qwen2.5-Coder-1.5B-Instruct@*)
           cp "$source_dir/LICENSE" "$RUNNER_TEMP/models/LICENSE.Qwen2.5-Coder"
           epoch=$(git log -1 --format=%ct)
           tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner \

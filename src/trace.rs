@@ -26,7 +26,7 @@ pub const FORMAT: u32 = 1;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Trace {
     pub format: u32,
-    /// Version of npu-commit that wrote the trace.
+    /// Version of smart-commit that wrote the trace.
     pub tool_version: String,
     /// Model and device, from [`Backend::describe`].
     pub backend: String,

@@ -10,7 +10,7 @@ detectado, e a limpeza determinística do que o modelo responder (mais um
 fallback para quando a resposta não presta). Para inspecionar à mão:
 
 ```console
-$ npu-commit prompt ~/Projects/coffe-builder
+$ smart-commit prompt ~/Projects/coffe-builder
 ===== system =====
 You write git commit messages from a diff. Reply with the commit message only: ...
 
