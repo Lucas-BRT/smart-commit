@@ -10,6 +10,8 @@
 - llama.cpp backend with Vulkan for AMD, NVIDIA and Intel GPUs, and on the
   CPU, so machines without Intel devices need no OpenVINO.
 - `auto` device selection, `bench` and `device`.
+- Recommended models downloaded from their publishers on Hugging Face,
+  pinned and checked (`smart-commit model`), or any GGUF file from disk.
 - Fast load for llama.cpp (`--no-repack --fit off`), turned on per device
   by the benchmark.
 - Global and per-repository configuration.
@@ -24,7 +26,7 @@
 | 1 | **Quality evaluation** (`smart-commit eval`) | Choosing a model or changing the prompt needs numbers. A versioned set of (diff, human message, history) cases from permissively licensed repositories, pinned by commit, in several conventions and both languages. Deterministic metrics first: convention followed, subject ≤ 72, language right, ticket when expected, retry and fallback rates, and **copied examples** (the 1.5B model sometimes repeats a history subject when the diff says little). Then, optionally, a larger local model as a judge with a pinned prompt. |
 | 2 | **Golden replies per device** | `tests/fixtures/golden/<model>/<device>.json`, written only by a script; the hardware tests would flag when a driver or runtime update changes replies. |
 | 3 | **Energy** | Joules per message on each device, from the package RAPL counter (it covers CPU, GPU and NPU). It needs root, either through a udev rule for the `render` group or by running the benchmark with `sudo`. With energy, `auto` could weigh more than time. |
-| 4 | **More models** (after 1) | A model registry for `export-model.sh` (`scripts/export/models/<name>.toml`), and `smart-commit model list / use`. |
+| 4 | **More models** (after 1) | OpenVINO exports for more of the [recommended models](models.md), and validating the experimental ones with the evaluation. |
 | 5 | **Prompt work** (after 1) | For example an instruction against copying examples. Each change must improve the evaluation without hurting the format metrics. |
 | 6 | **CUDA and ROCm builds of llama.cpp** | Vulkan is enough everywhere; CUDA or ROCm may be faster on discrete GPUs. Measure first. |
 | 7 | **Several GPUs** | `bench` measures one Vulkan device (`model.vulkan_device`); it could measure each. |

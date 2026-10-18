@@ -6,27 +6,23 @@
 
 use std::path::PathBuf;
 
-/// The OpenVINO model that `smart-commit setup` downloads (and
-/// `scripts/export-model.sh` reproduces).
-pub const DEFAULT_MODEL: &str = "qwen2.5-coder-1.5b-instruct-int4-sym-g128";
-
-/// `$XDG_DATA_HOME/smart-commit/models/<DEFAULT_MODEL>`.
-pub fn default_model_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
-    Some(
-        xdg(&env, "XDG_DATA_HOME", ".local/share")?
-            .join("smart-commit/models")
-            .join(DEFAULT_MODEL),
-    )
+/// `$XDG_DATA_HOME/smart-commit/models`, where models are installed.
+pub fn default_models_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("smart-commit/models"))
 }
 
-/// `$XDG_DATA_HOME/smart-commit/models/<DEFAULT_GGUF>`, the model of the
-/// llama.cpp backend.
+fn default_model() -> &'static crate::models::Model {
+    crate::models::find(crate::models::DEFAULT).expect("the default model is registered")
+}
+
+/// The default model's OpenVINO directory, in [`default_models_dir`].
+pub fn default_model_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(default_models_dir(env)?.join(default_model().openvino?))
+}
+
+/// The default model's GGUF file, in [`default_models_dir`].
 pub fn default_gguf_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
-    Some(
-        xdg(&env, "XDG_DATA_HOME", ".local/share")?
-            .join("smart-commit/models")
-            .join(crate::llamacpp::DEFAULT_GGUF),
-    )
+    Some(default_models_dir(env)?.join(default_model().gguf.file))
 }
 
 /// `$XDG_DATA_HOME/smart-commit/llama.cpp/llama-<build>/llama-server`, as
@@ -82,7 +78,9 @@ mod tests {
         let vars = [("HOME", "/home/me")];
         assert_eq!(
             default_model_dir(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.local/share/smart-commit/models").join(DEFAULT_MODEL)
+            PathBuf::from(
+                "/home/me/.local/share/smart-commit/models/qwen2.5-coder-1.5b-instruct-int4-sym-g128"
+            )
         );
         assert_eq!(
             default_cache_dir(env(&vars)).unwrap(),
@@ -94,8 +92,9 @@ mod tests {
         );
         assert_eq!(
             default_gguf_file(env(&vars)).unwrap(),
-            PathBuf::from("/home/me/.local/share/smart-commit/models")
-                .join(crate::llamacpp::DEFAULT_GGUF)
+            PathBuf::from(
+                "/home/me/.local/share/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"
+            )
         );
         assert_eq!(
             default_bench_file(env(&vars)).unwrap(),
@@ -120,8 +119,8 @@ mod tests {
             PathBuf::from("/config/smart-commit/config.toml")
         );
         assert_eq!(
-            default_model_dir(env(&vars)).unwrap(),
-            PathBuf::from("/data/smart-commit/models").join(DEFAULT_MODEL)
+            default_models_dir(env(&vars)).unwrap(),
+            PathBuf::from("/data/smart-commit/models")
         );
         assert_eq!(
             default_cache_dir(env(&vars)).unwrap(),

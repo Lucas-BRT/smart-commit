@@ -112,9 +112,16 @@ pub fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
         ConfigCommand::Get { key, at } => {
             config::key(&key)?;
             let resolved = resolve_at(&at.path)?;
-            let (value, _) = resolved
-                .get(&key)
-                .ok_or_else(|| format!("{key} has no value (its default needs $HOME)"))?;
+            let (value, _) = resolved.get(&key).ok_or_else(|| {
+                if key == "model.dir" {
+                    format!(
+                        "model.dir has no value: {} has no OpenVINO version",
+                        resolved.settings().model.id
+                    )
+                } else {
+                    format!("{key} has no value (its default needs $HOME)")
+                }
+            })?;
             println!("{value}");
         }
         ConfigCommand::Set { key, value, target } => {

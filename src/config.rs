@@ -20,6 +20,7 @@ use crate::backend::GenerationConfig;
 use crate::device::{self, Target};
 use crate::genai::{Device, GenaiOptions, NpuTuning};
 use crate::llamacpp::{LlamaCppOptions, LlamaDevice};
+use crate::models::{self, Model};
 use crate::paths;
 use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions};
 use crate::style::{Convention, Language};
@@ -79,11 +80,20 @@ pub const KEYS: &[Key] = &[
                       intel-gpu.",
     },
     Key {
+        name: "model.name",
+        kind: Kind::Choice(models::IDS),
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_MODEL"),
+        description: "Which recommended model runs (`smart-commit model` lists them), \
+                      downloaded from its publisher on Hugging Face.",
+    },
+    Key {
         name: "model.dir",
         kind: Kind::Path,
         scope: Scope::User,
         env: Some("SMART_COMMIT_MODEL_DIR"),
-        description: "The OpenVINO model, downloaded by `smart-commit setup`.",
+        description: "The OpenVINO model; by default model.name's, exported on this machine \
+                      by `smart-commit setup`. Another directory uses that model instead.",
     },
     Key {
         name: "model.cache_dir",
@@ -97,7 +107,8 @@ pub const KEYS: &[Key] = &[
         kind: Kind::Path,
         scope: Scope::User,
         env: Some("SMART_COMMIT_GGUF"),
-        description: "The GGUF model of the llama.cpp backend, downloaded by `smart-commit setup`.",
+        description: "The GGUF model of the llama.cpp devices; by default model.name's. \
+                      Another file (`smart-commit model use FILE`) uses that model instead.",
     },
     Key {
         name: "model.llama_server",
@@ -478,6 +489,29 @@ impl Resolved {
             })?;
             values.insert(key.name, (value, Origin::Flag));
         }
+        // The model files default to those of model.name, whichever layer
+        // set it.
+        let model = match values.get("model.name") {
+            Some((Value::Text(id), _)) => models::find(id),
+            _ => None,
+        }
+        .expect("model.name is checked against the registry");
+        if let Some(dir) = paths::default_models_dir(env) {
+            let path = |p: PathBuf| {
+                (
+                    Value::Text(p.to_string_lossy().into_owned()),
+                    Origin::Default,
+                )
+            };
+            values
+                .entry("model.gguf")
+                .or_insert_with(|| path(dir.join(model.gguf.file)));
+            if let Some(name) = model.openvino {
+                values
+                    .entry("model.dir")
+                    .or_insert_with(|| path(dir.join(name)));
+            }
+        }
         Ok(Self { values })
     }
 
@@ -533,6 +567,7 @@ impl Resolved {
             },
             device: Target::from_name(choice("model.device"))
                 .map_or(DeviceSetting::Auto, DeviceSetting::Fixed),
+            model: models::find(choice("model.name")).expect("checked against the registry"),
             model_dir: self.text("model.dir").map(PathBuf::from),
             gguf: self.text("model.gguf").map(PathBuf::from),
             llama_server: self.text("model.llama_server").map(PathBuf::from),
@@ -582,6 +617,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
     let mut values = vec![
         ("backend", text("auto")),
         ("model.device", text("auto")),
+        ("model.name", text(models::DEFAULT)),
         ("model.vulkan_device", Value::Count(0)),
         ("model.fast_load", text("auto")),
         (
@@ -606,14 +642,8 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
             Value::Count(crate::context::HISTORY_DEPTH),
         ),
     ];
-    if let Some(dir) = path(paths::default_model_dir(env)) {
-        values.push(("model.dir", dir));
-    }
     if let Some(dir) = path(paths::default_cache_dir(env)) {
         values.push(("model.cache_dir", dir));
-    }
-    if let Some(file) = path(paths::default_gguf_file(env)) {
-        values.push(("model.gguf", file));
     }
     if let Some(file) = path(paths::default_llama_server(env)) {
         values.push(("model.llama_server", file));
@@ -660,6 +690,7 @@ impl FastLoad {
 pub struct Settings {
     pub backend: BackendKind,
     pub device: DeviceSetting,
+    pub model: &'static Model,
     pub model_dir: Option<PathBuf>,
     pub gguf: Option<PathBuf>,
     pub llama_server: Option<PathBuf>,
@@ -706,8 +737,21 @@ impl Settings {
                 self.max_prompt_tokens
             ));
         }
+        let model_dir = match (&self.model_dir, self.model.openvino) {
+            (Some(dir), _) => dir.clone(),
+            (None, None) => {
+                return Err(format!(
+                    "{} has no OpenVINO version, which {} needs; `smart-commit model use {}` \
+                     has one",
+                    self.model.id,
+                    device.target().name(),
+                    models::DEFAULT
+                ));
+            }
+            (None, Some(_)) => return Err(missing("model.dir")),
+        };
         Ok(GenaiOptions {
-            model_dir: self.model_dir.clone().ok_or_else(|| missing("model.dir"))?,
+            model_dir,
             device,
             cache_dir: self
                 .cache_dir
@@ -994,6 +1038,7 @@ mod tests {
         assert_eq!(settings.generation_config(), GenerationConfig::default());
         assert_eq!(settings.backend, BackendKind::Auto);
         assert_eq!(settings.device, DeviceSetting::Auto);
+        assert_eq!(settings.model.id, models::DEFAULT);
         assert_eq!(settings.gguf, paths::default_gguf_file(env(HOME)));
         assert_eq!(
             settings.llama_server,

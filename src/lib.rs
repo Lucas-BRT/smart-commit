@@ -13,6 +13,7 @@ pub mod git;
 pub mod hook;
 pub mod llamacpp;
 pub mod message;
+pub mod models;
 pub mod paths;
 pub mod prompt;
 pub mod style;

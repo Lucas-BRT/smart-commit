@@ -96,6 +96,7 @@ Vulkan, with the fast load the benchmark turned on. See [devices](docs/devices.m
 - [Usage](docs/usage.md): install, everyday use, hook, devices, troubleshooting
 - [Configuration](docs/configuration.md): every setting and its layers
 - [Devices](docs/devices.md): backends, device selection, hardware setup, measurements
+- [Models](docs/models.md): the recommended models, where they come from, using your own
 - [Architecture](docs/architecture.md): how a message is made
 - [Reproducibility](docs/reproducibility.md): what is pinned and how it is checked
 - [Roadmap](docs/roadmap.md): what comes next, and the model candidates
@@ -114,6 +115,6 @@ and how releases are made.
 
 ## License
 
-smart-commit is released under the [MIT License](LICENSE). The models have
-their own licences: Qwen2.5-Coder is Apache-2.0, and its licence is
-downloaded with it.
+smart-commit is released under the [MIT License](LICENSE). The models are
+not part of it: they are downloaded from their publishers on Hugging Face,
+under their own licences (the recommended ones are Apache-2.0).

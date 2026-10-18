@@ -38,9 +38,10 @@ value, for example when an environment variable is set.
 |---|---|---|---|---|
 | `backend` | `auto`, `openvino`, `llamacpp`, `mock` | `auto` | `SMART_COMMIT_BACKEND` | global |
 | `model.device` | `auto`, `npu`, `intel-gpu`, `vulkan`, `cpu`, `openvino-cpu` | `auto` | `SMART_COMMIT_DEVICE` | global |
-| `model.dir` | path | `$XDG_DATA_HOME/smart-commit/models/qwen2.5-coder-1.5b-instruct-int4-sym-g128` | `SMART_COMMIT_MODEL_DIR` | global |
+| `model.name` | `qwen2.5-coder-1.5b`, `qwen2.5-coder-0.5b`, `qwen2.5-coder-7b` | `qwen2.5-coder-1.5b` | `SMART_COMMIT_MODEL` | global |
+| `model.dir` | path | model.name's OpenVINO export in `$XDG_DATA_HOME/smart-commit/models/` (none for models without one) | `SMART_COMMIT_MODEL_DIR` | global |
 | `model.cache_dir` | path | `$XDG_CACHE_HOME/smart-commit/openvino` | `SMART_COMMIT_CACHE_DIR` | global |
-| `model.gguf` | path | `$XDG_DATA_HOME/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | `SMART_COMMIT_GGUF` | global |
+| `model.gguf` | path | model.name's GGUF file in `$XDG_DATA_HOME/smart-commit/models/` | `SMART_COMMIT_GGUF` | global |
 | `model.llama_server` | path | `$XDG_DATA_HOME/smart-commit/llama.cpp/llama-b11381/llama-server` | `SMART_COMMIT_LLAMA_SERVER` | global |
 | `model.vulkan_device` | 0–15 | 0 | | global |
 | `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
@@ -63,6 +64,10 @@ value, for example when an environment variable is set.
   cpu and openvino-cpu when there is no benchmark. See [devices](devices.md).
   `gpu`, the name of `intel-gpu` before 0.4, still works with a warning;
   `config set` and `device use` write the new name.
+- `model.name` is one of the [recommended models](models.md);
+  `smart-commit model use <id>` downloads it and sets it. `model.gguf` and
+  `model.dir` default to its files, whichever layer sets it; set them (or
+  `smart-commit model use FILE`) to run a model from disk instead.
 - `model.vulkan_device` picks a GPU on machines with more than one, as
   `llama-server --list-devices` numbers them (0 is `Vulkan0`).
 - `model.fast_load` starts llama-server (`vulkan` and `cpu`) with

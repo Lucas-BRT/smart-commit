@@ -34,6 +34,16 @@ impl Device {
             Self::Cpu => "CPU",
         }
     }
+
+    /// The smart-commit device this is.
+    pub fn target(self) -> crate::device::Target {
+        use crate::device::Target;
+        match self {
+            Self::Npu => Target::Npu,
+            Self::Gpu => Target::IntelGpu,
+            Self::Cpu => Target::OpenvinoCpu,
+        }
+    }
 }
 
 impl fmt::Display for Device {

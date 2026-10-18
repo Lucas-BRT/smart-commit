@@ -92,6 +92,18 @@ smart-commit bench             # measure again
 `auto` uses the fastest device of the last benchmark, and falls back to the
 next one, with a note, if it becomes unavailable. See [devices](devices.md).
 
+## Models
+
+```bash
+smart-commit model                       # the recommended models, and which is in use
+smart-commit model use qwen2.5-coder-7b  # download it from Hugging Face and use it
+smart-commit model use ~/models/my.gguf  # use a GGUF file from disk, unverified
+```
+
+Recommended models are downloaded from their publishers' Hugging Face
+repositories, pinned to a revision and checked against a SHA-256. See
+[models](models.md).
+
 ## Settings
 
 ```bash
@@ -127,7 +139,8 @@ test fixture.
 | Message | What to do |
 |---|---|
 | `no device could run the model` | `smart-commit setup`; the message lists what each device lacks |
-| `no model in …`, `no GGUF model at …`, `no llama-server at …` | `smart-commit setup` downloads them |
+| `no model in …`, `no GGUF model at …`, `no llama-server at …` | `smart-commit setup` downloads them; `smart-commit model use <id>` downloads a model |
+| `… has no OpenVINO version, which npu needs` | the model runs on `vulkan` and `cpu` only; `smart-commit model use qwen2.5-coder-1.5b` for the NPU |
 | `OpenVINO GenAI not found` | only `npu`, `intel-gpu` and `openvino-cpu` need it; on a machine without an Intel NPU or GPU, use `vulkan` or `cpu` |
 | `model.device = gpu … is the old name of intel-gpu` | `smart-commit device use intel-gpu` (or `auto`) |
 | `cannot load the model on the NPU` | `~/.local/share/smart-commit/scripts/check-npu.sh`; after being added to the `render` group, log out and back in |

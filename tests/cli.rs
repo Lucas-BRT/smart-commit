@@ -162,16 +162,15 @@ fn auto_without_any_model_lists_every_device() {
     let repo = staged_repo();
     let output = smart_commit(&[], repo.path());
     assert_eq!(output.status.code(), Some(1));
-    let ir = format!(
-        "{}/smart-commit/models/{}",
-        common::DATA_HOME,
-        smart_commit::paths::DEFAULT_MODEL
-    );
-    let gguf = format!(
-        "{}/smart-commit/models/{}",
-        common::DATA_HOME,
-        smart_commit::llamacpp::DEFAULT_GGUF
-    );
+    let env = |name: &str| (name == "XDG_DATA_HOME").then(|| common::DATA_HOME.to_owned());
+    let ir = smart_commit::paths::default_model_dir(env)
+        .unwrap()
+        .display()
+        .to_string();
+    let gguf = smart_commit::paths::default_gguf_file(env)
+        .unwrap()
+        .display()
+        .to_string();
     let no_ir = format!("backend unavailable: no model in {ir}; `smart-commit setup` downloads it");
     let no_gguf =
         format!("backend unavailable: no GGUF model at {gguf}; `smart-commit setup` downloads it");

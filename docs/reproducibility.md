@@ -62,8 +62,11 @@ unless the manifest matches, and publishes the model;
 repository's manifest. Installing therefore needs neither Python nor 10 GB
 of disk.
 
-The GGUF model for llama.cpp is Qwen's official
-`qwen2.5-coder-1.5b-instruct-q4_k_m.gguf`, pinned by revision and SHA-256.
+The GGUF models for llama.cpp are the publishers' own files on Hugging
+Face (Qwen's for every recommended model), each pinned in `src/models.rs` to
+a repository commit and to the file's SHA-256 at that commit:
+`smart-commit model use` refuses any other file. A model chosen from disk
+(`model.gguf`) is not checked; traces name it `sha256=unverified`.
 
 ## System dependencies
 

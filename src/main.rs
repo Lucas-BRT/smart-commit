@@ -20,6 +20,7 @@ use smart_commit::trace::Trace;
 
 mod bench_cmd;
 mod config_cmd;
+mod model_cmd;
 
 /// Writes a commit message for the staged changes, in the style of the
 /// repository, with a small LLM running locally.
@@ -72,6 +73,11 @@ enum Command {
     Device {
         #[command(subcommand)]
         command: Option<bench_cmd::DeviceCommand>,
+    },
+    /// List the recommended models, or switch to another one or to a file.
+    Model {
+        #[command(subcommand)]
+        command: Option<model_cmd::ModelCommand>,
     },
     /// List this machine's CPU, GPUs and NPU, install only what they need,
     /// then benchmark them (asks before anything that needs sudo).
@@ -289,6 +295,7 @@ fn main() -> ExitCode {
         Some(Command::Config(command)) => config_cmd::run(command),
         Some(Command::Bench { json }) => bench_cmd::run_bench(json),
         Some(Command::Device { command }) => bench_cmd::run_device(command),
+        Some(Command::Model { command }) => model_cmd::run(command),
         Some(Command::Setup {
             yes,
             no_drivers,

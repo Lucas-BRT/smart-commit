@@ -25,8 +25,6 @@ use crate::prompt::Prompt;
 
 /// The llama.cpp release `smart-commit setup` installs.
 pub const LLAMA_CPP_BUILD: &str = "b11381";
-/// The GGUF model `smart-commit setup` downloads.
-pub const DEFAULT_GGUF: &str = "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf";
 
 /// UNIX socket paths are limited to 108 bytes on Linux.
 const MAX_SOCKET_PATH: usize = 100;
@@ -758,7 +756,6 @@ mod tests {
     fn setup_script_installs_what_the_code_expects() {
         let script = include_str!("../scripts/setup-llamacpp.sh");
         assert!(script.contains(&format!("\nLLAMA_BUILD={LLAMA_CPP_BUILD}\n")));
-        assert!(script.contains(&format!("\nGGUF_NAME={DEFAULT_GGUF}\n")));
     }
 
     #[test]
