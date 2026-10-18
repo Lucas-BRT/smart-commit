@@ -28,6 +28,8 @@ Installer options (after `bash -s --` when piping):
 | `--no-setup` | only install; run `smart-commit setup` later |
 | `--yes` | answer yes to the setup's questions |
 | `--uninstall` | remove smart-commit (models, caches and config are kept) |
+| `--purge` | `--uninstall`, plus the models, llama.cpp, the benchmark, the caches and the config |
+| `--system` | `--uninstall`, plus the OpenVINO that the setup installed (asks before using `sudo`) |
 
 The installer warns if `~/.local/bin` is not on your `PATH`. Running it
 again upgrades in place: it only replaces the binary, the scripts and the
@@ -136,8 +138,21 @@ test fixture.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash -s -- --uninstall
-rm -rf ~/.local/share/smart-commit ~/.cache/smart-commit ~/.config/smart-commit   # models, caches, settings
 ```
 
-Drivers and OpenVINO installed by the setup stay on the system: they are
-`.deb` packages and `/opt/intel`.
+| Option | Removes |
+|---|---|
+| `--uninstall` | the binary, the scripts and the docs; the models, llama.cpp, the benchmark, the caches and the config stay, for a later install |
+| `--purge` | also `~/.local/share/smart-commit`, `~/.cache/smart-commit` and `~/.config/smart-commit` |
+| `--system` | also OpenVINO, when the setup installed it: `/opt/intel/openvino_2026.3.1`, the `/opt/intel/openvino` link and `/etc/ld.so.conf.d/smart-commit-openvino.conf`; it lists them and asks before using `sudo` (`--yes` skips the question) |
+
+`--purge --system` removes all of it. `--system` recognises the setup's
+OpenVINO by its `ld.so.conf.d` file, so an OpenVINO installed another way is
+never touched.
+
+What always stays: the driver packages (the Intel NPU driver, Level Zero,
+Intel's compute runtime, the Vulkan drivers), which other programs may use,
+and membership of the `render` group. Remove them with `apt` and `gpasswd`
+if nothing else needs them. The hook stays in the repositories where it was
+installed: remove `.git/hooks/prepare-commit-msg` there, or run
+`smart-commit hook uninstall` before uninstalling.

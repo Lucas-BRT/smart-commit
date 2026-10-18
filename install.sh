@@ -10,9 +10,16 @@
 #   --no-setup       only install; run `smart-commit setup` later
 #   --yes            answer yes to the setup's questions
 #   --uninstall      remove smart-commit (models, caches and config are kept)
+#   --purge          --uninstall, and also the models, llama.cpp, the
+#                    benchmark, the caches and the configuration
+#   --system         --uninstall, and also OpenVINO, if smart-commit's setup
+#                    installed it (/opt/intel, /etc/ld.so.conf.d; uses sudo,
+#                    asks first unless --yes). Driver packages are kept.
 #
 # The download is checked against the release's SHA256SUMS.
-# SMART_COMMIT_RELEASE_BASE overrides where releases are downloaded from.
+# SMART_COMMIT_RELEASE_BASE overrides where releases are downloaded from;
+# SMART_COMMIT_SYSTEM_ROOT (a directory standing for /) and
+# SMART_COMMIT_SUDO (the command instead of sudo) are for tests.
 set -euo pipefail
 
 BASE=${SMART_COMMIT_RELEASE_BASE:-https://github.com/Lucas-BRT/smart-commit/releases}
@@ -21,6 +28,9 @@ PREFIX=$HOME/.local
 VERSION=latest
 SETUP=1
 UNINSTALL=0
+PURGE=0
+SYSTEM=0
+ASSUME_YES=0
 setup_args=()
 
 while [ $# -gt 0 ]; do
@@ -35,8 +45,13 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         --no-setup) SETUP=0 ;;
-        --yes) setup_args+=(--yes) ;;
+        --yes)
+            setup_args+=(--yes)
+            ASSUME_YES=1
+            ;;
         --uninstall) UNINSTALL=1 ;;
+        --purge) UNINSTALL=1 PURGE=1 ;;
+        --system) UNINSTALL=1 SYSTEM=1 ;;
         -h | --help)
             sed -n '2,/^set -euo/p' "$0" | sed '$d; s/^# \{0,1\}//'
             exit 0
@@ -72,13 +87,72 @@ die() {
     exit 1
 }
 
+# ask QUESTION: yes with --yes; no without a terminal to ask on.
+ask() {
+    [ "$ASSUME_YES" = 1 ] && return 0
+    if ! { : </dev/tty; } 2>/dev/null; then
+        echo "$1 [skipped: no terminal; pass --yes]"
+        return 1
+    fi
+    printf '%s [y/N] ' "$1"
+    local answer
+    read -r answer </dev/tty || return 1
+    case $answer in y | Y | yes | s | S | sim) return 0 ;; *) return 1 ;; esac
+}
+
+# remove_openvino: undoes setup-npu.sh's OpenVINO install. Its ld.so.conf.d
+# file marks an install of ours; without it nothing is touched, so an
+# OpenVINO installed some other way stays.
+remove_openvino() {
+    local root=${SMART_COMMIT_SYSTEM_ROOT:-}
+    local sudo=${SMART_COMMIT_SUDO-sudo}
+    local conf=$root/etc/ld.so.conf.d/smart-commit-openvino.conf
+    local link=$root/opt/intel/openvino target=
+    if [ ! -e "$conf" ]; then
+        say "no OpenVINO installed by smart-commit; nothing to remove"
+        return
+    fi
+    if [ -L "$link" ]; then
+        target=$(readlink "$link")
+        case $target in
+            /opt/intel/openvino_* | "$root"/opt/intel/openvino_*) target=$root/opt/intel/${target##*/} ;;
+            *) target= ;;
+        esac
+    fi
+    say "OpenVINO installed by smart-commit's setup:"
+    echo "  $conf"
+    [ -L "$link" ] && echo "  $link"
+    [ -n "$target" ] && echo "  $target"
+    ask "Remove it (uses sudo)?" || return 0
+    $sudo rm -f "$conf"
+    [ -L "$link" ] && $sudo rm -f "$link"
+    [ -n "$target" ] && $sudo rm -rf "$target"
+    $sudo rmdir "$root/opt/intel" 2>/dev/null || true
+    # Only the real system's linker cache knows these libraries.
+    [ -n "$root" ] || $sudo ldconfig
+    say "removed OpenVINO"
+}
+
 if [ "$UNINSTALL" = 1 ]; then
     remove_release
     say "removed smart-commit from $PREFIX"
-    echo "Kept (delete them yourself if you want):"
-    echo "  models and benchmark: ${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit"
-    echo "  compiled-model cache: ${XDG_CACHE_HOME:-$HOME/.cache}/smart-commit"
-    echo "  configuration:        ${XDG_CONFIG_HOME:-$HOME/.config}/smart-commit"
+    data=${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit
+    cache=${XDG_CACHE_HOME:-$HOME/.cache}/smart-commit
+    config=${XDG_CONFIG_HOME:-$HOME/.config}/smart-commit
+    if [ "$PURGE" = 1 ]; then
+        rm -rf "${data:?}" "${cache:?}" "${config:?}"
+        say "removed the models, llama.cpp, the benchmark, the caches and the configuration"
+    else
+        echo "Kept (--purge removes them):"
+        echo "  models and benchmark: $data"
+        echo "  compiled-model cache: $cache"
+        echo "  configuration:        $config"
+    fi
+    if [ "$SYSTEM" = 1 ]; then
+        remove_openvino
+    fi
+    echo "Kept: driver packages (Intel NPU driver, Level Zero, Intel's compute runtime,"
+    echo "Vulkan drivers) and render group membership; other programs may use them."
     echo "Repositories with the hook keep it; \`smart-commit hook uninstall\` needs the binary,"
     echo "so remove .git/hooks/prepare-commit-msg by hand there."
     exit 0

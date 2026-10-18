@@ -2,7 +2,8 @@
 # Installs, upgrades and uninstalls a fake release (file:// URLs) with the
 # default layout, where the release's share/smart-commit is also the data
 # directory: the models, llama.cpp and the benchmark there must survive all
-# of it. No network, sudo or Docker.
+# of it, unless --purge asks otherwise. --system runs against a fake root.
+# No network, sudo or Docker.
 #
 #   tests/scripts/test-install-data.sh
 set -euo pipefail
@@ -32,9 +33,13 @@ home=$work/home
 prefix=$home/.local
 data=$prefix/share/smart-commit
 
+root=$work/root
+# setsid: no controlling terminal, so questions are never asked, even when
+# the test runs in one.
 run() {
     HOME=$home XDG_DATA_HOME=$prefix/share XDG_CACHE_HOME=$home/.cache XDG_CONFIG_HOME=$home/.config \
-        SMART_COMMIT_RELEASE_BASE=file://$work/releases bash "$ROOT/install.sh" "$@" >"$work/out" 2>&1
+        SMART_COMMIT_RELEASE_BASE=file://$work/releases SMART_COMMIT_SYSTEM_ROOT=$root SMART_COMMIT_SUDO='' \
+        setsid bash "$ROOT/install.sh" "$@" </dev/null >"$work/out" 2>&1
 }
 
 # check NAME COMMAND...: passes when COMMAND succeeds.
@@ -91,6 +96,59 @@ rm -rf "$data"
 run --no-setup
 run --uninstall
 check "uninstall leaves no empty directory" absent "$data"
+
+# --purge: the data, the caches and the configuration go too.
+run --no-setup
+setup_data
+mkdir -p "$home/.cache/smart-commit/openvino" "$home/.config/smart-commit"
+echo 'backend = "auto"' >"$home/.config/smart-commit/config.toml"
+run --purge
+purged() {
+    release_gone && [ ! -e "$data" ] && [ ! -e "$home/.cache/smart-commit" ] &&
+        [ ! -e "$home/.config/smart-commit" ]
+}
+check "--purge removes the data, caches and configuration" purged
+check "--purge leaves the rest of the home alone" test -d "$home/.config"
+
+# openvino_install MARKED: what setup-npu.sh leaves, with its ld.so.conf.d
+# file when MARKED is yes.
+openvino_install() {
+    mkdir -p "$root/opt/intel/openvino_2026.3.1/runtime" "$root/etc/ld.so.conf.d"
+    ln -sfn /opt/intel/openvino_2026.3.1 "$root/opt/intel/openvino"
+    echo "other" >"$root/etc/ld.so.conf.d/other.conf"
+    if [ "$1" = yes ]; then
+        echo /opt/intel/openvino/runtime/lib/intel64 >"$root/etc/ld.so.conf.d/smart-commit-openvino.conf"
+    fi
+}
+openvino_gone() {
+    [ ! -e "$root/opt/intel" ] && [ ! -e "$root/etc/ld.so.conf.d/smart-commit-openvino.conf" ] &&
+        [ -f "$root/etc/ld.so.conf.d/other.conf" ]
+}
+openvino_kept() { [ -d "$root/opt/intel/openvino_2026.3.1" ] && [ -L "$root/opt/intel/openvino" ]; }
+
+# --system without --yes and without a terminal asks nothing and keeps it.
+openvino_install yes
+run --no-setup
+run --system
+check "--system without a terminal keeps OpenVINO" openvino_kept
+check "--system without a terminal says to pass --yes" grep -qF "[skipped: no terminal; pass --yes]" "$work/out"
+check "--system still uninstalls" release_gone
+
+run --no-setup
+setup_data
+run --system --yes
+check "--system --yes removes setup's OpenVINO" openvino_gone
+check "--system lists what it removes" grep -qF "$root/opt/intel/openvino_2026.3.1" "$work/out"
+check "--system keeps the driver packages" grep -qF "Kept: driver packages" "$work/out"
+check "--system without --purge keeps the data" data_kept
+
+# An OpenVINO that smart-commit did not install is never touched.
+rm -rf "$root"
+openvino_install no
+run --no-setup
+run --system --yes
+check "--system keeps an OpenVINO it did not install" openvino_kept
+check "--system says there was nothing of its own" grep -qF "no OpenVINO installed by smart-commit" "$work/out"
 
 if [ "$failures" -gt 0 ]; then
     echo "$failures failure(s)"
