@@ -18,6 +18,7 @@ use npu_commit::paths;
 use npu_commit::prompt;
 use npu_commit::trace::Trace;
 
+mod bench_cmd;
 mod config_cmd;
 
 /// Writes a commit message for the staged changes, in the style of the
@@ -59,6 +60,17 @@ enum Command {
     /// Read and change settings, globally or for a repository.
     #[command(subcommand)]
     Config(config_cmd::ConfigCommand),
+    /// Measure every device of this machine; `auto` then uses the fastest.
+    Bench {
+        /// Print the full report as JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Show which device runs the model and how fast each one was.
+    Device {
+        #[command(subcommand)]
+        command: Option<bench_cmd::DeviceCommand>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -236,6 +248,8 @@ fn main() -> ExitCode {
             Ok(())
         }
         Some(Command::Config(command)) => config_cmd::run(command),
+        Some(Command::Bench { json }) => bench_cmd::run_bench(json),
+        Some(Command::Device { command }) => bench_cmd::run_device(command),
         None => run_generate(&cli.generate),
     };
     match result {
@@ -319,7 +333,9 @@ fn load_on(settings: &Settings, target: Target) -> Result<Box<dyn Backend>, Back
 
 /// Devices in the order the last benchmark ranked them, fastest first.
 fn preferred_devices() -> Vec<Target> {
-    Vec::new()
+    bench_cmd::last_report()
+        .map(|report| report.ranking())
+        .unwrap_or_default()
 }
 
 /// Generates a message for what is staged in `repo`, writing the trace if

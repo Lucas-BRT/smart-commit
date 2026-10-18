@@ -39,6 +39,11 @@ pub fn default_llama_server(env: impl Fn(&str) -> Option<String>) -> Option<Path
     )
 }
 
+/// `$XDG_DATA_HOME/npu-commit/bench.json`, the last `npu-commit bench`.
+pub fn default_bench_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("npu-commit/bench.json"))
+}
+
 /// `$XDG_CACHE_HOME/npu-commit/openvino`, where compiled NPU blobs go.
 pub fn default_cache_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("npu-commit/openvino"))
@@ -90,6 +95,10 @@ mod tests {
             default_gguf_file(env(&vars)).unwrap(),
             PathBuf::from("/home/me/.local/share/npu-commit/models")
                 .join(crate::llamacpp::DEFAULT_GGUF)
+        );
+        assert_eq!(
+            default_bench_file(env(&vars)).unwrap(),
+            PathBuf::from("/home/me/.local/share/npu-commit/bench.json")
         );
         assert_eq!(
             default_llama_server(env(&vars)).unwrap(),

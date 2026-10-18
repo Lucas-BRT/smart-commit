@@ -2,6 +2,7 @@
 //! small LLM running locally on an Intel NPU.
 
 pub mod backend;
+pub mod bench;
 pub mod config;
 pub mod context;
 pub mod device;
