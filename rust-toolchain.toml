@@ -1,0 +1,5 @@
+# Same compiler everywhere: locally, in CI and for anyone reproducing a build.
+[toolchain]
+channel = "1.99.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

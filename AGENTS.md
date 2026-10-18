@@ -15,8 +15,8 @@ O CI roda exatamente isto, e tudo precisa passar antes de qualquer commit:
 
 ```bash
 cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
 ```
 
 ## Testes são obrigatórios
