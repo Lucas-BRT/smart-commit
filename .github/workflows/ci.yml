@@ -19,4 +19,5 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked
-      - run: shellcheck scripts/*.sh tests/fixtures/make-traces.sh
+      - run: shellcheck scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh
+      - run: tests/scripts/test-setup-gpu.sh

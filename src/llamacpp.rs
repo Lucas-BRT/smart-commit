@@ -612,6 +612,13 @@ mod tests {
     }
 
     #[test]
+    fn setup_script_installs_what_the_code_expects() {
+        let script = include_str!("../scripts/setup-gpu.sh");
+        assert!(script.contains(&format!("\nLLAMA_BUILD={LLAMA_CPP_BUILD}\n")));
+        assert!(script.contains(&format!("\nGGUF_NAME={DEFAULT_GGUF}\n")));
+    }
+
+    #[test]
     fn socket_dirs_are_private_and_short() {
         let dir = private_dir().unwrap();
         assert!(dir.join("server.sock").as_os_str().len() < 108);
