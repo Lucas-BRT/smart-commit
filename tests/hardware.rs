@@ -3,8 +3,10 @@
 //!
 //!   cargo test --test hardware -- --ignored --test-threads 1
 //!
-//! `NPU_COMMIT_TEST_DEVICE` picks the device (`npu`, the default, `gpu` or
-//! `cpu`); `NPU_COMMIT_MODEL_DIR` overrides the model directory. The prompts
+//! `NPU_COMMIT_TEST_DEVICE` picks the device: `npu` (the default), `gpu` or
+//! `cpu` through OpenVINO, or `vulkan` through llama.cpp.
+//! `NPU_COMMIT_MODEL_DIR`, `NPU_COMMIT_GGUF` and `NPU_COMMIT_LLAMA_SERVER`
+//! override where the models and the server are. The prompts
 //! come from the recorded traces in tests/fixtures/traces, so every run sees
 //! the same inputs.
 
@@ -14,33 +16,44 @@ use std::path::{Path, PathBuf};
 use npu_commit::backend::{Backend, GenerationConfig};
 use npu_commit::diff::estimate_tokens;
 use npu_commit::genai::{Device, GenaiBackend, GenaiOptions};
+use npu_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
 use npu_commit::paths;
 use npu_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
 use npu_commit::trace::Trace;
 
-fn device() -> Device {
-    match std::env::var("NPU_COMMIT_TEST_DEVICE").as_deref() {
-        Ok("cpu") => Device::Cpu,
-        Ok("gpu") => Device::Gpu,
-        Ok("npu") | Err(_) => Device::Npu,
-        Ok(other) => panic!("unknown NPU_COMMIT_TEST_DEVICE {other:?}"),
-    }
-}
-
-fn backend() -> GenaiBackend {
+fn backend() -> Box<dyn Backend> {
     let env = |name: &str| std::env::var(name).ok();
-    let model_dir = env("NPU_COMMIT_MODEL_DIR")
-        .map(PathBuf::from)
-        .or_else(|| paths::default_model_dir(env))
-        .expect("HOME or NPU_COMMIT_MODEL_DIR");
-    GenaiBackend::load(&GenaiOptions {
-        model_dir,
-        device: device(),
+    let path = |var: &str, default: Option<PathBuf>| {
+        env(var)
+            .map(PathBuf::from)
+            .or(default)
+            .expect("HOME or the override variable")
+    };
+    let device = match env("NPU_COMMIT_TEST_DEVICE").as_deref() {
+        Some("vulkan") => {
+            let backend = LlamaCppBackend::start(&LlamaCppOptions {
+                server: path("NPU_COMMIT_LLAMA_SERVER", paths::default_llama_server(env)),
+                model: path("NPU_COMMIT_GGUF", paths::default_gguf_file(env)),
+                vulkan_device: 0,
+                max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
+                max_new_tokens: GenerationConfig::default().max_new_tokens,
+                startup_timeout: std::time::Duration::from_secs(120),
+            });
+            return Box::new(backend.unwrap_or_else(|err| panic!("{err}")));
+        }
+        Some("cpu") => Device::Cpu,
+        Some("gpu") => Device::Gpu,
+        Some("npu") | None => Device::Npu,
+        Some(other) => panic!("unknown NPU_COMMIT_TEST_DEVICE {other:?}"),
+    };
+    let backend = GenaiBackend::load(&GenaiOptions {
+        model_dir: path("NPU_COMMIT_MODEL_DIR", paths::default_model_dir(env)),
+        device,
         cache_dir: paths::default_cache_dir(env).expect("HOME"),
         max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
         max_new_tokens: GenerationConfig::default().max_new_tokens,
-    })
-    .unwrap_or_else(|err| panic!("{err}"))
+    });
+    Box::new(backend.unwrap_or_else(|err| panic!("{err}")))
 }
 
 /// Every prompt recorded in the fixtures, in a fixed order.

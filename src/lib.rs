@@ -9,6 +9,7 @@ pub mod genai;
 pub mod generate;
 pub mod git;
 pub mod hook;
+pub mod llamacpp;
 pub mod message;
 pub mod paths;
 pub mod prompt;

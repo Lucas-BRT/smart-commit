@@ -18,6 +18,27 @@ pub fn default_model_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf
     )
 }
 
+/// `$XDG_DATA_HOME/npu-commit/models/<DEFAULT_GGUF>`, the model of the
+/// llama.cpp backend.
+pub fn default_gguf_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(
+        xdg(&env, "XDG_DATA_HOME", ".local/share")?
+            .join("npu-commit/models")
+            .join(crate::llamacpp::DEFAULT_GGUF),
+    )
+}
+
+/// `$XDG_DATA_HOME/npu-commit/llama.cpp/llama-<build>/llama-server`, as
+/// `scripts/setup-gpu.sh` installs it.
+pub fn default_llama_server(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(
+        xdg(&env, "XDG_DATA_HOME", ".local/share")?
+            .join("npu-commit/llama.cpp")
+            .join(format!("llama-{}", crate::llamacpp::LLAMA_CPP_BUILD))
+            .join("llama-server"),
+    )
+}
+
 /// `$XDG_CACHE_HOME/npu-commit/openvino`, where compiled NPU blobs go.
 pub fn default_cache_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("npu-commit/openvino"))
@@ -64,6 +85,15 @@ mod tests {
         assert_eq!(
             default_config_file(env(&vars)).unwrap(),
             PathBuf::from("/home/me/.config/npu-commit/config.toml")
+        );
+        assert_eq!(
+            default_gguf_file(env(&vars)).unwrap(),
+            PathBuf::from("/home/me/.local/share/npu-commit/models")
+                .join(crate::llamacpp::DEFAULT_GGUF)
+        );
+        assert_eq!(
+            default_llama_server(env(&vars)).unwrap(),
+            PathBuf::from("/home/me/.local/share/npu-commit/llama.cpp/llama-b11381/llama-server")
         );
     }
 
