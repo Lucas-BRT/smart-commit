@@ -29,15 +29,26 @@ const OWN_ENV: &[&str] = &[
     "NPU_COMMIT_BACKEND",
     "NPU_COMMIT_MOCK_RESPONSE",
     "NPU_COMMIT_TRACE",
+    "NPU_COMMIT_DEVICE",
+    "NPU_COMMIT_MODEL_DIR",
 ];
 
-/// Applies [`GIT_ENV`] and drops [`OWN_ENV`], so the command behaves the
-/// same on every machine.
+/// Where the binary looks for models and caches during tests: nowhere real,
+/// so a model the developer exported is never picked up.
+pub const DATA_HOME: &str = "/nonexistent/npu-commit-tests/data";
+pub const CACHE_HOME: &str = "/nonexistent/npu-commit-tests/cache";
+
+/// Applies [`GIT_ENV`], drops [`OWN_ENV`] and points the XDG directories at
+/// [`DATA_HOME`] and [`CACHE_HOME`], so the command behaves the same on every
+/// machine.
 pub fn isolate(command: &mut Command) -> &mut Command {
     for var in OWN_ENV {
         command.env_remove(var);
     }
-    command.envs(GIT_ENV.iter().copied())
+    command
+        .env("XDG_DATA_HOME", DATA_HOME)
+        .env("XDG_CACHE_HOME", CACHE_HOME)
+        .envs(GIT_ENV.iter().copied())
 }
 
 /// Runs the `npu-commit` binary, isolated like [`TestRepo::git`].

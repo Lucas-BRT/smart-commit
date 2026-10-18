@@ -152,7 +152,7 @@ fn commit_all_sees_the_index_being_committed() {
 #[test]
 fn failures_warn_but_never_block_the_commit() {
     let repo = repo_with_hook();
-    // No backend configured; the user writes the message instead.
+    // No model exported; the user writes the message instead.
     let output = repo.git_with(
         &["commit", "--quiet"],
         // Portable editor: git appends the file name, which becomes $1.
@@ -160,7 +160,7 @@ fn failures_warn_but_never_block_the_commit() {
     );
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(
-        stderr(&output).contains("npu-commit: the NPU backend is not available yet"),
+        stderr(&output).contains("npu-commit: backend unavailable: no model in"),
         "{}",
         stderr(&output)
     );

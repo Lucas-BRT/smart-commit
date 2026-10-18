@@ -39,6 +39,7 @@ fn invalid_arguments_are_usage_errors() {
         &["frobnicate"][..],
         &["context", "a", "b"],
         &["--backend", "gpu"],
+        &["--device", "tpu"],
         &["context", "--commit"],
     ] {
         let output = npu_commit(args, repo.path());
@@ -157,11 +158,63 @@ fn generate_uses_the_second_reply_when_the_first_is_rejected() {
 }
 
 #[test]
-fn generate_without_a_backend_fails_clearly() {
+fn generate_without_a_model_says_how_to_export_one() {
     let repo = staged_repo();
     let output = npu_commit(&[], repo.path());
     assert_eq!(output.status.code(), Some(1));
-    assert!(stderr(&output).contains("NPU backend is not available yet"));
+    assert_eq!(
+        stderr(&output),
+        format!(
+            "error: backend unavailable: no model in {}/npu-commit/models/{}; \
+             export one with scripts/export-model.sh\n",
+            common::DATA_HOME,
+            npu_commit::paths::DEFAULT_MODEL
+        )
+    );
+}
+
+#[test]
+fn model_dir_can_be_given() {
+    let repo = staged_repo();
+    let empty = tempfile::TempDir::new().unwrap();
+    let dir = empty.path().to_str().unwrap();
+    for (args, env) in [
+        (vec!["--model-dir", dir], vec![]),
+        (vec![], vec![("NPU_COMMIT_MODEL_DIR", dir)]),
+    ] {
+        let output = npu_commit_with(&args, repo.path(), &env);
+        assert_eq!(output.status.code(), Some(1));
+        assert!(
+            stderr(&output).contains(&format!("no model in {dir};")),
+            "{}",
+            stderr(&output)
+        );
+    }
+}
+
+#[test]
+fn replay_with_model_needs_the_model() {
+    let repo = staged_repo();
+    let trace = repo.path().join("trace.json");
+    let path = trace.to_str().unwrap();
+    npu_commit(
+        &[
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: x y",
+            "--trace",
+            path,
+        ],
+        repo.path(),
+    );
+    let output = npu_commit(&["replay", path, "--with-model"], repo.path());
+    assert_eq!(output.status.code(), Some(1));
+    assert!(
+        stderr(&output).contains("no model in"),
+        "{}",
+        stderr(&output)
+    );
 }
 
 #[test]

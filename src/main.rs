@@ -6,10 +6,12 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use npu_commit::backend::{Backend, GenerationConfig, MockBackend};
 use npu_commit::context::RepoContext;
 use npu_commit::diff;
+use npu_commit::genai::{Device, GenaiBackend, GenaiOptions};
 use npu_commit::generate::{self, Source};
 use npu_commit::git::Repo;
 use npu_commit::hook;
 use npu_commit::message::CommitMessage;
+use npu_commit::paths;
 use npu_commit::prompt::{self, PromptOptions};
 use npu_commit::trace::Trace;
 
@@ -37,7 +39,15 @@ enum Command {
         path: PathBuf,
     },
     /// Run a recorded generation again and check it is reproduced exactly.
-    Replay { trace: PathBuf },
+    Replay {
+        trace: PathBuf,
+        /// Ask the model again instead of reusing the recorded replies, to
+        /// check that it still answers the same way.
+        #[arg(long)]
+        with_model: bool,
+        #[command(flatten)]
+        model: ModelArgs,
+    },
     /// Manage the `prepare-commit-msg` git hook.
     #[command(subcommand)]
     Hook(HookCommand),
@@ -90,8 +100,10 @@ struct GenerateArgs {
 /// gets them.
 #[derive(Debug, Args)]
 struct BackendArgs {
-    #[arg(long, env = "NPU_COMMIT_BACKEND", value_enum, default_value_t = BackendKind::Npu)]
+    #[arg(long, env = "NPU_COMMIT_BACKEND", value_enum, default_value_t = BackendKind::Openvino)]
     backend: BackendKind,
+    #[command(flatten)]
+    model: ModelArgs,
     /// Reply of the mock backend; repeat it for the following attempts.
     /// The environment variable holds a single reply.
     #[arg(
@@ -108,10 +120,52 @@ struct BackendArgs {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum BackendKind {
-    /// Intel NPU through OpenVINO (not available yet).
-    Npu,
+    /// The exported model through OpenVINO GenAI, on --device.
+    Openvino,
     /// Scripted replies from --mock-response, for tests and development.
     Mock,
+}
+
+/// Which model runs where, for the OpenVINO backend.
+#[derive(Debug, Args)]
+struct ModelArgs {
+    #[arg(long, env = "NPU_COMMIT_DEVICE", value_enum, default_value_t = DeviceArg::Npu)]
+    device: DeviceArg,
+    /// Exported model [default: $XDG_DATA_HOME/npu-commit/models/<default model>]
+    #[arg(long, env = "NPU_COMMIT_MODEL_DIR", value_name = "DIR")]
+    model_dir: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum DeviceArg {
+    Npu,
+    Gpu,
+    Cpu,
+}
+
+impl ModelArgs {
+    fn load(&self) -> Result<GenaiBackend, Box<dyn Error>> {
+        let env = |name: &str| std::env::var(name).ok();
+        let model_dir = self
+            .model_dir
+            .clone()
+            .or_else(|| paths::default_model_dir(env))
+            .ok_or("HOME is not set; pass --model-dir")?;
+        let cache_dir = paths::default_cache_dir(env).ok_or("HOME is not set")?;
+        let device = match self.device {
+            DeviceArg::Npu => Device::Npu,
+            DeviceArg::Gpu => Device::Gpu,
+            DeviceArg::Cpu => Device::Cpu,
+        };
+        Ok(GenaiBackend::load(&GenaiOptions {
+            model_dir,
+            device,
+            cache_dir,
+            // The NPU compiles for exactly the prompt length we budget for.
+            max_prompt_tokens: PromptOptions::default().max_prompt_tokens,
+            max_new_tokens: GenerationConfig::default().max_new_tokens,
+        })?)
+    }
 }
 
 fn main() -> ExitCode {
@@ -119,7 +173,11 @@ fn main() -> ExitCode {
     let result = match cli.command {
         Some(Command::Context { path }) => run_context(&path),
         Some(Command::Prompt { path }) => run_prompt(&path),
-        Some(Command::Replay { trace }) => run_replay(&trace),
+        Some(Command::Replay {
+            trace,
+            with_model,
+            model,
+        }) => run_replay(&trace, with_model.then_some(&model)),
         Some(Command::Hook(HookCommand::Install { path, force })) => run_hook_install(&path, force),
         Some(Command::Hook(HookCommand::Uninstall { path })) => run_hook_uninstall(&path),
         Some(Command::Hook(HookCommand::Run {
@@ -182,9 +240,7 @@ fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Bo
     let context = RepoContext::collect(repo)?;
     let files = staged_files(repo)?;
     let backend: Box<dyn Backend> = match args.backend {
-        BackendKind::Npu => {
-            return Err("the NPU backend is not available yet; use --backend mock".into());
-        }
+        BackendKind::Openvino => Box::new(args.model.load()?),
         BackendKind::Mock => Box::new(MockBackend::new(args.mock_responses.clone())),
     };
     let options = PromptOptions::default();
@@ -212,11 +268,24 @@ fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Bo
     Ok(generation.message)
 }
 
-fn run_replay(path: &Path) -> Result<(), Box<dyn Error>> {
+fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Error>> {
     let json = std::fs::read_to_string(path)
         .map_err(|err| format!("cannot read {}: {err}", path.display()))?;
     let trace = Trace::from_json(&json)?;
-    let replay = trace.replay()?;
+    let replay = match model {
+        None => trace.replay()?,
+        Some(model) => {
+            let backend = model.load()?;
+            if backend.describe() != trace.backend {
+                eprintln!(
+                    "note: recorded with `{}`, replaying with `{}`",
+                    trace.backend,
+                    backend.describe()
+                );
+            }
+            trace.replay_with(&backend)?
+        }
+    };
     if !replay.differences.is_empty() {
         for difference in &replay.differences {
             eprintln!("differs: {difference}");
