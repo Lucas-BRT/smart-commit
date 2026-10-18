@@ -53,7 +53,8 @@ reproduzido por outra pessoa, em outra máquina.
   `Cargo.lock` é versionado e o CI usa `--locked`. Não atualize dependências
   junto com outras mudanças; isso tem um commit próprio.
 - **Testes determinísticos:** sem rede, sem NPU, sem relógio, sem
-  aleatoriedade e sem a config git de quem roda (veja o `TestRepo`). Nada que
+  aleatoriedade, sem a config git de quem roda e sem a config, os modelos e
+  as variáveis `NPU_COMMIT_*` da máquina (veja `tests/common::isolate`). Nada que
   vá para a saída pode depender da ordem de iteração de um `HashMap`.
 - **Geração determinística:** decodificação gulosa e parâmetros de geração
   explícitos (`GenerationConfig`), nunca padrões implícitos da biblioteca. Se
@@ -115,6 +116,14 @@ git stash pop
 Siga o estilo do próprio histórico: Conventional Commits em português
 (`feat: ...`, `fix(diff): ...`, `docs: ...`, `test: ...`), com assunto de no
 máximo 72 colunas. Use o corpo para explicar o porquê, quando ele não for óbvio.
+
+## Configuração
+
+Toda configuração nova é declarada em `config::KEYS` (tipo, escopo,
+variável de ambiente, descrição), nunca lida direto de um arquivo ou do
+ambiente em outro lugar. Chaves sobre a máquina são `Scope::User` (só no
+global). Se ela afeta a geração, precisa chegar ao trace por
+`PromptOptions` ou `GenerationConfig`.
 
 ## Documentação
 

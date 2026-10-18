@@ -16,6 +16,10 @@ cargo run -- --commit --backend mock --mock-response '…'  # abre o editor e co
 cargo run -- --backend mock --mock-response '…' --trace t.json
 cargo run -- replay t.json    # refaz a geração gravada e confere se é idêntica
 cargo run -- hook install     # preenche a mensagem de todo `git commit`
+cargo run -- config init      # cria ~/.config/npu-commit/config.toml comentado
+cargo run -- config set model.device cpu
+cargo run -- config set --repo style.convention conventional   # .npu-commit.toml
+cargo run -- config list --show-origin
 cargo run -- context [PATH]   # mostra o que foi detectado no repositório
 cargo run -- prompt [PATH]    # mostra o prompt que o modelo receberia
 cargo test --locked           # não precisa de NPU
@@ -32,3 +36,4 @@ O toolchain é fixado em `rust-toolchain.toml`. Regras para contribuir
 - [04 — Fase 3: CLI de ponta a ponta e reprodutibilidade](docs/04-fase-3-cli.md)
 - [05 — Fase 5: hook `prepare-commit-msg`](docs/05-fase-5-hook.md)
 - [06 — Fase 4: backend OpenVINO GenAI na NPU](docs/06-fase-4-npu.md)
+- [07 — Configuração global e por repositório](docs/07-configuracao.md)
