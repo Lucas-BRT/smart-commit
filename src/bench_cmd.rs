@@ -2,13 +2,18 @@
 //! machine, show which one is used, and change it.
 
 use std::error::Error;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, mpsc};
+use std::time::Duration;
 
 use clap::Subcommand;
-use smart_commit::bench::{self, Machine, Report};
-use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin};
+use smart_commit::bench::{self, Entry, Machine, Report};
+use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};
 use smart_commit::device::{DEFAULT_ORDER, Target};
 use smart_commit::paths;
+use smart_commit::tui::bench::{Action, BenchView};
+use smart_commit::tui::{self, Screen};
 
 use crate::DeviceArg;
 
@@ -35,52 +40,177 @@ pub fn last_report() -> Option<Report> {
 const HOW_TO_CHANGE: &str = "To use another device: smart-commit device use \
                              <npu|intel-gpu|vulkan|cpu|openvino-cpu>, or `auto` for the fastest.";
 
-pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
-    let resolved = crate::resolve(None, Vec::new())?;
-    crate::warn_renamed(&resolved);
-    let settings = resolved.settings();
+/// What the measuring thread reports.
+enum Progress {
+    Start(Target, &'static str),
+    Done(Entry),
+}
+
+/// Measures every device, telling `progress` what it does, unless `stop`
+/// is set before a device: then `None`, and nothing is left running.
+fn measure_all(
+    settings: &Settings,
+    stop: &AtomicBool,
+    mut progress: impl FnMut(Progress),
+) -> Option<Report> {
     let prompts = bench::prompts();
     let config = settings.generation_config();
     let mut entries = Vec::new();
     for target in DEFAULT_ORDER {
-        eprintln!("measuring {target}...");
-        entries.push(match target.backend() {
-            BackendKind::LlamaCpp => {
-                bench::measure_load_modes(target, &prompts, &config, |t, fast| {
-                    crate::load_with(&settings, t, fast, crate::Retry::Never)
-                })
-            }
+        if stop.load(Ordering::Relaxed) {
+            return None;
+        }
+        progress(Progress::Start(target, "measuring"));
+        let entry = match target.backend() {
+            BackendKind::LlamaCpp => bench::measure_load_modes_with(
+                target,
+                &prompts,
+                &config,
+                |t, fast| crate::load_with(settings, t, fast, crate::Retry::Never),
+                |phase| progress(Progress::Start(target, phase)),
+            ),
             _ => bench::measure(target, &prompts, &config, |t| {
-                crate::load_with(&settings, t, false, crate::Retry::Never)
+                crate::load_with(settings, t, false, crate::Retry::Never)
             }),
-        });
+        };
+        progress(Progress::Done(entry.clone()));
+        entries.push(entry);
     }
-    let report = Report {
+    Some(Report {
         format: bench::FORMAT,
         tool_version: env!("CARGO_PKG_VERSION").to_owned(),
         machine: Machine::current(),
         entries,
-    };
+    })
+}
+
+fn save(report: &Report) -> Result<PathBuf, Box<dyn Error>> {
     let path = bench_file()?;
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
     }
     std::fs::write(&path, report.to_json())?;
+    Ok(path)
+}
+
+pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
+    let resolved = crate::resolve(None, Vec::new())?;
+    crate::warn_renamed(&resolved);
+    let settings = resolved.settings();
+    if !json && tui::interactive() {
+        return bench_screen(settings);
+    }
+    let report = measure_all(&settings, &AtomicBool::new(false), |p| {
+        if let Progress::Start(target, "measuring") = p {
+            eprintln!("measuring {target}...");
+        }
+    })
+    .expect("never stopped");
+    let path = save(&report)?;
     if json {
         print!("{}", report.to_json());
         return Ok(());
     }
-    let selected = effective(&report, settings.device);
+    print_summary(&report, &settings, &path)
+}
+
+/// The benchmark in a terminal: devices as they are measured, then a
+/// choice of device; the summary is printed afterwards, so it stays on
+/// screen.
+fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
+    let auto = settings.device == DeviceSetting::Auto;
+    let mut view = BenchView::measuring(
+        format!("Benchmark on {}", Machine::current().cpu),
+        &DEFAULT_ORDER,
+        auto,
+    );
+    let stop = Arc::new(AtomicBool::new(false));
+    let (sender, progress) = mpsc::channel();
+    let worker = {
+        let (settings, stop) = (settings.clone(), stop.clone());
+        std::thread::spawn(move || {
+            measure_all(&settings, &stop, |p| {
+                let _ = sender.send(p);
+            })
+        })
+    };
+    let mut screen = Screen::new()?;
+    let report = loop {
+        while let Ok(p) = progress.try_recv() {
+            match p {
+                Progress::Start(target, what) => view.start(target, what),
+                Progress::Done(entry) => view.finish(entry),
+            }
+        }
+        if worker.is_finished() {
+            match worker.join().map_err(|_| "the benchmark crashed")? {
+                Some(report) => break report,
+                None => {
+                    drop(screen);
+                    return Err("benchmark stopped; nothing was saved".into());
+                }
+            }
+        }
+        view.tick();
+        screen.draw(|frame| view.render(frame))?;
+        // Ctrl+C stops after the device being measured, so no server is
+        // left running.
+        if let Some(key) = screen.key_within(Duration::from_millis(150))?
+            && view.on_key(key) == Action::Quit
+        {
+            stop.store(true, Ordering::Relaxed);
+            view.stopping();
+        }
+    };
+    let path = save(&report)?;
+    view.done(
+        effective(&report, settings.device),
+        fast_load_lines(&report, settings.fast_load),
+    );
+    let choice = choose(&mut screen, &mut view)?;
+    drop(screen);
+    let settings = apply(choice)?.unwrap_or(settings);
+    print_summary(&report, &settings, &path)
+}
+
+/// Waits for the user to pick a device, or none.
+fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, Box<dyn Error>> {
+    loop {
+        screen.draw(|frame| view.render(frame))?;
+        match view.on_key(screen.key()?) {
+            Action::None => {}
+            Action::Quit => return Ok(None),
+            Action::Use(target) => return Ok(Some(target.name().to_owned())),
+            Action::Auto => return Ok(Some("auto".to_owned())),
+        }
+    }
+}
+
+/// Sets model.device to what the screen chose, and returns the settings
+/// after it.
+fn apply(choice: Option<String>) -> Result<Option<Settings>, Box<dyn Error>> {
+    let Some(name) = choice else {
+        return Ok(None);
+    };
+    let path = paths::default_config_file(env).ok_or("HOME is not set")?;
+    let origin = Origin::Global(path.clone());
+    config::set_in_file(&path, &origin, "model.device", &name, None)?;
+    println!("model.device = {name}  ({origin})");
+    Ok(Some(crate::resolve(None, Vec::new())?.settings()))
+}
+
+fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<(), Box<dyn Error>> {
+    let selected = effective(report, settings.device);
     println!(
         "Benchmark on {}: {} prompts, after one warm-up load.\n",
         report.machine.cpu,
-        prompts.len()
+        bench::prompts().len()
     );
     print!("{}", report.table(selected));
     println!();
-    print_fast_load(&report, settings.fast_load);
+    print_fast_load(report, settings.fast_load);
     match selected {
-        Some(target) => println!("{}", using_message(&report, target, settings.device)),
+        Some(target) => println!("{}", using_message(report, target, settings.device)),
         None => {
             return Err(
                 "no device could run the model; `smart-commit setup` installs \
@@ -97,19 +227,28 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
 /// What the benchmark decided about fast load, and whether model.fast_load
 /// overrides it.
 fn print_fast_load(report: &Report, setting: FastLoad) {
-    let notes = report.fast_load_notes();
-    if notes.is_empty() {
+    let lines = fast_load_lines(report, setting);
+    if lines.is_empty() {
         return;
     }
-    for note in notes {
-        println!("{note}");
+    for line in lines {
+        println!("{line}");
+    }
+    println!();
+}
+
+/// The benchmark's fast load notes, and the setting that overrides them.
+fn fast_load_lines(report: &Report, setting: FastLoad) -> Vec<String> {
+    let mut lines = report.fast_load_notes();
+    if lines.is_empty() {
+        return lines;
     }
     match setting {
         FastLoad::Auto => {}
-        FastLoad::On => println!("model.fast_load = on overrides this: always on."),
-        FastLoad::Off => println!("model.fast_load = off overrides this: always off."),
+        FastLoad::On => lines.push("model.fast_load = on overrides this: always on.".to_owned()),
+        FastLoad::Off => lines.push("model.fast_load = off overrides this: always off.".to_owned()),
     }
-    println!();
+    lines
 }
 
 /// The device that will run: the configured one, or the fastest for auto.
@@ -143,6 +282,25 @@ pub fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> 
 fn show_device() -> Result<(), Box<dyn Error>> {
     let resolved = crate::resolve(None, Vec::new())?;
     crate::warn_renamed(&resolved);
+    let settings = resolved.settings();
+    if tui::interactive()
+        && let Some(report) = last_report()
+    {
+        let mut view = BenchView::from_report(
+            format!("Last benchmark ({})", report.machine.cpu),
+            &report,
+            effective(&report, settings.device),
+            settings.device == DeviceSetting::Auto,
+            fast_load_lines(&report, settings.fast_load),
+        );
+        let mut screen = Screen::new()?;
+        let choice = choose(&mut screen, &mut view)?;
+        drop(screen);
+        if apply(choice)?.is_none() {
+            return Ok(());
+        }
+    }
+    let resolved = crate::resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let origin = resolved
         .get("model.device")

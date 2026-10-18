@@ -6,6 +6,7 @@
 //! when both stdin and stdout are terminals: hooks, pipes and scripts get the
 //! plain text output instead.
 
+pub mod bench;
 pub mod models;
 pub mod review;
 

@@ -1,0 +1,13 @@
+---
+source: src/tui/bench.rs
+expression: "draw(80, 12, |f| view.render(f))"
+---
+┌ Benchmark on AMD Ryzen 5 5500 ───────────────────────────────────────────────┐
+│device       per message load   generate CPU                                  │
+│intel-gpu    -                                 unavailable: OpenVINO GenAI not│
+│vulkan       |                                 measuring, with fast load      │
+│cpu                                            waiting                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+[Ctrl+C] stop

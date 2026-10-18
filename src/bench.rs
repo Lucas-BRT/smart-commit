@@ -321,9 +321,22 @@ pub fn measure_load_modes(
     target: Target,
     prompts: &[Prompt],
     config: &GenerationConfig,
-    mut load: impl FnMut(Target, bool) -> Result<Box<dyn Backend>, BackendError>,
+    load: impl FnMut(Target, bool) -> Result<Box<dyn Backend>, BackendError>,
 ) -> Entry {
+    measure_load_modes_with(target, prompts, config, load, |_| {})
+}
+
+/// Like [`measure_load_modes`], telling `phase` which mode it measures.
+pub fn measure_load_modes_with(
+    target: Target,
+    prompts: &[Prompt],
+    config: &GenerationConfig,
+    mut load: impl FnMut(Target, bool) -> Result<Box<dyn Backend>, BackendError>,
+    mut phase: impl FnMut(&'static str),
+) -> Entry {
+    phase("measuring, normal load");
     let normal = measure(target, prompts, config, |t| load(t, false));
+    phase("measuring, with fast load");
     let fast = measure(target, prompts, config, |t| load(t, true));
     let per_message = |e: &Entry| e.measurement.as_ref().map(|m| m.per_message_ms);
     let trial = FastLoadTrial::new(per_message(&normal), per_message(&fast));
@@ -510,6 +523,18 @@ mod tests {
             modes,
             [false, false, true, true],
             "warm-up and timed load each"
+        );
+        let mut phases = Vec::new();
+        measure_load_modes_with(
+            Target::Cpu,
+            &prompts(),
+            &GenerationConfig::default(),
+            |_, _| slow_load(0),
+            |p| phases.push(p),
+        );
+        assert_eq!(
+            phases,
+            ["measuring, normal load", "measuring, with fast load"]
         );
         let trial = entry.fast_load.unwrap();
         assert!(trial.enabled);

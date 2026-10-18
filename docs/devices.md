@@ -70,6 +70,13 @@ $ smart-commit device          # the last benchmark and the current choice
 - **Fast load.** `vulkan` and `cpu` are measured twice, with and without
   [fast load](#fast-load), and keep the faster mode; the lines under the
   table say what was turned on.
+- **In a terminal**, `smart-commit bench` shows each device while it is
+  measured (and which load mode), then the results, with the device in use
+  selected: Up/Down and Enter use another device, `a` goes back to `auto`.
+  Ctrl+C stops after the device being measured, so no server is left
+  running, and saves nothing. The summary is printed when the screen
+  closes. `smart-commit device` opens the same screen on the last
+  benchmark. `--json`, pipes and scripts get the text output.
 - **`smart-commit device use <device>`** writes `model.device` to the global
   config and shows the estimate for that device, or a note if it failed in
   the last benchmark.

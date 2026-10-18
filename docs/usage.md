@@ -107,7 +107,7 @@ smart-commit prompt            # the exact prompt for what is staged
 ## Devices
 
 ```bash
-smart-commit device            # the device in use, and the measured times
+smart-commit device            # the device in use and the measured times (choose another in a terminal)
 smart-commit device use npu    # use the NPU from now on
 smart-commit device use auto   # back to the fastest
 smart-commit bench             # measure again
