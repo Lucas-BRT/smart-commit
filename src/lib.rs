@@ -6,6 +6,7 @@ pub mod context;
 pub mod diff;
 pub mod generate;
 pub mod git;
+pub mod hook;
 pub mod message;
 pub mod prompt;
 pub mod style;

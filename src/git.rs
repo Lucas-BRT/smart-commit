@@ -117,6 +117,27 @@ impl Repo {
         Ok(diff::parse(&numstat, &patch))
     }
 
+    /// Where git looks for hooks, honouring `core.hooksPath`.
+    pub fn hooks_dir(&self) -> Result<PathBuf, GitError> {
+        let out = self.git(&["rev-parse", "--git-path", "hooks"])?;
+        // Relative paths are relative to where git ran: the root.
+        Ok(self.root.join(out.trim_end()))
+    }
+
+    /// The prefix of comment lines in commit messages (`core.commentChar`).
+    ///
+    /// `auto` makes git pick a character per message; we assume the default
+    /// then, which only matters for messages that start with `#`.
+    pub fn comment_prefix(&self) -> Result<String, GitError> {
+        let output = self.run(&["config", "--get", "core.commentChar"])?;
+        let value = String::from_utf8(output.stdout)?;
+        let value = value.trim_end();
+        Ok(match value {
+            "" | "auto" => "#".to_owned(),
+            custom => custom.to_owned(),
+        })
+    }
+
     /// Runs `git commit` with `message` pre-filled in the user's editor.
     ///
     /// Git's own terminal handling applies: hooks run, an empty message

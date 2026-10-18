@@ -262,3 +262,34 @@ fn repo_environment_reaches_every_git_call() {
     assert_eq!(statuses, [ChangeStatus::Deleted, ChangeStatus::Added]);
     assert_eq!(repo.context().staged[0].status, ChangeStatus::Renamed);
 }
+
+#[test]
+fn hooks_dir_honours_core_hooks_path() {
+    let repo = TestRepo::new();
+    let default = repo.repo().hooks_dir().unwrap();
+    assert_eq!(
+        default.canonicalize().unwrap(),
+        repo.path().join(".git/hooks").canonicalize().unwrap()
+    );
+
+    repo.git(&["config", "core.hooksPath", "tools/hooks"]);
+    assert_eq!(
+        repo.repo().hooks_dir().unwrap(),
+        repo.repo().root().join("tools/hooks")
+    );
+    repo.git(&["config", "core.hooksPath", "/etc/shared-hooks"]);
+    assert_eq!(
+        repo.repo().hooks_dir().unwrap(),
+        std::path::PathBuf::from("/etc/shared-hooks")
+    );
+}
+
+#[test]
+fn comment_prefix_defaults_to_hash() {
+    let repo = TestRepo::new();
+    assert_eq!(repo.repo().comment_prefix().unwrap(), "#");
+    repo.git(&["config", "core.commentChar", ";"]);
+    assert_eq!(repo.repo().comment_prefix().unwrap(), ";");
+    repo.git(&["config", "core.commentChar", "auto"]);
+    assert_eq!(repo.repo().comment_prefix().unwrap(), "#");
+}
