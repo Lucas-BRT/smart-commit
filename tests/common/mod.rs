@@ -31,21 +31,25 @@ const OWN_ENV: &[&str] = &[
     "NPU_COMMIT_TRACE",
     "NPU_COMMIT_DEVICE",
     "NPU_COMMIT_MODEL_DIR",
+    "NPU_COMMIT_CACHE_DIR",
 ];
 
-/// Where the binary looks for models and caches during tests: nowhere real,
-/// so a model the developer exported is never picked up.
+/// Where the binary looks for config, models and caches during tests:
+/// nowhere real, so the developer's own config and exported model are never
+/// picked up. Tests that write config pass their own XDG_CONFIG_HOME.
+pub const CONFIG_HOME: &str = "/nonexistent/npu-commit-tests/config";
 pub const DATA_HOME: &str = "/nonexistent/npu-commit-tests/data";
 pub const CACHE_HOME: &str = "/nonexistent/npu-commit-tests/cache";
 
 /// Applies [`GIT_ENV`], drops [`OWN_ENV`] and points the XDG directories at
-/// [`DATA_HOME`] and [`CACHE_HOME`], so the command behaves the same on every
-/// machine.
+/// [`CONFIG_HOME`], [`DATA_HOME`] and [`CACHE_HOME`], so the command behaves
+/// the same on every machine.
 pub fn isolate(command: &mut Command) -> &mut Command {
     for var in OWN_ENV {
         command.env_remove(var);
     }
     command
+        .env("XDG_CONFIG_HOME", CONFIG_HOME)
         .env("XDG_DATA_HOME", DATA_HOME)
         .env("XDG_CACHE_HOME", CACHE_HOME)
         .envs(GIT_ENV.iter().copied())

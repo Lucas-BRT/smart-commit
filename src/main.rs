@@ -3,17 +3,20 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use npu_commit::backend::{Backend, GenerationConfig, MockBackend};
+use npu_commit::backend::{Backend, MockBackend};
+use npu_commit::config::{self, BackendKind, Resolved, Settings, Sources};
 use npu_commit::context::RepoContext;
 use npu_commit::diff;
-use npu_commit::genai::{Device, GenaiBackend, GenaiOptions};
+use npu_commit::genai::GenaiBackend;
 use npu_commit::generate::{self, Source};
 use npu_commit::git::Repo;
 use npu_commit::hook;
 use npu_commit::message::CommitMessage;
 use npu_commit::paths;
-use npu_commit::prompt::{self, PromptOptions};
+use npu_commit::prompt;
 use npu_commit::trace::Trace;
+
+mod config_cmd;
 
 /// Writes a commit message for the staged changes, in the style of the
 /// repository, with a small LLM running locally.
@@ -51,6 +54,9 @@ enum Command {
     /// Manage the `prepare-commit-msg` git hook.
     #[command(subcommand)]
     Hook(HookCommand),
+    /// Read and change settings, globally or for a repository.
+    #[command(subcommand)]
+    Config(config_cmd::ConfigCommand),
 }
 
 #[derive(Debug, Subcommand)]
@@ -95,13 +101,13 @@ struct GenerateArgs {
     backend: BackendArgs,
 }
 
-/// How messages are generated. Each option can also come from the
-/// environment, which is how the git hook, run by git without our flags,
-/// gets them.
+/// How messages are generated. Unset options come from the environment,
+/// then the config files (see `npu-commit config list --show-origin`).
 #[derive(Debug, Args)]
 struct BackendArgs {
-    #[arg(long, env = "NPU_COMMIT_BACKEND", value_enum, default_value_t = BackendKind::Openvino)]
-    backend: BackendKind,
+    /// [config: backend; env: NPU_COMMIT_BACKEND]
+    #[arg(long, value_enum)]
+    backend: Option<BackendArg>,
     #[command(flatten)]
     model: ModelArgs,
     /// Reply of the mock backend; repeat it for the following attempts.
@@ -119,7 +125,7 @@ struct BackendArgs {
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-enum BackendKind {
+enum BackendArg {
     /// The exported model through OpenVINO GenAI, on --device.
     Openvino,
     /// Scripted replies from --mock-response, for tests and development.
@@ -129,10 +135,11 @@ enum BackendKind {
 /// Which model runs where, for the OpenVINO backend.
 #[derive(Debug, Args)]
 struct ModelArgs {
-    #[arg(long, env = "NPU_COMMIT_DEVICE", value_enum, default_value_t = DeviceArg::Npu)]
-    device: DeviceArg,
-    /// Exported model [default: $XDG_DATA_HOME/npu-commit/models/<default model>]
-    #[arg(long, env = "NPU_COMMIT_MODEL_DIR", value_name = "DIR")]
+    /// [config: model.device; env: NPU_COMMIT_DEVICE]
+    #[arg(long, value_enum)]
+    device: Option<DeviceArg>,
+    /// [config: model.dir; env: NPU_COMMIT_MODEL_DIR]
+    #[arg(long, value_name = "DIR")]
     model_dir: Option<PathBuf>,
 }
 
@@ -143,29 +150,53 @@ enum DeviceArg {
     Cpu,
 }
 
-impl ModelArgs {
-    fn load(&self) -> Result<GenaiBackend, Box<dyn Error>> {
-        let env = |name: &str| std::env::var(name).ok();
-        let model_dir = self
-            .model_dir
-            .clone()
-            .or_else(|| paths::default_model_dir(env))
-            .ok_or("HOME is not set; pass --model-dir")?;
-        let cache_dir = paths::default_cache_dir(env).ok_or("HOME is not set")?;
-        let device = match self.device {
-            DeviceArg::Npu => Device::Npu,
-            DeviceArg::Gpu => Device::Gpu,
-            DeviceArg::Cpu => Device::Cpu,
-        };
-        Ok(GenaiBackend::load(&GenaiOptions {
-            model_dir,
-            device,
-            cache_dir,
-            // The NPU compiles for exactly the prompt length we budget for.
-            max_prompt_tokens: PromptOptions::default().max_prompt_tokens,
-            max_new_tokens: GenerationConfig::default().max_new_tokens,
-        })?)
+impl BackendArgs {
+    fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {
+        let mut flags = self.model.flags()?;
+        if let Some(backend) = self.backend {
+            let name = match backend {
+                BackendArg::Openvino => "openvino",
+                BackendArg::Mock => "mock",
+            };
+            flags.push(("backend", name.to_owned()));
+        }
+        Ok(flags)
     }
+}
+
+impl ModelArgs {
+    fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {
+        let mut flags = Vec::new();
+        if let Some(device) = self.device {
+            let name = match device {
+                DeviceArg::Npu => "npu",
+                DeviceArg::Gpu => "gpu",
+                DeviceArg::Cpu => "cpu",
+            };
+            flags.push(("model.device", name.to_owned()));
+        }
+        if let Some(dir) = &self.model_dir {
+            // Relative to where the command runs, as users expect from a flag.
+            let dir = std::path::absolute(dir)?;
+            flags.push(("model.dir", dir.to_string_lossy().into_owned()));
+        }
+        Ok(flags)
+    }
+}
+
+/// Every layer for `repo` (or none outside a repository), with `flags` on
+/// top.
+fn resolve(
+    repo: Option<&Repo>,
+    flags: Vec<(&'static str, String)>,
+) -> Result<Resolved, config::ConfigError> {
+    let env = |name: &str| std::env::var(name).ok();
+    Resolved::resolve(&Sources {
+        global: paths::default_config_file(env),
+        repo: repo.map(|r| r.root().join(config::REPO_FILE)),
+        env: &env,
+        flags,
+    })
 }
 
 fn main() -> ExitCode {
@@ -189,6 +220,7 @@ fn main() -> ExitCode {
             run_hook(&message_file, source.as_deref(), &backend);
             Ok(())
         }
+        Some(Command::Config(command)) => config_cmd::run(command),
         None => run_generate(&cli.generate),
     };
     match result {
@@ -201,17 +233,20 @@ fn main() -> ExitCode {
 }
 
 fn run_context(path: &Path) -> Result<(), Box<dyn Error>> {
-    let context = RepoContext::collect(&Repo::discover(path)?)?;
-    print_context(&context);
+    let repo = Repo::discover(path)?;
+    let settings = resolve(Some(&repo), Vec::new())?.settings();
+    let context = RepoContext::collect_with_history(&repo, settings.history_depth)?;
+    print_context(&context, &settings);
     Ok(())
 }
 
 /// Prints the prompt the model would get for the staged changes.
 fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
     let repo = Repo::discover(path)?;
-    let context = RepoContext::collect(&repo)?;
+    let settings = resolve(Some(&repo), Vec::new())?.settings();
+    let context = RepoContext::collect_with_history(&repo, settings.history_depth)?;
     let files = staged_files(&repo)?;
-    let options = PromptOptions::default();
+    let options = settings.prompt_options();
     let prompt = prompt::build(&context, &files, &options);
     let tokens = diff::estimate_tokens(&prompt.system) + diff::estimate_tokens(&prompt.user);
     println!("===== system =====\n{}", prompt.system);
@@ -234,17 +269,22 @@ fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn load_model(settings: &Settings) -> Result<GenaiBackend, Box<dyn Error>> {
+    Ok(GenaiBackend::load(&settings.genai_options()?)?)
+}
+
 /// Generates a message for what is staged in `repo`, writing the trace if
 /// asked and warning when the fallback had to be used.
 fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Box<dyn Error>> {
-    let context = RepoContext::collect(repo)?;
+    let settings = resolve(Some(repo), args.flags()?)?.settings();
+    let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
     let files = staged_files(repo)?;
-    let backend: Box<dyn Backend> = match args.backend {
-        BackendKind::Openvino => Box::new(args.model.load()?),
+    let backend: Box<dyn Backend> = match settings.backend {
+        BackendKind::Openvino => Box::new(load_model(&settings)?),
         BackendKind::Mock => Box::new(MockBackend::new(args.mock_responses.clone())),
     };
-    let options = PromptOptions::default();
-    let config = GenerationConfig::default();
+    let options = settings.prompt_options();
+    let config = settings.generation_config();
     let generation = generate::generate(&context, &files, backend.as_ref(), &options, &config)?;
     if let Some(path) = &args.trace {
         let trace = Trace::new(
@@ -275,7 +315,10 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
     let replay = match model {
         None => trace.replay()?,
         Some(model) => {
-            let backend = model.load()?;
+            // The prompt options come from the trace; only where the model
+            // runs comes from the settings (no repository: it may be gone).
+            let settings = resolve(None, model.flags()?)?.settings();
+            let backend = load_model(&settings)?;
             if backend.describe() != trace.backend {
                 eprintln!(
                     "note: recorded with `{}`, replaying with `{}`",
@@ -406,7 +449,7 @@ fn staged_files(repo: &Repo) -> Result<Vec<diff::FileDiff>, Box<dyn Error>> {
     Ok(files)
 }
 
-fn print_context(ctx: &RepoContext) {
+fn print_context(ctx: &RepoContext, settings: &Settings) {
     let style = &ctx.style;
     println!("repository:  {}", ctx.root.display());
     println!(
@@ -418,7 +461,13 @@ fn print_context(ctx: &RepoContext) {
         "convention:  {:?} (from {} commits)",
         style.convention, style.sample_size
     );
+    if let Some(forced) = settings.convention {
+        println!("             forced to {forced:?} by style.convention");
+    }
     println!("language:    {:?}", style.language);
+    if let Some(forced) = settings.language {
+        println!("             forced to {forced:?} by style.language");
+    }
     println!("tickets:     {:?}", style.tickets);
     println!("types:       {}", format_ranked(&style.types));
     println!("scopes:      {}", format_ranked(&style.scopes));

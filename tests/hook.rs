@@ -245,3 +245,24 @@ fn install_honours_core_hooks_path() {
     assert!(npu_commit::hook::is_ours(&script));
     assert!(!hook_path(&repo).exists());
 }
+
+#[test]
+fn broken_config_warns_but_never_blocks_the_commit() {
+    let repo = repo_with_hook();
+    repo.write(".npu-commit.toml", "[style]\nlanguage = \"klingon\"\n");
+    let output = repo.git_with(
+        &["commit", "--quiet"],
+        &[
+            MOCK,
+            reply("feat: generated"),
+            ("GIT_EDITOR", "sh -c 'echo \"by hand\" > \"$1\"' -"),
+        ],
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(
+        stderr(&output).contains("`style.language`") && stderr(&output).contains("klingon"),
+        "{}",
+        stderr(&output)
+    );
+    assert_eq!(last_message(&repo), "by hand");
+}
