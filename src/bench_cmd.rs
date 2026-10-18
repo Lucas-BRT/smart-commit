@@ -4,47 +4,18 @@
 use std::error::Error;
 use std::path::PathBuf;
 
-use clap::{Subcommand, ValueEnum};
+use clap::Subcommand;
 use smart_commit::bench::{self, Machine, Report};
 use smart_commit::config::{self, DeviceSetting, Origin};
 use smart_commit::device::{DEFAULT_ORDER, Target};
 use smart_commit::paths;
 
+use crate::DeviceArg;
+
 #[derive(Debug, Subcommand)]
 pub enum DeviceCommand {
     /// Use a device from now on (global config), or `auto` for the fastest.
-    Use { device: DeviceChoice },
-}
-
-#[derive(Debug, Clone, Copy, ValueEnum)]
-pub enum DeviceChoice {
-    Auto,
-    Npu,
-    Gpu,
-    Cpu,
-    Vulkan,
-}
-
-impl DeviceChoice {
-    fn name(self) -> &'static str {
-        match self {
-            Self::Auto => "auto",
-            Self::Npu => "npu",
-            Self::Gpu => "gpu",
-            Self::Cpu => "cpu",
-            Self::Vulkan => "vulkan",
-        }
-    }
-
-    fn target(self) -> Option<Target> {
-        match self {
-            Self::Auto => None,
-            Self::Npu => Some(Target::Npu),
-            Self::Gpu => Some(Target::Gpu),
-            Self::Cpu => Some(Target::Cpu),
-            Self::Vulkan => Some(Target::Vulkan),
-        }
-    }
+    Use { device: DeviceArg },
 }
 
 fn env(name: &str) -> Option<String> {
@@ -171,7 +142,7 @@ fn show_device() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn use_device(device: DeviceChoice) -> Result<(), Box<dyn Error>> {
+fn use_device(device: DeviceArg) -> Result<(), Box<dyn Error>> {
     let path = paths::default_config_file(env).ok_or("HOME is not set")?;
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", device.name(), None)?;

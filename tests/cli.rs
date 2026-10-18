@@ -78,7 +78,7 @@ fn context_accepts_a_path() {
     let repo = TestRepo::new();
     let elsewhere = tempfile::TempDir::new().unwrap();
     let path = repo.path().to_str().unwrap();
-    let output = smart_commit(&["context", path], elsewhere.path());
+    let output = smart_commit(&["context", "-C", path], elsewhere.path());
     assert!(output.status.success(), "{}", stderr(&output));
 }
 

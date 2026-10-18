@@ -36,12 +36,14 @@ struct Cli {
 enum Command {
     /// Show what was detected about the repository.
     Context {
-        #[arg(default_value = ".")]
+        /// Repository to work on.
+        #[arg(short = 'C', long = "path", default_value = ".")]
         path: PathBuf,
     },
     /// Show the prompt the model would get for the staged changes.
     Prompt {
-        #[arg(default_value = ".")]
+        /// Repository to work on.
+        #[arg(short = 'C', long = "path", default_value = ".")]
         path: PathBuf,
     },
     /// Run a recorded generation again and check it is reproduced exactly.
@@ -175,15 +177,41 @@ struct ModelArgs {
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-enum DeviceArg {
+pub enum DeviceArg {
     /// The fastest benchmarked device, else the first that works.
     Auto,
+    /// Intel NPU, through OpenVINO.
     Npu,
     /// Intel GPU, through OpenVINO.
     Gpu,
+    /// The CPU, through OpenVINO.
     Cpu,
-    /// Any GPU with a Vulkan driver, through llama.cpp.
+    /// Any GPU with a Vulkan driver (AMD, NVIDIA, Intel), through llama.cpp.
     Vulkan,
+}
+
+impl DeviceArg {
+    /// The value `model.device` takes for it.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Auto => "auto",
+            Self::Npu => "npu",
+            Self::Gpu => "gpu",
+            Self::Cpu => "cpu",
+            Self::Vulkan => "vulkan",
+        }
+    }
+
+    /// The device it names; none for `auto`.
+    pub fn target(self) -> Option<Target> {
+        match self {
+            Self::Auto => None,
+            Self::Npu => Some(Target::Npu),
+            Self::Gpu => Some(Target::Gpu),
+            Self::Cpu => Some(Target::Cpu),
+            Self::Vulkan => Some(Target::Vulkan),
+        }
+    }
 }
 
 impl BackendArgs {
@@ -206,14 +234,7 @@ impl ModelArgs {
     fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {
         let mut flags = Vec::new();
         if let Some(device) = self.device {
-            let name = match device {
-                DeviceArg::Auto => "auto",
-                DeviceArg::Npu => "npu",
-                DeviceArg::Gpu => "gpu",
-                DeviceArg::Cpu => "cpu",
-                DeviceArg::Vulkan => "vulkan",
-            };
-            flags.push(("model.device", name.to_owned()));
+            flags.push(("model.device", device.name().to_owned()));
         }
         if let Some(dir) = &self.model_dir {
             // Relative to where the command runs, as users expect from a flag.
