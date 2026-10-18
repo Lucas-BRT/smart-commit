@@ -24,16 +24,6 @@ pub const GIT_ENV: &[(&str, &str)] = &[
     ("GIT_COMMITTER_DATE", "2026-01-01T00:00:00Z"),
 ];
 
-/// Our own settings, which the developer may have exported.
-const OWN_ENV: &[&str] = &[
-    "SMART_COMMIT_BACKEND",
-    "SMART_COMMIT_MOCK_RESPONSE",
-    "SMART_COMMIT_TRACE",
-    "SMART_COMMIT_DEVICE",
-    "SMART_COMMIT_MODEL_DIR",
-    "SMART_COMMIT_CACHE_DIR",
-];
-
 /// Where the binary looks for config, models and caches during tests:
 /// nowhere real, so the developer's own config and exported model are never
 /// picked up. Tests that write config pass their own XDG_CONFIG_HOME.
@@ -41,12 +31,15 @@ pub const CONFIG_HOME: &str = "/nonexistent/smart-commit-tests/config";
 pub const DATA_HOME: &str = "/nonexistent/smart-commit-tests/data";
 pub const CACHE_HOME: &str = "/nonexistent/smart-commit-tests/cache";
 
-/// Applies [`GIT_ENV`], drops [`OWN_ENV`] and points the XDG directories at
+/// Applies [`GIT_ENV`], drops every `SMART_COMMIT_*` variable the developer
+/// may have exported (settings and test overrides alike) and points the XDG directories at
 /// [`CONFIG_HOME`], [`DATA_HOME`] and [`CACHE_HOME`], so the command behaves
 /// the same on every machine.
 pub fn isolate(command: &mut Command) -> &mut Command {
-    for var in OWN_ENV {
-        command.env_remove(var);
+    for (var, _) in std::env::vars_os() {
+        if var.to_string_lossy().starts_with("SMART_COMMIT_") {
+            command.env_remove(var);
+        }
     }
     command
         .env("XDG_CONFIG_HOME", CONFIG_HOME)
