@@ -2,6 +2,7 @@
 
 use std::fs;
 
+use npu_commit::context::RepoContext;
 use npu_commit::diff;
 use npu_commit::git::{ChangeStatus, FileChange, GitError, Repo};
 use npu_commit::prompt::{self, PromptOptions};
@@ -292,4 +293,18 @@ fn comment_prefix_defaults_to_hash() {
     assert_eq!(repo.repo().comment_prefix().unwrap(), ";");
     repo.git(&["config", "core.commentChar", "auto"]);
     assert_eq!(repo.repo().comment_prefix().unwrap(), "#");
+}
+
+#[test]
+fn history_depth_limits_the_subjects() {
+    let repo = TestRepo::new();
+    for n in 1..=5 {
+        repo.commit(&format!("feat: change number {n}"));
+    }
+    let ctx = RepoContext::collect_with_history(&repo.repo(), 2).unwrap();
+    assert_eq!(
+        ctx.subjects,
+        ["feat: change number 5", "feat: change number 4"]
+    );
+    assert_eq!(ctx.style.sample_size, 2);
 }

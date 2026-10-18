@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::git::{FileChange, GitError, Repo};
 use crate::style::{self, Style};
 
-/// How many recent commits the style is learned from.
+/// How many recent commits the style is learned from, by default.
 pub const HISTORY_DEPTH: usize = 30;
 
 #[derive(Debug, Clone)]
@@ -22,10 +22,16 @@ pub struct RepoContext {
 
 impl RepoContext {
     pub fn collect(repo: &Repo) -> Result<Self, GitError> {
+        Self::collect_with_history(repo, HISTORY_DEPTH)
+    }
+
+    /// Like [`Self::collect`], learning the style from the last
+    /// `history_depth` commits.
+    pub fn collect_with_history(repo: &Repo, history_depth: usize) -> Result<Self, GitError> {
         Ok(Self::new(
             repo.root().to_path_buf(),
             repo.current_branch()?,
-            repo.recent_subjects(HISTORY_DEPTH)?,
+            repo.recent_subjects(history_depth)?,
             repo.staged_changes()?,
         ))
     }
