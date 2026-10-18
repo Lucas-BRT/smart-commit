@@ -3,12 +3,15 @@
 Gera mensagens de commit no estilo do seu repositório usando um LLM pequeno
 rodando **localmente na NPU Intel** (OpenVINO). Nada sai da sua máquina.
 
-> Status: fases 1, 2, 3 e 5 concluídas. O fluxo completo (CLI e hook do git)
-> funciona com um backend simulado (`--backend mock`); o backend da NPU é a
-> fase 4.
+> Status: fases 1, 2, 3 e 5 concluídas; fase 4 em andamento. O modelo real
+> já gera mensagens pelo OpenVINO na CPU; falta validar na NPU.
+
+Setup (uma vez): `scripts/setup-npu.sh` (usa sudo), `scripts/check-npu.sh` e
+`scripts/export-model.sh`. Veja [docs/06](docs/06-fase-4-npu.md).
 
 ```bash
-cargo run -- --backend mock --mock-response 'feat: ...'   # gera e imprime a mensagem
+cargo run                     # gera a mensagem na NPU (--device cpu|gpu)
+cargo run -- --backend mock --mock-response 'feat: ...'   # sem modelo
 cargo run -- --commit --backend mock --mock-response '…'  # abre o editor e commita
 cargo run -- --backend mock --mock-response '…' --trace t.json
 cargo run -- replay t.json    # refaz a geração gravada e confere se é idêntica
@@ -28,3 +31,4 @@ O toolchain é fixado em `rust-toolchain.toml`. Regras para contribuir
 - [03 — Fase 2: diff, prompt e saneamento](docs/03-fase-2-prompt.md)
 - [04 — Fase 3: CLI de ponta a ponta e reprodutibilidade](docs/04-fase-3-cli.md)
 - [05 — Fase 5: hook `prepare-commit-msg`](docs/05-fase-5-hook.md)
+- [06 — Fase 4: backend OpenVINO GenAI na NPU](docs/06-fase-4-npu.md)

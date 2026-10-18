@@ -39,7 +39,7 @@ Onde cada teste fica:
 | Snapshot de prompt | `insta::assert_snapshot!`, com arquivos em `src/snapshots/`. Atualize com `INSTA_UPDATE=always cargo test` e revise o diff |
 | Integração com git | `tests/git_context.rs`, usando o `TestRepo` de `tests/common/` (repositório temporário isolado da config do desenvolvedor) |
 | CLI de ponta a ponta | `tests/cli.rs`, rodando o binário via `CARGO_BIN_EXE_npu-commit` |
-| Hardware (NPU) | `#[ignore]`, roda com `cargo test -- --ignored` |
+| Hardware (modelo real) | `tests/hardware.rs`, `#[ignore]`: `cargo test --test hardware -- --ignored --test-threads 1` (`NPU_COMMIT_TEST_DEVICE=cpu` sem NPU). Use os prompts das fixtures, nunca entradas ad hoc |
 
 `cargo test` nunca pode depender da NPU, de rede ou da config git de quem
 roda os testes.
