@@ -17,7 +17,7 @@ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.com GIT_AUTHOR_DATE=2026-01-01T00:00:00Z
 export GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.com GIT_COMMITTER_DATE=2026-01-01T00:00:00Z
 mkdir -p "$OUT"
-fresh() { rm -rf "$WORK/$1"; git init -q --initial-branch=main "$WORK/$1"; cd "$WORK/$1"; }
+fresh() { rm -rf "${WORK:?}/${1:?}"; git init -q --initial-branch=main "$WORK/$1"; cd "$WORK/$1"; }
 commit() { git commit -q --allow-empty -m "$1"; }
 
 fresh conventional
