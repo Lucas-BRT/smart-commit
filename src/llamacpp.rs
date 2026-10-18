@@ -1,6 +1,8 @@
-//! A second backend: llama.cpp's server with Vulkan, for the GPUs OpenVINO
-//! cannot drive (AMD and NVIDIA, with proprietary or open-source drivers);
-//! it runs on Intel GPUs too.
+//! A second backend: llama.cpp's server, with Vulkan for the GPUs OpenVINO
+//! cannot drive (AMD and NVIDIA, with proprietary or open-source drivers;
+//! it runs on Intel GPUs too), and on the CPU of any x86_64 machine, which
+//! needs no OpenVINO. The release build picks the CPU code for the machine
+//! (Intel or AMD) at run time.
 //!
 //! Each generation session starts a private `llama-server`, listening on a
 //! UNIX socket in a fresh temporary directory (nothing is exposed on the
@@ -29,14 +31,31 @@ pub const DEFAULT_GGUF: &str = "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf";
 /// UNIX socket paths are limited to 108 bytes on Linux.
 const MAX_SOCKET_PATH: usize = 100;
 
+/// Where llama.cpp runs the model.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LlamaDevice {
+    /// Every layer on the CPU.
+    Cpu,
+    /// Every layer on this Vulkan device (`VulkanN`, as
+    /// `llama-server --list-devices` numbers them).
+    Vulkan(usize),
+}
+
+impl fmt::Display for LlamaDevice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Cpu => f.write_str("CPU"),
+            Self::Vulkan(n) => write!(f, "Vulkan{n}"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LlamaCppOptions {
     pub server: PathBuf,
     /// A GGUF model; `<model>.sha256` next to it, if present, identifies it.
     pub model: PathBuf,
-    /// Which Vulkan device (`VulkanN`, as `llama-server --list-devices`
-    /// numbers them).
-    pub vulkan_device: usize,
+    pub device: LlamaDevice,
     pub max_prompt_tokens: usize,
     pub max_new_tokens: usize,
     pub startup_timeout: Duration,
@@ -195,6 +214,11 @@ impl Backend for LlamaCppBackend {
 /// exactly our prompt budget and reply, one slot, no web UI, no network.
 pub fn server_args(options: &LlamaCppOptions, socket: &Path) -> Vec<String> {
     let context = options.max_prompt_tokens + options.max_new_tokens;
+    let (layers, device) = match options.device {
+        // `none` keeps llama.cpp from offloading anything to a GPU it finds.
+        LlamaDevice::Cpu => ("0", "none".to_owned()),
+        LlamaDevice::Vulkan(_) => ("999", options.device.to_string()),
+    };
     [
         "--model",
         &options.model.to_string_lossy(),
@@ -202,9 +226,9 @@ pub fn server_args(options: &LlamaCppOptions, socket: &Path) -> Vec<String> {
         "--host",
         &socket.to_string_lossy(),
         "--n-gpu-layers",
-        "999",
+        layers,
         "--device",
-        &format!("Vulkan{}", options.vulkan_device),
+        &device,
         "--ctx-size",
         &context.to_string(),
         "--parallel",
@@ -395,8 +419,8 @@ fn describe(options: &LlamaCppOptions) -> String {
         })
         .unwrap_or_else(|| "unverified".to_owned());
     format!(
-        "llama.cpp server={build} device=Vulkan{} model={} sha256={identity} ctx={}",
-        options.vulkan_device,
+        "llama.cpp server={build} device={} model={} sha256={identity} ctx={}",
+        options.device,
         name(&options.model),
         options.max_prompt_tokens + options.max_new_tokens
     )
@@ -412,7 +436,7 @@ mod tests {
         LlamaCppOptions {
             server: dir.join("llama-b11381/llama-server"),
             model: dir.join("model.gguf"),
-            vulkan_device: 1,
+            device: LlamaDevice::Vulkan(1),
             max_prompt_tokens: 1024,
             max_new_tokens: 128,
             startup_timeout: Duration::from_secs(5),
@@ -436,6 +460,23 @@ mod tests {
         assert!(joined.contains("--ctx-size 1152"));
         assert!(joined.contains("--n-gpu-layers 999"));
         assert!(joined.contains("--offline"));
+    }
+
+    #[test]
+    fn on_the_cpu_nothing_is_offloaded() {
+        let options = LlamaCppOptions {
+            device: LlamaDevice::Cpu,
+            ..options(Path::new("/d"))
+        };
+        let joined = server_args(&options, Path::new("/tmp/x/server.sock")).join(" ");
+        assert!(joined.contains("--n-gpu-layers 0"), "{joined}");
+        assert!(joined.contains("--device none"), "{joined}");
+        assert!(!joined.contains("Vulkan"), "{joined}");
+        assert!(joined.contains("--ctx-size 1152"), "{joined}");
+        assert_eq!(
+            describe(&options),
+            "llama.cpp server=llama-b11381 device=CPU model=model.gguf sha256=unverified ctx=1152"
+        );
     }
 
     #[test]

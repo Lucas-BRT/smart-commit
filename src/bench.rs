@@ -15,8 +15,9 @@ use crate::device::Target;
 use crate::prompt::Prompt;
 use crate::trace::Trace;
 
-/// Bumped on incompatible changes to the saved report.
-pub const FORMAT: u32 = 1;
+/// Bumped on incompatible changes to the saved report. 2: the devices of
+/// 0.4 (`cpu` moved to llama.cpp, `gpu` became `intel-gpu`).
+pub const FORMAT: u32 = 2;
 
 const FIXTURES: &[&str] = &[
     include_str!("../tests/fixtures/traces/conventional-pt-retry.json"),
@@ -128,7 +129,7 @@ impl Report {
     /// The table shown to the user, marking `selected`.
     pub fn table(&self, selected: Option<Target>) -> String {
         let mut out = format!(
-            "  {:<8} {:>11} {:>8} {:>9} {:>7}\n",
+            "  {:<12} {:>11} {:>8} {:>9} {:>7}\n",
             "device", "per message", "load", "generate", "CPU"
         );
         for entry in &self.entries {
@@ -139,7 +140,7 @@ impl Report {
             };
             match (&entry.measurement, &entry.error) {
                 (Some(m), _) => out.push_str(&format!(
-                    "  {:<8} {:>11} {:>8} {:>9} {:>7}{mark}\n",
+                    "  {:<12} {:>11} {:>8} {:>9} {:>7}{mark}\n",
                     entry.target.name(),
                     seconds(m.per_message_ms),
                     seconds(m.load_ms),
@@ -147,7 +148,7 @@ impl Report {
                     format!("{:.1}x", m.cpu_cores),
                 )),
                 (None, error) => out.push_str(&format!(
-                    "  {:<8} unavailable: {}\n",
+                    "  {:<12} unavailable: {}\n",
                     entry.target.name(),
                     first_line(error.as_deref().unwrap_or("unknown error"))
                 )),
@@ -286,27 +287,32 @@ mod tests {
     #[test]
     fn ranking_is_fastest_first_and_skips_failures() {
         let report = report_of(vec![
-            entry(Target::Gpu, None),
+            entry(Target::IntelGpu, None),
             entry(Target::Npu, Some(5100.0)),
             entry(Target::Vulkan, Some(2400.0)),
             entry(Target::Cpu, Some(4000.0)),
         ]);
         assert_eq!(report.ranking(), [Target::Vulkan, Target::Cpu, Target::Npu]);
         assert_eq!(report.fastest(), Some(Target::Vulkan));
-        assert_eq!(report_of(vec![entry(Target::Gpu, None)]).fastest(), None);
+        assert_eq!(
+            report_of(vec![entry(Target::IntelGpu, None)]).fastest(),
+            None
+        );
     }
 
     #[test]
     fn table_marks_the_selection_and_explains_failures() {
         let report = report_of(vec![
-            entry(Target::Gpu, Some(1800.0)),
+            entry(Target::IntelGpu, Some(1800.0)),
             entry(Target::Npu, None),
+            entry(Target::OpenvinoCpu, Some(2100.0)),
         ]);
         assert_eq!(
-            report.table(Some(Target::Gpu)),
-            "  device   per message     load  generate     CPU\n  \
-             gpu            1.8 s    0.9 s     0.9 s    1.2x  <- selected\n  \
-             npu      unavailable: backend unavailable: no runtime\n"
+            report.table(Some(Target::IntelGpu)),
+            "  device       per message     load  generate     CPU\n  \
+             intel-gpu          1.8 s    0.9 s     0.9 s    1.2x  <- selected\n  \
+             npu          unavailable: backend unavailable: no runtime\n  \
+             openvino-cpu       2.1 s    1.1 s     1.1 s    1.2x\n"
         );
     }
 
@@ -314,8 +320,9 @@ mod tests {
     fn reports_round_trip_and_other_formats_are_ignored() {
         let report = report_of(vec![entry(Target::Cpu, Some(4000.0))]);
         assert_eq!(Report::from_json(&report.to_json()).unwrap(), report);
-        let other = report.to_json().replace("\"format\": 1", "\"format\": 2");
-        assert_eq!(Report::from_json(&other), None);
+        // Reports of 0.3 and earlier name devices that changed meaning.
+        let old = report.to_json().replace("\"format\": 2", "\"format\": 1");
+        assert_eq!(Report::from_json(&old), None);
         assert_eq!(Report::from_json("{"), None);
     }
 

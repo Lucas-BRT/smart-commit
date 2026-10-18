@@ -3,8 +3,9 @@
 //!
 //!   cargo test --test hardware -- --ignored --test-threads 1
 //!
-//! `SMART_COMMIT_TEST_DEVICE` picks the device: `npu` (the default), `gpu` or
-//! `cpu` through OpenVINO, or `vulkan` through llama.cpp.
+//! `SMART_COMMIT_TEST_DEVICE` picks the device: `npu` (the default),
+//! `intel-gpu` or `openvino-cpu` through OpenVINO, or `vulkan` or `cpu`
+//! through llama.cpp.
 //! `SMART_COMMIT_MODEL_DIR`, `SMART_COMMIT_GGUF` and `SMART_COMMIT_LLAMA_SERVER`
 //! override where the models and the server are. The prompts
 //! come from the recorded traces in tests/fixtures/traces, so every run sees
@@ -16,7 +17,7 @@ use std::path::{Path, PathBuf};
 use smart_commit::backend::{Backend, GenerationConfig};
 use smart_commit::diff::estimate_tokens;
 use smart_commit::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};
-use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
+use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions, LlamaDevice};
 use smart_commit::paths;
 use smart_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
 use smart_commit::trace::Trace;
@@ -30,22 +31,26 @@ fn backend() -> Box<dyn Backend> {
             .expect("HOME or the override variable")
     };
     let device = match env("SMART_COMMIT_TEST_DEVICE").as_deref() {
-        Some("vulkan") => {
+        Some(name @ ("vulkan" | "cpu")) => {
             let backend = LlamaCppBackend::start(&LlamaCppOptions {
                 server: path(
                     "SMART_COMMIT_LLAMA_SERVER",
                     paths::default_llama_server(env),
                 ),
                 model: path("SMART_COMMIT_GGUF", paths::default_gguf_file(env)),
-                vulkan_device: 0,
+                device: if name == "cpu" {
+                    LlamaDevice::Cpu
+                } else {
+                    LlamaDevice::Vulkan(0)
+                },
                 max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
                 max_new_tokens: GenerationConfig::default().max_new_tokens,
                 startup_timeout: std::time::Duration::from_secs(120),
             });
             return Box::new(backend.unwrap_or_else(|err| panic!("{err}")));
         }
-        Some("cpu") => Device::Cpu,
-        Some("gpu") => Device::Gpu,
+        Some("openvino-cpu") => Device::Cpu,
+        Some("intel-gpu") => Device::Gpu,
         Some("npu") | None => Device::Npu,
         Some(other) => panic!("unknown SMART_COMMIT_TEST_DEVICE {other:?}"),
     };

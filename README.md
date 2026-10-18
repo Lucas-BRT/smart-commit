@@ -22,10 +22,10 @@ feat(diff): share the token budget between files by priority
 - **Follows your repository's style.** It learns the convention
   (Conventional Commits, gitmoji or free form), the language, the scopes and
   the ticket format from the history.
-- **Runs on the hardware you have.** OpenVINO drives Intel NPUs, Intel GPUs
-  and CPUs; llama.cpp with Vulkan drives AMD and NVIDIA GPUs, with
-  proprietary or open-source drivers. It benchmarks the machine and picks the
-  fastest device.
+- **Runs on the hardware you have.** OpenVINO drives Intel NPUs and Intel
+  GPUs; llama.cpp drives AMD and NVIDIA GPUs through Vulkan, with proprietary
+  or open-source drivers, and the CPU of any x86_64 machine. It benchmarks
+  the machine and picks the fastest device.
 - **Works with any git client.** A `prepare-commit-msg` hook fills in the
   message of every `git commit`, from the terminal, an editor or a GUI, and
   never blocks a commit.
@@ -45,12 +45,13 @@ guided setup. The setup asks before installing drivers, downloads the models
 and ends with a benchmark that shows which device will be used:
 
 ```text
-  device   per message     load  generate     CPU
-  gpu            1.0 s    0.6 s     0.4 s    1.1x  <- selected
-  npu            3.4 s    1.8 s     1.6 s    0.4x
-  vulkan         1.6 s    0.8 s     0.8 s    0.5x
-  cpu            2.1 s    1.3 s     0.9 s    2.9x
+  device       per message     load  generate     CPU
+  vulkan             2.5 s    2.4 s     0.1 s    0.5x  <- selected
+  cpu                2.8 s    1.4 s     1.4 s    5.2x
 ```
+
+(a Ryzen 5 5500 with an RTX 3050; the Intel-only devices are listed as
+unavailable there.)
 
 Requirements: Linux on x86_64. Drivers are installed with `apt`
 (Ubuntu 24.04 and derivatives are tested); on other distributions the setup
@@ -76,14 +77,16 @@ installer's options and for building from source.
 | Device | Backend | Hardware |
 |---|---|---|
 | `npu` | OpenVINO GenAI | Intel NPU (Core Ultra) |
-| `gpu` | OpenVINO GenAI | Intel GPU, integrated or Arc |
+| `intel-gpu` | OpenVINO GenAI | Intel GPU, integrated or Arc |
 | `vulkan` | llama.cpp | AMD (RADV), NVIDIA (proprietary or NVK) and Intel GPUs |
-| `cpu` | OpenVINO GenAI | any x86_64 CPU |
+| `cpu` | llama.cpp | any x86_64 CPU, Intel or AMD |
+| `openvino-cpu` | OpenVINO GenAI | any x86_64 CPU, where OpenVINO is installed |
 
 The default model is Qwen2.5-Coder-1.5B-Instruct. On a Core Ultra 5 225H a
 message takes 1.8 s end to end on the integrated GPU, 2.5 s through Vulkan,
-4.0 s on the CPU and 5.1 s on the NPU. See [devices](docs/devices.md) for the
-measurements.
+4.0 s on the CPU through OpenVINO and 5.1 s on the NPU; on a Ryzen 5 5500
+with an RTX 3050, 2.5 s through Vulkan and 2.8 s on the CPU through
+llama.cpp. See [devices](docs/devices.md) for the measurements.
 
 ## Documentation
 

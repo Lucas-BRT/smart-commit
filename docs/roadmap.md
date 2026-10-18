@@ -7,7 +7,8 @@
 - `prepare-commit-msg` hook for any git client.
 - OpenVINO GenAI backend on the NPU, the Intel GPU and the CPU, with NPU
   tuning (chunked prefill, `BEST_PERF`).
-- llama.cpp backend with Vulkan for AMD, NVIDIA and Intel GPUs.
+- llama.cpp backend with Vulkan for AMD, NVIDIA and Intel GPUs, and on the
+  CPU, so machines without Intel devices need no OpenVINO.
 - `auto` device selection, `bench` and `device`.
 - Global and per-repository configuration.
 - Installer, guided setup for every GPU vendor, reproducible model export and

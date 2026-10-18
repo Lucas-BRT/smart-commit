@@ -183,34 +183,32 @@ pub enum DeviceArg {
     /// Intel NPU, through OpenVINO.
     Npu,
     /// Intel GPU, through OpenVINO.
-    Gpu,
-    /// The CPU, through OpenVINO.
-    Cpu,
+    #[value(alias = "gpu")]
+    IntelGpu,
     /// Any GPU with a Vulkan driver (AMD, NVIDIA, Intel), through llama.cpp.
     Vulkan,
+    /// Any x86_64 CPU (Intel or AMD), through llama.cpp.
+    Cpu,
+    /// The CPU through OpenVINO, when it is installed for an Intel NPU or GPU.
+    OpenvinoCpu,
 }
 
 impl DeviceArg {
-    /// The value `model.device` takes for it.
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::Auto => "auto",
-            Self::Npu => "npu",
-            Self::Gpu => "gpu",
-            Self::Cpu => "cpu",
-            Self::Vulkan => "vulkan",
-        }
-    }
-
     /// The device it names; none for `auto`.
     pub fn target(self) -> Option<Target> {
         match self {
             Self::Auto => None,
             Self::Npu => Some(Target::Npu),
-            Self::Gpu => Some(Target::Gpu),
-            Self::Cpu => Some(Target::Cpu),
+            Self::IntelGpu => Some(Target::IntelGpu),
             Self::Vulkan => Some(Target::Vulkan),
+            Self::Cpu => Some(Target::Cpu),
+            Self::OpenvinoCpu => Some(Target::OpenvinoCpu),
         }
+    }
+
+    /// The value `model.device` takes for it.
+    pub fn name(self) -> &'static str {
+        self.target().map_or("auto", Target::name)
     }
 }
 
@@ -258,6 +256,13 @@ fn resolve(
         env: &env,
         flags,
     })
+}
+
+/// Warns about settings that still use an old name.
+pub fn warn_renamed(resolved: &Resolved) {
+    for warning in resolved.renamed_values() {
+        eprintln!("warning: {warning}");
+    }
 }
 
 fn main() -> ExitCode {
@@ -354,15 +359,15 @@ fn load_model(settings: &Settings) -> Result<Box<dyn Backend>, Box<dyn Error>> {
 
 fn load_on(settings: &Settings, target: Target) -> Result<Box<dyn Backend>, BackendError> {
     let device = match target {
-        Target::Vulkan => {
+        Target::Vulkan | Target::Cpu => {
             let options = settings
-                .llamacpp_options()
+                .llamacpp_options(target)
                 .map_err(BackendError::Unavailable)?;
             return Ok(Box::new(LlamaCppBackend::start(&options)?));
         }
         Target::Npu => Device::Npu,
-        Target::Gpu => Device::Gpu,
-        Target::Cpu => Device::Cpu,
+        Target::IntelGpu => Device::Gpu,
+        Target::OpenvinoCpu => Device::Cpu,
     };
     let options = settings
         .genai_options(device)
@@ -380,7 +385,9 @@ fn preferred_devices() -> Vec<Target> {
 /// Generates a message for what is staged in `repo`, writing the trace if
 /// asked and warning when the fallback had to be used.
 fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Box<dyn Error>> {
-    let settings = resolve(Some(repo), args.flags()?)?.settings();
+    let resolved = resolve(Some(repo), args.flags()?)?;
+    warn_renamed(&resolved);
+    let settings = resolved.settings();
     let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
     let files = staged_files(repo)?;
     let backend: Box<dyn Backend> = match settings.backend {

@@ -131,7 +131,7 @@ fn invalid_settings_are_refused_and_nothing_is_written() {
     for (args, problem) in [
         (
             &["config", "set", "model.device", "tpu"][..],
-            "expected one of auto, npu, gpu, cpu, vulkan",
+            "expected one of auto, npu, intel-gpu, vulkan, cpu, openvino-cpu",
         ),
         (
             &["config", "set", "model.devise", "cpu"],

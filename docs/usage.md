@@ -121,7 +121,8 @@ test fixture.
 |---|---|
 | `no device could run the model` | `smart-commit setup`; the message lists what each device lacks |
 | `no model in …`, `no GGUF model at …`, `no llama-server at …` | `smart-commit setup` downloads them |
-| `OpenVINO GenAI not found` | `smart-commit setup` installs it |
+| `OpenVINO GenAI not found` | only `npu`, `intel-gpu` and `openvino-cpu` need it; on a machine without an Intel NPU or GPU, use `vulkan` or `cpu` |
+| `model.device = gpu … is the old name of intel-gpu` | `smart-commit device use intel-gpu` (or `auto`) |
 | `cannot load the model on the NPU` | `~/.local/share/smart-commit/scripts/check-npu.sh`; after being added to the `render` group, log out and back in |
 | NVIDIA GPU `has no driver bound` | install a driver (`sudo ubuntu-drivers install`) or use nouveau, then `smart-commit setup` |
 | the hook does nothing | it only acts on `git commit` without `-m`; `smart-commit hook install` reinstalls it |

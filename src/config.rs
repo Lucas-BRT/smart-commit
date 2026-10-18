@@ -17,8 +17,9 @@ use std::path::{Path, PathBuf};
 use toml_edit::{DocumentMut, Item, Table};
 
 use crate::backend::GenerationConfig;
+use crate::device::{self, Target};
 use crate::genai::{Device, GenaiOptions, NpuTuning};
-use crate::llamacpp::LlamaCppOptions;
+use crate::llamacpp::{LlamaCppOptions, LlamaDevice};
 use crate::paths;
 use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions};
 use crate::style::{Convention, Language};
@@ -60,19 +61,22 @@ pub const KEYS: &[Key] = &[
         kind: Kind::Choice(&["auto", "openvino", "llamacpp", "mock"]),
         scope: Scope::User,
         env: Some("SMART_COMMIT_BACKEND"),
-        description: "What runs the model: `openvino` (Intel NPU, GPU and CPU), `llamacpp` \
-                      (any GPU through Vulkan), `auto` (whichever model.device needs) or \
-                      `mock`, which replies with --mock-response (for tests).",
+        description: "What runs the model: `openvino` (Intel NPU, Intel GPU, openvino-cpu), \
+                      `llamacpp` (any GPU through Vulkan, and the CPU), `auto` (whichever \
+                      model.device needs) or `mock`, which replies with --mock-response \
+                      (for tests).",
     },
     Key {
         name: "model.device",
-        kind: Kind::Choice(&["auto", "npu", "gpu", "cpu", "vulkan"]),
+        kind: Kind::Choice(&["auto", "npu", "intel-gpu", "vulkan", "cpu", "openvino-cpu"]),
         scope: Scope::User,
         env: Some("SMART_COMMIT_DEVICE"),
-        description: "Where the model runs: `npu`, `gpu` (Intel) and `cpu` through OpenVINO, \
-                      `vulkan` (AMD, NVIDIA or Intel GPU) through llama.cpp, or `auto`: \
-                      the fastest in the last `smart-commit bench`, else the first that works \
-                      of gpu, npu, vulkan, cpu.",
+        description: "Where the model runs: `npu` (Intel NPU) and `intel-gpu` through OpenVINO, \
+                      `vulkan` (AMD, NVIDIA or Intel GPU) and `cpu` (any x86_64) through \
+                      llama.cpp, `openvino-cpu` (the CPU through OpenVINO), or `auto`: the \
+                      fastest in the last `smart-commit bench`, else the first that works of \
+                      intel-gpu, npu, vulkan, cpu, openvino-cpu. `gpu` is the old name of \
+                      intel-gpu.",
     },
     Key {
         name: "model.dir",
@@ -263,11 +267,23 @@ fn known_keys() -> String {
     KEYS.iter().map(|k| k.name).collect::<Vec<_>>().join(", ")
 }
 
+/// Values renamed in a release, still accepted: (key, old, new).
+const RENAMED: &[(&str, &str, &str)] = &[("model.device", device::OLD_INTEL_GPU_NAME, "intel-gpu")];
+
+/// The current name of `text`, if it is an old value of `key`.
+fn renamed(key: &str, text: &str) -> Option<&'static str> {
+    RENAMED
+        .iter()
+        .find(|(k, old, _)| *k == key && *old == text)
+        .map(|(_, _, new)| *new)
+}
+
 /// Checks a value given as text (environment, flag, `config set`).
 pub fn parse(key: &Key, text: &str, home: Option<&str>) -> Result<Value, String> {
     match key.kind {
         Kind::Choice(choices) => {
-            if choices.contains(&text) {
+            // Old names are kept as they are, so warnings can show them.
+            if choices.contains(&text) || renamed(key.name, text).is_some() {
                 Ok(Value::Text(text.to_owned()))
             } else {
                 Err(format!(
@@ -456,6 +472,22 @@ impl Resolved {
         Ok(Self { values })
     }
 
+    /// A warning for each value that has an old name, with where it is set.
+    pub fn renamed_values(&self) -> Vec<String> {
+        self.values
+            .iter()
+            .filter_map(|(name, (value, origin))| match value {
+                Value::Text(text) => renamed(name, text).map(|new| {
+                    format!(
+                        "{name} = {text} ({origin}) is the old name of {new}; \
+                         `smart-commit config set {name} {new}` renames it"
+                    )
+                }),
+                Value::Count(_) => None,
+            })
+            .collect()
+    }
+
     /// Value and origin of `name`, if it has a value (paths need `$HOME`
     /// for their defaults).
     pub fn get(&self, name: &str) -> Option<&(Value, Origin)> {
@@ -490,13 +522,8 @@ impl Resolved {
                 "mock" => BackendKind::Mock,
                 _ => BackendKind::Auto,
             },
-            device: match choice("model.device") {
-                "npu" => DeviceSetting::Npu,
-                "gpu" => DeviceSetting::Gpu,
-                "cpu" => DeviceSetting::Cpu,
-                "vulkan" => DeviceSetting::Vulkan,
-                _ => DeviceSetting::Auto,
-            },
+            device: Target::from_name(choice("model.device"))
+                .map_or(DeviceSetting::Auto, DeviceSetting::Fixed),
             model_dir: self.text("model.dir").map(PathBuf::from),
             gguf: self.text("model.gguf").map(PathBuf::from),
             llama_server: self.text("model.llama_server").map(PathBuf::from),
@@ -590,10 +617,7 @@ pub enum BackendKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DeviceSetting {
     Auto,
-    Npu,
-    Gpu,
-    Cpu,
-    Vulkan,
+    Fixed(Target),
 }
 
 /// Every setting, typed and resolved.
@@ -660,7 +684,8 @@ impl Settings {
         })
     }
 
-    pub fn llamacpp_options(&self) -> Result<LlamaCppOptions, String> {
+    /// For [`Target::Cpu`] or [`Target::Vulkan`] (model.vulkan_device).
+    pub fn llamacpp_options(&self, target: Target) -> Result<LlamaCppOptions, String> {
         let missing = |key: &str| format!("{key} has no default without $HOME; set it");
         Ok(LlamaCppOptions {
             server: self
@@ -668,7 +693,10 @@ impl Settings {
                 .clone()
                 .ok_or_else(|| missing("model.llama_server"))?,
             model: self.gguf.clone().ok_or_else(|| missing("model.gguf"))?,
-            vulkan_device: self.vulkan_device,
+            device: match target {
+                Target::Cpu => LlamaDevice::Cpu,
+                _ => LlamaDevice::Vulkan(self.vulkan_device),
+            },
             max_prompt_tokens: self.max_prompt_tokens,
             max_new_tokens: self.max_new_tokens,
             startup_timeout: std::time::Duration::from_secs(120),
@@ -692,6 +720,8 @@ pub fn set_in_file(
             path: path.display().to_string(),
         });
     }
+    // Files get the current name, even when given the old one.
+    let text = renamed(name, text).unwrap_or(text);
     let value = parse(key, text, home).map_err(|problem| ConfigError::InvalidValue {
         key: name.to_owned(),
         location: None,
@@ -952,7 +982,7 @@ mod tests {
 
         let settings = resolved.settings();
         assert_eq!(settings.backend, BackendKind::Openvino);
-        assert_eq!(settings.device, DeviceSetting::Cpu);
+        assert_eq!(settings.device, DeviceSetting::Fixed(Target::Cpu));
         assert_eq!(settings.language, Some(Language::Portuguese));
         assert_eq!(settings.history_depth, 10);
     }
@@ -973,7 +1003,7 @@ mod tests {
         for (text, problem) in [
             (
                 "[model]\ndevice = \"tpu\"\n",
-                "expected one of auto, npu, gpu, cpu, vulkan, got \"tpu\"",
+                "expected one of auto, npu, intel-gpu, vulkan, cpu, openvino-cpu, got \"tpu\"",
             ),
             ("[model]\ndevice = 3\n", "expected a string, got 3"),
             (
@@ -1052,10 +1082,55 @@ mod tests {
         );
         assert!(
             settings
-                .llamacpp_options()
+                .llamacpp_options(Target::Cpu)
                 .unwrap_err()
                 .contains("model.llama_server")
         );
+    }
+
+    #[test]
+    fn llamacpp_runs_on_the_cpu_or_the_configured_vulkan_gpu() {
+        let global = "[model]\nvulkan_device = 2\n";
+        let settings = resolve(Some(global), None, HOME, vec![])
+            .unwrap()
+            .settings();
+        let on = |target| settings.llamacpp_options(target).unwrap().device;
+        assert_eq!(on(Target::Cpu), LlamaDevice::Cpu);
+        assert_eq!(on(Target::Vulkan), LlamaDevice::Vulkan(2));
+    }
+
+    #[test]
+    fn every_device_name_is_accepted() {
+        for target in device::DEFAULT_ORDER {
+            let vars = [("SMART_COMMIT_DEVICE", target.name())];
+            let settings = resolve(None, None, &vars, vec![]).unwrap().settings();
+            assert_eq!(settings.device, DeviceSetting::Fixed(target));
+        }
+        let vars = [("SMART_COMMIT_DEVICE", "tpu")];
+        assert!(resolve(None, None, &vars, vec![]).is_err());
+    }
+
+    #[test]
+    fn the_old_gpu_name_still_works_with_a_warning() {
+        let global = "[model]\ndevice = \"gpu\"\n";
+        let resolved = resolve(Some(global), None, HOME, vec![]).unwrap();
+        assert_eq!(
+            resolved.settings().device,
+            DeviceSetting::Fixed(Target::IntelGpu)
+        );
+        let warnings = resolved.renamed_values();
+        assert_eq!(warnings.len(), 1, "{warnings:?}");
+        assert!(
+            warnings[0].starts_with("model.device = gpu (global ")
+                && warnings[0].ends_with(
+                    "is the old name of intel-gpu; \
+                     `smart-commit config set model.device intel-gpu` renames it"
+                ),
+            "{}",
+            warnings[0]
+        );
+        let current = resolve(None, None, &[("SMART_COMMIT_DEVICE", "intel-gpu")], vec![]);
+        assert!(current.unwrap().renamed_values().is_empty());
     }
 
     #[test]
@@ -1154,11 +1229,12 @@ mod tests {
 
         let values = parse_file(&text, &path, &origin, None).unwrap();
         assert_eq!(values.len(), 3);
-        // Changing it again edits the now real key.
+        // Changing it again edits the now real key; an old name is written
+        // under its new one.
         set_in_file(&path, &origin, "model.device", "gpu", None).unwrap();
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(
-            text.contains("SMART_COMMIT_DEVICE.\ndevice = \"gpu\""),
+            text.contains("SMART_COMMIT_DEVICE.\ndevice = \"intel-gpu\""),
             "{text}"
         );
     }

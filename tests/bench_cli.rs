@@ -88,16 +88,16 @@ fn bench_without_models_reports_every_device_and_fails() {
     let output = home.run(&["bench"], dir.path());
     assert_eq!(output.status.code(), Some(1));
     let out = stdout(&output);
-    for device in ["gpu", "npu", "vulkan", "cpu"] {
+    for device in ["intel-gpu", "npu", "vulkan", "cpu", "openvino-cpu"] {
         assert!(
-            out.contains(&format!("  {device:<8} unavailable: ")),
+            out.contains(&format!("  {device:<12} unavailable: ")),
             "{out}"
         );
     }
-    assert!(stderr(&output).contains("measuring gpu..."));
+    assert!(stderr(&output).contains("measuring intel-gpu..."));
     assert!(stderr(&output).contains("error: no device could run the model"));
     let saved = Report::from_json(&fs::read_to_string(home.bench_file()).unwrap()).unwrap();
-    assert_eq!(saved.entries.len(), 4);
+    assert_eq!(saved.entries.len(), 5);
     assert_eq!(saved.fastest(), None);
 }
 
@@ -109,7 +109,13 @@ fn bench_json_prints_the_report() {
     let report = Report::from_json(&stdout(&output)).unwrap();
     assert_eq!(
         report.entries.iter().map(|e| e.target).collect::<Vec<_>>(),
-        [Target::Gpu, Target::Npu, Target::Vulkan, Target::Cpu]
+        [
+            Target::IntelGpu,
+            Target::Npu,
+            Target::Vulkan,
+            Target::Cpu,
+            Target::OpenvinoCpu
+        ]
     );
 }
 
@@ -127,7 +133,7 @@ fn device_shows_the_fastest_as_selected() {
     let home = Home::new();
     let dir = TempDir::new().unwrap();
     home.save_report(&[
-        (Target::Gpu, Some(1800.0)),
+        (Target::IntelGpu, Some(1800.0)),
         (Target::Npu, Some(5100.0)),
         (Target::Vulkan, None),
         (Target::Cpu, Some(4000.0)),
@@ -139,11 +145,13 @@ fn device_shows_the_fastest_as_selected() {
         "{out}"
     );
     assert!(
-        out.contains("vulkan   unavailable: backend unavailable: not set up"),
+        out.contains("vulkan       unavailable: backend unavailable: not set up"),
         "{out}"
     );
     assert!(
-        out.contains("smart-commit will use gpu on this machine (~1.8 s per message): the fastest"),
+        out.contains(
+            "smart-commit will use intel-gpu on this machine (~1.8 s per message): the fastest"
+        ),
         "{out}"
     );
 }
@@ -153,7 +161,7 @@ fn device_use_changes_the_global_config_and_shows_the_estimate() {
     let home = Home::new();
     let dir = TempDir::new().unwrap();
     home.save_report(&[
-        (Target::Gpu, Some(1800.0)),
+        (Target::IntelGpu, Some(1800.0)),
         (Target::Npu, Some(5100.0)),
         (Target::Vulkan, None),
     ]);
@@ -175,10 +183,41 @@ fn device_use_changes_the_global_config_and_shows_the_estimate() {
 
     let output = home.run(&["device", "use", "auto"], dir.path());
     assert!(
-        stdout(&output).contains("will use gpu"),
+        stdout(&output).contains("will use intel-gpu"),
         "{}",
         stdout(&output)
     );
+}
+
+#[test]
+fn the_old_gpu_name_in_the_config_still_works_with_a_warning() {
+    let home = Home::new();
+    let dir = TempDir::new().unwrap();
+    let config = home.config.path().join("smart-commit/config.toml");
+    fs::create_dir_all(config.parent().unwrap()).unwrap();
+    fs::write(&config, "[model]\ndevice = \"gpu\"\n").unwrap();
+    home.save_report(&[(Target::IntelGpu, Some(1800.0))]);
+    let output = home.run(&["device"], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(
+        stdout(&output).contains("will use intel-gpu on this machine (~1.8 s per message)"),
+        "{}",
+        stdout(&output)
+    );
+    let err = stderr(&output);
+    assert!(
+        err.starts_with("warning: model.device = gpu (global ")
+            && err.contains("`smart-commit config set model.device intel-gpu` renames it"),
+        "{err}"
+    );
+
+    // `device use` with the old name writes the new one.
+    home.run(&["device", "use", "gpu"], dir.path());
+    assert_eq!(
+        fs::read_to_string(&config).unwrap(),
+        "[model]\ndevice = \"intel-gpu\"\n"
+    );
+    assert_eq!(stderr(&home.run(&["device"], dir.path())), "");
 }
 
 #[test]
@@ -189,7 +228,7 @@ fn auto_tries_devices_in_benchmark_order() {
     repo.write("a.rs", "fn a() {}\n");
     repo.git(&["add", "a.rs"]);
     home.save_report(&[
-        (Target::Gpu, None),
+        (Target::IntelGpu, None),
         (Target::Cpu, Some(4000.0)),
         (Target::Vulkan, Some(2400.0)),
     ]);
@@ -197,7 +236,11 @@ fn auto_tries_devices_in_benchmark_order() {
     let order: Vec<&str> = err
         .lines()
         .filter_map(|l| l.trim_start().split_once(':').map(|(d, _)| d))
-        .filter(|d| ["gpu", "npu", "vulkan", "cpu"].contains(d))
+        .filter(|d| Target::from_name(d).is_some())
         .collect();
-    assert_eq!(order, ["vulkan", "cpu", "gpu", "npu"], "{err}");
+    assert_eq!(
+        order,
+        ["vulkan", "cpu", "intel-gpu", "npu", "openvino-cpu"],
+        "{err}"
+    );
 }

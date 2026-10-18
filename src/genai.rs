@@ -80,6 +80,23 @@ impl Default for NpuTuning {
     }
 }
 
+/// Who needs OpenVINO GenAI (only Intel's devices) and how to get it.
+pub fn missing_openvino(device: Device) -> &'static str {
+    match device {
+        Device::Npu => {
+            "the Intel NPU needs it; `smart-commit setup` installs it on machines with one"
+        }
+        Device::Gpu => {
+            "Intel GPUs need it; `smart-commit setup` installs it on machines with one \
+             (other GPUs use the vulkan device)"
+        }
+        Device::Cpu => {
+            "only openvino-cpu needs it (the cpu device runs on llama.cpp); \
+             setup-npu.sh --openvino-only installs it"
+        }
+    }
+}
+
 pub struct GenaiBackend {
     pipeline: Mutex<LlmPipeline>,
     description: String,
@@ -98,7 +115,8 @@ impl GenaiBackend {
         let identity = model_identity(&options.model_dir)?;
         openvino_genai::load().map_err(|err| {
             BackendError::Unavailable(format!(
-                "OpenVINO GenAI not found ({err}); `smart-commit setup` installs it"
+                "OpenVINO GenAI not found ({err}); {}",
+                missing_openvino(options.device)
             ))
         })?;
         std::fs::create_dir_all(&options.cache_dir).map_err(|err| {
@@ -266,6 +284,15 @@ mod tests {
             max_new_tokens: 128,
             npu: NpuTuning::default(),
         }
+    }
+
+    #[test]
+    fn without_openvino_each_device_says_who_needs_it() {
+        assert!(missing_openvino(Device::Npu).contains("the Intel NPU needs it"));
+        assert!(missing_openvino(Device::Gpu).contains("other GPUs use the vulkan device"));
+        let cpu = missing_openvino(Device::Cpu);
+        assert!(cpu.contains("only openvino-cpu needs it"), "{cpu}");
+        assert!(cpu.contains("the cpu device runs on llama.cpp"), "{cpu}");
     }
 
     #[test]

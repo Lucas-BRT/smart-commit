@@ -23,8 +23,8 @@ Everything except the model is deterministic and tested without hardware.
 | `message` | sanitizes the model's output; builds the fallback message |
 | `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |
 | `backend` | the `Backend` trait, `GenerationConfig`, `MockBackend` |
-| `genai` | OpenVINO GenAI backend (NPU, Intel GPU, CPU), loaded at run time |
-| `llamacpp` | llama.cpp backend: a private `llama-server` over a UNIX socket |
+| `genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
+| `llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
 | `device` | candidate devices and loading the first that works |
 | `bench` | measures every device on the embedded fixture prompts |
 | `config` | settings from flags, environment, repository and global files |
@@ -138,6 +138,7 @@ clients often run hooks without the user's `PATH`.
   UNIX socket in a fresh `0700` temporary directory, so nothing is exposed on
   the network. A minimal HTTP/1.1 client talks to it, and requests are greedy
   and seeded, without prompt caching. The server stops when the backend is
-  dropped.
+  dropped. On `cpu` it offloads nothing (`--n-gpu-layers 0 --device none`),
+  even when it finds a GPU.
 
 See [devices](devices.md) for how the device is chosen and how they compare.

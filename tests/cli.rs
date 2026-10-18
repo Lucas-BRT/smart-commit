@@ -173,12 +173,13 @@ fn auto_without_any_model_lists_every_device() {
         smart_commit::llamacpp::DEFAULT_GGUF
     );
     let no_ir = format!("backend unavailable: no model in {ir}; `smart-commit setup` downloads it");
+    let no_gguf =
+        format!("backend unavailable: no GGUF model at {gguf}; `smart-commit setup` downloads it");
     assert_eq!(
         stderr(&output),
         format!(
-            "error: no device could run the model:\n  gpu: {no_ir}\n  npu: {no_ir}\n  \
-             vulkan: backend unavailable: no GGUF model at {gguf}; `smart-commit setup` \
-             downloads it\n  cpu: {no_ir}\n"
+            "error: no device could run the model:\n  intel-gpu: {no_ir}\n  npu: {no_ir}\n  \
+             vulkan: {no_gguf}\n  cpu: {no_gguf}\n  openvino-cpu: {no_ir}\n"
         )
     );
 }
@@ -186,7 +187,20 @@ fn auto_without_any_model_lists_every_device() {
 #[test]
 fn a_fixed_device_reports_only_its_own_problem() {
     let repo = staged_repo();
+    let output = smart_commit(&["--device", "openvino-cpu"], repo.path());
+    assert!(
+        stderr(&output).starts_with("error: backend unavailable: no model in"),
+        "{}",
+        stderr(&output)
+    );
     let output = smart_commit(&["--device", "cpu"], repo.path());
+    assert!(
+        stderr(&output).starts_with("error: backend unavailable: no GGUF model at"),
+        "{}",
+        stderr(&output)
+    );
+    // The old name of intel-gpu is still a valid flag.
+    let output = smart_commit(&["--device", "gpu"], repo.path());
     assert!(
         stderr(&output).starts_with("error: backend unavailable: no model in"),
         "{}",

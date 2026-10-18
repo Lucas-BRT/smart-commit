@@ -13,37 +13,57 @@ use crate::backend::{Backend, BackendError};
 use crate::config::{BackendKind, DeviceSetting};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Target {
     /// Intel NPU through OpenVINO.
     Npu,
     /// Intel GPU through OpenVINO.
-    Gpu,
-    /// CPU through OpenVINO.
-    Cpu,
-    /// Any GPU with a Vulkan driver, through llama.cpp.
+    IntelGpu,
+    /// Any GPU with a Vulkan driver (AMD, NVIDIA, Intel), through llama.cpp.
     Vulkan,
+    /// Any x86_64 CPU (Intel or AMD), through llama.cpp.
+    Cpu,
+    /// Any x86_64 CPU, through OpenVINO, for machines that have it anyway.
+    OpenvinoCpu,
 }
 
-/// Without a benchmark: GPU first (fastest and lightest in our
+/// Without a benchmark: the Intel GPU first (fastest and lightest in our
 /// measurements), then the NPU, any other GPU, and the CPU, which always
 /// works.
-pub const DEFAULT_ORDER: [Target; 4] = [Target::Gpu, Target::Npu, Target::Vulkan, Target::Cpu];
+pub const DEFAULT_ORDER: [Target; 5] = [
+    Target::IntelGpu,
+    Target::Npu,
+    Target::Vulkan,
+    Target::Cpu,
+    Target::OpenvinoCpu,
+];
+
+/// The name `intel-gpu` had before 0.4, still accepted.
+pub const OLD_INTEL_GPU_NAME: &str = "gpu";
 
 impl Target {
     pub fn name(self) -> &'static str {
         match self {
             Self::Npu => "npu",
-            Self::Gpu => "gpu",
-            Self::Cpu => "cpu",
+            Self::IntelGpu => "intel-gpu",
             Self::Vulkan => "vulkan",
+            Self::Cpu => "cpu",
+            Self::OpenvinoCpu => "openvino-cpu",
         }
+    }
+
+    /// The device called `name` in `model.device` (or its old name).
+    pub fn from_name(name: &str) -> Option<Self> {
+        if name == OLD_INTEL_GPU_NAME {
+            return Some(Self::IntelGpu);
+        }
+        DEFAULT_ORDER.into_iter().find(|t| t.name() == name)
     }
 
     pub fn backend(self) -> BackendKind {
         match self {
-            Self::Vulkan => BackendKind::LlamaCpp,
-            _ => BackendKind::Openvino,
+            Self::Vulkan | Self::Cpu => BackendKind::LlamaCpp,
+            Self::Npu | Self::IntelGpu | Self::OpenvinoCpu => BackendKind::Openvino,
         }
     }
 }
@@ -63,10 +83,7 @@ pub fn candidates(
 ) -> Result<Vec<Target>, String> {
     let fixed = match device {
         DeviceSetting::Auto => None,
-        DeviceSetting::Npu => Some(Target::Npu),
-        DeviceSetting::Gpu => Some(Target::Gpu),
-        DeviceSetting::Cpu => Some(Target::Cpu),
-        DeviceSetting::Vulkan => Some(Target::Vulkan),
+        DeviceSetting::Fixed(target) => Some(target),
     };
     let allowed = |target: Target| match backend {
         BackendKind::Auto => true,
@@ -139,6 +156,27 @@ mod tests {
     use crate::backend::MockBackend;
 
     #[test]
+    fn names_round_trip_and_the_old_gpu_name_still_works() {
+        for target in DEFAULT_ORDER {
+            assert_eq!(Target::from_name(target.name()), Some(target));
+            let json = serde_json::to_string(&target).unwrap();
+            assert_eq!(json, format!("\"{}\"", target.name()));
+        }
+        assert_eq!(Target::from_name("gpu"), Some(Target::IntelGpu));
+        assert_eq!(Target::from_name("auto"), None);
+        assert_eq!(Target::from_name(""), None);
+    }
+
+    #[test]
+    fn the_cpu_runs_on_llamacpp_unless_openvino_is_asked_for() {
+        assert_eq!(Target::Cpu.backend(), BackendKind::LlamaCpp);
+        assert_eq!(Target::Vulkan.backend(), BackendKind::LlamaCpp);
+        assert_eq!(Target::OpenvinoCpu.backend(), BackendKind::Openvino);
+        assert_eq!(Target::IntelGpu.backend(), BackendKind::Openvino);
+        assert_eq!(Target::Npu.backend(), BackendKind::Openvino);
+    }
+
+    #[test]
     fn auto_follows_the_benchmark_then_the_default_order() {
         let order = candidates(BackendKind::Auto, DeviceSetting::Auto, &[]).unwrap();
         assert_eq!(order, DEFAULT_ORDER);
@@ -150,7 +188,13 @@ mod tests {
         .unwrap();
         assert_eq!(
             order,
-            [Target::Vulkan, Target::Cpu, Target::Gpu, Target::Npu]
+            [
+                Target::Vulkan,
+                Target::Cpu,
+                Target::IntelGpu,
+                Target::Npu,
+                Target::OpenvinoCpu
+            ]
         );
     }
 
@@ -161,27 +205,32 @@ mod tests {
             DeviceSetting::Auto,
             &[Target::Vulkan],
         );
-        assert_eq!(openvino.unwrap(), [Target::Gpu, Target::Npu, Target::Cpu]);
+        assert_eq!(
+            openvino.unwrap(),
+            [Target::IntelGpu, Target::Npu, Target::OpenvinoCpu]
+        );
         let llamacpp = candidates(BackendKind::LlamaCpp, DeviceSetting::Auto, &[]);
-        assert_eq!(llamacpp.unwrap(), [Target::Vulkan]);
+        assert_eq!(llamacpp.unwrap(), [Target::Vulkan, Target::Cpu]);
     }
 
     #[test]
     fn a_fixed_device_is_the_only_candidate() {
+        let fixed = DeviceSetting::Fixed;
         assert_eq!(
-            candidates(BackendKind::Auto, DeviceSetting::Npu, &[Target::Gpu]).unwrap(),
+            candidates(BackendKind::Auto, fixed(Target::Npu), &[Target::IntelGpu]).unwrap(),
             [Target::Npu]
         );
         assert_eq!(
-            candidates(BackendKind::Auto, DeviceSetting::Vulkan, &[]).unwrap(),
+            candidates(BackendKind::Auto, fixed(Target::Vulkan), &[]).unwrap(),
             [Target::Vulkan]
         );
-        let err = candidates(BackendKind::Openvino, DeviceSetting::Vulkan, &[]).unwrap_err();
+        let err = candidates(BackendKind::Openvino, fixed(Target::Cpu), &[]).unwrap_err();
+        assert_eq!(err, "model.device = cpu needs backend = llamacpp (or auto)");
+        let err = candidates(BackendKind::LlamaCpp, fixed(Target::OpenvinoCpu), &[]).unwrap_err();
         assert_eq!(
             err,
-            "model.device = vulkan needs backend = llamacpp (or auto)"
+            "model.device = openvino-cpu needs backend = openvino (or auto)"
         );
-        assert!(candidates(BackendKind::LlamaCpp, DeviceSetting::Npu, &[]).is_err());
         assert!(candidates(BackendKind::Mock, DeviceSetting::Auto, &[]).is_err());
     }
 
@@ -191,7 +240,7 @@ mod tests {
         let selection = load_first(&DEFAULT_ORDER, |target| {
             tried.push(target);
             match target {
-                Target::Gpu => Err(BackendError::Unavailable("no GPU runtime".into())),
+                Target::IntelGpu => Err(BackendError::Unavailable("no GPU runtime".into())),
                 _ => Ok(Box::new(MockBackend::default())),
             }
         })
@@ -199,11 +248,11 @@ mod tests {
         assert_eq!(selection.target, Target::Npu);
         assert_eq!(
             tried,
-            [Target::Gpu, Target::Npu],
+            [Target::IntelGpu, Target::Npu],
             "stops at the first success"
         );
         assert_eq!(selection.skipped.len(), 1);
-        assert_eq!(selection.skipped[0].0, Target::Gpu);
+        assert_eq!(selection.skipped[0].0, Target::IntelGpu);
     }
 
     #[test]
@@ -211,11 +260,13 @@ mod tests {
         let fail = |target: Target| -> Result<Box<dyn Backend>, BackendError> {
             Err(BackendError::Unavailable(format!("{target} missing")))
         };
-        let err = load_first(&[Target::Gpu, Target::Cpu], fail).err().unwrap();
+        let err = load_first(&[Target::IntelGpu, Target::Cpu], fail)
+            .err()
+            .unwrap();
         assert_eq!(
             err,
-            "no device could run the model:\n  gpu: backend unavailable: gpu missing\n  \
-             cpu: backend unavailable: cpu missing"
+            "no device could run the model:\n  intel-gpu: backend unavailable: intel-gpu \
+             missing\n  cpu: backend unavailable: cpu missing"
         );
         // One candidate: its error as is.
         let err = load_first(&[Target::Cpu], fail).err().unwrap();

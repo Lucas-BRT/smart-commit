@@ -32,11 +32,13 @@ pub fn last_report() -> Option<Report> {
     Report::from_json(&text)
 }
 
-const HOW_TO_CHANGE: &str = "To use another device: smart-commit device use <npu|gpu|cpu|vulkan>, \
-                             or `auto` for the fastest.";
+const HOW_TO_CHANGE: &str = "To use another device: smart-commit device use \
+                             <npu|intel-gpu|vulkan|cpu|openvino-cpu>, or `auto` for the fastest.";
 
 pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
-    let settings = crate::resolve(None, Vec::new())?.settings();
+    let resolved = crate::resolve(None, Vec::new())?;
+    crate::warn_renamed(&resolved);
+    let settings = resolved.settings();
     let prompts = bench::prompts();
     let config = settings.generation_config();
     let mut entries = Vec::new();
@@ -88,10 +90,7 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
 fn effective(report: &Report, device: DeviceSetting) -> Option<Target> {
     match device {
         DeviceSetting::Auto => report.fastest(),
-        DeviceSetting::Npu => Some(Target::Npu),
-        DeviceSetting::Gpu => Some(Target::Gpu),
-        DeviceSetting::Cpu => Some(Target::Cpu),
-        DeviceSetting::Vulkan => Some(Target::Vulkan),
+        DeviceSetting::Fixed(target) => Some(target),
     }
 }
 
@@ -117,6 +116,7 @@ pub fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> 
 
 fn show_device() -> Result<(), Box<dyn Error>> {
     let resolved = crate::resolve(None, Vec::new())?;
+    crate::warn_renamed(&resolved);
     let settings = resolved.settings();
     let origin = resolved
         .get("model.device")
@@ -134,7 +134,8 @@ fn show_device() -> Result<(), Box<dyn Error>> {
         }
         None => println!(
             "No benchmark yet: `smart-commit bench` measures the devices of this machine.\n\
-             Until then, auto uses the first that works of gpu, npu, vulkan, cpu."
+             Until then, auto uses the first that works of {}.",
+            DEFAULT_ORDER.map(Target::name).join(", ")
         ),
     }
     println!("model.device comes from: {origin}.");

@@ -37,7 +37,7 @@ value, for example when an environment variable is set.
 | Key | Values | Default | Environment | Where |
 |---|---|---|---|---|
 | `backend` | `auto`, `openvino`, `llamacpp`, `mock` | `auto` | `SMART_COMMIT_BACKEND` | global |
-| `model.device` | `auto`, `npu`, `gpu`, `cpu`, `vulkan` | `auto` | `SMART_COMMIT_DEVICE` | global |
+| `model.device` | `auto`, `npu`, `intel-gpu`, `vulkan`, `cpu`, `openvino-cpu` | `auto` | `SMART_COMMIT_DEVICE` | global |
 | `model.dir` | path | `$XDG_DATA_HOME/smart-commit/models/qwen2.5-coder-1.5b-instruct-int4-sym-g128` | `SMART_COMMIT_MODEL_DIR` | global |
 | `model.cache_dir` | path | `$XDG_CACHE_HOME/smart-commit/openvino` | `SMART_COMMIT_CACHE_DIR` | global |
 | `model.gguf` | path | `$XDG_DATA_HOME/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | `SMART_COMMIT_GGUF` | global |
@@ -54,11 +54,14 @@ value, for example when an environment variable is set.
 | `style.history_depth` | 1–500 | 30 | | global or repository |
 
 - `backend = auto` uses whichever backend the device needs: OpenVINO for
-  `npu`, `gpu` and `cpu`, llama.cpp for `vulkan`. `mock` replies with
-  `--mock-response` / `SMART_COMMIT_MOCK_RESPONSE`, for tests.
+  `npu`, `intel-gpu` and `openvino-cpu`, llama.cpp for `vulkan` and `cpu`.
+  `mock` replies with `--mock-response` / `SMART_COMMIT_MOCK_RESPONSE`, for
+  tests.
 - `model.device = auto` uses the fastest device of the last
-  `smart-commit bench`, and the first that works of gpu, npu, vulkan and cpu
-  when there is no benchmark. See [devices](devices.md).
+  `smart-commit bench`, and the first that works of intel-gpu, npu, vulkan,
+  cpu and openvino-cpu when there is no benchmark. See [devices](devices.md).
+  `gpu`, the name of `intel-gpu` before 0.4, still works with a warning;
+  `config set` and `device use` write the new name.
 - `model.vulkan_device` picks a GPU on machines with more than one, as
   `llama-server --list-devices` numbers them (0 is `Vulkan0`).
 - `model.npu_prefill_chunk` must divide `model.max_prompt_tokens`. Chunks

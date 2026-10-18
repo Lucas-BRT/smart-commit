@@ -40,7 +40,7 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 | CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
 | Trace fixtures | `tests/replay_fixtures.rs` |
 | Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |
-| Hardware | `tests/hardware.rs`, ignored by default: `cargo test --test hardware -- --ignored --test-threads 1`, with `SMART_COMMIT_TEST_DEVICE=npu\|gpu\|cpu\|vulkan`; use the fixture prompts, never ad hoc inputs |
+| Hardware | `tests/hardware.rs`, ignored by default: `cargo test --test hardware -- --ignored --test-threads 1`, with `SMART_COMMIT_TEST_DEVICE=npu\|intel-gpu\|vulkan\|cpu\|openvino-cpu`; use the fixture prompts, never ad hoc inputs |
 
 `cargo test` never depends on an NPU or GPU, the network, the clock,
 randomness, or the machine's git config, smart-commit config, models and
