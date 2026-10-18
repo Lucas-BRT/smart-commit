@@ -37,21 +37,21 @@ refute() {
     else echo "ok    no $1"; fi
 }
 expect "## smart-commit 0.2.0"
-expect "Mudanças desde v0.1.0."
-expect "### Novidades"
+expect "Changes since v0.1.0."
+expect "### Features"
 expect "- **cli** adiciona o comando bench"
-expect "### Correções"
+expect "### Fixes"
 expect "- corrige o parse"
-expect "### Documentação"
+expect "### Documentation"
 refute "- **** "
-expect "### Outros"
+expect "### Other"
 expect "- fixa o toolchain"
 expect "- Mensagem livre"
 refute "before the tag"
 expect "install.sh | bash"
 
 first=$("$ROOT/scripts/release-notes.sh" v0.1.0 v0.1.0)
-if grep -q "Primeira versão." <<<"$first"; then
+if grep -q "First release." <<<"$first"; then
     echo "ok    first release"
 else
     echo "FAIL  first release"

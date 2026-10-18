@@ -25,28 +25,28 @@ section() {
 echo "## smart-commit ${TAG#v}"
 echo
 if [ -n "$previous" ]; then
-    echo "Mudanças desde $previous."
+    echo "Changes since $previous."
 else
-    echo "Primeira versão."
+    echo "First release."
 fi
 echo
-section "Novidades" feat
-section "Correções" fix
-section "Desempenho" perf
-section "Documentação" docs
+section "Features" feat
+section "Fixes" fix
+section "Performance" perf
+section "Documentation" docs
 others=$(grep -vE "^(feat|fix|perf|docs)(\([^)]*\))?!?: " <<<"$subjects" || true)
 if [ -n "$others" ]; then
-    printf '### Outros\n\n'
+    printf '### Other\n\n'
     sed -E 's/^[a-z]+(\(([^)]*)\))?!?: /- **\2** /; t; s/^/- /' <<<"$others" | sed 's/^- \*\*\*\* /- /'
     printf '\n'
 fi
 cat <<'EOF'
-### Instalação
+### Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ```
 
-O tarball é reproduzível: `scripts/package.sh` nesta tag gera os mesmos bytes
-de `SHA256SUMS`.
+The tarball is reproducible: `scripts/package.sh` on this tag gives the bytes
+in `SHA256SUMS`, on any machine with Docker.
 EOF
