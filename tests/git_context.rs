@@ -238,3 +238,27 @@ fn staged_diff_ignores_color_external_tools_and_prefix_config() {
     assert_eq!(files.len(), 1);
     assert_eq!(files[0].hunks, "@@ -1 +1 @@\n-old\n+new\n");
 }
+
+#[test]
+fn repo_environment_reaches_every_git_call() {
+    let repo = TestRepo::new();
+    repo.write("a.rs", "one\ntwo\nthree\n");
+    repo.git(&["add", "."]);
+    repo.commit("init");
+    repo.git(&["mv", "a.rs", "b.rs"]);
+
+    let config = repo.path().join("isolated.gitconfig");
+    fs::write(&config, "[diff]\n\trenames = false\n").unwrap();
+    let without_renames = repo
+        .repo()
+        .with_env([("GIT_CONFIG_GLOBAL", config.to_str().unwrap())]);
+
+    let statuses: Vec<ChangeStatus> = without_renames
+        .staged_changes()
+        .unwrap()
+        .iter()
+        .map(|c| c.status)
+        .collect();
+    assert_eq!(statuses, [ChangeStatus::Deleted, ChangeStatus::Added]);
+    assert_eq!(repo.context().staged[0].status, ChangeStatus::Renamed);
+}

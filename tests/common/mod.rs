@@ -11,6 +11,19 @@ use npu_commit::context::RepoContext;
 use npu_commit::git::Repo;
 use tempfile::TempDir;
 
+/// Keeps git away from the developer's config and pins identities and dates,
+/// so commits (hashes included) are the same on every machine.
+pub const GIT_ENV: &[(&str, &str)] = &[
+    ("GIT_CONFIG_GLOBAL", "/dev/null"),
+    ("GIT_CONFIG_NOSYSTEM", "1"),
+    ("GIT_AUTHOR_NAME", "Test"),
+    ("GIT_AUTHOR_EMAIL", "test@example.com"),
+    ("GIT_AUTHOR_DATE", "2026-01-01T00:00:00Z"),
+    ("GIT_COMMITTER_NAME", "Test"),
+    ("GIT_COMMITTER_EMAIL", "test@example.com"),
+    ("GIT_COMMITTER_DATE", "2026-01-01T00:00:00Z"),
+];
+
 pub struct TestRepo {
     dir: TempDir,
 }
@@ -34,12 +47,7 @@ impl TestRepo {
             .arg("-C")
             .arg(self.path())
             .args(args)
-            .env("GIT_CONFIG_GLOBAL", "/dev/null")
-            .env("GIT_CONFIG_NOSYSTEM", "1")
-            .env("GIT_AUTHOR_NAME", "Test")
-            .env("GIT_AUTHOR_EMAIL", "test@example.com")
-            .env("GIT_COMMITTER_NAME", "Test")
-            .env("GIT_COMMITTER_EMAIL", "test@example.com")
+            .envs(GIT_ENV.iter().copied())
             .status()
             .unwrap();
         assert!(status.success(), "git {args:?} failed");
@@ -53,8 +61,11 @@ impl TestRepo {
         fs::write(self.path().join(file), contents).unwrap();
     }
 
+    /// The repository as the crate sees it, isolated like [`Self::git`].
     pub fn repo(&self) -> Repo {
-        Repo::discover(self.path()).unwrap()
+        Repo::discover(self.path())
+            .unwrap()
+            .with_env(GIT_ENV.iter().copied())
     }
 
     pub fn context(&self) -> RepoContext {

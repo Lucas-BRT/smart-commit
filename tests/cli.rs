@@ -11,8 +11,7 @@ fn npu_commit(args: &[&str], dir: &Path) -> Output {
         .args(args)
         .current_dir(dir)
         // The git the binary runs must not see the developer's config.
-        .env("GIT_CONFIG_GLOBAL", "/dev/null")
-        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .envs(common::GIT_ENV.iter().copied())
         .output()
         .unwrap()
 }

@@ -156,9 +156,10 @@ Para atualizar os snapshots depois de mudar o prompt de propósito:
   `--ignore-space-change` esconderia commits que são só de formatação.
 - Exemplos do histórico podem ter mais de 72 colunas (o limite da fase 1 é
   100) enquanto o prompt pede ≤ 72. Por enquanto o saneamento resolve.
-- Nos testes de integração, as chamadas que o próprio `Repo` faz ao git
-  ainda leem a config global de quem roda os testes; só os comandos de
-  preparo do `TestRepo` e o binário nos testes da CLI estão isolados.
+- ~~Nos testes de integração, as chamadas que o próprio `Repo` faz ao git
+  ainda leem a config global de quem roda os testes.~~ Resolvido com
+  `Repo::with_env` e `GIT_ENV` em `tests/common/`, que também fixa
+  identidade e datas dos commits de teste.
 - O fallback de um único arquivo com caminho muito longo vira algo como
   `chore: add` depois do corte em 72 colunas; usar só o nome do arquivo
   nesse caso resolveria.

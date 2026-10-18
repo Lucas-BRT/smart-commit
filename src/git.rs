@@ -42,6 +42,9 @@ pub struct FileChange {
 #[derive(Debug, Clone)]
 pub struct Repo {
     root: PathBuf,
+    /// Extra environment for every git call, e.g. to isolate tests from
+    /// the user's config.
+    env: Vec<(String, String)>,
 }
 
 impl Repo {
@@ -59,7 +62,18 @@ impl Repo {
         let root = String::from_utf8(output.stdout)?;
         Ok(Self {
             root: PathBuf::from(root.trim_end()),
+            env: Vec::new(),
         })
+    }
+
+    /// Sets environment variables for every git call made through `self`.
+    pub fn with_env<K: Into<String>, V: Into<String>>(
+        mut self,
+        vars: impl IntoIterator<Item = (K, V)>,
+    ) -> Self {
+        self.env
+            .extend(vars.into_iter().map(|(k, v)| (k.into(), v.into())));
+        self
     }
 
     pub fn root(&self) -> &Path {
@@ -119,6 +133,7 @@ impl Repo {
             .arg("-C")
             .arg(&self.root)
             .args(args)
+            .envs(self.env.iter().map(|(k, v)| (k, v)))
             .output()?)
     }
 }
