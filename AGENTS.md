@@ -72,7 +72,8 @@ describes what is pinned and how it is checked.
 - **Model export:** a change to the export (revision, flags, lock) needs two
   identical exports from scratch, the new `scripts/export/MANIFEST.sha256`
   committed with it, and the **Model** workflow run, which checks the export
-  on another machine and publishes it for `fetch-model.sh`.
+  on another machine. Models are never hosted by this project: users'
+  machines download them from their publishers and export them.
 
 ## Commits
 

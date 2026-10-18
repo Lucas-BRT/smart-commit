@@ -55,11 +55,11 @@ mkdir -p "$stage/bin" "$stage/share/smart-commit/scripts/export" "$stage/share/d
 install -m 755 "$binary/smart-commit" "$stage/bin/"
 rm -rf "$binary"
 for script in setup.sh hardware.sh setup-llamacpp.sh setup-npu.sh setup-gpu.sh check-npu.sh \
-    fetch-model.sh export-model.sh; do
+    export-model.sh; do
     install -m 755 "scripts/$script" "$stage/share/smart-commit/scripts/"
 done
 install -m 644 scripts/export/requirements.in scripts/export/requirements.lock \
-    scripts/export/MANIFEST.sha256 "$stage/share/smart-commit/scripts/export/"
+    scripts/export/MANIFEST.sha256 scripts/export/normalize_ir.py "$stage/share/smart-commit/scripts/export/"
 install -m 644 LICENSE README.md docs/usage.md "$stage/share/doc/smart-commit/"
 echo "$VERSION" >"$stage/share/smart-commit/VERSION"
 

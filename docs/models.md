@@ -82,8 +82,11 @@ do.
 
 `npu`, `intel-gpu` and `openvino-cpu` need the model exported for OpenVINO
 with symmetric INT4 weights, which the NPU requires. Only models with a
-pinned, reproducible export have one: today `qwen2.5-coder-1.5b`
-(`scripts/export-model.sh`, see [reproducibility](reproducibility.md)).
+pinned, reproducible export have one: today `qwen2.5-coder-1.5b`.
+`smart-commit setup` exports it on machines with an Intel NPU or GPU, from
+the publisher's files on Hugging Face (`scripts/export-model.sh`, about
+10 GB of disk while it runs, a few minutes), and checks the result against
+the committed manifest; see [reproducibility](reproducibility.md).
 With another model those devices are unavailable, with a message saying so,
 and `auto` uses `vulkan` or `cpu`.
 

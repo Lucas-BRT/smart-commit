@@ -32,9 +32,12 @@ install --no-setup
 "$work/prefix/bin/smart-commit" --version | grep -qx "smart-commit $VERSION"
 for file in share/smart-commit/scripts/setup.sh share/smart-commit/scripts/setup-gpu.sh \
     share/smart-commit/scripts/hardware.sh share/smart-commit/scripts/setup-llamacpp.sh \
-    share/smart-commit/scripts/export/MANIFEST.sha256 share/doc/smart-commit/LICENSE share/doc/smart-commit/usage.md; do
+    share/smart-commit/scripts/export-model.sh share/smart-commit/scripts/export/MANIFEST.sha256 \
+    share/smart-commit/scripts/export/requirements.lock share/smart-commit/scripts/export/normalize_ir.py \
+    share/doc/smart-commit/LICENSE share/doc/smart-commit/usage.md; do
     test -f "$work/prefix/$file"
 done
+test ! -e "$work/prefix/share/smart-commit/scripts/fetch-model.sh"
 grep -q "smart-commit setup" "$work/out"
 echo "ok    installs the latest release"
 # install.sh only replaces and removes these, since share/smart-commit is

@@ -10,8 +10,8 @@
 #   per GPU             its Vulkan driver (setup-gpu.sh); Intel GPUs also
 #                       Intel's compute runtime, for intel-gpu
 #   Intel NPU           the NPU driver and Level Zero (setup-npu.sh)
-#   Intel NPU or GPU    OpenVINO GenAI and the OpenVINO model; nothing else
-#                       needs OpenVINO
+#   Intel NPU or GPU    OpenVINO GenAI, and the model exported for it on
+#                       this machine; nothing else needs OpenVINO
 #
 #   setup.sh [--yes] [--no-drivers] [--no-bench]
 #
@@ -20,8 +20,8 @@
 #   --no-bench    skip the benchmark
 #
 # Every step is optional and can be run again later on its own:
-# hardware.sh, setup-llamacpp.sh, setup-gpu.sh, setup-npu.sh, fetch-model.sh
-# and `smart-commit bench`. SMART_COMMIT_BIN names the smart-commit binary
+# hardware.sh, setup-llamacpp.sh, setup-gpu.sh, setup-npu.sh,
+# export-model.sh and `smart-commit bench`. SMART_COMMIT_BIN names the smart-commit binary
 # to benchmark; hardware.sh lists the variables tests use.
 set -euo pipefail
 
@@ -85,10 +85,10 @@ if has_intel_npu; then
     echo "  Intel NPU: the NPU driver 1.38.0 and Level Zero 1.32.0 (sudo)"
 fi
 if needs_openvino; then
-    echo "  OpenVINO GenAI 2026.3.1 (sudo) and the OpenVINO model, for the Intel NPU or GPU"
-    echo "  (it also gives openvino-cpu)"
+    echo "  OpenVINO GenAI 2026.3.1 (sudo), for the Intel NPU or GPU (it also gives openvino-cpu),"
+    echo "  and the model exported for it here, from Hugging Face"
 elif openvino_installed; then
-    echo "  the OpenVINO model, for openvino-cpu (OpenVINO is already installed)"
+    echo "  the model exported for OpenVINO here, for openvino-cpu (OpenVINO is already installed)"
 else
     echo "  not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime, since"
     echo "  there is no Intel NPU or GPU here"
@@ -121,9 +121,11 @@ fi
 
 if needs_openvino || openvino_installed; then
     say "OpenVINO model"
-    if ! "$HERE/fetch-model.sh"; then
-        echo "  Could not download the OpenVINO model; export it locally with"
-        echo "  $HERE/export-model.sh (needs uv and about 10 GB of disk)."
+    if "$HERE/export-model.sh" --check; then
+        echo "  already exported, every file checked"
+    elif ask "Export the model for OpenVINO here (downloads it from Hugging Face; about 10 GB of disk while it runs, a few minutes)?"; then
+        "$HERE/export-model.sh" ||
+            echo "  Could not export the model; run $HERE/export-model.sh again."
     fi
 fi
 

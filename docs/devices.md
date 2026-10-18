@@ -127,10 +127,10 @@ that needs `sudo`. On a Ryzen 5 5500 with an RTX 3050:
 | Hardware | What the setup installs |
 |---|---|
 | any x86_64 machine | llama.cpp b11381 and the GGUF model, without `sudo`: the `cpu` and `vulkan` devices |
-| Intel GPU | Mesa ANV; Intel's compute runtime and OpenVINO GenAI, for `intel-gpu`; the OpenVINO model |
+| Intel GPU | Mesa ANV; Intel's compute runtime and OpenVINO GenAI, for `intel-gpu`; the model exported for OpenVINO |
 | AMD GPU | Mesa RADV |
 | NVIDIA GPU | the proprietary driver's Vulkan ICD if it is missing, or Mesa NVK with nouveau |
-| Intel NPU | the NPU driver, Level Zero and OpenVINO GenAI; the OpenVINO model |
+| Intel NPU | the NPU driver, Level Zero and OpenVINO GenAI; the model exported for OpenVINO |
 | AMD NPU (Ryzen AI) | nothing: listed as not supported |
 
 OpenVINO, the NPU driver and Intel's GPU runtime are never installed on a
@@ -145,7 +145,7 @@ a checkout):
 | `setup-gpu.sh [--dry-run] [--yes]` | the system drivers each GPU needs (below) | only for system packages |
 | `setup-npu.sh` | NPU driver 1.38.0, Level Zero 1.32.0 and OpenVINO GenAI 2026.3.1, the combination Intel validated; adds you to the `render` group | yes |
 | `setup-npu.sh --openvino-only` | only OpenVINO, for an Intel GPU without an NPU, or to compare `openvino-cpu` with `cpu` | yes |
-| `fetch-model.sh` | the OpenVINO model, every file checked against the manifest | no |
+| `export-model.sh [--check] [--keep]` | the model for OpenVINO, exported here from Hugging Face and checked against the manifest; about 10 GB of disk while it runs | no |
 | `check-npu.sh` | checks the NPU stack without changing anything | no |
 
 OpenVINO is installed in `/opt/intel/openvino_2026.3.1`, with the link

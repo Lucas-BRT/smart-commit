@@ -43,8 +43,9 @@ pinning:
 - the NPU's flags: `--weight-format int4 --sym --group-size 128 --ratio 1.0`.
 
 The result must match `scripts/export/MANIFEST.sha256` byte for byte, or the
-script fails. The manifest's hash is the model's identity in traces and the
-name of its release.
+script fails. The manifest's hash is the model's identity in traces. uv
+0.13.1 is pinned too, by SHA-256, and downloaded into the cache when it is
+missing.
 
 *How it was checked:* two exports from scratch are identical. On CI the
 weights matched but two files did not, which led to two fixes:
@@ -56,11 +57,15 @@ weights matched but two files did not, which led to two fixes:
   `scripts/export/normalize_ir.py` renumbers them in order of appearance;
   nothing refers to nodes by those names, and the replies did not change.
 
-The **Model** workflow (`.github/workflows/model.yml`) exports on CI, fails
-unless the manifest matches, and publishes the model;
-`scripts/fetch-model.sh` downloads it and checks every file against the
-repository's manifest. Installing therefore needs neither Python nor 10 GB
-of disk.
+smart-commit hosts no models: `smart-commit setup` runs the export on each
+machine that has an Intel NPU or GPU, from the publisher's files on Hugging
+Face, and the manifest check makes the result the same everywhere. It needs
+about 10 GB of disk while it runs; the Python environment and the source
+model are removed afterwards (`--keep` keeps them). The **Model** workflow
+(`.github/workflows/model.yml`) runs the export on CI after any change to
+it, to check that it reproduces on another machine. On a Ryzen 5 5500 the
+export from scratch (uv, Python, the packages and the source model
+downloaded) took 1 min 47 s and matched the manifest.
 
 The GGUF models for llama.cpp are the publishers' own files on Hugging
 Face (Qwen's for every recommended model), each pinned in `src/models.rs` to

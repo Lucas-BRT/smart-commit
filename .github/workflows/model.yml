@@ -1,14 +1,15 @@
 name: Model
 
 # Exports the OpenVINO model with scripts/export-model.sh, which fails unless
-# the result is byte for byte scripts/export/MANIFEST.sha256 (so this also
-# proves the export reproduces on another machine), and publishes it for
-# scripts/fetch-model.sh. Run by hand after changing the pinned export.
+# the result is byte for byte scripts/export/MANIFEST.sha256: this proves the
+# export reproduces on another machine, as every user's machine exports it
+# (smart-commit hosts no models). Run by hand after changing the pinned
+# export.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   NAME: qwen2.5-coder-1.5b-instruct-int4-sym-g128
@@ -18,9 +19,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.13.1"
       - name: Make room (the export needs about 10 GB)
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
@@ -37,28 +35,3 @@ jobs:
             ${{ runner.temp }}/models/*.partial/*.xml
             ${{ runner.temp }}/models/*.partial/MANIFEST.sha256
           retention-days: 7
-      - name: Package
-        run: |
-          set -euo pipefail
-          tag="model-$NAME-$(sha256sum scripts/export/MANIFEST.sha256 | cut -c1-16)"
-          echo "TAG=$tag" >>"$GITHUB_ENV"
-          source_dir=$(ls -d ~/.cache/smart-commit/sources/Qwen/Qwen2.5-Coder-1.5B-Instruct@*)
-          cp "$source_dir/LICENSE" "$RUNNER_TEMP/models/LICENSE.Qwen2.5-Coder"
-          epoch=$(git log -1 --format=%ct)
-          tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner \
-              --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
-              -C "$RUNNER_TEMP/models" -cf - "$NAME" LICENSE.Qwen2.5-Coder |
-              gzip -9n >"$NAME.tar.gz"
-          sha256sum "$NAME.tar.gz" >"$NAME.tar.gz.sha256"
-          cat "$NAME.tar.gz.sha256"
-      - name: Publish
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "$TAG already published"
-            exit 0
-          fi
-          gh release create "$TAG" "$NAME.tar.gz" "$NAME.tar.gz.sha256" \
-            --title "Model: $NAME" --latest=false \
-            --notes "Qwen2.5-Coder-1.5B-Instruct (Apache-2.0, see LICENSE.Qwen2.5-Coder) exported for OpenVINO with INT4 symmetric weights by scripts/export-model.sh at ${GITHUB_SHA}. Every file matches scripts/export/MANIFEST.sha256; scripts/fetch-model.sh installs it."
