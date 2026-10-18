@@ -21,9 +21,9 @@ use serde_json::{Value, json};
 use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};
 use crate::prompt::Prompt;
 
-/// The llama.cpp release `scripts/setup-gpu.sh` installs.
+/// The llama.cpp release `npu-commit setup` installs.
 pub const LLAMA_CPP_BUILD: &str = "b11381";
-/// The GGUF model `scripts/setup-gpu.sh` fetches.
+/// The GGUF model `npu-commit setup` downloads.
 pub const DEFAULT_GGUF: &str = "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf";
 
 /// UNIX socket paths are limited to 108 bytes on Linux.
@@ -66,13 +66,13 @@ impl LlamaCppBackend {
         let unavailable = BackendError::Unavailable;
         if !options.model.is_file() {
             return Err(unavailable(format!(
-                "no GGUF model at {}; fetch it with scripts/setup-gpu.sh",
+                "no GGUF model at {}; `npu-commit setup` downloads it",
                 options.model.display()
             )));
         }
         if !options.server.is_file() {
             return Err(unavailable(format!(
-                "no llama-server at {}; install it with scripts/setup-gpu.sh",
+                "no llama-server at {}; `npu-commit setup` installs it",
                 options.server.display()
             )));
         }

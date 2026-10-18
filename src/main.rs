@@ -71,6 +71,19 @@ enum Command {
         #[command(subcommand)]
         command: Option<bench_cmd::DeviceCommand>,
     },
+    /// Install drivers and models for this machine's NPU and GPUs, then
+    /// benchmark them (asks before anything that needs sudo).
+    Setup {
+        /// Answer yes to every question.
+        #[arg(long)]
+        yes: bool,
+        /// Skip drivers and runtimes: no sudo at all.
+        #[arg(long)]
+        no_drivers: bool,
+        /// Skip the benchmark.
+        #[arg(long)]
+        no_bench: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -250,6 +263,11 @@ fn main() -> ExitCode {
         Some(Command::Config(command)) => config_cmd::run(command),
         Some(Command::Bench { json }) => bench_cmd::run_bench(json),
         Some(Command::Device { command }) => bench_cmd::run_device(command),
+        Some(Command::Setup {
+            yes,
+            no_drivers,
+            no_bench,
+        }) => run_setup(yes, no_drivers, no_bench),
         None => run_generate(&cli.generate),
     };
     match result {
@@ -411,6 +429,35 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
         replay.generation.source
     );
     println!("{}", replay.generation.message);
+    Ok(())
+}
+
+/// Runs `setup.sh`: installed next to the binary (`../share/npu-commit`)
+/// or, from a checkout, in `scripts/`.
+fn run_setup(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
+    let exe = std::env::current_exe()?.canonicalize()?;
+    let bin = exe.parent().ok_or("the binary has no directory")?;
+    let script = [
+        bin.join("../share/npu-commit/scripts/setup.sh"),
+        bin.join("../../scripts/setup.sh"),
+    ]
+    .into_iter()
+    .find(|p| p.is_file())
+    .ok_or("setup.sh not found next to the binary; reinstall npu-commit")?;
+    let flags = [
+        (yes, "--yes"),
+        (no_drivers, "--no-drivers"),
+        (no_bench, "--no-bench"),
+    ];
+    let status = std::process::Command::new(&script)
+        .args(flags.iter().filter(|(on, _)| *on).map(|(_, flag)| flag))
+        // So the setup benchmarks this very binary.
+        .env("NPU_COMMIT_BIN", &exe)
+        .status()
+        .map_err(|err| format!("cannot run {}: {err}", script.display()))?;
+    if !status.success() {
+        return Err(format!("setup failed ({status})").into());
+    }
     Ok(())
 }
 

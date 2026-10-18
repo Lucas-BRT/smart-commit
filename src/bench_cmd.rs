@@ -101,9 +101,11 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
     match selected {
         Some(target) => println!("{}", using_message(&report, target, settings.device)),
         None => {
-            return Err("no device could run the model; scripts/setup.sh installs \
+            return Err(
+                "no device could run the model; `npu-commit setup` installs \
                         the drivers and models"
-                .into());
+                    .into(),
+            );
         }
     }
     println!("{HOW_TO_CHANGE}");

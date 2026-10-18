@@ -44,7 +44,7 @@ impl fmt::Display for Device {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GenaiOptions {
-    /// A model exported by `scripts/export-model.sh`.
+    /// The OpenVINO model (`npu-commit setup` downloads it).
     pub model_dir: PathBuf,
     pub device: Device,
     /// Where OpenVINO keeps compiled models; without it every load on the
@@ -59,7 +59,7 @@ pub struct GenaiOptions {
 }
 
 /// How the NPU compiles the model. The defaults are what we measured to be
-/// fastest with identical replies (docs/08-plano-proximas-fases.md).
+/// fastest with identical replies (docs/devices.md).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NpuTuning {
     /// Prompt tokens processed per step. Below `max_prompt_tokens` the NPU
@@ -91,14 +91,14 @@ impl GenaiBackend {
         let model_xml = options.model_dir.join("openvino_model.xml");
         if !model_xml.is_file() {
             return Err(BackendError::Unavailable(format!(
-                "no model in {}; export one with scripts/export-model.sh",
+                "no model in {}; `npu-commit setup` downloads it",
                 options.model_dir.display()
             )));
         }
         let identity = model_identity(&options.model_dir)?;
         openvino_genai::load().map_err(|err| {
             BackendError::Unavailable(format!(
-                "OpenVINO GenAI not found ({err}); install it with scripts/setup-npu.sh"
+                "OpenVINO GenAI not found ({err}); `npu-commit setup` installs it"
             ))
         })?;
         std::fs::create_dir_all(&options.cache_dir).map_err(|err| {
@@ -117,7 +117,7 @@ impl GenaiBackend {
                 .map_err(|err| {
                 BackendError::Unavailable(format!(
                     "cannot load the model on the {} ({err:?}); \
-                         scripts/check-npu.sh checks the setup",
+                         `npu-commit setup` installs and checks the drivers",
                     options.device
                 ))
             })?;
@@ -340,7 +340,7 @@ mod tests {
         assert_eq!(
             err,
             BackendError::Unavailable(format!(
-                "no model in {}; export one with scripts/export-model.sh",
+                "no model in {}; `npu-commit setup` downloads it",
                 dir.path().display()
             ))
         );

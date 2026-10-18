@@ -79,7 +79,7 @@ pub const KEYS: &[Key] = &[
         kind: Kind::Path,
         scope: Scope::User,
         env: Some("NPU_COMMIT_MODEL_DIR"),
-        description: "The model exported by scripts/export-model.sh.",
+        description: "The OpenVINO model, downloaded by `npu-commit setup`.",
     },
     Key {
         name: "model.cache_dir",
@@ -93,14 +93,14 @@ pub const KEYS: &[Key] = &[
         kind: Kind::Path,
         scope: Scope::User,
         env: Some("NPU_COMMIT_GGUF"),
-        description: "The GGUF model for the llama.cpp backend, fetched by scripts/setup-gpu.sh.",
+        description: "The GGUF model of the llama.cpp backend, downloaded by `npu-commit setup`.",
     },
     Key {
         name: "model.llama_server",
         kind: Kind::Path,
         scope: Scope::User,
         env: Some("NPU_COMMIT_LLAMA_SERVER"),
-        description: "The llama-server binary installed by scripts/setup-gpu.sh.",
+        description: "The llama-server binary, installed by `npu-commit setup`.",
     },
     Key {
         name: "model.vulkan_device",

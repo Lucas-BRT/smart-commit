@@ -172,14 +172,13 @@ fn auto_without_any_model_lists_every_device() {
         common::DATA_HOME,
         npu_commit::llamacpp::DEFAULT_GGUF
     );
-    let no_ir =
-        format!("backend unavailable: no model in {ir}; export one with scripts/export-model.sh");
+    let no_ir = format!("backend unavailable: no model in {ir}; `npu-commit setup` downloads it");
     assert_eq!(
         stderr(&output),
         format!(
             "error: no device could run the model:\n  gpu: {no_ir}\n  npu: {no_ir}\n  \
-             vulkan: backend unavailable: no GGUF model at {gguf}; fetch it with \
-             scripts/setup-gpu.sh\n  cpu: {no_ir}\n"
+             vulkan: backend unavailable: no GGUF model at {gguf}; `npu-commit setup` \
+             downloads it\n  cpu: {no_ir}\n"
         )
     );
 }
@@ -431,4 +430,28 @@ fn flags_override_the_environment() {
         ],
     );
     assert_eq!(stdout(&output), "fix: from the flag\n");
+}
+
+#[test]
+fn setup_runs_the_guided_setup_next_to_the_binary() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let data = tempfile::TempDir::new().unwrap();
+    // No drivers, no benchmark, and a release that does not exist: the model
+    // download fails gracefully and nothing touches the network.
+    let output = npu_commit_with(
+        &["setup", "--no-drivers", "--no-bench"],
+        dir.path(),
+        &[
+            ("NPU_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
+            ("XDG_DATA_HOME", data.path().to_str().unwrap()),
+        ],
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let out = stdout(&output);
+    assert!(out.contains("==> Hardware"), "{out}");
+    assert!(
+        out.contains("Could not download the OpenVINO model"),
+        "{out}"
+    );
+    assert!(out.contains("npu-commit hook install"), "{out}");
 }

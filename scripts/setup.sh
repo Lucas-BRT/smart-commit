@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Guided setup, run by install.sh: finds the NPU and GPUs of this machine,
-# offers to install what each needs, fetches the models, and benchmarks the
-# devices so `model.device = auto` uses the fastest one.
+# Guided setup, run by install.sh and `npu-commit setup`: finds the NPU and
+# GPUs of this machine, offers to install what each needs, fetches the
+# models, and benchmarks the devices so `model.device = auto` uses the
+# fastest one.
 #
 #   setup.sh [--yes] [--no-drivers] [--no-bench]
 #
@@ -11,6 +12,7 @@
 #
 # Every step is optional and can be run again later on its own:
 # setup-npu.sh, setup-gpu.sh, fetch-model.sh and `npu-commit bench`.
+# NPU_COMMIT_BIN names the npu-commit binary to benchmark.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -30,8 +32,11 @@ for arg in "$@"; do
     esac
 done
 
-# The binary: installed next to share/, else on PATH, else this checkout's.
-if [ -x "$HERE/../../../bin/npu-commit" ]; then
+# The binary: the one that called us, installed next to share/, on PATH, or
+# this checkout's.
+if [ -n "${NPU_COMMIT_BIN:-}" ]; then
+    NPU_COMMIT=$NPU_COMMIT_BIN
+elif [ -x "$HERE/../../../bin/npu-commit" ]; then
     NPU_COMMIT=$HERE/../../../bin/npu-commit
 elif command -v npu-commit >/dev/null; then
     NPU_COMMIT=npu-commit

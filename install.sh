@@ -7,7 +7,7 @@
 # Options (after `bash -s --` when piping):
 #   --version X.Y.Z  install that release instead of the latest
 #   --prefix DIR     install in DIR/bin and DIR/share (default: ~/.local)
-#   --no-setup       only install; run share/npu-commit/scripts/setup.sh later
+#   --no-setup       only install; run `npu-commit setup` later
 #   --yes            answer yes to the setup's questions
 #   --uninstall      remove npu-commit (models, caches and config are kept)
 #
@@ -105,5 +105,5 @@ esac
 if [ "$SETUP" = 1 ]; then
     "$PREFIX/share/npu-commit/scripts/setup.sh" "${setup_args[@]}"
 else
-    echo "Run $PREFIX/share/npu-commit/scripts/setup.sh to set up the devices and models."
+    echo "Run \`npu-commit setup\` to set up the devices and models."
 fi

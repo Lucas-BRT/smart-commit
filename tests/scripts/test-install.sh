@@ -34,7 +34,7 @@ for file in share/npu-commit/scripts/setup.sh share/npu-commit/scripts/setup-gpu
     share/npu-commit/scripts/export/MANIFEST.sha256 share/doc/npu-commit/LICENSE share/doc/npu-commit/uso.md; do
     test -f "$work/prefix/$file"
 done
-grep -q "setup.sh to set up" "$work/out"
+grep -q "npu-commit setup" "$work/out"
 echo "ok    installs the latest release"
 
 install --no-setup --version "v$VERSION"

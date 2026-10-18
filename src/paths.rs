@@ -6,7 +6,8 @@
 
 use std::path::PathBuf;
 
-/// The model `scripts/export-model.sh` exports.
+/// The OpenVINO model that `npu-commit setup` downloads (and
+/// `scripts/export-model.sh` reproduces).
 pub const DEFAULT_MODEL: &str = "qwen2.5-coder-1.5b-instruct-int4-sym-g128";
 
 /// `$XDG_DATA_HOME/npu-commit/models/<DEFAULT_MODEL>`.
@@ -29,7 +30,7 @@ pub fn default_gguf_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf
 }
 
 /// `$XDG_DATA_HOME/npu-commit/llama.cpp/llama-<build>/llama-server`, as
-/// `scripts/setup-gpu.sh` installs it.
+/// `npu-commit setup` installs it.
 pub fn default_llama_server(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(
         xdg(&env, "XDG_DATA_HOME", ".local/share")?
