@@ -113,7 +113,7 @@ O `MANIFEST.sha256` do modelo também é a identidade dele nos traces
 ## 5. Testes
 
 ```bash
-cargo test --locked                                    # 151, sem hardware
+cargo test --locked                                    # 145, sem hardware
 cargo test --test hardware -- --ignored --test-threads 1   # modelo real
 NPU_COMMIT_TEST_DEVICE=cpu cargo test --test hardware -- --ignored --test-threads 1
 ```
