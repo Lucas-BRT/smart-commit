@@ -189,14 +189,12 @@ as `trace::Inputs` (`src/trace.rs`):
 - Target: the commit's subject (and body, if kept), cleaned the way the
   sanitizer would accept it.
 
-The prompt is then built **by smart-commit**, not by the Python code. The
-missing piece is a command that does it without a git repository; proposed:
-`smart-commit prompt --inputs FILE` reading JSON Lines of `Inputs` and
-writing JSON Lines of `{"system", "user"}`, using `prompt::build` and
-`Trace::context` like `replay` does. It is a normal feature commit on
-`main`'s rules (tests in `tests/cli.rs`, docs in `docs/usage.md`). Run it
-with an empty `XDG_CONFIG_HOME` so the user's config does not leak into the
-dataset, and record the `PromptOptions` used.
+The prompt is then built **by smart-commit**, not by the Python code:
+`smart-commit prompt --inputs FILE` reads JSON Lines of `Inputs` and writes
+JSON Lines of `{"system", "user"}`, with `prompt::build` and
+`Inputs::context`, as `replay` does ([usage](usage.md)). Run it with an empty
+`XDG_CONFIG_HOME` so the user's config does not leak into the dataset, and
+record the `PromptOptions` used.
 
 The diff fitting (`src/diff.rs`) uses one line of context (`-U1`), while
 CommitChronicle diffs have more. Either trim the context to one line when
@@ -263,7 +261,7 @@ same numbers judge every model:
 
 ## Next steps, in order
 
-1. `smart-commit prompt --inputs` (Rust, with tests).
+1. ~~`smart-commit prompt --inputs` (Rust, with tests).~~ Done.
 2. Dataset builder: CommitChronicle → `Inputs` → prompts → JSON Lines with
    targets, split by repository.
 3. Evaluation script, and the base 1.5B and 0.5B scores.
