@@ -25,4 +25,12 @@ jobs:
       - run: tests/scripts/test-setup.sh
       - run: tests/scripts/test-normalize-ir.sh
       - run: tests/scripts/test-release-notes.sh
+
+  # Packages in the pinned build container (twice: the bytes must match)
+  # and installs the result; the printed hash is the one any machine gets
+  # for this commit.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - run: tests/scripts/test-install.sh
