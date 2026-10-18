@@ -5,7 +5,7 @@
 
 use std::fs;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Output};
 
 use npu_commit::context::RepoContext;
 use npu_commit::git::Repo;
@@ -23,6 +23,34 @@ pub const GIT_ENV: &[(&str, &str)] = &[
     ("GIT_COMMITTER_EMAIL", "test@example.com"),
     ("GIT_COMMITTER_DATE", "2026-01-01T00:00:00Z"),
 ];
+
+/// Our own settings, which the developer may have exported.
+const OWN_ENV: &[&str] = &[
+    "NPU_COMMIT_BACKEND",
+    "NPU_COMMIT_MOCK_RESPONSE",
+    "NPU_COMMIT_TRACE",
+];
+
+/// Applies [`GIT_ENV`] and drops [`OWN_ENV`], so the command behaves the
+/// same on every machine.
+pub fn isolate(command: &mut Command) -> &mut Command {
+    for var in OWN_ENV {
+        command.env_remove(var);
+    }
+    command.envs(GIT_ENV.iter().copied())
+}
+
+/// Runs the `npu-commit` binary, isolated like [`TestRepo::git`].
+pub fn npu_commit(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
+    isolate(
+        Command::new(env!("CARGO_BIN_EXE_npu-commit"))
+            .args(args)
+            .current_dir(dir),
+    )
+    .envs(env.iter().copied())
+    .output()
+    .unwrap()
+}
 
 pub struct TestRepo {
     dir: TempDir,
@@ -43,27 +71,26 @@ impl TestRepo {
 
     /// Runs git isolated from the developer's own config.
     pub fn git(&self, args: &[&str]) {
-        let status = Command::new("git")
-            .arg("-C")
-            .arg(self.path())
-            .args(args)
-            .envs(GIT_ENV.iter().copied())
-            .status()
-            .unwrap();
-        assert!(status.success(), "git {args:?} failed");
+        self.git_output(args);
     }
 
     /// Runs git like [`Self::git`] and returns its stdout.
     pub fn git_output(&self, args: &[&str]) -> String {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(self.path())
-            .args(args)
-            .envs(GIT_ENV.iter().copied())
-            .output()
-            .unwrap();
-        assert!(output.status.success(), "git {args:?} failed");
+        let output = self.git_with(args, &[]);
+        assert!(
+            output.status.success(),
+            "git {args:?} failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         String::from_utf8(output.stdout).unwrap()
+    }
+
+    /// Runs git with extra environment, without checking the outcome.
+    pub fn git_with(&self, args: &[&str], env: &[(&str, &str)]) -> Output {
+        isolate(Command::new("git").arg("-C").arg(self.path()).args(args))
+            .envs(env.iter().copied())
+            .output()
+            .unwrap()
     }
 
     pub fn commit(&self, subject: &str) {

@@ -1,7 +1,7 @@
 //! Runs the `npu-commit` binary end to end.
 
 use std::path::Path;
-use std::process::{Command, Output};
+use std::process::Output;
 
 mod common;
 use common::TestRepo;
@@ -11,18 +11,7 @@ fn npu_commit(args: &[&str], dir: &Path) -> Output {
 }
 
 fn npu_commit_with(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_npu-commit"))
-        .args(args)
-        .current_dir(dir)
-        // Neither the binary nor the git it runs may see the developer's
-        // own settings.
-        .env_remove("NPU_COMMIT_BACKEND")
-        .env_remove("NPU_COMMIT_MOCK_RESPONSE")
-        .env_remove("NPU_COMMIT_TRACE")
-        .envs(common::GIT_ENV.iter().copied())
-        .envs(env.iter().copied())
-        .output()
-        .unwrap()
+    common::npu_commit(args, dir, env)
 }
 
 /// A repository with a conventional history and one staged file.
