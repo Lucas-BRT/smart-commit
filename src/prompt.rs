@@ -54,6 +54,17 @@ pub fn effective_style(style: &Style, options: &PromptOptions) -> (Convention, L
 }
 
 pub fn build(ctx: &RepoContext, files: &[FileDiff], options: &PromptOptions) -> Prompt {
+    build_with_note(ctx, files, options, None)
+}
+
+/// Like [`build`], with `note` at the end of the user message, e.g. why the
+/// previous reply was rejected. The diff shrinks to make room for it.
+pub fn build_with_note(
+    ctx: &RepoContext,
+    files: &[FileDiff],
+    options: &PromptOptions,
+    note: Option<&str>,
+) -> Prompt {
     let system = system_message(ctx, options);
     // Sized with the truncation note at its longest, which large diffs
     // will need.
@@ -62,10 +73,10 @@ pub fn build(ctx: &RepoContext, files: &[FileDiff], options: &PromptOptions) -> 
         ..CompactDiff::default()
     };
     let fixed = diff::estimate_tokens(&system)
-        + diff::estimate_tokens(&user_message(&empty))
+        + diff::estimate_tokens(&user_message(&empty, note))
         + TEMPLATE_OVERHEAD_TOKENS;
     let budget = options.max_prompt_tokens.saturating_sub(fixed);
-    let user = user_message(&diff::compact(files, budget));
+    let user = user_message(&diff::compact(files, budget), note);
     Prompt { system, user }
 }
 
@@ -130,7 +141,7 @@ fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
     text
 }
 
-fn user_message(diff: &CompactDiff) -> String {
+fn user_message(diff: &CompactDiff, note: Option<&str>) -> String {
     let mut text = format!("Files changed:\n{}", diff.stat);
     if !diff.patch.is_empty() {
         let _ = write!(text, "\nDiff:\n{}", diff.patch);
@@ -141,6 +152,9 @@ fn user_message(diff: &CompactDiff) -> String {
             "\n({} files are only partly shown; rely on the file list.)\n",
             diff.truncated
         );
+    }
+    if let Some(note) = note {
+        let _ = write!(text, "\n{note}\n");
     }
     text
 }
@@ -262,6 +276,34 @@ mod tests {
         let ctx = context(&["Add login page", "Fix crash"], Some("ABC-3-signup"));
         let prompt = build(&ctx, &files(), &PromptOptions::default());
         assert!(!prompt.system.contains("ABC-3"));
+    }
+
+    #[test]
+    fn note_goes_last_and_the_diff_makes_room_for_it() {
+        let big: Vec<FileDiff> = (0..20)
+            .map(|n| FileDiff {
+                path: format!("src/m{n}.rs"),
+                old_path: None,
+                lines: Some((60, 0)),
+                hunks: format!(
+                    "@@ -0,0 +1,60 @@\n{}",
+                    "+let value = compute();\n".repeat(60)
+                ),
+            })
+            .collect();
+        let ctx = context(&["feat: add a thing to the parser"], None);
+        let options = PromptOptions::default();
+        let note = "Your previous reply was rejected. ".repeat(10);
+
+        let plain = build(&ctx, &big, &options);
+        let noted = build_with_note(&ctx, &big, &options, Some(&note));
+        assert_eq!(noted.system, plain.system);
+        assert!(noted.user.ends_with(&format!("\n{note}\n")));
+        assert!(noted.user.len() - note.len() < plain.user.len());
+        let used = diff::estimate_tokens(&noted.system)
+            + diff::estimate_tokens(&noted.user)
+            + TEMPLATE_OVERHEAD_TOKENS;
+        assert!(used <= options.max_prompt_tokens, "{used}");
     }
 
     #[test]
