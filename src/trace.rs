@@ -49,6 +49,19 @@ pub struct Inputs {
     pub generated: Vec<String>,
 }
 
+impl Inputs {
+    /// The context these inputs describe, without a repository path.
+    pub fn context(&self) -> RepoContext {
+        RepoContext::new(
+            PathBuf::new(),
+            self.branch.clone(),
+            self.subjects.clone(),
+            self.staged.clone(),
+        )
+        .with_generated(self.generated.clone())
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum TraceError {
     #[error("invalid trace: {0}")]
@@ -115,13 +128,7 @@ impl Trace {
 
     /// The context the generation started from. The path is not recorded.
     pub fn context(&self) -> RepoContext {
-        RepoContext::new(
-            PathBuf::new(),
-            self.inputs.branch.clone(),
-            self.inputs.subjects.clone(),
-            self.inputs.staged.clone(),
-        )
-        .with_generated(self.inputs.generated.clone())
+        self.inputs.context()
     }
 
     /// Runs the generation again with the recorded replies in place of the

@@ -112,6 +112,12 @@ smart-commit context           # the style detected in the history
 smart-commit prompt            # the exact prompt for what is staged
 ```
 
+`smart-commit prompt --inputs FILE` builds prompts without a repository, from
+JSON Lines of the `inputs` object of [traces](reproducibility.md) (`-` reads
+stdin), and prints one `{"system": ..., "user": ...}` per line. Only global
+settings apply. It gives a training or evaluation set the exact prompts
+smart-commit sends.
+
 ## Devices
 
 ```bash

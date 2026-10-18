@@ -109,6 +109,122 @@ fn prompt_shows_style_and_staged_diff() {
     assert!(out.contains("of 1024 tokens ====="));
 }
 
+/// The inputs of a mock generation in [`staged_repo`] as one JSON line, and
+/// the prompt smart-commit sent for them.
+fn recorded_inputs(repo: &TestRepo) -> (String, serde_json::Value) {
+    let trace = repo.path().join("trace.json");
+    let output = smart_commit(
+        &[
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: add the entry point",
+            "--trace",
+            trace.to_str().unwrap(),
+        ],
+        repo.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let trace: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&trace).unwrap()).unwrap();
+    (
+        trace["inputs"].to_string(),
+        trace["generation"]["attempts"][0]["prompt"].clone(),
+    )
+}
+
+#[test]
+fn prompt_from_inputs_matches_the_prompt_sent() {
+    let repo = staged_repo();
+    let (inputs, prompt) = recorded_inputs(&repo);
+    let elsewhere = tempfile::TempDir::new().unwrap();
+    let file = elsewhere.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n\n{inputs}\n")).unwrap();
+
+    let output = smart_commit(
+        &["prompt", "--inputs", file.to_str().unwrap()],
+        elsewhere.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let lines: Vec<serde_json::Value> = stdout(&output)
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert_eq!(lines, [prompt.clone(), prompt]);
+}
+
+#[test]
+fn prompt_from_inputs_reads_stdin_and_global_settings() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let config_home = tempfile::TempDir::new().unwrap();
+    let config = config_home.path().join("smart-commit/config.toml");
+    std::fs::create_dir_all(config.parent().unwrap()).unwrap();
+    std::fs::write(&config, "[style]\nlanguage = \"portuguese\"\n").unwrap();
+
+    let mut child = common::isolate(
+        std::process::Command::new(env!("CARGO_BIN_EXE_smart-commit"))
+            .args(["prompt", "--inputs", "-"])
+            .current_dir(config_home.path()),
+    )
+    .env("XDG_CONFIG_HOME", config_home.path())
+    .stdin(std::process::Stdio::piped())
+    .stdout(std::process::Stdio::piped())
+    .stderr(std::process::Stdio::piped())
+    .spawn()
+    .unwrap();
+    std::io::Write::write_all(&mut child.stdin.take().unwrap(), inputs.as_bytes()).unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(output.status.success());
+    assert_eq!(stderr(&output), "");
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    assert!(
+        prompt["system"]
+            .as_str()
+            .unwrap()
+            .contains("Brazilian Portuguese")
+    );
+}
+
+#[test]
+fn prompt_from_empty_inputs_prints_nothing() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, "").unwrap();
+    let output = smart_commit(&["prompt", "--inputs", file.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "");
+}
+
+#[test]
+fn prompt_from_invalid_inputs_names_the_line() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n{{\"branch\": null}}\n")).unwrap();
+    let path = file.to_str().unwrap();
+
+    let output = smart_commit(&["prompt", "--inputs", path], dir.path());
+    assert_eq!(output.status.code(), Some(1));
+    assert!(
+        stderr(&output).starts_with(&format!("error: {path}:2: invalid inputs: missing field")),
+        "{}",
+        stderr(&output)
+    );
+
+    let missing = dir.path().join("missing.jsonl");
+    let output = smart_commit(
+        &["prompt", "--inputs", missing.to_str().unwrap()],
+        dir.path(),
+    );
+    assert_eq!(output.status.code(), Some(1));
+    assert!(stderr(&output).contains("cannot read"));
+
+    let output = smart_commit(&["prompt", "--inputs", path, "-C", "."], dir.path());
+    assert_eq!(output.status.code(), Some(2));
+}
+
 #[test]
 fn lockfiles_alone_get_a_message_without_loading_a_model() {
     let repo = TestRepo::new();

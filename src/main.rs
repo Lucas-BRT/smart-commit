@@ -1,5 +1,6 @@
 use std::cell::OnceCell;
 use std::error::Error;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;
@@ -21,7 +22,7 @@ use smart_commit::llamacpp::LlamaCppBackend;
 use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::paths;
 use smart_commit::prompt::{self, PromptOptions};
-use smart_commit::trace::Trace;
+use smart_commit::trace::{Inputs, Trace};
 use smart_commit::tui::review::{self, Review};
 use smart_commit::tui::{self, Screen};
 
@@ -52,8 +53,17 @@ enum Command {
     /// Show the prompt the model would get for the staged changes.
     Prompt {
         /// Repository to work on.
-        #[arg(short = 'C', long = "path", default_value = ".")]
+        #[arg(
+            short = 'C',
+            long = "path",
+            default_value = ".",
+            conflicts_with = "inputs"
+        )]
         path: PathBuf,
+        /// Build prompts without a repository from JSON Lines of trace
+        /// inputs (`-` for stdin), printing one `{"system", "user"}` per line.
+        #[arg(long, value_name = "FILE")]
+        inputs: Option<PathBuf>,
     },
     /// Run a recorded generation again and check it is reproduced exactly.
     Replay {
@@ -286,7 +296,11 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
         Some(Command::Context { path }) => run_context(&path),
-        Some(Command::Prompt { path }) => run_prompt(&path),
+        Some(Command::Prompt {
+            inputs: Some(inputs),
+            ..
+        }) => run_prompt_inputs(&inputs),
+        Some(Command::Prompt { path, inputs: None }) => run_prompt(&path),
         Some(Command::Replay {
             trace,
             with_model,
@@ -350,6 +364,31 @@ fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
         "===== ~{tokens} of {} tokens =====",
         options.max_prompt_tokens
     );
+    Ok(())
+}
+
+/// `prompt --inputs`: the prompts of many recorded inputs, e.g. to build a
+/// training set with the exact prompts smart-commit sends. Only the user's
+/// global settings apply, since there is no repository.
+fn run_prompt_inputs(path: &Path) -> Result<(), Box<dyn Error>> {
+    let text = if path == Path::new("-") {
+        std::io::read_to_string(std::io::stdin())?
+    } else {
+        std::fs::read_to_string(path)
+            .map_err(|err| format!("cannot read {}: {err}", path.display()))?
+    };
+    let options = resolve(None, Vec::new())?.settings().prompt_options();
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    for (index, line) in text.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let inputs: Inputs = serde_json::from_str(line)
+            .map_err(|err| format!("{}:{}: invalid inputs: {err}", path.display(), index + 1))?;
+        let prompt = prompt::build(&inputs.context(), &inputs.files, &options);
+        writeln!(out, "{}", serde_json::to_string(&prompt)?)?;
+    }
+    out.flush()?;
     Ok(())
 }
 
