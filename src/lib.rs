@@ -4,10 +4,12 @@
 pub mod backend;
 pub mod context;
 pub mod diff;
+pub mod genai;
 pub mod generate;
 pub mod git;
 pub mod hook;
 pub mod message;
+pub mod paths;
 pub mod prompt;
 pub mod style;
 pub mod trace;
