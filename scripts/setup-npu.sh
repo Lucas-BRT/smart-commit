@@ -7,6 +7,8 @@
 #     was validated with
 #   - OpenVINO GenAI 2026.3.1 archive (runtime + GenAI + tokenizers),
 #     also the version validated with the driver, in /opt/intel
+#   - /etc/ld.so.conf.d/npu-commit-openvino.conf, so its libraries resolve
+#     without LD_LIBRARY_PATH
 #   - membership of the `render` group, which owns /dev/accel/accel0
 #
 # Run as your own user; it calls sudo where needed:
@@ -77,6 +79,13 @@ sudo mkdir -p "$INSTALL_ROOT"
 sudo rm -rf "${INSTALL_DIR:?}"
 sudo mv "$work/$GENAI_DIR" "$INSTALL_DIR"
 sudo ln -sfn "$INSTALL_DIR" "$INSTALL_ROOT/openvino"
+# The archive's libraries have no RUNPATH and expect setupvars.sh to set
+# LD_LIBRARY_PATH, which processes started outside a shell (git hooks run by
+# GUI clients) never get. Registering them with the dynamic linker instead
+# makes them resolve everywhere.
+printf '%s\n' "$INSTALL_ROOT/openvino/runtime/lib/intel64" "$INSTALL_ROOT/openvino/runtime/3rdparty/tbb/lib" |
+    sudo tee /etc/ld.so.conf.d/npu-commit-openvino.conf >/dev/null
+sudo ldconfig
 
 echo "==> adding $USER to the render group"
 sudo gpasswd -a "$USER" render

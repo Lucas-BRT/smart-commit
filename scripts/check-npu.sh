@@ -31,6 +31,8 @@ check "OpenVINO GenAI 2026.3.1 is in /opt/intel/openvino" \
     grep -q '^2026.3.1' /opt/intel/openvino/runtime/version.txt
 check "the GenAI C library is there" \
     test -e /opt/intel/openvino/runtime/lib/intel64/libopenvino_genai_c.so
+check "the dynamic linker resolves the OpenVINO libraries" \
+    sh -c "ldconfig -p | grep -q 'libopenvino_c.so'"
 
 if [ "$failures" -gt 0 ]; then
     echo
