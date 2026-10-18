@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use toml_edit::{DocumentMut, Item, Table};
 
 use crate::backend::GenerationConfig;
-use crate::genai::{Device, GenaiOptions};
+use crate::genai::{Device, GenaiOptions, NpuTuning};
 use crate::llamacpp::LlamaCppOptions;
 use crate::paths;
 use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions};
@@ -109,6 +109,26 @@ pub const KEYS: &[Key] = &[
         env: None,
         description: "Which Vulkan GPU llama.cpp uses, as `llama-server --list-devices` \
                       numbers them (0 is Vulkan0).",
+    },
+    Key {
+        name: "model.npu_prefill_chunk",
+        kind: Kind::Count {
+            min: 512,
+            max: 8192,
+        },
+        scope: Scope::User,
+        env: None,
+        description: "NPU only: prompt tokens processed per step; below \
+                      model.max_prompt_tokens (and dividing it) the NPU pays only for the \
+                      prompt's real length. Smaller chunks fail to compile with driver 1.38.",
+    },
+    Key {
+        name: "model.npu_generate_hint",
+        kind: Kind::Choice(&["best_perf", "fast_compile"]),
+        scope: Scope::User,
+        env: None,
+        description: "NPU only: `best_perf` compiles slower (once, then cached) for faster \
+                      tokens.",
     },
     Key {
         name: "model.max_prompt_tokens",
@@ -481,6 +501,10 @@ impl Resolved {
             gguf: self.text("model.gguf").map(PathBuf::from),
             llama_server: self.text("model.llama_server").map(PathBuf::from),
             vulkan_device: self.count("model.vulkan_device"),
+            npu: NpuTuning {
+                prefill_chunk: self.count("model.npu_prefill_chunk"),
+                best_perf: choice("model.npu_generate_hint") == "best_perf",
+            },
             cache_dir: self.text("model.cache_dir").map(PathBuf::from),
             max_prompt_tokens: self.count("model.max_prompt_tokens"),
             max_new_tokens: self.count("model.max_new_tokens"),
@@ -518,6 +542,11 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("backend", text("auto")),
         ("model.device", text("auto")),
         ("model.vulkan_device", Value::Count(0)),
+        (
+            "model.npu_prefill_chunk",
+            Value::Count(NpuTuning::default().prefill_chunk),
+        ),
+        ("model.npu_generate_hint", text("best_perf")),
         (
             "model.max_prompt_tokens",
             Value::Count(DEFAULT_MAX_PROMPT_TOKENS),
@@ -576,6 +605,7 @@ pub struct Settings {
     pub gguf: Option<PathBuf>,
     pub llama_server: Option<PathBuf>,
     pub vulkan_device: usize,
+    pub npu: NpuTuning,
     pub cache_dir: Option<PathBuf>,
     pub max_prompt_tokens: usize,
     pub max_new_tokens: usize,
@@ -605,6 +635,17 @@ impl Settings {
 
     pub fn genai_options(&self, device: Device) -> Result<GenaiOptions, String> {
         let missing = |key: &str| format!("{key} has no default without $HOME; set it");
+        let chunk = self.npu.prefill_chunk;
+        if device == Device::Npu
+            && chunk < self.max_prompt_tokens
+            && !self.max_prompt_tokens.is_multiple_of(chunk)
+        {
+            return Err(format!(
+                "model.max_prompt_tokens ({}) must be a multiple of model.npu_prefill_chunk \
+                 ({chunk}) on the NPU",
+                self.max_prompt_tokens
+            ));
+        }
         Ok(GenaiOptions {
             model_dir: self.model_dir.clone().ok_or_else(|| missing("model.dir"))?,
             device,
@@ -615,6 +656,7 @@ impl Settings {
             // The NPU compiles for exactly the prompt length we budget for.
             max_prompt_tokens: self.max_prompt_tokens,
             max_new_tokens: self.max_new_tokens,
+            npu: self.npu,
         })
     }
 
@@ -1014,6 +1056,25 @@ mod tests {
                 .unwrap_err()
                 .contains("model.llama_server")
         );
+    }
+
+    #[test]
+    fn npu_chunk_must_divide_the_prompt_length() {
+        let global = "[model]\nmax_prompt_tokens = 1536\nnpu_prefill_chunk = 1024\n";
+        let settings = resolve(Some(global), None, HOME, vec![])
+            .unwrap()
+            .settings();
+        let err = settings.genai_options(Device::Npu).unwrap_err();
+        assert!(err.contains("must be a multiple"), "{err}");
+        // Only the NPU cares; and a chunk at least as large is just static.
+        assert!(settings.genai_options(Device::Gpu).is_ok());
+        let global = "[model]\nmax_prompt_tokens = 512\nnpu_prefill_chunk = 1024\n";
+        let settings = resolve(Some(global), None, HOME, vec![])
+            .unwrap()
+            .settings();
+        assert!(settings.genai_options(Device::Npu).is_ok());
+        assert_eq!(settings.npu.prefill_chunk, 1024);
+        assert!(settings.npu.best_perf);
     }
 
     #[test]

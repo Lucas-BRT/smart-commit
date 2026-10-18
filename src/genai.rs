@@ -55,6 +55,29 @@ pub struct GenaiOptions {
     pub max_prompt_tokens: usize,
     /// The NPU also reserves room for the reply up front.
     pub max_new_tokens: usize,
+    pub npu: NpuTuning,
+}
+
+/// How the NPU compiles the model. The defaults are what we measured to be
+/// fastest with identical replies (docs/08-plano-proximas-fases.md).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NpuTuning {
+    /// Prompt tokens processed per step. Below `max_prompt_tokens` the NPU
+    /// only pays for the prompt's real length (TTFT 2.4 s -> 1.1 s with 512);
+    /// 128 and 256 fail to compile with driver 1.38.
+    pub prefill_chunk: usize,
+    /// `BEST_PERF` compiles slower (once, then cached) for ~10% faster
+    /// tokens; `FAST_COMPILE` is OpenVINO's default.
+    pub best_perf: bool,
+}
+
+impl Default for NpuTuning {
+    fn default() -> Self {
+        Self {
+            prefill_chunk: 512,
+            best_perf: true,
+        }
+    }
 }
 
 pub struct GenaiBackend {
@@ -173,6 +196,16 @@ pub fn pipeline_properties(options: &GenaiOptions) -> Vec<(&'static str, String)
     if options.device == Device::Npu {
         properties.push(("MAX_PROMPT_LEN", options.max_prompt_tokens.to_string()));
         properties.push(("MIN_RESPONSE_LEN", options.max_new_tokens.to_string()));
+        properties.push((
+            "NPUW_LLM_PREFILL_CHUNK_SIZE",
+            options.npu.prefill_chunk.to_string(),
+        ));
+        let hint = if options.npu.best_perf {
+            "BEST_PERF"
+        } else {
+            "FAST_COMPILE"
+        };
+        properties.push(("GENERATE_HINT", hint.to_owned()));
     }
     properties
 }
@@ -206,8 +239,15 @@ fn describe(options: &GenaiOptions, identity: &str) -> String {
     );
     if options.device == Device::Npu {
         description.push_str(&format!(
-            " max_prompt_len={} min_response_len={}",
-            options.max_prompt_tokens, options.max_new_tokens
+            " max_prompt_len={} min_response_len={} prefill_chunk={} generate_hint={}",
+            options.max_prompt_tokens,
+            options.max_new_tokens,
+            options.npu.prefill_chunk,
+            if options.npu.best_perf {
+                "best_perf"
+            } else {
+                "fast_compile"
+            }
         ));
     }
     description
@@ -224,6 +264,7 @@ mod tests {
             cache_dir: PathBuf::from("/cache/npu-commit/openvino"),
             max_prompt_tokens: 1024,
             max_new_tokens: 128,
+            npu: NpuTuning::default(),
         }
     }
 
@@ -236,7 +277,16 @@ mod tests {
                 ("CACHE_DIR", "/cache/npu-commit/openvino".to_owned()),
                 ("MAX_PROMPT_LEN", "1024".to_owned()),
                 ("MIN_RESPONSE_LEN", "128".to_owned()),
+                ("NPUW_LLM_PREFILL_CHUNK_SIZE", "512".to_owned()),
+                ("GENERATE_HINT", "BEST_PERF".to_owned()),
             ]
+        );
+        let mut untuned = options(Path::new("/m"), Device::Npu);
+        untuned.npu.best_perf = false;
+        let props = pipeline_properties(&untuned);
+        assert_eq!(
+            props.last().unwrap(),
+            &("GENERATE_HINT", "FAST_COMPILE".to_owned())
         );
         for device in [Device::Cpu, Device::Gpu] {
             let props = pipeline_properties(&options(Path::new("/m"), device));
@@ -273,7 +323,7 @@ mod tests {
         assert_eq!(
             describe(&options(dir, Device::Npu), "0123456789abcdef"),
             "openvino-genai device=NPU model=qwen-int4 manifest=0123456789abcdef \
-             max_prompt_len=1024 min_response_len=128"
+             max_prompt_len=1024 min_response_len=128 prefill_chunk=512 generate_hint=best_perf"
         );
         assert_eq!(
             describe(&options(dir, Device::Cpu), "unverified"),

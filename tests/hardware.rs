@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 use npu_commit::backend::{Backend, GenerationConfig};
 use npu_commit::diff::estimate_tokens;
-use npu_commit::genai::{Device, GenaiBackend, GenaiOptions};
+use npu_commit::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};
 use npu_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
 use npu_commit::paths;
 use npu_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
@@ -52,6 +52,7 @@ fn backend() -> Box<dyn Backend> {
         cache_dir: paths::default_cache_dir(env).expect("HOME"),
         max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
         max_new_tokens: GenerationConfig::default().max_new_tokens,
+        npu: NpuTuning::default(),
     });
     Box::new(backend.unwrap_or_else(|err| panic!("{err}")))
 }
@@ -128,4 +129,40 @@ fn token_estimate_never_undercounts() {
         // The prompt module reserves 40 tokens for the chat template.
         assert!(real <= estimate + 40, "{name}: {real} > {estimate} + 40");
     }
+}
+
+#[test]
+#[ignore = "needs an NPU, OpenVINO GenAI and an exported model"]
+fn npu_tuning_does_not_change_replies() {
+    if std::env::var("NPU_COMMIT_TEST_DEVICE").is_ok_and(|d| d != "npu") {
+        return;
+    }
+    let env = |name: &str| std::env::var(name).ok();
+    let load = |npu: NpuTuning| {
+        GenaiBackend::load(&GenaiOptions {
+            model_dir: env("NPU_COMMIT_MODEL_DIR")
+                .map(PathBuf::from)
+                .or_else(|| paths::default_model_dir(env))
+                .unwrap(),
+            device: Device::Npu,
+            cache_dir: paths::default_cache_dir(env).unwrap(),
+            max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
+            max_new_tokens: GenerationConfig::default().max_new_tokens,
+            npu,
+        })
+        .unwrap_or_else(|err| panic!("{err}"))
+    };
+    let config = GenerationConfig::default();
+    let reply_all = |backend: &GenaiBackend| -> Vec<String> {
+        fixture_prompts()
+            .iter()
+            .map(|(_, p)| backend.generate(p, &config).unwrap())
+            .collect()
+    };
+    let untuned = reply_all(&load(NpuTuning {
+        prefill_chunk: DEFAULT_MAX_PROMPT_TOKENS,
+        best_perf: false,
+    }));
+    let tuned = reply_all(&load(NpuTuning::default()));
+    assert_eq!(tuned, untuned);
 }
