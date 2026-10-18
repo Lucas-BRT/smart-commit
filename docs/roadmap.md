@@ -28,10 +28,11 @@
 | 3 | **Energy** | Joules per message on each device, from the package RAPL counter (it covers CPU, GPU and NPU). It needs root, either through a udev rule for the `render` group or by running the benchmark with `sudo`. With energy, `auto` could weigh more than time. |
 | 4 | **More models** (after 1) | OpenVINO exports for more of the [recommended models](models.md), and validating the experimental ones with the evaluation. |
 | 5 | **Prompt work** (after 1) | For example an instruction against copying examples. Each change must improve the evaluation without hurting the format metrics. |
-| 6 | **CUDA and ROCm builds of llama.cpp** | Vulkan is enough everywhere; CUDA or ROCm may be faster on discrete GPUs. Measure first. |
-| 7 | **Several GPUs** | `bench` measures one Vulkan device (`model.vulkan_device`); it could measure each. |
-| 8 | **Other distributions** | The setup installs system packages with `apt` only and lists them elsewhere. |
-| 9 | **OpenVINO 2026.4+** | When an NPU driver is validated with it. Newer runtimes also read the models the OpenVINO organisation publishes. |
+| 6 | **A fine-tuned model** (after 1) | Qwen2.5-Coder-1.5B, then 0.5B, trained on smart-commit's own prompts; on the `training` branch, see [training](training.md). |
+| 7 | **CUDA and ROCm builds of llama.cpp** | Vulkan is enough everywhere; CUDA or ROCm may be faster on discrete GPUs. Measure first. |
+| 8 | **Several GPUs** | `bench` measures one Vulkan device (`model.vulkan_device`); it could measure each. |
+| 9 | **Other distributions** | The setup installs system packages with `apt` only and lists them elsewhere. |
+| 10 | **OpenVINO 2026.4+** | When an NPU driver is validated with it. Newer runtimes also read the models the OpenVINO organisation publishes. |
 
 ## Model candidates
 
