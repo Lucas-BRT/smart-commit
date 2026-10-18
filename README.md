@@ -37,3 +37,4 @@ O toolchain é fixado em `rust-toolchain.toml`. Regras para contribuir
 - [05 — Fase 5: hook `prepare-commit-msg`](docs/05-fase-5-hook.md)
 - [06 — Fase 4: backend OpenVINO GenAI na NPU](docs/06-fase-4-npu.md)
 - [07 — Configuração global e por repositório](docs/07-configuracao.md)
+- [08 — Plano: GPU, energia, qualidade e outros modelos](docs/08-plano-proximas-fases.md) (proposta)
