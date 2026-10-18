@@ -35,11 +35,28 @@ pub enum BackendError {
     Generation(String),
 }
 
+/// Timings and token counts of the last generation.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Metrics {
+    pub input_tokens: usize,
+    pub output_tokens: usize,
+    pub load_ms: f32,
+    pub time_to_first_token_ms: f32,
+    pub time_per_output_token_ms: f32,
+    pub generate_ms: f32,
+}
+
 pub trait Backend {
     /// Model and device, recorded with each generation.
     fn describe(&self) -> String;
 
     fn generate(&self, prompt: &Prompt, config: &GenerationConfig) -> Result<String, BackendError>;
+
+    /// Timings of the last successful [`Backend::generate`], when the
+    /// backend measures them.
+    fn last_metrics(&self) -> Option<Metrics> {
+        None
+    }
 }
 
 /// Replies with scripted responses in order, then with empty ones, and

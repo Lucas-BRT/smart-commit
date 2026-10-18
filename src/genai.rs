@@ -14,7 +14,7 @@ use openvino_genai::{ChatHistory, ChatMessage, LlmPipeline};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::backend::{Backend, BackendError, GenerationConfig};
+use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};
 use crate::prompt::Prompt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -55,17 +55,6 @@ pub struct GenaiOptions {
     pub max_prompt_tokens: usize,
     /// The NPU also reserves room for the reply up front.
     pub max_new_tokens: usize,
-}
-
-/// Timings and token counts of the last generation.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Metrics {
-    pub input_tokens: usize,
-    pub output_tokens: usize,
-    pub load_ms: f32,
-    pub time_to_first_token_ms: f32,
-    pub time_per_output_token_ms: f32,
-    pub generate_ms: f32,
 }
 
 pub struct GenaiBackend {
@@ -115,16 +104,15 @@ impl GenaiBackend {
             last_metrics: Mutex::new(None),
         })
     }
-
-    /// Metrics of the last successful [`Backend::generate`] call.
-    pub fn last_metrics(&self) -> Option<Metrics> {
-        self.last_metrics.lock().expect("metrics lock").clone()
-    }
 }
 
 impl Backend for GenaiBackend {
     fn describe(&self) -> String {
         self.description.clone()
+    }
+
+    fn last_metrics(&self) -> Option<Metrics> {
+        self.last_metrics.lock().expect("metrics lock").clone()
     }
 
     fn generate(&self, prompt: &Prompt, config: &GenerationConfig) -> Result<String, BackendError> {
