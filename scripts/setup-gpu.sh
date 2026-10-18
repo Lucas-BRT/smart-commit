@@ -110,6 +110,8 @@ have_apt() { command -v apt-get >/dev/null; }
 # installed PACKAGE [VERSION]: whether dpkg has it (at that version).
 installed() {
     local status
+    # The format is dpkg-query's, not the shell's.
+    # shellcheck disable=SC2016
     status=$(${NPU_COMMIT_DPKG_QUERY:-dpkg-query} -W -f='${Status} ${Version}' "$1" 2>/dev/null) || return 1
     case $status in
         "install ok installed ${2:-}"*) return 0 ;;
