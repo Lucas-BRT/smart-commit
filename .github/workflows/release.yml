@@ -1,0 +1,56 @@
+name: Release
+
+# Releases happen by bumping `version` in Cargo.toml: on every push to main,
+# if there is no tag v<version> yet, this tests, packages (reproducibly, see
+# scripts/package.sh) and publishes the release with notes from the commits.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    # The oldest supported Ubuntu, so the binary runs on 22.04 and newer.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Version
+        id: version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "new=false" >>"$GITHUB_OUTPUT"
+            echo "v$version is already released"
+          else
+            echo "new=true" >>"$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.new == 'true'
+        run: rustup toolchain install
+      - if: steps.version.outputs.new == 'true'
+        run: cargo test --locked
+      - if: steps.version.outputs.new == 'true'
+        run: scripts/package.sh dist
+      - if: steps.version.outputs.new == 'true'
+        run: scripts/release-notes.sh "v${{ steps.version.outputs.version }}" >notes.md
+      - if: steps.version.outputs.new == 'true'
+        name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" dist/* \
+            --target "$GITHUB_SHA" \
+            --title "npu-commit ${{ steps.version.outputs.version }}" \
+            --notes-file notes.md

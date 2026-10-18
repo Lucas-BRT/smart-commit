@@ -39,6 +39,7 @@ Onde cada teste fica:
 | Snapshot de prompt | `insta::assert_snapshot!`, com arquivos em `src/snapshots/`. Atualize com `INSTA_UPDATE=always cargo test` e revise o diff |
 | Integração com git | `tests/git_context.rs`, usando o `TestRepo` de `tests/common/` (repositório temporário isolado da config do desenvolvedor) |
 | CLI de ponta a ponta | `tests/cli.rs`, rodando o binário via `CARGO_BIN_EXE_npu-commit` |
+| Scripts | `tests/scripts/test-*.sh`, contra sysfs, releases e binários falsos (sem rede, sudo ou hardware); `shellcheck` em todos |
 | Hardware (modelo real) | `tests/hardware.rs`, `#[ignore]`: `cargo test --test hardware -- --ignored --test-threads 1` (`NPU_COMMIT_TEST_DEVICE=cpu` sem NPU). Use os prompts das fixtures, nunca entradas ad hoc |
 
 `cargo test` nunca pode depender da NPU, de rede ou da config git de quem
@@ -116,6 +117,22 @@ git stash pop
 Siga o estilo do próprio histórico: Conventional Commits em português
 (`feat: ...`, `fix(diff): ...`, `docs: ...`, `test: ...`), com assunto de no
 máximo 72 colunas. Use o corpo para explicar o porquê, quando ele não for óbvio.
+
+## Releases
+
+- **Para lançar, suba `version` no `Cargo.toml`** (semver) num commit
+  `chore: lança a versão X.Y.Z` na `main`. O `.github/workflows/release.yml`
+  testa, empacota (`scripts/package.sh`, reproduzível) e publica a release,
+  com notas geradas a partir dos commits (`scripts/release-notes.sh`). Nunca
+  crie tags ou releases à mão.
+- O tarball precisa continuar reproduzível: `tests/scripts/test-install.sh`
+  empacota duas vezes e exige os mesmos bytes.
+- **Mudou a exportação do modelo** (revisão, flags, lock)? Exporte duas vezes
+  do zero, versione o novo `scripts/export/MANIFEST.sha256` e rode o workflow
+  **Model**, que confere a reprodutibilidade em outra máquina e publica o
+  modelo para o `fetch-model.sh`.
+- Versões de drivers, runtimes, llama.cpp e modelos ficam fixadas com
+  SHA-256 nos scripts; ao subir alguma, troque versão e hash juntos.
 
 ## Configuração
 
