@@ -27,6 +27,16 @@ jobs:
           df -h /
       - name: Export (fails if not identical to the committed manifest)
         run: scripts/export-model.sh "$RUNNER_TEMP/models/$NAME"
+      - name: Keep the differing export for diagnosis
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-mismatch
+          path: |
+            ${{ runner.temp }}/models/*.partial/*.json
+            ${{ runner.temp }}/models/*.partial/*.xml
+            ${{ runner.temp }}/models/*.partial/MANIFEST.sha256
+          retention-days: 7
       - name: Package
         run: |
           set -euo pipefail
