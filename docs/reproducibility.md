@@ -13,13 +13,17 @@ pinned and how each guarantee is checked.
   which pins the image by digest, `gcc` and `libc6-dev` (whose C runtime
   objects are linked into the binary) by an Ubuntu snapshot date, `rustup`
   by SHA-256, and the toolchain by `rust-toolchain.toml`. Paths are remapped
-  out of the binary, debug info is stripped, and the tar has a fixed order,
-  owner, file modes and dates (the commit's).
+  out of the binary and debug info is stripped. The archive is made in the
+  same container, because `tar` and `gzip` versions change the bytes too,
+  with a fixed order, owner, file modes and dates (the commit's).
 - *How it was checked:* v0.2.0, built on the host, differed between CI
   (GCC 11) and a developer machine (GCC 13) and in the directory modes (the
-  packager's umask). With the container, the same commit gave the same hash
-  locally and on CI. CI packages every commit twice and prints the hash
-  (`tests/scripts/test-install.sh`).
+  packager's umask). With the binary built in the container, v0.3.0's
+  contents matched but its archive did not: the release runner (Ubuntu
+  22.04) and the developer machine (24.04) have different `tar` and `gzip`.
+  With the archive made in the container too, a developer machine
+  reproduces the published v0.3.0 tarball exactly. CI packages every commit
+  twice and prints the hash (`tests/scripts/test-install.sh`).
 - `SMART_COMMIT_PACKAGE_HOST=1` builds on the host, without Docker, at the
   cost of cross-machine reproducibility.
 

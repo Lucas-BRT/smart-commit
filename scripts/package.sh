@@ -64,10 +64,25 @@ echo "$VERSION" >"$stage/share/smart-commit/VERSION"
 
 mkdir -p "$OUT"
 # Modes are normalised too: the umask of whoever packages must not matter.
-tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
-    --mode='u+rwX,go+rX,go-w' \
+# The same script on the host and in the image: pack DIR OUT NAME.
+# shellcheck disable=SC2016
+PACK='tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
+    --mode=u+rwX,go+rX,go-w \
     --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
-    -C "$work" -cf - "$NAME" | gzip -9n >"$OUT/$NAME.tar.gz"
+    -C "$1" -cf - "$3" | gzip -9n >"$2/$3.tar.gz"'
+if [ "${SMART_COMMIT_PACKAGE_HOST:-0}" = 1 ]; then
+    sh -c "$PACK" pack "$work" "$OUT" "$NAME"
+else
+    # tar's and gzip's versions change the bytes too, so they come from the
+    # image as well.
+    docker run --rm \
+        --volume "$work:/work:ro" \
+        --volume "$OUT:/out" \
+        --env SOURCE_DATE_EPOCH \
+        --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" \
+        smart-commit-build sh -c "$PACK && chown \$HOST_UID:\$HOST_GID /out/\$3.tar.gz" \
+        pack /work /out "$NAME"
+fi
 (cd "$OUT" && sha256sum "$NAME.tar.gz" >SHA256SUMS)
 echo "smart-commit $VERSION: $OUT/$NAME.tar.gz"
 cat "$OUT/SHA256SUMS"
