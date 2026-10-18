@@ -1,10 +1,9 @@
 # 06 — Fase 4: backend OpenVINO GenAI na NPU
 
-> Status: **em andamento** · Data: 2026-10-18
+> Status: concluída · Data: 2026-10-18
 >
-> O backend real funciona de ponta a ponta **na CPU**. Na NPU falta rodar o
-> `scripts/setup-npu.sh` (precisa de `sudo`) e então os testes de hardware e
-> o benchmark da seção 6.
+> O backend real funciona de ponta a ponta na NPU e na CPU, com respostas
+> idênticas nos dois. As medições estão na seção 6.
 
 ## 1. O que entrega
 
@@ -159,15 +158,65 @@ levou cerca de 4 s.
   modelo de 1,5B tende a imitar os exemplos; vale acompanhar com mais
   fixtures antes de mexer no prompt.
 
-### NPU
+### NPU (Meteor Lake / Arrow Lake NPU 37xx), driver 1.38.0, OpenVINO 2026.3.1
 
-A preencher depois do `setup-npu.sh`: tempo da 1ª carga com o cache vazio e
-com o cache cheio, TTFT, ms/token e a comparação com a CPU.
+`scripts/check-npu.sh` com tudo `ok`; os três testes de hardware passam na
+NPU sem nenhuma variável de ambiente (as bibliotecas resolvem pelo
+`ld.so.conf.d`).
 
-## 7. Pendências
+**As respostas da NPU são idênticas às da CPU**, palavra por palavra, para
+todos os prompts das fixtures. Um trace gravado na CPU se reproduz com
+`replay --with-model` na NPU.
 
-- [ ] Rodar `scripts/setup-npu.sh` + `check-npu.sh` (precisa de `sudo` e
-      logout/login).
-- [ ] Testes de hardware e medições na NPU.
-- [ ] Se a NPU recusar o modelo de 1,5B, tentar o Qwen2.5-Coder-0.5B (que
-      está na lista oficial de suporte) ou ajustar `--group-size`.
+| Prompt | Tokens | TTFT | ms/token |
+|---|---|---|---|
+| conventional-pt-retry #1 | 207 | 2860 ms (1ª chamada) | 96,3 |
+| conventional-pt-retry #2 | 248 | 2230 ms | 77,8 |
+| free-en-chatty #1 | 142 | 2245 ms | 83,6 |
+| gitmoji-fallback #1 | 201 | 2446 ms | 76,8 |
+| gitmoji-fallback #2 | 221 | 2459 ms | 78,0 |
+
+**Carga do modelo:** 11,7 s com o cache vazio (compila o grafo); **1,7 s**
+com o cache cheio (246 MB em `~/.cache/npu-commit/openvino`). O `CACHE_DIR`
+funciona e é indispensável.
+
+**Ponta a ponta pela CLI** (binário release, cache cheio, clone do
+`coffe-builder`, 1 arquivo staged, mesma mensagem nos dois devices; média de
+3 execuções):
+
+| Device | `max_prompt_tokens` | Tempo total | CPU usada (user + sys) | Memória (RSS) |
+|---|---|---|---|---|
+| NPU | 1024 | **6,6 s** | **4,2 s** (63% de um núcleo) | 1,99 GB |
+| NPU | 512 | **5,2 s** | — | — |
+| CPU | 1024 | **4,0 s** | **11,1 s** (2,75 núcleos) | 2,02 GB |
+
+### O que os números dizem
+
+- **Na NPU, o TTFT é quase constante (~2,2–2,5 s)**, independente do
+  tamanho do prompt: ela compila para o `MAX_PROMPT_LEN` fixo e processa os
+  1024 tokens sempre. Por isso reduzir para 512 economiza ~1,4 s, em troca
+  de menos diff no prompt. Fica a critério de quem usa
+  (`npu-commit config set model.max_prompt_tokens 512`); mudar o valor
+  custa uma recompilação (~10 s) na primeira vez.
+- **A NPU é mais lenta que a CPU** neste processador (Core Ultra 5 225H)
+  com um modelo de 1,5B: 6,6 s contra 4,0 s. Em compensação, usa **2,6×
+  menos CPU**: a máquina continua livre durante a geração, que é o objetivo
+  do projeto. Não medi energia, porque o RAPL
+  (`/sys/class/powercap/intel-rapl:0/energy_uj`) só pode ser lido como
+  root.
+- O padrão continua sendo a NPU. Quem prefere latência menor usa
+  `config set model.device cpu`; o resultado é o mesmo.
+
+## 7. Limitações e próximos passos
+
+- **Energia:** medir o consumo por mensagem na NPU e na CPU (RAPL como
+  root, ou um medidor externo) para quantificar a vantagem da NPU além do
+  tempo de CPU.
+- **Fallback de device:** se a NPU não estiver disponível, cair para GPU ou
+  CPU automaticamente (fase 6). Hoje o erro diz como resolver, e
+  `model.device` escolhe o device.
+- **Qualidade:** o modelo de 1,5B copia exemplos do histórico quando o diff
+  diz pouco (`gitmoji-fallback`). Vale juntar mais fixtures de casos reais
+  antes de mexer no prompt ou trocar de modelo.
+- **Daemon (fase 7):** com o cache, a carga é de 1,7 s em cada commit; um
+  processo residente só se pagaria se isso incomodar no uso do hook.

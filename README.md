@@ -3,8 +3,8 @@
 Gera mensagens de commit no estilo do seu repositório usando um LLM pequeno
 rodando **localmente na NPU Intel** (OpenVINO). Nada sai da sua máquina.
 
-> Status: fases 1, 2, 3 e 5 concluídas; fase 4 em andamento. O modelo real
-> já gera mensagens pelo OpenVINO na CPU; falta validar na NPU.
+> Status: fases 1 a 5 concluídas. O modelo gera mensagens na NPU (~6,6 s,
+> usando 2,6× menos CPU) ou na CPU (~4 s), com resultado idêntico.
 
 Setup (uma vez): `scripts/setup-npu.sh` (usa sudo), `scripts/check-npu.sh` e
 `scripts/export-model.sh`. Veja [docs/06](docs/06-fase-4-npu.md).
