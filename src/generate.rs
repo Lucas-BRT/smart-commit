@@ -103,20 +103,18 @@ mod tests {
     use super::*;
     use crate::backend::MockBackend;
     use crate::git::{ChangeStatus, FileChange};
-    use crate::style;
 
     fn context(subjects: &[&str]) -> RepoContext {
-        RepoContext {
-            root: PathBuf::from("/repo"),
-            branch: Some("main".into()),
-            ticket: None,
-            style: style::detect(subjects),
-            staged: vec![FileChange {
+        RepoContext::new(
+            PathBuf::from("/repo"),
+            Some("main".into()),
+            subjects.iter().map(|s| s.to_string()).collect(),
+            vec![FileChange {
                 status: ChangeStatus::Modified,
                 path: "src/git.rs".into(),
                 old_path: None,
             }],
-        }
+        )
     }
 
     fn files() -> Vec<FileDiff> {

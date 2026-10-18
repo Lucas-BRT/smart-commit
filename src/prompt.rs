@@ -176,13 +176,12 @@ mod tests {
     use crate::style;
 
     fn context(subjects: &[&str], branch: Option<&str>) -> RepoContext {
-        RepoContext {
-            root: PathBuf::from("/repo"),
-            branch: branch.map(str::to_owned),
-            ticket: branch.and_then(crate::context::ticket_from_branch),
-            style: style::detect(subjects),
-            staged: Vec::new(),
-        }
+        RepoContext::new(
+            PathBuf::from("/repo"),
+            branch.map(str::to_owned),
+            subjects.iter().map(|s| s.to_string()).collect(),
+            Vec::new(),
+        )
     }
 
     fn files() -> Vec<FileDiff> {

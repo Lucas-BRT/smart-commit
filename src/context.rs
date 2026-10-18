@@ -14,20 +14,38 @@ pub struct RepoContext {
     pub branch: Option<String>,
     /// Issue key found in the branch name, e.g. `ABC-123`.
     pub ticket: Option<String>,
+    /// Subjects the style was learned from, most recent first.
+    pub subjects: Vec<String>,
     pub style: Style,
     pub staged: Vec<FileChange>,
 }
 
 impl RepoContext {
     pub fn collect(repo: &Repo) -> Result<Self, GitError> {
-        let branch = repo.current_branch()?;
-        Ok(Self {
-            root: repo.root().to_path_buf(),
+        Ok(Self::new(
+            repo.root().to_path_buf(),
+            repo.current_branch()?,
+            repo.recent_subjects(HISTORY_DEPTH)?,
+            repo.staged_changes()?,
+        ))
+    }
+
+    /// Derives everything else from what git reports, so a context can be
+    /// rebuilt exactly from recorded data.
+    pub fn new(
+        root: PathBuf,
+        branch: Option<String>,
+        subjects: Vec<String>,
+        staged: Vec<FileChange>,
+    ) -> Self {
+        Self {
+            root,
             ticket: branch.as_deref().and_then(ticket_from_branch),
             branch,
-            style: style::detect(&repo.recent_subjects(HISTORY_DEPTH)?),
-            staged: repo.staged_changes()?,
-        })
+            style: style::detect(&subjects),
+            subjects,
+            staged,
+        }
     }
 }
 
@@ -54,6 +72,23 @@ mod tests {
                 "{branch}"
             );
         }
+    }
+
+    #[test]
+    fn new_derives_ticket_and_style_from_raw_data() {
+        let subjects = vec![
+            "feat(api): add login".to_owned(),
+            "fix(api): crash".to_owned(),
+        ];
+        let ctx = RepoContext::new(
+            PathBuf::from("/repo"),
+            Some("feature/ABC-9-login".into()),
+            subjects.clone(),
+            Vec::new(),
+        );
+        assert_eq!(ctx.ticket.as_deref(), Some("ABC-9"));
+        assert_eq!(ctx.style, style::detect(&subjects));
+        assert_eq!(ctx.subjects, subjects);
     }
 
     #[test]
