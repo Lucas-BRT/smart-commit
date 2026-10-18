@@ -590,6 +590,16 @@ pub fn set_in_file(
         Value::Text(t) => toml_edit::value(t.as_str()),
         Value::Count(n) => toml_edit::value(i64::try_from(*n).expect("small counts")),
     };
+    // A file from `config init` has the key commented out under its
+    // description: uncommenting that line keeps the two together.
+    if !has_key(&doc, name)
+        && let Some(text) = uncomment_template_line(&doc.to_string(), name, &item)
+        && let Ok(edited) = text.parse::<DocumentMut>()
+        && has_key(&edited, name)
+    {
+        save_document(path, &edited)?;
+        return Ok(value);
+    }
     match name.split_once('.') {
         Some((section, field)) => {
             let table = doc
@@ -607,6 +617,41 @@ pub fn set_in_file(
     }
     save_document(path, &doc)?;
     Ok(value)
+}
+
+fn has_key(doc: &DocumentMut, name: &str) -> bool {
+    match name.split_once('.') {
+        Some((section, field)) => doc
+            .get(section)
+            .and_then(Item::as_table)
+            .is_some_and(|t| t.contains_key(field)),
+        None => doc.contains_key(name),
+    }
+}
+
+/// Replaces the template's `# field = default` line for `name` (inside its
+/// `[section]`, or before any section for top-level keys) with the value.
+fn uncomment_template_line(text: &str, name: &str, item: &Item) -> Option<String> {
+    let (section, field) = match name.split_once('.') {
+        Some((section, field)) => (Some(section), field),
+        None => (None, name),
+    };
+    let commented = format!("# {field} = ");
+    let mut current: Option<&str> = None;
+    let mut lines: Vec<String> = Vec::new();
+    let mut replaced = false;
+    for line in text.lines() {
+        if let Some(header) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
+            current = Some(header.trim());
+        }
+        if !replaced && current == section && line.starts_with(&commented) {
+            lines.push(format!("{field} = {}", item.to_string().trim()));
+            replaced = true;
+        } else {
+            lines.push(line.to_owned());
+        }
+    }
+    replaced.then(|| lines.join("\n") + "\n")
 }
 
 /// Removes `name` from the file at `path`. Returns whether it was there.
@@ -913,6 +958,42 @@ mod tests {
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(
             text.contains("# mine\n[model]\n") && !text.contains("device"),
+            "{text}"
+        );
+    }
+
+    #[test]
+    fn set_uncomments_the_template_line() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        let origin = Origin::Global(path.clone());
+        let defaults = resolve(None, None, HOME, vec![]).unwrap();
+        std::fs::write(&path, template(false, &defaults)).unwrap();
+
+        set_in_file(&path, &origin, "model.device", "cpu", None).unwrap();
+        set_in_file(&path, &origin, "backend", "mock", None).unwrap();
+        set_in_file(&path, &origin, "style.history_depth", "12", None).unwrap();
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert!(
+            text.contains("# Environment: NPU_COMMIT_DEVICE.\ndevice = \"cpu\"\n"),
+            "{text}"
+        );
+        assert!(text.contains("# Environment: NPU_COMMIT_BACKEND.\nbackend = \"mock\"\n"));
+        assert!(text.contains("history_depth = 12\n"));
+        assert!(
+            !text.contains("# device = "),
+            "the commented line was replaced"
+        );
+        // `max_prompt_tokens` has its own template line; it must stay put.
+        assert!(text.contains("# max_prompt_tokens = 1024"));
+
+        let values = parse_file(&text, &path, &origin, None).unwrap();
+        assert_eq!(values.len(), 3);
+        // Changing it again edits the now real key.
+        set_in_file(&path, &origin, "model.device", "gpu", None).unwrap();
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert!(
+            text.contains("NPU_COMMIT_DEVICE.\ndevice = \"gpu\""),
             "{text}"
         );
     }
