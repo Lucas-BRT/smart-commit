@@ -4,6 +4,7 @@
 pub mod backend;
 pub mod context;
 pub mod diff;
+pub mod generate;
 pub mod git;
 pub mod message;
 pub mod prompt;
