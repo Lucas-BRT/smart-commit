@@ -4,7 +4,7 @@
 //! (diff drivers, `.gitattributes`, rename detection) is respected.
 
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::{Command, ExitStatus, Output};
 
 use crate::diff::{self, FileDiff};
 
@@ -16,6 +16,8 @@ pub enum GitError {
     NotARepository(PathBuf),
     #[error("`git {args}` failed: {stderr}")]
     Command { args: String, stderr: String },
+    #[error("`git {args}` exited with {status}")]
+    Exited { args: String, status: ExitStatus },
     #[error("git output is not valid UTF-8")]
     Utf8(#[from] std::string::FromUtf8Error),
 }
@@ -112,6 +114,23 @@ impl Repo {
         Ok(diff::parse(&numstat, &patch))
     }
 
+    /// Runs `git commit` with `message` pre-filled in the user's editor.
+    ///
+    /// Git's own terminal handling applies: hooks run, an empty message
+    /// aborts, and the editor gets the terminal.
+    pub fn commit_in_editor(&self, message: &str) -> Result<(), GitError> {
+        let status = self
+            .command(&["commit", "--edit", "--message", message])
+            .status()?;
+        if !status.success() {
+            return Err(GitError::Exited {
+                args: "commit --edit".to_owned(),
+                status,
+            });
+        }
+        Ok(())
+    }
+
     fn has_commits(&self) -> Result<bool, GitError> {
         let output = self.run(&["rev-parse", "--verify", "--quiet", "HEAD"])?;
         Ok(output.status.success())
@@ -129,12 +148,17 @@ impl Repo {
     }
 
     fn run(&self, args: &[&str]) -> Result<Output, GitError> {
-        Ok(Command::new("git")
+        Ok(self.command(args).output()?)
+    }
+
+    fn command(&self, args: &[&str]) -> Command {
+        let mut command = Command::new("git");
+        command
             .arg("-C")
             .arg(&self.root)
             .args(args)
-            .envs(self.env.iter().map(|(k, v)| (k, v)))
-            .output()?)
+            .envs(self.env.iter().map(|(k, v)| (k, v)));
+        command
     }
 }
 

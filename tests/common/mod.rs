@@ -53,6 +53,19 @@ impl TestRepo {
         assert!(status.success(), "git {args:?} failed");
     }
 
+    /// Runs git like [`Self::git`] and returns its stdout.
+    pub fn git_output(&self, args: &[&str]) -> String {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(self.path())
+            .args(args)
+            .envs(GIT_ENV.iter().copied())
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "git {args:?} failed");
+        String::from_utf8(output.stdout).unwrap()
+    }
+
     pub fn commit(&self, subject: &str) {
         self.git(&["commit", "--quiet", "--allow-empty", "-m", subject]);
     }
