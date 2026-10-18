@@ -23,3 +23,4 @@ jobs:
       - run: tests/scripts/test-setup-gpu.sh
       - run: tests/scripts/test-fetch-model.sh
       - run: tests/scripts/test-setup.sh
+      - run: tests/scripts/test-normalize-ir.sh

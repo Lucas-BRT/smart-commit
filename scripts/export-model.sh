@@ -35,7 +35,7 @@ LOCK=$ROOT/scripts/export/requirements.lock
 # What the export produced when the pinned inputs were committed; any other
 # result means it is not reproducible and must not be used silently.
 EXPECTED=$ROOT/scripts/export/MANIFEST.sha256
-OUT=${1:-${XDG_DATA_HOME:-$HOME/.local/share}/npu-commit/models/$NAME}
+OUT=$(realpath -m "${1:-${XDG_DATA_HOME:-$HOME/.local/share}/npu-commit/models/$NAME}")
 CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/npu-commit
 VENV=${NPU_COMMIT_EXPORT_VENV:-$CACHE/export-venv}
 SOURCE=$CACHE/sources/$MODEL_ID@$MODEL_REVISION
@@ -61,11 +61,18 @@ echo "==> downloading $MODEL_ID@$MODEL_REVISION"
 echo "==> exporting"
 staging="$OUT.partial"
 rm -rf "${staging:?}"
-"$VENV/bin/optimum-cli" export openvino \
-    --model "$SOURCE" \
+# From inside the sources directory with a relative --model: optimum records
+# the path it was given in openvino_config.json, and an absolute one would
+# make the export differ between machines.
+(cd "$(dirname "$SOURCE")" && "$VENV/bin/optimum-cli" export openvino \
+    --model "./$(basename "$SOURCE")" \
     --task text-generation-with-past \
     "${EXPORT_FLAGS[@]}" \
-    "$staging"
+    "$staging")
+
+# OpenVINO numbers the nodes it names itself with a process-wide counter,
+# which differs between machines; renumbering them makes the IR reproducible.
+"$VENV/bin/python" -I "$ROOT/scripts/export/normalize_ir.py" "$staging"/openvino_*.xml
 
 lock_sha256=$(sha256sum "$LOCK" | cut -d' ' -f1)
 cat >"$staging/npu-commit-export.json" <<JSON
