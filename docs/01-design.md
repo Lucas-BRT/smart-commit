@@ -110,7 +110,7 @@ lockfile) em `tests/fixtures/`.
 | 1 | Coleta de contexto do git + detecção de estilo | não |
 | 2 | Compactação do diff + montagem do prompt + saneamento | não |
 | 3 | CLI ponta a ponta com `MockBackend` | não |
-| 4 | `GenaiBackend` na NPU + benchmark (`docs/05-benchmarks.md`) | **sim** (requer setup do driver/OpenVINO) |
+| 4 | `GenaiBackend` na NPU + benchmark (`docs/0N-benchmarks.md`, próximo número livre) | **sim** (requer setup do driver/OpenVINO) |
 | 5 | Hook `prepare-commit-msg` | não |
 | 6 | Fallback de device, `model fetch`, config, empacotamento | parcial |
 | 7 | (se o benchmark pedir) daemon / map-reduce | sim |
