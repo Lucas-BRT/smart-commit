@@ -111,7 +111,8 @@ the replies to the five fixture prompts are the same in both modes.
 
 ## Setting up the hardware
 
-`smart-commit setup` first lists the hardware (the CPU, each GPU with its
+`smart-commit hardware` prints the hardware list below without changing
+anything. `smart-commit setup` first lists the hardware (the CPU, each GPU with its
 vendor, kernel driver and the devices it gives, and the NPU), then prints a
 plan of what that hardware needs, and only that, then asks before each step
 that needs `sudo`. On a Ryzen 5 5500 with an RTX 3050:
@@ -147,7 +148,7 @@ a checkout):
 
 | Script | Does | sudo |
 |---|---|---|
-| `hardware.sh` | prints the hardware list above, without changing anything | no |
+| `hardware.sh` | prints the hardware list above, like `smart-commit hardware` (a test keeps both the same) | no |
 | `setup-llamacpp.sh [--dry-run]` | llama.cpp and the GGUF model, both pinned by SHA-256 | no |
 | `setup-gpu.sh [--dry-run] [--yes]` | the system drivers each GPU needs (below) | only for system packages |
 | `setup-npu.sh` | NPU driver 1.38.0, Level Zero 1.32.0 and OpenVINO GenAI 2026.3.1, the combination Intel validated; adds you to the `render` group | yes |

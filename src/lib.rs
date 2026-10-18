@@ -10,6 +10,7 @@ pub mod diff;
 pub mod genai;
 pub mod generate;
 pub mod git;
+pub mod hardware;
 pub mod hook;
 pub mod llamacpp;
 pub mod message;

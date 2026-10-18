@@ -74,6 +74,7 @@ installer's options and for building from source.
 | `smart-commit context` / `prompt` | show the detected style and the exact prompt |
 | `smart-commit --trace FILE` / `replay FILE` | record and replay a generation |
 | `smart-commit setup` | install drivers and models, then benchmark |
+| `smart-commit hardware` | list the CPU, GPUs and NPU, and the devices each gives |
 
 ## Supported hardware
 

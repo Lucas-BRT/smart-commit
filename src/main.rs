@@ -14,6 +14,7 @@ use smart_commit::diff::{self, FileDiff};
 use smart_commit::genai::{Device, GenaiBackend};
 use smart_commit::generate::{self, Generation, Source};
 use smart_commit::git::Repo;
+use smart_commit::hardware::{self, Hardware};
 use smart_commit::hook;
 use smart_commit::llamacpp::LlamaCppBackend;
 use smart_commit::message::CommitMessage;
@@ -79,6 +80,8 @@ enum Command {
         #[command(subcommand)]
         command: Option<bench_cmd::DeviceCommand>,
     },
+    /// The CPU, GPUs and NPU of this machine, and the devices each gives.
+    Hardware,
     /// List the recommended models, or switch to another one or to a file.
     Model {
         #[command(subcommand)]
@@ -302,6 +305,10 @@ fn main() -> ExitCode {
         Some(Command::Bench { json }) => bench_cmd::run_bench(json),
         Some(Command::Device { command }) => bench_cmd::run_device(command),
         Some(Command::Model { command }) => model_cmd::run(command),
+        Some(Command::Hardware) => {
+            print!("{}", Hardware::detect(&hardware_sources()).inventory());
+            Ok(())
+        }
         Some(Command::Setup {
             yes,
             no_drivers,
@@ -632,6 +639,18 @@ fn run_setup(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn 
         return Err(format!("setup failed ({status})").into());
     }
     Ok(())
+}
+
+/// The real machine, or the fake one tests point at (the variables
+/// `scripts/hardware.sh` reads too).
+fn hardware_sources() -> hardware::Sources {
+    let real = hardware::Sources::real();
+    let var = |name: &str| std::env::var_os(name).map(PathBuf::from);
+    hardware::Sources {
+        sysfs: var("SMART_COMMIT_SYSFS").unwrap_or(real.sysfs),
+        cpuinfo: var("SMART_COMMIT_CPUINFO").unwrap_or(real.cpuinfo),
+        openvino_dir: var("SMART_COMMIT_OPENVINO_DIR").unwrap_or(real.openvino_dir),
+    }
 }
 
 const HOOK_NAME: &str = "prepare-commit-msg";
