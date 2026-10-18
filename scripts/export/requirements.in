@@ -1,0 +1,12 @@
+# What exports a model for the NPU. Mirrors samples/export-requirements.txt
+# of the OpenVINO GenAI 2026.3.1 archive (the combination Intel tested),
+# with openvino pinned to the runtime installed by scripts/setup-npu.sh:
+# the exported tokenizer must match the runtime's openvino-tokenizers.
+#
+# Edit this file, then regenerate the lock (see scripts/export-model.sh).
+openvino==2026.3.1
+openvino-tokenizers[transformers]==2026.3.1.0
+nncf==3.3.0
+optimum-intel[openvino] @ https://github.com/huggingface/optimum-intel/archive/a8c4734741e766ef95d7f1a7d1e29a1d4ba2ab8f.tar.gz
+transformers==5.0.0
+torch
