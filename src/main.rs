@@ -9,6 +9,7 @@ use npu_commit::diff;
 use npu_commit::generate::{self, Source};
 use npu_commit::git::Repo;
 use npu_commit::prompt::{self, PromptOptions};
+use npu_commit::trace::Trace;
 
 /// Writes a commit message for the staged changes, in the style of the
 /// repository, with a small LLM running locally.
@@ -33,6 +34,8 @@ enum Command {
         #[arg(default_value = ".")]
         path: PathBuf,
     },
+    /// Run a recorded generation again and check it is reproduced exactly.
+    Replay { trace: PathBuf },
 }
 
 #[derive(Debug, Args)]
@@ -48,6 +51,10 @@ struct GenerateArgs {
     /// Reply of the mock backend; repeat it for the following attempts.
     #[arg(long = "mock-response", value_name = "TEXT")]
     mock_responses: Vec<String>,
+    /// Record inputs, prompts and replies to FILE, for `replay`. It
+    /// includes the staged diff and recent commit subjects.
+    #[arg(long, value_name = "FILE")]
+    trace: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -63,6 +70,7 @@ fn main() -> ExitCode {
     let result = match cli.command {
         Some(Command::Context { path }) => run_context(&path),
         Some(Command::Prompt { path }) => run_prompt(&path),
+        Some(Command::Replay { trace }) => run_replay(&trace),
         None => run_generate(&cli.generate),
     };
     match result {
@@ -107,13 +115,21 @@ fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
         }
         BackendKind::Mock => Box::new(MockBackend::new(args.mock_responses.clone())),
     };
-    let generation = generate::generate(
-        &context,
-        &files,
-        backend.as_ref(),
-        &PromptOptions::default(),
-        &GenerationConfig::default(),
-    )?;
+    let options = PromptOptions::default();
+    let config = GenerationConfig::default();
+    let generation = generate::generate(&context, &files, backend.as_ref(), &options, &config)?;
+    if let Some(path) = &args.trace {
+        let trace = Trace::new(
+            &context,
+            &files,
+            backend.as_ref(),
+            &options,
+            &config,
+            &generation,
+        );
+        std::fs::write(path, trace.to_json())
+            .map_err(|err| format!("cannot write {}: {err}", path.display()))?;
+    }
     if generation.source == Source::Fallback {
         eprintln!(
             "warning: the model's output was unusable after {} attempts; \
@@ -127,6 +143,31 @@ fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
     } else {
         println!("{message}");
     }
+    Ok(())
+}
+
+fn run_replay(path: &Path) -> Result<(), Box<dyn Error>> {
+    let json = std::fs::read_to_string(path)
+        .map_err(|err| format!("cannot read {}: {err}", path.display()))?;
+    let trace = Trace::from_json(&json)?;
+    let replay = trace.replay()?;
+    if !replay.differences.is_empty() {
+        for difference in &replay.differences {
+            eprintln!("differs: {difference}");
+        }
+        return Err(format!(
+            "not reproduced (trace written by npu-commit {}, this is {})",
+            trace.tool_version,
+            env!("CARGO_PKG_VERSION")
+        )
+        .into());
+    }
+    println!(
+        "reproduced: {} attempt(s), {:?} message",
+        replay.generation.attempts.len(),
+        replay.generation.source
+    );
+    println!("{}", replay.generation.message);
     Ok(())
 }
 

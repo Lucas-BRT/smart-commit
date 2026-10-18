@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "tool_version": "0.1.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "Fix crash when the diff is empty",
+      "Add support for renames"
+    ],
+    "staged": [
+      {
+        "status": "added",
+        "path": "main.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "main.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -0,0 +1 @@\n+fn main() {}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "Add the main entry point",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nFix crash when the diff is empty\nAdd support for renames\n",
+          "user": "Files changed:\nmain.rs | +1 -0\n\nDiff:\n--- main.rs\n@@ -0,0 +1 @@\n+fn main() {}\n"
+        },
+        "raw": "<think>The diff adds main.</think>\nSure! Here is a commit message:\n\"Add the main entry point.\"\n\nThis commit message describes the change.",
+        "rejected": null
+      }
+    ]
+  }
+}

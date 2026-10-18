@@ -1,6 +1,8 @@
 //! From context and diff to a commit message: prompt, generate, sanitize,
 //! retry once, and fall back to a message built from the file list.
 
+use serde::{Deserialize, Serialize};
+
 use crate::backend::{Backend, BackendError, GenerationConfig};
 use crate::context::RepoContext;
 use crate::diff::FileDiff;
@@ -11,7 +13,7 @@ use crate::style::Convention;
 /// The first try plus one retry that says what was wrong.
 pub const MAX_ATTEMPTS: usize = 2;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Attempt {
     pub prompt: Prompt,
     /// What the model returned, unmodified.
@@ -20,14 +22,15 @@ pub struct Attempt {
     pub rejected: Option<SanitizeError>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Source {
     Model,
     /// Every attempt was rejected; built from the file list.
     Fallback,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Generation {
     pub message: CommitMessage,
     pub source: Source,

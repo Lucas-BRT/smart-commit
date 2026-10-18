@@ -240,3 +240,75 @@ fn failed_editor_aborts_the_commit() {
     assert!(stderr(&output).contains("`git commit --edit` exited with"));
     assert_eq!(repo.git_output(&["rev-list", "--count", "HEAD"]), "2\n");
 }
+
+#[test]
+fn trace_is_written_and_replays() {
+    let repo = staged_repo();
+    let trace = repo.path().join("trace.json");
+    let output = npu_commit(
+        &[
+            "--backend",
+            "mock",
+            "--mock-response",
+            "Add the entry point",
+            "--mock-response",
+            "feat: add the entry point",
+            "--trace",
+            trace.to_str().unwrap(),
+        ],
+        repo.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let json = std::fs::read_to_string(&trace).unwrap();
+    assert!(json.contains("\"raw\": \"Add the entry point\""));
+    assert!(!json.contains(repo.path().to_str().unwrap()));
+
+    // Replays anywhere, without the repository.
+    let elsewhere = tempfile::TempDir::new().unwrap();
+    let output = npu_commit(&["replay", trace.to_str().unwrap()], elsewhere.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(
+        stdout(&output),
+        "reproduced: 2 attempt(s), Model message\nfeat: add the entry point\n"
+    );
+}
+
+#[test]
+fn replay_reports_differences() {
+    let repo = staged_repo();
+    let trace = repo.path().join("trace.json");
+    let path = trace.to_str().unwrap();
+    npu_commit(
+        &[
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: add it",
+            "--trace",
+            path,
+        ],
+        repo.path(),
+    );
+    let json = std::fs::read_to_string(&trace).unwrap();
+    // Only the recorded outcome changes, not the reply it came from.
+    let tampered = json.replace(
+        "\"subject\": \"feat: add it\"",
+        "\"subject\": \"feat: add that\"",
+    );
+    assert_ne!(tampered, json);
+    std::fs::write(&trace, tampered).unwrap();
+
+    let output = npu_commit(&["replay", path], repo.path());
+    assert_eq!(output.status.code(), Some(1));
+    let err = stderr(&output);
+    assert!(err.contains("differs: message: recorded"), "{err}");
+    assert!(err.contains("error: not reproduced"), "{err}");
+}
+
+#[test]
+fn replay_of_a_missing_file_fails() {
+    let repo = TestRepo::new();
+    let output = npu_commit(&["replay", "missing.json"], repo.path());
+    assert_eq!(output.status.code(), Some(1));
+    assert!(stderr(&output).starts_with("error: cannot read missing.json"));
+}

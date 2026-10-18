@@ -7,6 +7,8 @@
 
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 use crate::diff::FileKind;
 use crate::git::{ChangeStatus, FileChange};
 use crate::style::{self, Convention, Language};
@@ -16,7 +18,7 @@ pub const BODY_WIDTH: usize = 72;
 /// Files listed in a fallback body before summarising the rest.
 const FALLBACK_LISTED: usize = 10;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CommitMessage {
     pub subject: String,
     pub body: Option<String>,
@@ -32,7 +34,8 @@ impl fmt::Display for CommitMessage {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, thiserror::Error)]
+#[serde(rename_all = "snake_case")]
 pub enum SanitizeError {
     #[error("the model returned no message")]
     Empty,

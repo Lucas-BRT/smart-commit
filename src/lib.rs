@@ -9,3 +9,4 @@ pub mod git;
 pub mod message;
 pub mod prompt;
 pub mod style;
+pub mod trace;

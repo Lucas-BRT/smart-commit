@@ -5,6 +5,8 @@
 
 use std::fmt::Write as _;
 
+use serde::{Deserialize, Serialize};
+
 use crate::context::RepoContext;
 use crate::diff::{self, CompactDiff, FileDiff};
 use crate::style::{Convention, Language, Style, TicketStyle};
@@ -16,13 +18,13 @@ const TEMPLATE_OVERHEAD_TOKENS: usize = 40;
 /// Types and scopes beyond these are rarely used and only cost tokens.
 const MAX_LISTED: usize = 8;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Prompt {
     pub system: String,
     pub user: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PromptOptions {
     pub max_prompt_tokens: usize,
     /// Used when the history is too short or mixed to tell.

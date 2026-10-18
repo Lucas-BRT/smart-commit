@@ -6,6 +6,8 @@
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 
+use serde::{Deserialize, Serialize};
+
 use crate::diff::{self, FileDiff};
 
 #[derive(Debug, thiserror::Error)]
@@ -22,7 +24,8 @@ pub enum GitError {
     Utf8(#[from] std::string::FromUtf8Error),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ChangeStatus {
     Added,
     Modified,
@@ -33,7 +36,7 @@ pub enum ChangeStatus {
     Other(char),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileChange {
     pub status: ChangeStatus,
     pub path: String,

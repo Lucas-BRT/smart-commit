@@ -4,6 +4,8 @@
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
+use serde::{Deserialize, Serialize};
+
 use crate::prompt::Prompt;
 
 /// Everything that affects what the model generates, made explicit so a
@@ -11,7 +13,7 @@ use crate::prompt::Prompt;
 ///
 /// Decoding is always greedy, so the same prompt, model and config give the
 /// same output; there is no seed because nothing is sampled.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GenerationConfig {
     /// Enough for a 72-column subject and a short body.
     pub max_new_tokens: usize,

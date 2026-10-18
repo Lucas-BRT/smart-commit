@@ -6,6 +6,8 @@
 
 use std::fmt::Write as _;
 
+use serde::{Deserialize, Serialize};
+
 /// Rough characters per token for code and pt/en prose with Qwen-style
 /// tokenizers. Deliberately pessimistic: overflowing the NPU's fixed prompt
 /// length fails the generation, while underfilling only loses some context.
@@ -19,7 +21,7 @@ pub fn estimate_tokens(text: &str) -> usize {
     text.chars().count().div_ceil(CHARS_PER_TOKEN)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileDiff {
     pub path: String,
     /// Original path, for renames and copies.

@@ -5,6 +5,8 @@
 
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 /// Minimum share of subjects that must follow a convention for the
 /// repository to be considered as using it.
 const CONVENTION_THRESHOLD: f64 = 0.6;
@@ -15,7 +17,8 @@ const TICKET_THRESHOLD: f64 = 0.5;
 const MAX_EXAMPLES: usize = 5;
 const EXAMPLE_LEN: std::ops::RangeInclusive<usize> = 8..=100;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Convention {
     /// No history to learn from.
     Unknown,
@@ -26,7 +29,8 @@ pub enum Convention {
     Free,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Language {
     Unknown,
     English,

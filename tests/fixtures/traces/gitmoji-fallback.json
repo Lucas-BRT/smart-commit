@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "tool_version": "0.1.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      ":memo: update the readme",
+      "🐛 fix crash on logout",
+      "✨ add login page"
+    ],
+    "staged": [
+      {
+        "status": "added",
+        "path": "Cargo.lock",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "LOGIN.md",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -0,0 +1 @@\n+x\n"
+      },
+      {
+        "path": "LOGIN.md",
+        "old_path": null,
+        "lines": [
+          3,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,3 @@\n+# Login\n+\n+How to sign in.\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "🚧 update 2 files",
+      "body": "- Cargo.lock\n- LOGIN.md"
+    },
+    "source": "fallback",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Start the subject with one gitmoji for the change: ✨ feature, 🐛 fix, ♻️ refactor, 📝 docs, ✅ tests, 🔧 config.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\n:memo: update the readme\n🐛 fix crash on logout\n✨ add login page\n",
+          "user": "Files changed:\nCargo.lock | +1 -0\nLOGIN.md | +3 -0\n\nDiff:\n--- LOGIN.md\n@@ -0,0 +1,3 @@\n+# Login\n+\n+How to sign in.\n"
+        },
+        "raw": "",
+        "rejected": "empty"
+      },
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Start the subject with one gitmoji for the change: ✨ feature, 🐛 fix, ♻️ refactor, 📝 docs, ✅ tests, 🔧 config.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\n:memo: update the readme\n🐛 fix crash on logout\n✨ add login page\n",
+          "user": "Files changed:\nCargo.lock | +1 -0\nLOGIN.md | +3 -0\n\nDiff:\n--- LOGIN.md\n@@ -0,0 +1,3 @@\n+# Login\n+\n+How to sign in.\n\nYour previous reply was rejected because it contained no commit message. Reply again with only the commit message.\n"
+        },
+        "raw": "<think>still thinking",
+        "rejected": "empty"
+      }
+    ]
+  }
+}
