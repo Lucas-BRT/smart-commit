@@ -49,8 +49,8 @@ with a benchmark that shows which device will be used:
 
 ```text
   device       per message     load  generate     CPU
-  vulkan             2.5 s    2.4 s     0.1 s    0.5x  <- selected
-  cpu                2.8 s    1.4 s     1.4 s    5.2x
+  vulkan             2.3 s    2.2 s     0.1 s    0.4x
+  cpu                1.9 s    0.6 s     1.2 s    5.5x  <- selected
 ```
 
 (a Ryzen 5 5500 with an RTX 3050; the Intel-only devices are listed as
@@ -88,8 +88,8 @@ installer's options and for building from source.
 The default model is Qwen2.5-Coder-1.5B-Instruct. On a Core Ultra 5 225H a
 message takes 1.8 s end to end on the integrated GPU, 2.5 s through Vulkan,
 4.0 s on the CPU through OpenVINO and 5.1 s on the NPU; on a Ryzen 5 5500
-with an RTX 3050, 2.5 s through Vulkan and 2.8 s on the CPU through
-llama.cpp. See [devices](docs/devices.md) for the measurements.
+with an RTX 3050, 1.9 s on the CPU through llama.cpp and 2.3 s through
+Vulkan, with the fast load the benchmark turned on. See [devices](docs/devices.md) for the measurements.
 
 ## Documentation
 

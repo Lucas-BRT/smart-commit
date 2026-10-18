@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use clap::Subcommand;
 use smart_commit::bench::{self, Machine, Report};
-use smart_commit::config::{self, DeviceSetting, Origin};
+use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin};
 use smart_commit::device::{DEFAULT_ORDER, Target};
 use smart_commit::paths;
 
@@ -44,9 +44,16 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
     let mut entries = Vec::new();
     for target in DEFAULT_ORDER {
         eprintln!("measuring {target}...");
-        entries.push(bench::measure(target, &prompts, &config, |t| {
-            crate::load_on(&settings, t)
-        }));
+        entries.push(match target.backend() {
+            BackendKind::LlamaCpp => {
+                bench::measure_load_modes(target, &prompts, &config, |t, fast| {
+                    crate::load_with(&settings, t, fast, crate::Retry::Never)
+                })
+            }
+            _ => bench::measure(target, &prompts, &config, |t| {
+                crate::load_with(&settings, t, false, crate::Retry::Never)
+            }),
+        });
     }
     let report = Report {
         format: bench::FORMAT,
@@ -71,6 +78,7 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
     );
     print!("{}", report.table(selected));
     println!();
+    print_fast_load(&report, settings.fast_load);
     match selected {
         Some(target) => println!("{}", using_message(&report, target, settings.device)),
         None => {
@@ -84,6 +92,24 @@ pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
     println!("{HOW_TO_CHANGE}");
     println!("Saved to {}.", path.display());
     Ok(())
+}
+
+/// What the benchmark decided about fast load, and whether model.fast_load
+/// overrides it.
+fn print_fast_load(report: &Report, setting: FastLoad) {
+    let notes = report.fast_load_notes();
+    if notes.is_empty() {
+        return;
+    }
+    for note in notes {
+        println!("{note}");
+    }
+    match setting {
+        FastLoad::Auto => {}
+        FastLoad::On => println!("model.fast_load = on overrides this: always on."),
+        FastLoad::Off => println!("model.fast_load = off overrides this: always off."),
+    }
+    println!();
 }
 
 /// The device that will run: the configured one, or the fastest for auto.
@@ -128,6 +154,7 @@ fn show_device() -> Result<(), Box<dyn Error>> {
             let selected = effective(&report, settings.device);
             print!("{}", report.table(selected));
             println!();
+            print_fast_load(&report, settings.fast_load);
             if let Some(target) = selected {
                 println!("{}", using_message(&report, target, settings.device));
             }

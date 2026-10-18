@@ -39,16 +39,19 @@ Benchmark on AMD Ryzen 5 5500: 5 prompts, after one warm-up load.
   device       per message     load  generate     CPU
   intel-gpu    unavailable: backend unavailable: OpenVINO GenAI not found (...); Intel GPUs need it; `smart-commit setup` installs it on machines with one (other GPUs use the vulkan device)
   npu          unavailable: backend unavailable: OpenVINO GenAI not found (...); the Intel NPU needs it; `smart-commit setup` installs it on machines with one
-  vulkan             2.5 s    2.4 s     0.1 s    0.5x  <- selected
-  cpu                2.8 s    1.4 s     1.4 s    5.2x
+  vulkan             2.3 s    2.2 s     0.1 s    0.4x
+  cpu                1.9 s    0.6 s     1.2 s    5.5x  <- selected
   openvino-cpu unavailable: backend unavailable: OpenVINO GenAI not found (...); only openvino-cpu needs it (the cpu device runs on llama.cpp); setup-npu.sh --openvino-only installs it
 
-smart-commit will use vulkan on this machine (~2.5 s per message): the fastest, model.device = auto.
+fast load turned on for vulkan (--no-repack --fit off): 2.6 s -> 2.3 s per message
+fast load turned on for cpu (--no-repack --fit off): 2.8 s -> 1.9 s per message
+
+smart-commit will use cpu on this machine (~1.9 s per message): the fastest, model.device = auto.
 To use another device: smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu>, or `auto` for the fastest.
 
-$ smart-commit device use cpu
-model.device = cpu  (global /home/me/.config/smart-commit/config.toml)
-~2.8 s per message on this machine, in the last benchmark.
+$ smart-commit device use vulkan
+model.device = vulkan  (global /home/me/.config/smart-commit/config.toml)
+~2.3 s per message on this machine, in the last benchmark.
 
 $ smart-commit device          # the last benchmark and the current choice
 ```
@@ -64,6 +67,9 @@ $ smart-commit device          # the last benchmark and the current choice
   generation. *CPU* is the mean number of busy cores. The report is saved to
   `$XDG_DATA_HOME/smart-commit/bench.json`, with the CPU model, the kernel,
   the version and each backend's description.
+- **Fast load.** `vulkan` and `cpu` are measured twice, with and without
+  [fast load](#fast-load), and keep the faster mode; the lines under the
+  table say what was turned on.
 - **`smart-commit device use <device>`** writes `model.device` to the global
   config and shows the estimate for that device, or a note if it failed in
   the last benchmark.
@@ -72,6 +78,29 @@ $ smart-commit device          # the last benchmark and the current choice
 
 Run `smart-commit bench` again after installing drivers or changing the
 model; `smart-commit setup` runs it at the end.
+
+## Fast load
+
+Each commit starts `llama-server`, and most of a commit is that start.
+On the Ryzen 5 5500 below, two of its steps took a large share of it and
+are rarely needed for a 1 GB model with a fixed context:
+
+- **Repacking** (CPU): the weights are copied (600 MiB) and reordered for
+  the CPU's vector instructions, about 0.66 s. `--no-repack` uses them
+  straight from the memory-mapped file. On this AVX2 CPU generation was
+  not slower without it; CPUs with AVX-512 or AMX may gain more from it.
+- **Fitting** (CPU and Vulkan): every GPU is asked for its free memory, and
+  the layers and context adjusted to fit, 0.3–0.4 s, even with
+  `--device none`. `--fit off` skips it; a GPU short of memory then fails
+  to load instead of loading fewer layers, so smart-commit loads it again
+  normally.
+
+Since the gain depends on the processor, `smart-commit bench` measures
+each llama.cpp device in both modes, and fast load is used where it saved
+at least 5% per message (more than the noise between runs).
+`model.fast_load = on` or `off` overrides that. The backend's description,
+which traces record, ends in `load=fast` when it is on. On the Ryzen 5 5500
+the replies to the five fixture prompts are the same in both modes.
 
 ## Setting up the hardware
 
@@ -188,12 +217,15 @@ Per prompt:
 
 Ryzen 5 5500 (6 cores), GeForce RTX 3050 8 GB with the proprietary driver
 595.104, 23 GiB RAM, Pop!_OS 24.04, kernel 7.2; `smart-commit bench`, the
-same in two runs:
+same in two runs (fast load on for both devices):
 
-| Device | Per message | Load | Generate | CPU |
-|---|---|---|---|---|
-| vulkan (RTX 3050) | **2.5 s** | 2.4 s | 0.1 s | 0.5 cores |
-| cpu (llama.cpp) | 2.8 s | 1.4 s | 1.4 s | 5.2 cores |
+| Device | Per message | Load | Generate | CPU | Per message without fast load |
+|---|---|---|---|---|---|
+| cpu (llama.cpp) | **1.9 s** | 0.6 s | 1.2 s | 5.5 cores | 2.8 s |
+| vulkan (RTX 3050) | 2.3 s | 2.2 s | 0.1 s | 0.4 cores | 2.6 s |
+
+Most of the Vulkan load left is copying the weights to the GPU (935 MiB in
+1.5 s), which no load mode avoids.
 
 - On this machine the integrated GPU is the fastest and the lightest
   device. The NPU is the slowest for a 1.5B model, but uses far less CPU than

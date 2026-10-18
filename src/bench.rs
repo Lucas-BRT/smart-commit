@@ -4,7 +4,8 @@
 //! The prompts are the ones recorded in `tests/fixtures/traces`, embedded in
 //! the binary, so every machine is measured on the same inputs. Each device
 //! is loaded once to warm the compilation caches, then loaded again and
-//! timed: a commit pays one load plus one generation.
+//! timed: a commit pays one load plus one generation. The llama.cpp devices
+//! are measured twice, with and without fast load, and keep the faster.
 
 use std::time::Instant;
 
@@ -18,6 +19,10 @@ use crate::trace::Trace;
 /// Bumped on incompatible changes to the saved report. 2: the devices of
 /// 0.4 (`cpu` moved to llama.cpp, `gpu` became `intel-gpu`).
 pub const FORMAT: u32 = 2;
+
+/// Fast load must save at least this share of the time per message, more
+/// than the run-to-run noise, to be turned on.
+pub const FAST_LOAD_MIN_GAIN: f64 = 0.05;
 
 const FIXTURES: &[&str] = &[
     include_str!("../tests/fixtures/traces/conventional-pt-retry.json"),
@@ -60,6 +65,59 @@ pub struct Entry {
     pub backend: Option<String>,
     pub measurement: Option<Measurement>,
     pub error: Option<String>,
+    /// For llama.cpp devices: both load modes, `measurement` being the one
+    /// chosen.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fast_load: Option<FastLoadTrial>,
+}
+
+/// Time per message with and without fast load; `None` when that mode
+/// failed.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FastLoadTrial {
+    pub normal_ms: Option<f64>,
+    pub fast_ms: Option<f64>,
+    pub enabled: bool,
+}
+
+impl FastLoadTrial {
+    /// Picks fast load when it alone worked, or saved at least
+    /// [`FAST_LOAD_MIN_GAIN`].
+    pub fn new(normal_ms: Option<f64>, fast_ms: Option<f64>) -> Self {
+        let enabled = match (normal_ms, fast_ms) {
+            (Some(normal), Some(fast)) => fast <= normal * (1.0 - FAST_LOAD_MIN_GAIN),
+            (None, Some(_)) => true,
+            _ => false,
+        };
+        Self {
+            normal_ms,
+            fast_ms,
+            enabled,
+        }
+    }
+
+    /// What the benchmark decided, for the user.
+    pub fn note(&self, target: Target) -> String {
+        let s = |ms: f64| format!("{:.1} s", ms / 1000.0);
+        let flags = "--no-repack --fit off";
+        match (self.normal_ms, self.fast_ms, self.enabled) {
+            (Some(normal), Some(fast), true) => format!(
+                "fast load turned on for {target} ({flags}): {} -> {} per message",
+                s(normal),
+                s(fast)
+            ),
+            (None, Some(_), _) => {
+                format!("fast load turned on for {target} ({flags}): it only loads that way")
+            }
+            (Some(normal), Some(fast), false) => format!(
+                "fast load left off for {target}: {} -> {} per message, under {:.0}% faster",
+                s(normal),
+                s(fast),
+                FAST_LOAD_MIN_GAIN * 100.0
+            ),
+            _ => format!("fast load left off for {target}: it failed to load"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -111,6 +169,22 @@ impl Report {
 
     pub fn entry(&self, target: Target) -> Option<&Entry> {
         self.entries.iter().find(|e| e.target == target)
+    }
+
+    /// Whether the benchmark turned fast load on for `target`.
+    pub fn fast_load(&self, target: Target) -> bool {
+        self.entry(target)
+            .and_then(|e| e.fast_load.as_ref())
+            .is_some_and(|f| f.enabled)
+    }
+
+    /// One line per device that worked, measured in both load modes.
+    pub fn fast_load_notes(&self) -> Vec<String> {
+        self.entries
+            .iter()
+            .filter(|e| e.measurement.is_some())
+            .filter_map(|e| e.fast_load.as_ref().map(|f| f.note(e.target)))
+            .collect()
     }
 
     pub fn to_json(&self) -> String {
@@ -198,6 +272,7 @@ pub fn measure(
         backend: None,
         measurement: None,
         error: Some(error),
+        fast_load: None,
     };
     // Warm-up: compiles and caches the model, which only the first run pays.
     match load(target) {
@@ -236,6 +311,26 @@ pub fn measure(
             replies,
         }),
         error: None,
+        fast_load: None,
+    }
+}
+
+/// Measures a llama.cpp device without and with fast load (`load`'s second
+/// argument) and keeps the mode [`FastLoadTrial`] picks.
+pub fn measure_load_modes(
+    target: Target,
+    prompts: &[Prompt],
+    config: &GenerationConfig,
+    mut load: impl FnMut(Target, bool) -> Result<Box<dyn Backend>, BackendError>,
+) -> Entry {
+    let normal = measure(target, prompts, config, |t| load(t, false));
+    let fast = measure(target, prompts, config, |t| load(t, true));
+    let per_message = |e: &Entry| e.measurement.as_ref().map(|m| m.per_message_ms);
+    let trial = FastLoadTrial::new(per_message(&normal), per_message(&fast));
+    let chosen = if trial.enabled { fast } else { normal };
+    Entry {
+        fast_load: Some(trial),
+        ..chosen
     }
 }
 
@@ -258,6 +353,7 @@ mod tests {
             error: per_message_ms
                 .is_none()
                 .then(|| "backend unavailable: no runtime\nmore".to_owned()),
+            fast_load: None,
         }
     }
 
@@ -357,6 +453,107 @@ mod tests {
         );
         assert_eq!(entry.error.as_deref(), Some("backend unavailable: no NPU"));
         assert!(entry.measurement.is_none());
+    }
+
+    #[test]
+    fn fast_load_needs_a_real_gain() {
+        let on = FastLoadTrial::new(Some(2800.0), Some(1900.0));
+        assert!(on.enabled);
+        assert_eq!(
+            on.note(Target::Cpu),
+            "fast load turned on for cpu (--no-repack --fit off): 2.8 s -> 1.9 s per message"
+        );
+        // 4% is within the noise.
+        let small = FastLoadTrial::new(Some(2500.0), Some(2400.0));
+        assert!(!small.enabled);
+        assert_eq!(
+            small.note(Target::Vulkan),
+            "fast load left off for vulkan: 2.5 s -> 2.4 s per message, under 5% faster"
+        );
+        assert!(
+            FastLoadTrial::new(Some(2000.0), Some(1900.0)).enabled,
+            "exactly 5%"
+        );
+        assert!(!FastLoadTrial::new(Some(2000.0), Some(2100.0)).enabled);
+
+        let failed = FastLoadTrial::new(Some(2500.0), None);
+        assert!(!failed.enabled);
+        assert_eq!(
+            failed.note(Target::Vulkan),
+            "fast load left off for vulkan: it failed to load"
+        );
+        let only = FastLoadTrial::new(None, Some(2500.0));
+        assert!(only.enabled);
+        assert!(only.note(Target::Cpu).ends_with("it only loads that way"));
+        assert!(!FastLoadTrial::new(None, None).enabled);
+    }
+
+    /// A backend that sleeps for `load_ms` when created, like a slow load.
+    fn slow_load(load_ms: u64) -> Result<Box<dyn Backend>, BackendError> {
+        std::thread::sleep(std::time::Duration::from_millis(load_ms));
+        Ok(Box::new(MockBackend::new(["feat: a"; 5])))
+    }
+
+    #[test]
+    fn measure_load_modes_keeps_the_faster_mode() {
+        let mut modes = Vec::new();
+        let entry = measure_load_modes(
+            Target::Cpu,
+            &prompts(),
+            &GenerationConfig::default(),
+            |_, fast| {
+                modes.push(fast);
+                slow_load(if fast { 10 } else { 300 })
+            },
+        );
+        assert_eq!(
+            modes,
+            [false, false, true, true],
+            "warm-up and timed load each"
+        );
+        let trial = entry.fast_load.unwrap();
+        assert!(trial.enabled);
+        let m = entry.measurement.unwrap();
+        assert_eq!(Some(m.per_message_ms), trial.fast_ms);
+        assert!(m.load_ms < 300.0);
+
+        let entry = measure_load_modes(
+            Target::Vulkan,
+            &prompts(),
+            &GenerationConfig::default(),
+            |_, fast| {
+                if fast {
+                    Err(BackendError::Unavailable("out of device memory".into()))
+                } else {
+                    slow_load(0)
+                }
+            },
+        );
+        assert!(!entry.fast_load.as_ref().unwrap().enabled);
+        assert!(entry.measurement.is_some(), "the normal load is kept");
+        assert_eq!(entry.error, None);
+    }
+
+    #[test]
+    fn reports_know_where_fast_load_is_on() {
+        let mut cpu = entry(Target::Cpu, Some(1900.0));
+        cpu.fast_load = Some(FastLoadTrial::new(Some(2800.0), Some(1900.0)));
+        let mut vulkan = entry(Target::Vulkan, Some(2500.0));
+        vulkan.fast_load = Some(FastLoadTrial::new(Some(2500.0), Some(2400.0)));
+        let report = report_of(vec![entry(Target::Npu, Some(5100.0)), cpu, vulkan]);
+        assert!(report.fast_load(Target::Cpu));
+        assert!(!report.fast_load(Target::Vulkan));
+        assert!(!report.fast_load(Target::Npu));
+        assert!(!report.fast_load(Target::IntelGpu), "not measured");
+        assert_eq!(report.fast_load_notes().len(), 2);
+        // Nothing to say about a device that failed in both modes.
+        let mut failed = entry(Target::Cpu, None);
+        failed.fast_load = Some(FastLoadTrial::new(None, None));
+        assert!(report_of(vec![failed]).fast_load_notes().is_empty());
+        assert_eq!(Report::from_json(&report.to_json()).unwrap(), report);
+        // Devices without a trial do not write the field.
+        let npu = report_of(vec![entry(Target::Npu, Some(5100.0))]).to_json();
+        assert!(!npu.contains("fast_load"), "{npu}");
     }
 
     #[test]

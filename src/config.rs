@@ -115,6 +115,15 @@ pub const KEYS: &[Key] = &[
                       numbers them (0 is Vulkan0).",
     },
     Key {
+        name: "model.fast_load",
+        kind: Kind::Choice(&["auto", "on", "off"]),
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_FAST_LOAD"),
+        description: "llama.cpp devices: start llama-server without repacking the weights \
+                      and fitting them to GPU memory (`--no-repack --fit off`). `auto` uses \
+                      it where the last `smart-commit bench` found it faster.",
+    },
+    Key {
         name: "model.npu_prefill_chunk",
         kind: Kind::Count {
             min: 512,
@@ -528,6 +537,11 @@ impl Resolved {
             gguf: self.text("model.gguf").map(PathBuf::from),
             llama_server: self.text("model.llama_server").map(PathBuf::from),
             vulkan_device: self.count("model.vulkan_device"),
+            fast_load: match choice("model.fast_load") {
+                "on" => FastLoad::On,
+                "off" => FastLoad::Off,
+                _ => FastLoad::Auto,
+            },
             npu: NpuTuning {
                 prefill_chunk: self.count("model.npu_prefill_chunk"),
                 best_perf: choice("model.npu_generate_hint") == "best_perf",
@@ -569,6 +583,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("backend", text("auto")),
         ("model.device", text("auto")),
         ("model.vulkan_device", Value::Count(0)),
+        ("model.fast_load", text("auto")),
         (
             "model.npu_prefill_chunk",
             Value::Count(NpuTuning::default().prefill_chunk),
@@ -620,6 +635,26 @@ pub enum DeviceSetting {
     Fixed(Target),
 }
 
+/// `model.fast_load`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FastLoad {
+    /// Where the last benchmark found it faster.
+    Auto,
+    On,
+    Off,
+}
+
+impl FastLoad {
+    /// Whether to use it, asking `measured_faster` only for `auto`.
+    pub fn enabled(self, measured_faster: impl FnOnce() -> bool) -> bool {
+        match self {
+            Self::Auto => measured_faster(),
+            Self::On => true,
+            Self::Off => false,
+        }
+    }
+}
+
 /// Every setting, typed and resolved.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
@@ -629,6 +664,7 @@ pub struct Settings {
     pub gguf: Option<PathBuf>,
     pub llama_server: Option<PathBuf>,
     pub vulkan_device: usize,
+    pub fast_load: FastLoad,
     pub npu: NpuTuning,
     pub cache_dir: Option<PathBuf>,
     pub max_prompt_tokens: usize,
@@ -684,8 +720,13 @@ impl Settings {
         })
     }
 
-    /// For [`Target::Cpu`] or [`Target::Vulkan`] (model.vulkan_device).
-    pub fn llamacpp_options(&self, target: Target) -> Result<LlamaCppOptions, String> {
+    /// For [`Target::Cpu`] or [`Target::Vulkan`] (model.vulkan_device), with
+    /// or without [`LlamaCppOptions::fast_load`].
+    pub fn llamacpp_options(
+        &self,
+        target: Target,
+        fast_load: bool,
+    ) -> Result<LlamaCppOptions, String> {
         let missing = |key: &str| format!("{key} has no default without $HOME; set it");
         Ok(LlamaCppOptions {
             server: self
@@ -700,6 +741,7 @@ impl Settings {
             max_prompt_tokens: self.max_prompt_tokens,
             max_new_tokens: self.max_new_tokens,
             startup_timeout: std::time::Duration::from_secs(120),
+            fast_load,
         })
     }
 }
@@ -1082,7 +1124,7 @@ mod tests {
         );
         assert!(
             settings
-                .llamacpp_options(Target::Cpu)
+                .llamacpp_options(Target::Cpu, false)
                 .unwrap_err()
                 .contains("model.llama_server")
         );
@@ -1094,9 +1136,41 @@ mod tests {
         let settings = resolve(Some(global), None, HOME, vec![])
             .unwrap()
             .settings();
-        let on = |target| settings.llamacpp_options(target).unwrap().device;
+        let on = |target| settings.llamacpp_options(target, false).unwrap().device;
         assert_eq!(on(Target::Cpu), LlamaDevice::Cpu);
         assert_eq!(on(Target::Vulkan), LlamaDevice::Vulkan(2));
+    }
+
+    #[test]
+    fn fast_load_follows_the_benchmark_unless_set() {
+        let settings = |vars: &[(&str, &str)]| {
+            resolve(None, None, vars, vec![])
+                .unwrap()
+                .settings()
+                .fast_load
+        };
+        assert_eq!(settings(&[]), FastLoad::Auto);
+        assert!(FastLoad::Auto.enabled(|| true));
+        assert!(!FastLoad::Auto.enabled(|| false));
+
+        let on = settings(&[("SMART_COMMIT_FAST_LOAD", "on")]);
+        assert_eq!(on, FastLoad::On);
+        assert!(on.enabled(|| panic!("the benchmark is not asked")));
+        let off = settings(&[("SMART_COMMIT_FAST_LOAD", "off")]);
+        assert!(!off.enabled(|| panic!("the benchmark is not asked")));
+        assert!(resolve(None, None, &[("SMART_COMMIT_FAST_LOAD", "yes")], vec![]).is_err());
+
+        let repo = "[model]\nfast_load = \"on\"\n";
+        assert!(
+            resolve(None, Some(repo), &[], vec![]).is_err(),
+            "about the machine"
+        );
+        let options = resolve(None, None, HOME, vec![])
+            .unwrap()
+            .settings()
+            .llamacpp_options(Target::Cpu, true)
+            .unwrap();
+        assert!(options.fast_load);
     }
 
     #[test]

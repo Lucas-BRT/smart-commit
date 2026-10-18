@@ -59,7 +59,15 @@ pub struct LlamaCppOptions {
     pub max_prompt_tokens: usize,
     pub max_new_tokens: usize,
     pub startup_timeout: Duration,
+    /// Skips what llama-server does at every start that a small model with a
+    /// fixed context rarely needs: repacking the weights for the CPU's vector
+    /// instructions (a copy of most of the model) and fitting the model to the
+    /// GPUs' free memory. `smart-commit bench` measures whether it pays off.
+    pub fast_load: bool,
 }
+
+/// The flags of [`LlamaCppOptions::fast_load`].
+pub const FAST_LOAD_FLAGS: [&str; 3] = ["--no-repack", "--fit", "off"];
 
 pub struct LlamaCppBackend {
     server: Option<Mutex<Child>>,
@@ -130,6 +138,34 @@ impl LlamaCppBackend {
         backend.wait_until_ready(options.startup_timeout, &log_path)?;
         backend.load_ms = started.elapsed().as_secs_f32() * 1000.0;
         Ok(backend)
+    }
+
+    /// Starts with [`LlamaCppOptions::fast_load`] and, if that fails (without
+    /// the memory fit, a GPU short of memory cannot load the model), starts
+    /// again without it. Returns a note when it had to.
+    pub fn start_or_load_normally(
+        options: &LlamaCppOptions,
+    ) -> Result<(Self, Option<String>), BackendError> {
+        match Self::start(options) {
+            Ok(backend) => Ok((backend, None)),
+            Err(fast) if options.fast_load => {
+                let normal = LlamaCppOptions {
+                    fast_load: false,
+                    ..options.clone()
+                };
+                let backend = Self::start(&normal)?;
+                let reason = fast.to_string();
+                Ok((
+                    backend,
+                    Some(format!(
+                        "fast load failed on {} ({}); loaded normally",
+                        options.device,
+                        reason.lines().next().unwrap_or(&reason)
+                    )),
+                ))
+            }
+            Err(err) => Err(err),
+        }
     }
 
     /// Talks to a server that is already running, without managing it.
@@ -237,6 +273,11 @@ pub fn server_args(options: &LlamaCppOptions, socket: &Path) -> Vec<String> {
         "--offline",
     ]
     .iter()
+    .chain(if options.fast_load {
+        FAST_LOAD_FLAGS.as_slice()
+    } else {
+        &[]
+    })
     .map(|s| (*s).to_owned())
     .collect()
 }
@@ -419,10 +460,11 @@ fn describe(options: &LlamaCppOptions) -> String {
         })
         .unwrap_or_else(|| "unverified".to_owned());
     format!(
-        "llama.cpp server={build} device={} model={} sha256={identity} ctx={}",
+        "llama.cpp server={build} device={} model={} sha256={identity} ctx={}{}",
         options.device,
         name(&options.model),
-        options.max_prompt_tokens + options.max_new_tokens
+        options.max_prompt_tokens + options.max_new_tokens,
+        if options.fast_load { " load=fast" } else { "" }
     )
 }
 
@@ -440,6 +482,7 @@ mod tests {
             max_prompt_tokens: 1024,
             max_new_tokens: 128,
             startup_timeout: Duration::from_secs(5),
+            fast_load: false,
         }
     }
 
@@ -477,6 +520,65 @@ mod tests {
             describe(&options),
             "llama.cpp server=llama-b11381 device=CPU model=model.gguf sha256=unverified ctx=1152"
         );
+    }
+
+    #[test]
+    fn fast_load_skips_the_repack_and_the_memory_fit() {
+        let normal = options(Path::new("/d"));
+        let joined = server_args(&normal, Path::new("/tmp/x/server.sock")).join(" ");
+        assert!(!joined.contains("repack"), "{joined}");
+        assert!(!joined.contains("--fit"), "{joined}");
+
+        let fast = LlamaCppOptions {
+            fast_load: true,
+            ..normal
+        };
+        let args = server_args(&fast, Path::new("/tmp/x/server.sock"));
+        assert!(
+            args.ends_with(&FAST_LOAD_FLAGS.map(String::from)),
+            "{args:?}"
+        );
+        assert!(describe(&fast).ends_with(" ctx=1152 load=fast"));
+        assert!(describe(&options(Path::new("/d"))).ends_with(" ctx=1152"));
+    }
+
+    #[test]
+    fn a_failed_fast_load_is_retried_normally() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let mut options = options(dir.path());
+        std::fs::write(&options.model, "gguf").unwrap();
+        let calls = dir.path().join("calls");
+        let server = dir.path().join("fake-server");
+        std::fs::write(
+            &server,
+            format!(
+                "#!/bin/sh\necho \"$*\" >>'{}'\necho 'error: out of device memory' >&2\nexit 3\n",
+                calls.display()
+            ),
+        )
+        .unwrap();
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&server, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        options.server = server;
+        options.fast_load = true;
+        let err = LlamaCppBackend::start_or_load_normally(&options)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("out of device memory"), "{err}");
+        let calls = std::fs::read_to_string(&calls).unwrap();
+        let calls: Vec<&str> = calls.lines().collect();
+        assert_eq!(calls.len(), 2, "{calls:?}");
+        assert!(calls[0].ends_with("--no-repack --fit off"), "{calls:?}");
+        assert!(!calls[1].contains("--no-repack"), "{calls:?}");
+
+        // Without fast load there is nothing to fall back to.
+        std::fs::remove_file(dir.path().join("calls")).unwrap();
+        options.fast_load = false;
+        assert!(LlamaCppBackend::start_or_load_normally(&options).is_err());
+        let calls = std::fs::read_to_string(dir.path().join("calls")).unwrap();
+        assert_eq!(calls.lines().count(), 1);
     }
 
     #[test]

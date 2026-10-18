@@ -46,6 +46,7 @@ fn backend() -> Box<dyn Backend> {
                 max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
                 max_new_tokens: GenerationConfig::default().max_new_tokens,
                 startup_timeout: std::time::Duration::from_secs(120),
+                fast_load: false,
             });
             return Box::new(backend.unwrap_or_else(|err| panic!("{err}")));
         }

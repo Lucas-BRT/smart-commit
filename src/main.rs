@@ -357,13 +357,44 @@ fn load_model(settings: &Settings) -> Result<Box<dyn Backend>, Box<dyn Error>> {
     Ok(selection.backend)
 }
 
+/// Loads on `target`; on llama.cpp devices, with fast load as
+/// `model.fast_load` and the last benchmark say.
 fn load_on(settings: &Settings, target: Target) -> Result<Box<dyn Backend>, BackendError> {
+    let fast_load = settings
+        .fast_load
+        .enabled(|| bench_cmd::last_report().is_some_and(|report| report.fast_load(target)));
+    load_with(settings, target, fast_load, Retry::Normally)
+}
+
+/// What [`load_with`] does when fast load fails.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Retry {
+    /// Loads normally, with a note: what a commit wants.
+    Normally,
+    /// Fails: what the benchmark, which measures each mode, wants.
+    Never,
+}
+
+/// Loads on `target`, with or without fast load on llama.cpp devices.
+fn load_with(
+    settings: &Settings,
+    target: Target,
+    fast_load: bool,
+    retry: Retry,
+) -> Result<Box<dyn Backend>, BackendError> {
     let device = match target {
         Target::Vulkan | Target::Cpu => {
             let options = settings
-                .llamacpp_options(target)
+                .llamacpp_options(target, fast_load)
                 .map_err(BackendError::Unavailable)?;
-            return Ok(Box::new(LlamaCppBackend::start(&options)?));
+            if retry == Retry::Never {
+                return Ok(Box::new(LlamaCppBackend::start(&options)?));
+            }
+            let (backend, note) = LlamaCppBackend::start_or_load_normally(&options)?;
+            if let Some(note) = note {
+                eprintln!("note: {note}");
+            }
+            return Ok(Box::new(backend));
         }
         Target::Npu => Device::Npu,
         Target::IntelGpu => Device::Gpu,

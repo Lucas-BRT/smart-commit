@@ -10,6 +10,8 @@
 - llama.cpp backend with Vulkan for AMD, NVIDIA and Intel GPUs, and on the
   CPU, so machines without Intel devices need no OpenVINO.
 - `auto` device selection, `bench` and `device`.
+- Fast load for llama.cpp (`--no-repack --fit off`), turned on per device
+  by the benchmark.
 - Global and per-repository configuration.
 - Installer, guided setup that lists the hardware first and installs only
   what each vendor's CPU, GPU and NPU need, reproducible model export and

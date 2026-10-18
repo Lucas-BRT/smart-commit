@@ -139,6 +139,7 @@ clients often run hooks without the user's `PATH`.
   the network. A minimal HTTP/1.1 client talks to it, and requests are greedy
   and seeded, without prompt caching. The server stops when the backend is
   dropped. On `cpu` it offloads nothing (`--n-gpu-layers 0 --device none`),
-  even when it finds a GPU.
+  even when it finds a GPU. With fast load (`--no-repack --fit off`, where
+  the benchmark found it faster) a failed start is retried without it.
 
 See [devices](devices.md) for how the device is chosen and how they compare.

@@ -43,6 +43,7 @@ value, for example when an environment variable is set.
 | `model.gguf` | path | `$XDG_DATA_HOME/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | `SMART_COMMIT_GGUF` | global |
 | `model.llama_server` | path | `$XDG_DATA_HOME/smart-commit/llama.cpp/llama-b11381/llama-server` | `SMART_COMMIT_LLAMA_SERVER` | global |
 | `model.vulkan_device` | 0–15 | 0 | | global |
+| `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
 | `model.npu_prefill_chunk` | 512–8192 | 512 | | global |
 | `model.npu_generate_hint` | `best_perf`, `fast_compile` | `best_perf` | | global |
 | `model.max_prompt_tokens` | 256–8192 | 1024 | | global |
@@ -64,6 +65,15 @@ value, for example when an environment variable is set.
   `config set` and `device use` write the new name.
 - `model.vulkan_device` picks a GPU on machines with more than one, as
   `llama-server --list-devices` numbers them (0 is `Vulkan0`).
+- `model.fast_load` starts llama-server (`vulkan` and `cpu`) with
+  `--no-repack --fit off`: the weights are used as they are mapped from the
+  file instead of being copied and repacked for the CPU's vector
+  instructions, and the model is not fitted to the GPUs' free memory, which
+  a 1 GB model with a fixed context rarely needs. `auto` uses it on the
+  devices where the last `smart-commit bench` found it at least 5% faster;
+  without a benchmark it stays off. If a fast load fails (a GPU short of
+  memory), the model is loaded again normally, with a note. See
+  [devices](devices.md#fast-load).
 - `model.npu_prefill_chunk` must divide `model.max_prompt_tokens`. Chunks
   smaller than 512 fail to compile with NPU driver 1.38.
 - `model.max_prompt_tokens` is also the prompt length the NPU compiles for.

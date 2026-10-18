@@ -5,7 +5,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Output;
 
-use smart_commit::bench::{self, Entry, Machine, Measurement, Report};
+use smart_commit::bench::{self, Entry, FastLoadTrial, Machine, Measurement, Report};
 use smart_commit::device::Target;
 use tempfile::TempDir;
 
@@ -57,6 +57,7 @@ impl Home {
                 error: ms
                     .is_none()
                     .then(|| "backend unavailable: not set up".to_owned()),
+                fast_load: None,
             })
             .collect();
         let report = Report {
@@ -242,5 +243,40 @@ fn auto_tries_devices_in_benchmark_order() {
         order,
         ["vulkan", "cpu", "intel-gpu", "npu", "openvino-cpu"],
         "{err}"
+    );
+}
+
+#[test]
+fn device_says_where_the_benchmark_turned_fast_load_on() {
+    let home = Home::new();
+    let dir = TempDir::new().unwrap();
+    home.save_report(&[
+        (Target::Npu, None),
+        (Target::Vulkan, Some(2300.0)),
+        (Target::Cpu, Some(1900.0)),
+    ]);
+    let mut report = Report::from_json(&fs::read_to_string(home.bench_file()).unwrap()).unwrap();
+    report.entries[1].fast_load = Some(FastLoadTrial::new(Some(2400.0), Some(2300.0)));
+    report.entries[2].fast_load = Some(FastLoadTrial::new(Some(2800.0), Some(1900.0)));
+    fs::write(home.bench_file(), report.to_json()).unwrap();
+
+    let out = stdout(&home.run(&["device"], dir.path()));
+    assert!(
+        out.contains(
+            "fast load turned on for cpu (--no-repack --fit off): 2.8 s -> 1.9 s per message"
+        ),
+        "{out}"
+    );
+    assert!(
+        out.contains("fast load left off for vulkan: 2.4 s -> 2.3 s per message, under 5% faster"),
+        "{out}"
+    );
+    assert!(!out.contains("overrides"), "{out}");
+
+    home.run(&["config", "set", "model.fast_load", "off"], dir.path());
+    let out = stdout(&home.run(&["device"], dir.path()));
+    assert!(
+        out.contains("model.fast_load = off overrides this: always off."),
+        "{out}"
     );
 }
