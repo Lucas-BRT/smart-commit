@@ -29,7 +29,9 @@ Installer options (after `bash -s --` when piping):
 | `--yes` | answer yes to the setup's questions |
 | `--uninstall` | remove smart-commit (models, caches and config are kept) |
 
-The installer warns if `~/.local/bin` is not on your `PATH`.
+The installer warns if `~/.local/bin` is not on your `PATH`. Running it
+again upgrades in place: it only replaces the binary, the scripts and the
+docs, so the models, llama.cpp and the benchmark stay.
 `smart-commit setup` can run again at any time, for example after adding a
 GPU; `~/.local/share/smart-commit/scripts/hardware.sh` only prints the
 hardware list. `--no-drivers` skips everything that needs `sudo`, and `--no-bench`

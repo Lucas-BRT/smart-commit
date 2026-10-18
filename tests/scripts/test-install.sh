@@ -37,6 +37,14 @@ for file in share/smart-commit/scripts/setup.sh share/smart-commit/scripts/setup
 done
 grep -q "smart-commit setup" "$work/out"
 echo "ok    installs the latest release"
+# install.sh only replaces and removes these, since share/smart-commit is
+# also the data directory.
+release_files=$(tar -tzf "$work/dist1/$ASSET" | sed -n 's|^[^/]*/share/smart-commit/\([^/][^/]*\).*|\1|p' | LC_ALL=C sort -u | tr '\n' ' ')
+[ "$release_files" = "VERSION scripts " ] || {
+    echo "FAIL  share/smart-commit has $release_files; update RELEASE_FILES in install.sh"
+    exit 1
+}
+echo "ok    the release's share/smart-commit is what install.sh manages"
 
 install --no-setup --version "v$VERSION"
 grep -q "installed smart-commit $VERSION" "$work/out"

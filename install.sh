@@ -50,14 +50,30 @@ while [ $# -gt 0 ]; do
 done
 
 say() { printf '==> %s\n' "$*"; }
+
+# What the release puts in share/smart-commit. With the default prefix that
+# directory is also $XDG_DATA_HOME/smart-commit, where the setup keeps the
+# models, llama.cpp and the benchmark: only these entries are ever replaced
+# or removed.
+RELEASE_FILES=(scripts VERSION)
+
+# remove_release: the files this script installed, and nothing else.
+remove_release() {
+    local entry
+    rm -f "$PREFIX/bin/smart-commit"
+    for entry in "${RELEASE_FILES[@]}"; do
+        rm -rf "${PREFIX:?}/share/smart-commit/$entry"
+    done
+    rmdir "$PREFIX/share/smart-commit" 2>/dev/null || true
+    rm -rf "${PREFIX:?}/share/doc/smart-commit"
+}
 die() {
     echo "error: $*" >&2
     exit 1
 }
 
 if [ "$UNINSTALL" = 1 ]; then
-    rm -f "$PREFIX/bin/smart-commit"
-    rm -rf "${PREFIX:?}/share/smart-commit" "$PREFIX/share/doc/smart-commit"
+    remove_release
     say "removed smart-commit from $PREFIX"
     echo "Kept (delete them yourself if you want):"
     echo "  models and benchmark: ${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit"
@@ -90,10 +106,12 @@ curl -fsL --retry 3 -o "$work/SHA256SUMS" "$url/SHA256SUMS"
 
 tar -xzf "$work/$ASSET" -C "$work"
 src=$work/smart-commit-x86_64-unknown-linux-gnu
-mkdir -p "$PREFIX/bin" "$PREFIX/share/doc"
+remove_release
+mkdir -p "$PREFIX/bin" "$PREFIX/share/smart-commit" "$PREFIX/share/doc"
 install -m 755 "$src/bin/smart-commit" "$PREFIX/bin/smart-commit"
-rm -rf "${PREFIX:?}/share/smart-commit" "$PREFIX/share/doc/smart-commit"
-cp -R "$src/share/smart-commit" "$PREFIX/share/smart-commit"
+for entry in "${RELEASE_FILES[@]}"; do
+    cp -R "$src/share/smart-commit/$entry" "$PREFIX/share/smart-commit/$entry"
+done
 cp -R "$src/share/doc/smart-commit" "$PREFIX/share/doc/smart-commit"
 say "installed $("$PREFIX/bin/smart-commit" --version) in $PREFIX"
 

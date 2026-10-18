@@ -24,6 +24,7 @@ jobs:
       - run: tests/scripts/test-fetch-model.sh
       - run: tests/scripts/test-setup.sh
       - run: tests/scripts/test-setup-llamacpp.sh
+      - run: tests/scripts/test-install-data.sh
       - run: tests/scripts/test-normalize-ir.sh
       - run: tests/scripts/test-release-notes.sh
 
