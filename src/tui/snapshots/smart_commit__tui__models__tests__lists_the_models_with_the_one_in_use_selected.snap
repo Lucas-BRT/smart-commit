@@ -1,0 +1,24 @@
+---
+source: src/tui/models.rs
+expression: "draw(80, 20, |f| picker().render(f))"
+---
+ Models: downloaded from their publishers on Hugging Face, pinned and checked
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  model               size    licence    status       installed               │
+│> qwen2.5-coder-1.5b  1.1 GB  Apache-2.0 validated    gguf, openvino <- in use│
+│  qwen2.5-coder-0.5b  491 MB  Apache-2.0 experimental gguf                    │
+│  qwen2.5-coder-7b    4.7 GB  Apache-2.0 experimental -                       │
+│  a model from disk                                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌ Qwen2.5-Coder-1.5B-Instruct ─────────────────────────────────────────────────┐
+│the default: fast on every device, code-focused                               │
+│devices  every device                                                         │
+│source   huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF                 │
+│pinned   commit f86cb2c1fa58, SHA-256 cc324af070c2ecbf                        │
+│licence  Apache-2.0                                                           │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+[Up/Down] choose  [Enter] use (downloads it if needed)  [f] a file  [q] quit

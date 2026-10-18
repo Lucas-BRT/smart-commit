@@ -5,8 +5,14 @@ them from their publishers' Hugging Face repositories when asked, and checks
 that each file is exactly the one it pinned. Any other GGUF model can be
 used from disk.
 
+In a terminal, `smart-commit model` opens a picker: the models with what is
+installed and in use, the chosen one's source and pinned commit, a
+progress bar while it downloads, and a path prompt for a model on disk.
+`smart-commit model list` prints the same list as text, which is also what
+`smart-commit model` prints outside a terminal:
+
 ```console
-$ smart-commit model
+$ smart-commit model list
   model                   size  licence     status        installed
   qwen2.5-coder-1.5b    1.1 GB  Apache-2.0  validated     gguf, openvino  <- in use
   qwen2.5-coder-0.5b    491 MB  Apache-2.0  experimental  -

@@ -4,11 +4,15 @@
 use std::error::Error;
 use std::io::{IsTerminal, Write};
 use std::path::{Path, PathBuf};
+use std::sync::mpsc;
+use std::time::Duration;
 
 use clap::Subcommand;
 use smart_commit::config::{self, Origin, Resolved};
 use smart_commit::models::{self, Model};
 use smart_commit::paths;
+use smart_commit::tui::models::{Action, Entry, Picker};
+use smart_commit::tui::{self, Screen};
 
 #[derive(Debug, Subcommand)]
 pub enum ModelCommand {
@@ -28,6 +32,7 @@ fn env(name: &str) -> Option<String> {
 
 pub fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {
     match command {
+        None if tui::interactive() => pick(),
         None | Some(ModelCommand::List) => list(),
         Some(ModelCommand::Use { model }) => match models::find(&model) {
             Some(model) => use_recommended(model),
@@ -111,10 +116,100 @@ fn installed(model: &Model, dir: &Path) -> Vec<&'static str> {
     parts
 }
 
+/// The model picker, in a terminal; what it chooses is then used as with
+/// `model use`.
+fn pick() -> Result<(), Box<dyn Error>> {
+    let resolved = crate::resolve(None, Vec::new())?;
+    let settings = resolved.settings();
+    let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
+    let entries = models::REGISTRY
+        .iter()
+        .map(|model| {
+            let parts = installed(model, &dir);
+            Entry {
+                model,
+                gguf: parts.contains(&"gguf"),
+                openvino: parts.contains(&"openvino"),
+            }
+        })
+        .collect();
+    let custom = ["model.gguf", "model.dir"].iter().find_map(|key| {
+        resolved
+            .get(key)
+            .filter(|(_, origin)| *origin != Origin::Default)
+            .map(|(value, _)| format!("{key} = {value} replaces the model on its devices"))
+    });
+    let mut picker = Picker::new(entries, settings.model.id, custom, env("HOME"));
+    let base = hugging_face();
+    let mut screen = Screen::new()?;
+    let mut download: Option<Download> = None;
+    let choice = loop {
+        screen.draw(|frame| picker.render(frame))?;
+        if let Some(current) = &download {
+            while let Ok(bytes) = current.progress.try_recv() {
+                picker.progress(bytes);
+            }
+            if current.worker.is_finished() {
+                let Download { model, worker, .. } = download.take().expect("checked");
+                match worker.join() {
+                    Ok(Ok(_)) => break Some(Action::Use(model)),
+                    Ok(Err(err)) => picker.download_failed(err.to_string()),
+                    Err(_) => picker.download_failed("the download crashed".to_owned()),
+                }
+                continue;
+            }
+            // Ctrl+C stops waiting; curl resumes the download next time.
+            if let Some(key) = screen.key_within(Duration::from_millis(200))?
+                && picker.on_key(key) == Action::Quit
+            {
+                break None;
+            }
+            continue;
+        }
+        match picker.on_key(screen.key()?) {
+            Action::None => {}
+            Action::Quit => break None,
+            Action::Download(model) => {
+                let (sender, progress) = mpsc::channel();
+                let (dir, base) = (dir.clone(), base.clone());
+                let worker = std::thread::spawn(move || {
+                    models::install_gguf(model, &dir, &base, |bytes| {
+                        let _ = sender.send(bytes);
+                    })
+                });
+                download = Some(Download {
+                    model,
+                    progress,
+                    worker,
+                });
+            }
+            action => break Some(action),
+        }
+    };
+    drop(screen);
+    match choice {
+        Some(Action::Use(model)) => use_recommended(model),
+        Some(Action::UseFile(path)) => use_file(&path.to_string_lossy()),
+        _ => Ok(()),
+    }
+}
+
+/// A download running in its own thread, so the screen keeps drawing.
+struct Download {
+    model: &'static Model,
+    progress: mpsc::Receiver<u64>,
+    worker: std::thread::JoinHandle<Result<PathBuf, models::ModelError>>,
+}
+
+/// Where models are downloaded from: Hugging Face, unless a test serves
+/// them.
+fn hugging_face() -> String {
+    env("SMART_COMMIT_HF_BASE").unwrap_or_else(|| models::HUGGING_FACE.to_owned())
+}
+
 fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
     let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
-    // Only tests serve the models from elsewhere.
-    let base = env("SMART_COMMIT_HF_BASE").unwrap_or_else(|| models::HUGGING_FACE.to_owned());
+    let base = hugging_face();
     let file = dir.join(model.gguf.file);
     if models::is_installed(&model.gguf, &file) {
         eprintln!("{} is already installed: {}", model.name, file.display());

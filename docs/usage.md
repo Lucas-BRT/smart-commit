@@ -119,7 +119,8 @@ next one, with a note, if it becomes unavailable. See [devices](devices.md).
 ## Models
 
 ```bash
-smart-commit model                       # the recommended models, and which is in use
+smart-commit model                       # choose a model (a picker in a terminal)
+smart-commit model list                  # the recommended models, and which is in use
 smart-commit model use qwen2.5-coder-7b  # download it from Hugging Face and use it
 smart-commit model use ~/models/my.gguf  # use a GGUF file from disk, unverified
 ```
