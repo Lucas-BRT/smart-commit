@@ -8,6 +8,7 @@ use npu_commit::context::RepoContext;
 use npu_commit::diff;
 use npu_commit::generate::{self, Source};
 use npu_commit::git::Repo;
+use npu_commit::message::CommitMessage;
 use npu_commit::prompt::{self, PromptOptions};
 use npu_commit::trace::Trace;
 
@@ -46,14 +47,28 @@ struct GenerateArgs {
     /// Open the editor with the message, then commit.
     #[arg(long)]
     commit: bool,
-    #[arg(long, value_enum, default_value_t = BackendKind::Npu)]
+    #[command(flatten)]
+    backend: BackendArgs,
+}
+
+/// How messages are generated. Each option can also come from the
+/// environment, which is how the git hook, run by git without our flags,
+/// gets them.
+#[derive(Debug, Args)]
+struct BackendArgs {
+    #[arg(long, env = "NPU_COMMIT_BACKEND", value_enum, default_value_t = BackendKind::Npu)]
     backend: BackendKind,
     /// Reply of the mock backend; repeat it for the following attempts.
-    #[arg(long = "mock-response", value_name = "TEXT")]
+    /// The environment variable holds a single reply.
+    #[arg(
+        long = "mock-response",
+        env = "NPU_COMMIT_MOCK_RESPONSE",
+        value_name = "TEXT"
+    )]
     mock_responses: Vec<String>,
     /// Record inputs, prompts and replies to FILE, for `replay`. It
     /// includes the staged diff and recent commit subjects.
-    #[arg(long, value_name = "FILE")]
+    #[arg(long, env = "NPU_COMMIT_TRACE", value_name = "FILE")]
     trace: Option<PathBuf>,
 }
 
@@ -107,8 +122,20 @@ fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
 
 fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
     let repo = Repo::discover(&args.path)?;
-    let context = RepoContext::collect(&repo)?;
-    let files = staged_files(&repo)?;
+    let message = generate_message(&repo, &args.backend)?.to_string();
+    if args.commit {
+        repo.commit_in_editor(&message)?;
+    } else {
+        println!("{message}");
+    }
+    Ok(())
+}
+
+/// Generates a message for what is staged in `repo`, writing the trace if
+/// asked and warning when the fallback had to be used.
+fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Box<dyn Error>> {
+    let context = RepoContext::collect(repo)?;
+    let files = staged_files(repo)?;
     let backend: Box<dyn Backend> = match args.backend {
         BackendKind::Npu => {
             return Err("the NPU backend is not available yet; use --backend mock".into());
@@ -137,13 +164,7 @@ fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
             generation.attempts.len()
         );
     }
-    let message = generation.message.to_string();
-    if args.commit {
-        repo.commit_in_editor(&message)?;
-    } else {
-        println!("{message}");
-    }
-    Ok(())
+    Ok(generation.message)
 }
 
 fn run_replay(path: &Path) -> Result<(), Box<dyn Error>> {

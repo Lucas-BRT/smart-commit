@@ -14,7 +14,11 @@ fn npu_commit_with(args: &[&str], dir: &Path, env: &[(&str, &str)]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_npu-commit"))
         .args(args)
         .current_dir(dir)
-        // The git the binary runs must not see the developer's config.
+        // Neither the binary nor the git it runs may see the developer's
+        // own settings.
+        .env_remove("NPU_COMMIT_BACKEND")
+        .env_remove("NPU_COMMIT_MOCK_RESPONSE")
+        .env_remove("NPU_COMMIT_TRACE")
         .envs(common::GIT_ENV.iter().copied())
         .envs(env.iter().copied())
         .output()
@@ -311,4 +315,42 @@ fn replay_of_a_missing_file_fails() {
     let output = npu_commit(&["replay", "missing.json"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(stderr(&output).starts_with("error: cannot read missing.json"));
+}
+
+#[test]
+fn backend_options_can_come_from_the_environment() {
+    let repo = staged_repo();
+    let trace = repo.path().join("env-trace.json");
+    let output = npu_commit_with(
+        &[],
+        repo.path(),
+        &[
+            ("NPU_COMMIT_BACKEND", "mock"),
+            (
+                "NPU_COMMIT_MOCK_RESPONSE",
+                "feat: add the entry point\n\nWith a body, too.",
+            ),
+            ("NPU_COMMIT_TRACE", trace.to_str().unwrap()),
+        ],
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(
+        stdout(&output),
+        "feat: add the entry point\n\nWith a body, too.\n"
+    );
+    assert!(trace.exists());
+}
+
+#[test]
+fn flags_override_the_environment() {
+    let repo = staged_repo();
+    let output = npu_commit_with(
+        &["--mock-response", "fix: from the flag"],
+        repo.path(),
+        &[
+            ("NPU_COMMIT_BACKEND", "mock"),
+            ("NPU_COMMIT_MOCK_RESPONSE", "feat: from the environment"),
+        ],
+    );
+    assert_eq!(stdout(&output), "fix: from the flag\n");
 }
