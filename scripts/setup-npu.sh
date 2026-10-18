@@ -32,6 +32,7 @@ GENAI_DIR=openvino_genai_ubuntu24_2026.3.1.0_x86_64
 INSTALL_ROOT=/opt/intel
 INSTALL_DIR=$INSTALL_ROOT/openvino_2026.3.1
 
+# shellcheck source=/dev/null
 . /etc/os-release
 if [ "${VERSION_ID:-}" != "24.04" ]; then
     echo "warning: tested on Ubuntu 24.04; this is ${PRETTY_NAME:-unknown}" >&2
@@ -73,7 +74,7 @@ sudo dpkg -i "$work/libze1.deb"
 echo "==> installing OpenVINO GenAI 2026.3.1 in $INSTALL_DIR"
 tar -xzf "$work/genai.tar.gz" -C "$work"
 sudo mkdir -p "$INSTALL_ROOT"
-sudo rm -rf "$INSTALL_DIR"
+sudo rm -rf "${INSTALL_DIR:?}"
 sudo mv "$work/$GENAI_DIR" "$INSTALL_DIR"
 sudo ln -sfn "$INSTALL_DIR" "$INSTALL_ROOT/openvino"
 
