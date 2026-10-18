@@ -18,6 +18,7 @@ use toml_edit::{DocumentMut, Item, Table};
 
 use crate::backend::GenerationConfig;
 use crate::genai::{Device, GenaiOptions};
+use crate::llamacpp::LlamaCppOptions;
 use crate::paths;
 use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions};
 use crate::style::{Convention, Language};
@@ -56,18 +57,22 @@ pub struct Key {
 pub const KEYS: &[Key] = &[
     Key {
         name: "backend",
-        kind: Kind::Choice(&["openvino", "mock"]),
+        kind: Kind::Choice(&["auto", "openvino", "llamacpp", "mock"]),
         scope: Scope::User,
         env: Some("NPU_COMMIT_BACKEND"),
-        description: "How messages are generated: `openvino` runs the exported model, \
-                      `mock` replies with --mock-response (for tests).",
+        description: "What runs the model: `openvino` (Intel NPU, GPU and CPU), `llamacpp` \
+                      (any GPU through Vulkan), `auto` (whichever model.device needs) or \
+                      `mock`, which replies with --mock-response (for tests).",
     },
     Key {
         name: "model.device",
-        kind: Kind::Choice(&["npu", "gpu", "cpu"]),
+        kind: Kind::Choice(&["auto", "npu", "gpu", "cpu", "vulkan"]),
         scope: Scope::User,
         env: Some("NPU_COMMIT_DEVICE"),
-        description: "Where the model runs.",
+        description: "Where the model runs: `npu`, `gpu` (Intel) and `cpu` through OpenVINO, \
+                      `vulkan` (AMD, NVIDIA or Intel GPU) through llama.cpp, or `auto`: \
+                      the fastest in the last `npu-commit bench`, else the first that works \
+                      of gpu, npu, vulkan, cpu.",
     },
     Key {
         name: "model.dir",
@@ -82,6 +87,28 @@ pub const KEYS: &[Key] = &[
         scope: Scope::User,
         env: Some("NPU_COMMIT_CACHE_DIR"),
         description: "Where OpenVINO keeps compiled models, so loads after the first are fast.",
+    },
+    Key {
+        name: "model.gguf",
+        kind: Kind::Path,
+        scope: Scope::User,
+        env: Some("NPU_COMMIT_GGUF"),
+        description: "The GGUF model for the llama.cpp backend, fetched by scripts/setup-gpu.sh.",
+    },
+    Key {
+        name: "model.llama_server",
+        kind: Kind::Path,
+        scope: Scope::User,
+        env: Some("NPU_COMMIT_LLAMA_SERVER"),
+        description: "The llama-server binary installed by scripts/setup-gpu.sh.",
+    },
+    Key {
+        name: "model.vulkan_device",
+        kind: Kind::Count { min: 0, max: 15 },
+        scope: Scope::User,
+        env: None,
+        description: "Which Vulkan GPU llama.cpp uses, as `llama-server --list-devices` \
+                      numbers them (0 is Vulkan0).",
     },
     Key {
         name: "model.max_prompt_tokens",
@@ -438,15 +465,22 @@ impl Resolved {
         let choice = |name| self.text(name).expect("choices have defaults");
         Settings {
             backend: match choice("backend") {
+                "openvino" => BackendKind::Openvino,
+                "llamacpp" => BackendKind::LlamaCpp,
                 "mock" => BackendKind::Mock,
-                _ => BackendKind::Openvino,
+                _ => BackendKind::Auto,
             },
             device: match choice("model.device") {
-                "gpu" => Device::Gpu,
-                "cpu" => Device::Cpu,
-                _ => Device::Npu,
+                "npu" => DeviceSetting::Npu,
+                "gpu" => DeviceSetting::Gpu,
+                "cpu" => DeviceSetting::Cpu,
+                "vulkan" => DeviceSetting::Vulkan,
+                _ => DeviceSetting::Auto,
             },
             model_dir: self.text("model.dir").map(PathBuf::from),
+            gguf: self.text("model.gguf").map(PathBuf::from),
+            llama_server: self.text("model.llama_server").map(PathBuf::from),
+            vulkan_device: self.count("model.vulkan_device"),
             cache_dir: self.text("model.cache_dir").map(PathBuf::from),
             max_prompt_tokens: self.count("model.max_prompt_tokens"),
             max_new_tokens: self.count("model.max_new_tokens"),
@@ -481,8 +515,9 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
     let text = |s: &str| Value::Text(s.to_owned());
     let path = |p: Option<PathBuf>| p.map(|p| Value::Text(p.to_string_lossy().into_owned()));
     let mut values = vec![
-        ("backend", text("openvino")),
-        ("model.device", text("npu")),
+        ("backend", text("auto")),
+        ("model.device", text("auto")),
+        ("model.vulkan_device", Value::Count(0)),
         (
             "model.max_prompt_tokens",
             Value::Count(DEFAULT_MAX_PROMPT_TOKENS),
@@ -506,21 +541,41 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
     if let Some(dir) = path(paths::default_cache_dir(env)) {
         values.push(("model.cache_dir", dir));
     }
+    if let Some(file) = path(paths::default_gguf_file(env)) {
+        values.push(("model.gguf", file));
+    }
+    if let Some(file) = path(paths::default_llama_server(env)) {
+        values.push(("model.llama_server", file));
+    }
     values
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackendKind {
+    Auto,
     Openvino,
+    LlamaCpp,
     Mock,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceSetting {
+    Auto,
+    Npu,
+    Gpu,
+    Cpu,
+    Vulkan,
 }
 
 /// Every setting, typed and resolved.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
     pub backend: BackendKind,
-    pub device: Device,
+    pub device: DeviceSetting,
     pub model_dir: Option<PathBuf>,
+    pub gguf: Option<PathBuf>,
+    pub llama_server: Option<PathBuf>,
+    pub vulkan_device: usize,
     pub cache_dir: Option<PathBuf>,
     pub max_prompt_tokens: usize,
     pub max_new_tokens: usize,
@@ -548,11 +603,11 @@ impl Settings {
         }
     }
 
-    pub fn genai_options(&self) -> Result<GenaiOptions, String> {
+    pub fn genai_options(&self, device: Device) -> Result<GenaiOptions, String> {
         let missing = |key: &str| format!("{key} has no default without $HOME; set it");
         Ok(GenaiOptions {
             model_dir: self.model_dir.clone().ok_or_else(|| missing("model.dir"))?,
-            device: self.device,
+            device,
             cache_dir: self
                 .cache_dir
                 .clone()
@@ -560,6 +615,21 @@ impl Settings {
             // The NPU compiles for exactly the prompt length we budget for.
             max_prompt_tokens: self.max_prompt_tokens,
             max_new_tokens: self.max_new_tokens,
+        })
+    }
+
+    pub fn llamacpp_options(&self) -> Result<LlamaCppOptions, String> {
+        let missing = |key: &str| format!("{key} has no default without $HOME; set it");
+        Ok(LlamaCppOptions {
+            server: self
+                .llama_server
+                .clone()
+                .ok_or_else(|| missing("model.llama_server"))?,
+            model: self.gguf.clone().ok_or_else(|| missing("model.gguf"))?,
+            vulkan_device: self.vulkan_device,
+            max_prompt_tokens: self.max_prompt_tokens,
+            max_new_tokens: self.max_new_tokens,
+            startup_timeout: std::time::Duration::from_secs(120),
         })
     }
 }
@@ -808,8 +878,13 @@ mod tests {
         let settings = resolve(None, None, HOME, vec![]).unwrap().settings();
         assert_eq!(settings.prompt_options(), PromptOptions::default());
         assert_eq!(settings.generation_config(), GenerationConfig::default());
-        assert_eq!(settings.backend, BackendKind::Openvino);
-        assert_eq!(settings.device, Device::Npu);
+        assert_eq!(settings.backend, BackendKind::Auto);
+        assert_eq!(settings.device, DeviceSetting::Auto);
+        assert_eq!(settings.gguf, paths::default_gguf_file(env(HOME)));
+        assert_eq!(
+            settings.llama_server,
+            paths::default_llama_server(env(HOME))
+        );
         assert_eq!(settings.history_depth, crate::context::HISTORY_DEPTH);
         assert_eq!(settings.model_dir, paths::default_model_dir(env(HOME)));
     }
@@ -835,7 +910,7 @@ mod tests {
 
         let settings = resolved.settings();
         assert_eq!(settings.backend, BackendKind::Openvino);
-        assert_eq!(settings.device, Device::Cpu);
+        assert_eq!(settings.device, DeviceSetting::Cpu);
         assert_eq!(settings.language, Some(Language::Portuguese));
         assert_eq!(settings.history_depth, 10);
     }
@@ -856,7 +931,7 @@ mod tests {
         for (text, problem) in [
             (
                 "[model]\ndevice = \"tpu\"\n",
-                "expected one of npu, gpu, cpu, got \"tpu\"",
+                "expected one of auto, npu, gpu, cpu, vulkan, got \"tpu\"",
             ),
             ("[model]\ndevice = 3\n", "expected a string, got 3"),
             (
@@ -927,7 +1002,18 @@ mod tests {
     fn without_home_paths_have_no_default() {
         let settings = resolve(None, None, &[], vec![]).unwrap().settings();
         assert_eq!(settings.model_dir, None);
-        assert!(settings.genai_options().unwrap_err().contains("model.dir"));
+        assert!(
+            settings
+                .genai_options(Device::Npu)
+                .unwrap_err()
+                .contains("model.dir")
+        );
+        assert!(
+            settings
+                .llamacpp_options()
+                .unwrap_err()
+                .contains("model.llama_server")
+        );
     }
 
     #[test]

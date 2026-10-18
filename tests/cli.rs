@@ -158,18 +158,54 @@ fn generate_uses_the_second_reply_when_the_first_is_rejected() {
 }
 
 #[test]
-fn generate_without_a_model_says_how_to_export_one() {
+fn auto_without_any_model_lists_every_device() {
     let repo = staged_repo();
     let output = npu_commit(&[], repo.path());
     assert_eq!(output.status.code(), Some(1));
+    let ir = format!(
+        "{}/npu-commit/models/{}",
+        common::DATA_HOME,
+        npu_commit::paths::DEFAULT_MODEL
+    );
+    let gguf = format!(
+        "{}/npu-commit/models/{}",
+        common::DATA_HOME,
+        npu_commit::llamacpp::DEFAULT_GGUF
+    );
+    let no_ir =
+        format!("backend unavailable: no model in {ir}; export one with scripts/export-model.sh");
     assert_eq!(
         stderr(&output),
         format!(
-            "error: backend unavailable: no model in {}/npu-commit/models/{}; \
-             export one with scripts/export-model.sh\n",
-            common::DATA_HOME,
-            npu_commit::paths::DEFAULT_MODEL
+            "error: no device could run the model:\n  gpu: {no_ir}\n  npu: {no_ir}\n  \
+             vulkan: backend unavailable: no GGUF model at {gguf}; fetch it with \
+             scripts/setup-gpu.sh\n  cpu: {no_ir}\n"
         )
+    );
+}
+
+#[test]
+fn a_fixed_device_reports_only_its_own_problem() {
+    let repo = staged_repo();
+    let output = npu_commit(&["--device", "cpu"], repo.path());
+    assert!(
+        stderr(&output).starts_with("error: backend unavailable: no model in"),
+        "{}",
+        stderr(&output)
+    );
+    let output = npu_commit(&["--device", "vulkan"], repo.path());
+    assert!(
+        stderr(&output).starts_with("error: backend unavailable: no GGUF model at"),
+        "{}",
+        stderr(&output)
+    );
+    let output = npu_commit(
+        &["--backend", "openvino", "--device", "vulkan"],
+        repo.path(),
+    );
+    assert_eq!(
+        stderr(&output),
+        "error: model.device = vulkan needs backend = llamacpp (or auto)\n"
     );
 }
 

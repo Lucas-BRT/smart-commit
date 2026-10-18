@@ -4,6 +4,7 @@
 pub mod backend;
 pub mod config;
 pub mod context;
+pub mod device;
 pub mod diff;
 pub mod genai;
 pub mod generate;

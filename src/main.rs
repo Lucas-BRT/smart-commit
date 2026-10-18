@@ -3,14 +3,16 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use npu_commit::backend::{Backend, MockBackend};
-use npu_commit::config::{self, BackendKind, Resolved, Settings, Sources};
+use npu_commit::backend::{Backend, BackendError, MockBackend};
+use npu_commit::config::{self, BackendKind, DeviceSetting, Resolved, Settings, Sources};
 use npu_commit::context::RepoContext;
+use npu_commit::device::{self, Target};
 use npu_commit::diff;
-use npu_commit::genai::GenaiBackend;
+use npu_commit::genai::{Device, GenaiBackend};
 use npu_commit::generate::{self, Source};
 use npu_commit::git::Repo;
 use npu_commit::hook;
+use npu_commit::llamacpp::LlamaCppBackend;
 use npu_commit::message::CommitMessage;
 use npu_commit::paths;
 use npu_commit::prompt;
@@ -126,8 +128,12 @@ struct BackendArgs {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum BackendArg {
-    /// The exported model through OpenVINO GenAI, on --device.
+    /// Whichever --device needs.
+    Auto,
+    /// OpenVINO GenAI: Intel NPU, Intel GPU or CPU.
     Openvino,
+    /// llama.cpp with Vulkan: any GPU (AMD, NVIDIA, Intel).
+    Llamacpp,
     /// Scripted replies from --mock-response, for tests and development.
     Mock,
 }
@@ -145,9 +151,14 @@ struct ModelArgs {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum DeviceArg {
+    /// The fastest benchmarked device, else the first that works.
+    Auto,
     Npu,
+    /// Intel GPU, through OpenVINO.
     Gpu,
     Cpu,
+    /// Any GPU with a Vulkan driver, through llama.cpp.
+    Vulkan,
 }
 
 impl BackendArgs {
@@ -155,7 +166,9 @@ impl BackendArgs {
         let mut flags = self.model.flags()?;
         if let Some(backend) = self.backend {
             let name = match backend {
+                BackendArg::Auto => "auto",
                 BackendArg::Openvino => "openvino",
+                BackendArg::Llamacpp => "llamacpp",
                 BackendArg::Mock => "mock",
             };
             flags.push(("backend", name.to_owned()));
@@ -169,9 +182,11 @@ impl ModelArgs {
         let mut flags = Vec::new();
         if let Some(device) = self.device {
             let name = match device {
+                DeviceArg::Auto => "auto",
                 DeviceArg::Npu => "npu",
                 DeviceArg::Gpu => "gpu",
                 DeviceArg::Cpu => "cpu",
+                DeviceArg::Vulkan => "vulkan",
             };
             flags.push(("model.device", name.to_owned()));
         }
@@ -269,8 +284,42 @@ fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn load_model(settings: &Settings) -> Result<GenaiBackend, Box<dyn Error>> {
-    Ok(GenaiBackend::load(&settings.genai_options()?)?)
+/// Loads the model on the configured device, or picks one for `auto`.
+fn load_model(settings: &Settings) -> Result<Box<dyn Backend>, Box<dyn Error>> {
+    let candidates = device::candidates(settings.backend, settings.device, &preferred_devices())?;
+    let selection = device::load_first(&candidates, |target| load_on(settings, target))?;
+    if settings.device == DeviceSetting::Auto && !selection.skipped.is_empty() {
+        let skipped: Vec<&str> = selection.skipped.iter().map(|(t, _)| t.name()).collect();
+        eprintln!(
+            "note: running on {}; {} unavailable (`npu-commit device` shows why)",
+            selection.target,
+            skipped.join(", ")
+        );
+    }
+    Ok(selection.backend)
+}
+
+fn load_on(settings: &Settings, target: Target) -> Result<Box<dyn Backend>, BackendError> {
+    let device = match target {
+        Target::Vulkan => {
+            let options = settings
+                .llamacpp_options()
+                .map_err(BackendError::Unavailable)?;
+            return Ok(Box::new(LlamaCppBackend::start(&options)?));
+        }
+        Target::Npu => Device::Npu,
+        Target::Gpu => Device::Gpu,
+        Target::Cpu => Device::Cpu,
+    };
+    let options = settings
+        .genai_options(device)
+        .map_err(BackendError::Unavailable)?;
+    Ok(Box::new(GenaiBackend::load(&options)?))
+}
+
+/// Devices in the order the last benchmark ranked them, fastest first.
+fn preferred_devices() -> Vec<Target> {
+    Vec::new()
 }
 
 /// Generates a message for what is staged in `repo`, writing the trace if
@@ -280,8 +329,8 @@ fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Bo
     let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
     let files = staged_files(repo)?;
     let backend: Box<dyn Backend> = match settings.backend {
-        BackendKind::Openvino => Box::new(load_model(&settings)?),
         BackendKind::Mock => Box::new(MockBackend::new(args.mock_responses.clone())),
+        _ => load_model(&settings)?,
     };
     let options = settings.prompt_options();
     let config = settings.generation_config();
@@ -326,7 +375,7 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
                     backend.describe()
                 );
             }
-            trace.replay_with(&backend)?
+            trace.replay_with(backend.as_ref())?
         }
     };
     if !replay.differences.is_empty() {

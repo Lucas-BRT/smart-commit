@@ -63,7 +63,7 @@ fn init_writes_a_template_once() {
     let out = env.ok(&["config", "init"], dir.path());
     assert_eq!(out, format!("wrote {}\n", env.global_file().display()));
     let template = fs::read_to_string(env.global_file()).unwrap();
-    assert!(template.contains("# device = \"npu\""), "{template}");
+    assert!(template.contains("# device = \"auto\""), "{template}");
     assert!(template.contains("# Environment: NPU_COMMIT_DEVICE."));
 
     let again = env.run(&["config", "init"], dir.path());
@@ -92,7 +92,7 @@ fn set_get_unset_in_the_global_config() {
     let dir = TempDir::new().unwrap();
     assert_eq!(
         env.ok(&["config", "get", "model.device"], dir.path()),
-        "npu\n"
+        "auto\n"
     );
 
     let out = env.ok(&["config", "set", "model.device", "cpu"], dir.path());
@@ -116,7 +116,7 @@ fn set_get_unset_in_the_global_config() {
     env.ok(&["config", "unset", "model.device"], dir.path());
     assert_eq!(
         env.ok(&["config", "get", "model.device"], dir.path()),
-        "npu\n"
+        "auto\n"
     );
     assert_eq!(
         env.ok(&["config", "path"], dir.path()),
@@ -131,7 +131,7 @@ fn invalid_settings_are_refused_and_nothing_is_written() {
     for (args, problem) in [
         (
             &["config", "set", "model.device", "tpu"][..],
-            "expected one of npu, gpu, cpu",
+            "expected one of auto, npu, gpu, cpu, vulkan",
         ),
         (
             &["config", "set", "model.devise", "cpu"],

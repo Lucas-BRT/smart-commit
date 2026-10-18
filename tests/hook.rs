@@ -160,7 +160,7 @@ fn failures_warn_but_never_block_the_commit() {
     );
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(
-        stderr(&output).contains("npu-commit: backend unavailable: no model in"),
+        stderr(&output).contains("npu-commit: no device could run the model:"),
         "{}",
         stderr(&output)
     );
