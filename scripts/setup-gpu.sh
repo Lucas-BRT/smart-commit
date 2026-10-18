@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Sets up the GPUs of this machine for smart-commit, whatever the vendor:
+# Installs the system drivers the GPUs of this machine need, per vendor and
+# kernel driver, and nothing for vendors that are not there:
 #
-#   Intel  (i915/xe)  OpenVINO GPU runtime (intel-opencl-icd & co., pinned,
+#   Intel  (i915/xe)  Mesa ANV (vulkan) + Intel's compute runtime for
+#                     OpenVINO (intel-gpu: intel-opencl-icd & co., pinned,
 #                     from the PPA snapshot the NPU driver release was
-#                     validated with) + Mesa ANV for Vulkan
-#   AMD    (amdgpu)   Mesa RADV (Vulkan)
+#                     validated with, checked against SHA-256)
+#   AMD    (amdgpu)   Mesa RADV (vulkan)
 #   NVIDIA (nvidia)   the proprietary driver's own Vulkan ICD; if missing,
 #                     libnvidia-gl of the *same* version as the running driver
 #                     (the driver itself is never changed)
-#   NVIDIA (nouveau)  Mesa NVK (Vulkan; Turing / GTX 16xx or newer)
+#   NVIDIA (nouveau)  Mesa NVK (vulkan; Turing / GTX 16xx or newer)
 #
-# and, for the Vulkan backend on any of them, without sudo:
-#   llama.cpp b11381 (Vulkan build) in $XDG_DATA_HOME/smart-commit/llama.cpp
-#   the GGUF model in $XDG_DATA_HOME/smart-commit/models
-# Every download is checked against a pinned SHA-256.
+# llama.cpp itself, which runs the vulkan device, is setup-llamacpp.sh's job;
+# OpenVINO, which intel-gpu also needs, is setup-npu.sh --openvino-only's.
 #
 #   scripts/setup-gpu.sh [--dry-run] [--yes]
 #
@@ -27,14 +27,6 @@
 # tests.
 set -euo pipefail
 
-LLAMA_BUILD=b11381
-LLAMA_URL=https://github.com/ggml-org/llama.cpp/releases/download/$LLAMA_BUILD/llama-$LLAMA_BUILD-bin-ubuntu-vulkan-x64.tar.gz
-LLAMA_SHA256=6f93bf4138e9ad6a380ff605be1fd5108a66ec1977218eb74613f90634e18c64
-
-GGUF_NAME=qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
-GGUF_URL=https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/f86cb2c1fa58255f8052cc32aeede1b7482d4361/$GGUF_NAME
-GGUF_SHA256=cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
-
 # Intel compute runtime for OpenVINO's GPU plugin: kobuk-team/intel-graphics
 # snapshot 20260830T100000Z, as referenced by linux-npu-driver 1.38.0.
 INTEL_BASE=https://snapshot.ppa.launchpadcontent.net/kobuk-team/intel-graphics/ubuntu/20260830T100000Z/pool/main
@@ -45,8 +37,8 @@ INTEL_DEBS=(
     "i/intel-gmmlib/libigdgmm12_22.10.0-1~24.04~ppa1_amd64.deb 63fe9e124c3394193226c6cb8398dcabdc9306b5a10f63668118f7c799f5d792"
 )
 
-SYSFS=${SMART_COMMIT_SYSFS:-/sys}
-DATA=${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit
+# shellcheck source=/dev/null  # hardware.sh, next to this script
+. "$(dirname "$0")/hardware.sh"
 DRY_RUN=0
 ASSUME_YES=0
 for arg in "$@"; do
@@ -122,23 +114,7 @@ installed() {
 apt_packages=()
 need_apt() { apt_packages+=("$@"); }
 
-# --- detection ---------------------------------------------------------------
-
-# Prints "vendor driver slot" for every display controller (PCI class 03xx).
-list_gpus() {
-    local dev class vendor driver
-    for dev in "$SYSFS"/bus/pci/devices/*; do
-        [ -r "$dev/class" ] || continue
-        class=$(cat "$dev/class")
-        case $class in 0x03*) ;; *) continue ;; esac
-        vendor=$(cat "$dev/vendor")
-        driver=none
-        if [ -L "$dev/driver" ]; then
-            driver=$(basename "$(readlink "$dev/driver")")
-        fi
-        echo "$vendor $driver $(basename "$dev")"
-    done
-}
+# --- detection (list_gpus comes from hardware.sh) ------------------------------
 
 nvidia_driver_version() {
     cat "$SYSFS/module/nvidia/version" 2>/dev/null || true
@@ -158,7 +134,7 @@ intel_runtime=0
 vulkan=0
 
 setup_intel() {
-    say "Intel GPU ($1, driver $2): OpenVINO GPU runtime and Vulkan (Mesa ANV)"
+    say "Intel GPU ($1, driver $2): Vulkan (Mesa ANV) and Intel's compute runtime for OpenVINO"
     case $2 in
         i915 | xe) ;;
         *) warn "the Intel GPU at $1 has no i915/xe kernel driver bound; it will not be usable" ;;
@@ -213,7 +189,7 @@ setup_nvidia() {
 
 gpus=$(list_gpus)
 if [ -z "$gpus" ]; then
-    echo "No GPU found; smart-commit will use the NPU or the CPU."
+    echo "No GPU found: nothing to install here; smart-commit will use the CPU (or an Intel NPU)."
     exit 0
 fi
 while read -r vendor driver slot; do
@@ -240,7 +216,7 @@ if [ "${#apt_packages[@]}" -gt 0 ]; then
 fi
 if [ "${#apt_packages[@]}" -gt 0 ]; then
     if have_apt || [ "$DRY_RUN" = 1 ]; then
-        say "installing system packages: ${apt_packages[*]}"
+        say "system packages: ${apt_packages[*]}"
         sudo_run apt-get update -qq
         sudo_run apt-get install -y "${apt_packages[@]}"
     else
@@ -252,7 +228,7 @@ if [ "$intel_runtime" = 1 ] && installed intel-opencl-icd 26.27.39122.14; then
     say "the Intel compute runtime 26.27.39122.14 is installed"
 elif [ "$intel_runtime" = 1 ]; then
     if have_apt || [ "$DRY_RUN" = 1 ]; then
-        say "installing the Intel compute runtime for OpenVINO (pinned)"
+        say "Intel's compute runtime 26.27.39122.14 for OpenVINO (pinned)"
         work=$(mktemp -d)
         trap 'rm -rf "$work"' EXIT
         debs=()
@@ -270,30 +246,7 @@ elif [ "$intel_runtime" = 1 ]; then
     fi
 fi
 
-if [ "$vulkan" = 1 ]; then
-    say "installing llama.cpp $LLAMA_BUILD (Vulkan) in $DATA/llama.cpp"
-    if [ -x "$DATA/llama.cpp/llama-$LLAMA_BUILD/llama-server" ]; then
-        echo "    already installed"
-    else
-        archive=$DATA/llama.cpp/llama-$LLAMA_BUILD.tar.gz
-        fetch "$LLAMA_URL" "$LLAMA_SHA256" "$archive"
-        run tar -xzf "$archive" -C "$DATA/llama.cpp"
-        run rm -f "$archive"
-    fi
-    say "fetching the GGUF model in $DATA/models"
-    model=$DATA/models/$GGUF_NAME
-    if [ -f "$model" ] && echo "$GGUF_SHA256  $model" | sha256sum --check --quiet - 2>/dev/null; then
-        echo "    already there"
-    else
-        fetch "$GGUF_URL" "$GGUF_SHA256" "$model"
-    fi
-    if [ "$DRY_RUN" = 0 ]; then
-        echo "$GGUF_SHA256  $GGUF_NAME" >"$model.sha256"
-        say "Vulkan devices seen by llama.cpp:"
-        "$DATA/llama.cpp/llama-$LLAMA_BUILD/llama-server" --list-devices 2>&1 | sed -n '/Available devices/,$p' || true
-    fi
-fi
-
 echo
 echo "Done. If you were added to the render group, log out and back in."
-echo "Then \`smart-commit bench\` measures every device and picks the fastest."
+echo "The vulkan device also needs llama.cpp (setup-llamacpp.sh); then"
+echo "\`smart-commit bench\` measures every device and picks the fastest."

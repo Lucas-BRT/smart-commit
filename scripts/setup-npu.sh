@@ -15,8 +15,9 @@
 #
 #   scripts/setup-npu.sh [--openvino-only]
 #
-# --openvino-only installs just OpenVINO GenAI (for the CPU and Intel GPUs),
-# for machines without an NPU.
+# --openvino-only installs just OpenVINO GenAI, for machines with an Intel
+# GPU and no NPU (or to compare openvino-cpu with cpu). Machines without an
+# Intel NPU or GPU do not need OpenVINO: llama.cpp runs their CPU and GPUs.
 #
 # Then log out and back in (for the group), and run scripts/check-npu.sh.
 set -euo pipefail
@@ -109,7 +110,7 @@ sudo ldconfig
 
 if [ "$OPENVINO_ONLY" = 1 ]; then
     echo
-    echo "Done: OpenVINO GenAI is installed (CPU; Intel GPUs also need scripts/setup-gpu.sh)."
+    echo "Done: OpenVINO GenAI is installed (openvino-cpu; intel-gpu also needs scripts/setup-gpu.sh)."
     exit 0
 fi
 

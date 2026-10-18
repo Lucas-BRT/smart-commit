@@ -10,11 +10,13 @@ The installer downloads the latest release, checks it against the release's
 `SHA256SUMS` and installs it in `~/.local/bin` and `~/.local/share/smart-commit`,
 without `sudo`. It then runs `smart-commit setup`, which:
 
-1. lists the NPU and the GPUs it finds;
-2. offers what each needs, asking before anything that uses `sudo`: the NPU
-   driver and OpenVINO, OpenVINO alone on machines without an NPU (to run on
-   the CPU), and the GPU runtimes for Intel, AMD and NVIDIA;
-3. downloads the models, checking every file;
+1. lists the hardware: the CPU, each GPU with its vendor and driver, and the
+   NPU, with the devices each one gives;
+2. prints a plan with what that hardware needs, and nothing else: llama.cpp
+   and its model everywhere (the `cpu` and `vulkan` devices, no `sudo`), the
+   Vulkan driver of each GPU, and OpenVINO only for an Intel NPU or GPU;
+3. installs it, asking before anything that uses `sudo`, and checks every
+   download against its hash;
 4. benchmarks the devices and says which one will be used.
 
 Installer options (after `bash -s --` when piping):
@@ -29,7 +31,8 @@ Installer options (after `bash -s --` when piping):
 
 The installer warns if `~/.local/bin` is not on your `PATH`.
 `smart-commit setup` can run again at any time, for example after adding a
-GPU. `--no-drivers` skips everything that needs `sudo`, and `--no-bench`
+GPU; `~/.local/share/smart-commit/scripts/hardware.sh` only prints the
+hardware list. `--no-drivers` skips everything that needs `sudo`, and `--no-bench`
 skips the benchmark.
 
 To build from source instead:

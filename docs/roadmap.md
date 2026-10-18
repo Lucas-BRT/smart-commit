@@ -11,7 +11,8 @@
   CPU, so machines without Intel devices need no OpenVINO.
 - `auto` device selection, `bench` and `device`.
 - Global and per-repository configuration.
-- Installer, guided setup for every GPU vendor, reproducible model export and
+- Installer, guided setup that lists the hardware first and installs only
+  what each vendor's CPU, GPU and NPU need, reproducible model export and
   release packaging, automatic releases.
 
 ## Next

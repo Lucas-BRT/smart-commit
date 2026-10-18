@@ -73,8 +73,8 @@ enum Command {
         #[command(subcommand)]
         command: Option<bench_cmd::DeviceCommand>,
     },
-    /// Install drivers and models for this machine's NPU and GPUs, then
-    /// benchmark them (asks before anything that needs sudo).
+    /// List this machine's CPU, GPUs and NPU, install only what they need,
+    /// then benchmark them (asks before anything that needs sudo).
     Setup {
         /// Answer yes to every question.
         #[arg(long)]

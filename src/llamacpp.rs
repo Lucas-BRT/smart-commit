@@ -654,7 +654,7 @@ mod tests {
 
     #[test]
     fn setup_script_installs_what_the_code_expects() {
-        let script = include_str!("../scripts/setup-gpu.sh");
+        let script = include_str!("../scripts/setup-llamacpp.sh");
         assert!(script.contains(&format!("\nLLAMA_BUILD={LLAMA_CPP_BUILD}\n")));
         assert!(script.contains(&format!("\nGGUF_NAME={DEFAULT_GGUF}\n")));
     }

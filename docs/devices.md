@@ -75,15 +75,47 @@ model; `smart-commit setup` runs it at the end.
 
 ## Setting up the hardware
 
-`smart-commit setup` finds the NPU and the GPUs and asks before each step
-that needs `sudo`. The steps are scripts that can also run on their own, from
-`~/.local/share/smart-commit/scripts/` (or `scripts/` in a checkout):
+`smart-commit setup` first lists the hardware (the CPU, each GPU with its
+vendor, kernel driver and the devices it gives, and the NPU), then prints a
+plan of what that hardware needs, and only that, then asks before each step
+that needs `sudo`. On a Ryzen 5 5500 with an RTX 3050:
+
+```text
+==> Hardware
+  CPU  AMD Ryzen 5 5500 (x86_64)
+       -> cpu (llama.cpp); openvino-cpu where OpenVINO is installed
+  GPU  GA106 [Geforce RTX 3050] [0000:01:00.0], driver nvidia 595.104.02
+       -> vulkan (the NVIDIA driver's Vulkan ICD)
+  NPU  none
+
+==> Plan
+  llama.cpp and the GGUF model (no sudo): the cpu device, and vulkan on the GPUs
+  NVIDIA GPU (0000:01:00.0, proprietary driver 595.104.02): its own Vulkan ICD
+  not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime, since
+  there is no Intel NPU or GPU here
+```
+
+| Hardware | What the setup installs |
+|---|---|
+| any x86_64 machine | llama.cpp b11381 and the GGUF model, without `sudo`: the `cpu` and `vulkan` devices |
+| Intel GPU | Mesa ANV; Intel's compute runtime and OpenVINO GenAI, for `intel-gpu`; the OpenVINO model |
+| AMD GPU | Mesa RADV |
+| NVIDIA GPU | the proprietary driver's Vulkan ICD if it is missing, or Mesa NVK with nouveau |
+| Intel NPU | the NPU driver, Level Zero and OpenVINO GenAI; the OpenVINO model |
+| AMD NPU (Ryzen AI) | nothing: listed as not supported |
+
+OpenVINO, the NPU driver and Intel's GPU runtime are never installed on a
+machine without an Intel NPU or GPU. The steps are scripts that can also run
+on their own, from `~/.local/share/smart-commit/scripts/` (or `scripts/` in
+a checkout):
 
 | Script | Does | sudo |
 |---|---|---|
+| `hardware.sh` | prints the hardware list above, without changing anything | no |
+| `setup-llamacpp.sh [--dry-run]` | llama.cpp and the GGUF model, both pinned by SHA-256 | no |
+| `setup-gpu.sh [--dry-run] [--yes]` | the system drivers each GPU needs (below) | only for system packages |
 | `setup-npu.sh` | NPU driver 1.38.0, Level Zero 1.32.0 and OpenVINO GenAI 2026.3.1, the combination Intel validated; adds you to the `render` group | yes |
-| `setup-npu.sh --openvino-only` | only OpenVINO, to run on the CPU of a machine without an NPU | yes |
-| `setup-gpu.sh [--dry-run] [--yes]` | what each GPU needs (below), then llama.cpp and the GGUF model | only for system packages |
+| `setup-npu.sh --openvino-only` | only OpenVINO, for an Intel GPU without an NPU, or to compare `openvino-cpu` with `cpu` | yes |
 | `fetch-model.sh` | the OpenVINO model, every file checked against the manifest | no |
 | `check-npu.sh` | checks the NPU stack without changing anything | no |
 
@@ -104,8 +136,7 @@ outside a shell, such as git hooks run by GUI clients.
 | NVIDIA | none | warning: install a driver (`sudo ubuntu-drivers install`) or use nouveau |
 
 Packages already installed are skipped, `--dry-run` only prints the plan,
-and without `apt` the script lists the packages to install and sets up the
-user-space parts (llama.cpp and the GGUF model, both pinned by SHA-256).
+and without `apt` the script lists the packages to install.
 
 Intel's compute runtime must be installed by `dpkg`, which runs `ldconfig`:
 without the `libigc.so.2` links that creates, the runtime fails with a

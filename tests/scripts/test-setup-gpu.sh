@@ -85,18 +85,23 @@ expect intel "Intel GPU (0000:00:02.0, driver i915)"
 expect intel "intel-opencl-icd_26.27.39122.14"
 expect intel "would run: sudo dpkg -i"
 expect intel "would run: sudo apt-get install -y libvulkan1 mesa-vulkan-drivers"
-expect intel "llama-b11381-bin-ubuntu-vulkan-x64.tar.gz"
-expect intel "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"
+expect intel "Intel's compute runtime 26.27.39122.14 for OpenVINO"
+# llama.cpp is setup-llamacpp.sh's job.
+refute intel "llama-b11381"
+refute intel ".gguf"
 
 scenario amd amd
 expect amd "AMD GPU (0000:03:00.0, driver amdgpu): Vulkan (Mesa RADV)"
 expect amd "apt-get install -y libvulkan1 mesa-vulkan-drivers"
 refute amd "intel-opencl-icd"
+refute amd "OpenVINO"
 
 scenario nvidia_proprietary nvidia_proprietary
 expect nvidia_proprietary "proprietary driver 550.144.03"
 expect nvidia_proprietary "apt-get install -y libnvidia-gl-550 libvulkan1"
 refute nvidia_proprietary "mesa-vulkan-drivers"
+refute nvidia_proprietary "OpenVINO"
+refute nvidia_proprietary "intel-opencl-icd"
 
 scenario nvidia_with_icd nvidia_with_icd
 expect nvidia_with_icd "the NVIDIA Vulkan ICD is installed"
@@ -126,10 +131,9 @@ amd "$work/already"
 SMART_COMMIT_SYSFS=$work/already SMART_COMMIT_VULKAN_ICD_DIRS=$work/icd-already SMART_COMMIT_DPKG_QUERY=$fake_dpkg \
     XDG_DATA_HOME=$work/data-already bash "$SCRIPT" --dry-run >"$work/already.out" 2>&1
 refute already "apt-get install"
-expect already "llama-b11381-bin-ubuntu-vulkan-x64.tar.gz"
 
 scenario nothing nothing
-expect nothing "No GPU found"
+expect nothing "No GPU found: nothing to install here"
 refute nothing "would run"
 
 if [ "$failures" -gt 0 ]; then

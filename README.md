@@ -24,8 +24,10 @@ feat(diff): share the token budget between files by priority
   the ticket format from the history.
 - **Runs on the hardware you have.** OpenVINO drives Intel NPUs and Intel
   GPUs; llama.cpp drives AMD and NVIDIA GPUs through Vulkan, with proprietary
-  or open-source drivers, and the CPU of any x86_64 machine. It benchmarks
-  the machine and picks the fastest device.
+  or open-source drivers, and the CPU of any x86_64 machine. The setup lists
+  the hardware first and installs only what it needs (no OpenVINO without an
+  Intel NPU or GPU), then benchmarks the machine and picks the fastest
+  device.
 - **Works with any git client.** A `prepare-commit-msg` hook fills in the
   message of every `git commit`, from the terminal, an editor or a GUI, and
   never blocks a commit.
@@ -41,8 +43,9 @@ curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install
 ```
 
 This installs smart-commit in `~/.local` without `sudo`, then runs the
-guided setup. The setup asks before installing drivers, downloads the models
-and ends with a benchmark that shows which device will be used:
+guided setup. The setup lists the machine's CPU, GPUs and NPU, plans what
+they need, asks before installing drivers, downloads the models and ends
+with a benchmark that shows which device will be used:
 
 ```text
   device       per message     load  generate     CPU

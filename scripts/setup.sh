@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
-# Guided setup, run by install.sh and `smart-commit setup`: finds the NPU and
-# GPUs of this machine, offers to install what each needs, fetches the
-# models, and benchmarks the devices so `model.device = auto` uses the
-# fastest one.
+# Guided setup, run by install.sh and `smart-commit setup`. It lists the
+# hardware of this machine first (CPU, GPUs, NPU, with vendor and driver),
+# then plans what that hardware needs and only that, asks before each step
+# that uses sudo, and benchmarks the devices so `model.device = auto` uses
+# the fastest one:
+#
+#   always              llama.cpp + the GGUF model, no sudo: the cpu device
+#                       (any x86_64) and the vulkan device (any GPU)
+#   per GPU             its Vulkan driver (setup-gpu.sh); Intel GPUs also
+#                       Intel's compute runtime, for intel-gpu
+#   Intel NPU           the NPU driver and Level Zero (setup-npu.sh)
+#   Intel NPU or GPU    OpenVINO GenAI and the OpenVINO model; nothing else
+#                       needs OpenVINO
 #
 #   setup.sh [--yes] [--no-drivers] [--no-bench]
 #
@@ -11,12 +20,14 @@
 #   --no-bench    skip the benchmark
 #
 # Every step is optional and can be run again later on its own:
-# setup-npu.sh, setup-gpu.sh, fetch-model.sh and `smart-commit bench`.
-# SMART_COMMIT_BIN names the smart-commit binary to benchmark.
+# hardware.sh, setup-llamacpp.sh, setup-gpu.sh, setup-npu.sh, fetch-model.sh
+# and `smart-commit bench`. SMART_COMMIT_BIN names the smart-commit binary
+# to benchmark; hardware.sh lists the variables tests use.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-SYSFS=${SMART_COMMIT_SYSFS:-/sys}
+# shellcheck source=/dev/null  # hardware.sh, next to this script
+. "$HERE/hardware.sh"
 ASSUME_YES=0
 DRIVERS=1
 BENCH=1
@@ -61,39 +72,46 @@ ask() {
     case $answer in y | Y | yes | s | S | sim) return 0 ;; *) return 1 ;; esac
 }
 
-has_npu() { [ -e /dev/accel/accel0 ] || [ -d "$SYSFS/module/intel_vpu" ]; }
-
-gpu_count() {
-    local dev count=0
-    for dev in "$SYSFS"/bus/pci/devices/*; do
-        [ -r "$dev/class" ] || continue
-        case $(cat "$dev/class") in 0x03*) count=$((count + 1)) ;; esac
-    done
-    echo "$count"
-}
-
-openvino_installed() { [ -e /opt/intel/openvino/runtime/lib/intel64/libopenvino_genai_c.so ]; }
-
 say "Hardware"
-if has_npu; then echo "  NPU: Intel NPU found"; else echo "  NPU: none"; fi
-echo "  GPUs: $(gpu_count)"
+print_inventory
+
+# The plan, from the hardware alone: what each part needs, and why.
+say "Plan"
+echo "  llama.cpp and the GGUF model (no sudo): the cpu device, and vulkan on the GPUs"
+if [ "$(gpu_count)" -gt 0 ]; then
+    "$HERE/setup-gpu.sh" --dry-run | grep '^==>' | sed 's/^==> /  /' || true
+fi
+if has_intel_npu; then
+    echo "  Intel NPU: the NPU driver 1.38.0 and Level Zero 1.32.0 (sudo)"
+fi
+if needs_openvino; then
+    echo "  OpenVINO GenAI 2026.3.1 (sudo) and the OpenVINO model, for the Intel NPU or GPU"
+    echo "  (it also gives openvino-cpu)"
+elif openvino_installed; then
+    echo "  the OpenVINO model, for openvino-cpu (OpenVINO is already installed)"
+else
+    echo "  not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime, since"
+    echo "  there is no Intel NPU or GPU here"
+fi
+
+say "llama.cpp"
+"$HERE/setup-llamacpp.sh" || echo "  Could not install llama.cpp; run $HERE/setup-llamacpp.sh again."
 
 if [ "$DRIVERS" = 1 ]; then
-    if has_npu; then
+    if has_intel_npu; then
         if "$HERE/check-npu.sh" >/dev/null 2>&1; then
-            say "NPU: driver and OpenVINO already set up"
-        elif ask "Install the NPU driver and OpenVINO (uses sudo)?"; then
+            say "Intel NPU: driver and OpenVINO already set up"
+        elif ask "Install the Intel NPU driver and OpenVINO (uses sudo)?"; then
             "$HERE/setup-npu.sh"
         fi
-    elif ! openvino_installed; then
-        if ask "Install OpenVINO, to run on the CPU (uses sudo)?"; then
+    elif has_intel_gpu && ! openvino_installed; then
+        if ask "Install OpenVINO, for the Intel GPU (uses sudo)?"; then
             "$HERE/setup-npu.sh" --openvino-only
         fi
     fi
     if [ "$(gpu_count)" -gt 0 ]; then
-        say "GPUs"
-        "$HERE/setup-gpu.sh" --dry-run | grep '^==>' | sed 's/^==> /  /' || true
-        if ask "Set up the GPUs as above (may use sudo)?"; then
+        say "GPU drivers"
+        if ask "Set up the GPUs as planned above (may use sudo)?"; then
             yes_flag=()
             [ "$ASSUME_YES" = 1 ] && yes_flag=(--yes)
             "$HERE/setup-gpu.sh" "${yes_flag[@]}"
@@ -101,10 +119,12 @@ if [ "$DRIVERS" = 1 ]; then
     fi
 fi
 
-say "Models"
-if ! "$HERE/fetch-model.sh"; then
-    echo "  Could not download the OpenVINO model; export it locally with"
-    echo "  $HERE/export-model.sh (needs uv and about 10 GB of disk)."
+if needs_openvino || openvino_installed; then
+    say "OpenVINO model"
+    if ! "$HERE/fetch-model.sh"; then
+        echo "  Could not download the OpenVINO model; export it locally with"
+        echo "  $HERE/export-model.sh (needs uv and about 10 GB of disk)."
+    fi
 fi
 
 if [ "$BENCH" = 1 ]; then
@@ -122,4 +142,4 @@ say "Done"
 echo "  Generate a message:   git add -p && smart-commit"
 echo "  Commit with it:       smart-commit --commit"
 echo "  On every git commit:  smart-commit hook install"
-echo "  Change the device:    smart-commit device use <npu|gpu|cpu|vulkan|auto>"
+echo "  Change the device:    smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu|auto>"

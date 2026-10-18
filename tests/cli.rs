@@ -450,22 +450,38 @@ fn flags_override_the_environment() {
 fn setup_runs_the_guided_setup_next_to_the_binary() {
     let dir = tempfile::TempDir::new().unwrap();
     let data = tempfile::TempDir::new().unwrap();
-    // No drivers, no benchmark, and a release that does not exist: the model
-    // download fails gracefully and nothing touches the network.
+    // An empty machine (no GPU, no NPU), no drivers, no benchmark, and
+    // downloads that do not exist: llama.cpp fails gracefully and nothing
+    // touches the network or depends on this machine's hardware.
+    let sysfs = tempfile::TempDir::new().unwrap();
+    let cpuinfo = sysfs.path().join("cpuinfo");
+    std::fs::write(
+        &cpuinfo,
+        "vendor_id\t: AuthenticAMD\nmodel name\t: Test CPU\n",
+    )
+    .unwrap();
     let output = smart_commit_with(
         &["setup", "--no-drivers", "--no-bench"],
         dir.path(),
         &[
+            ("SMART_COMMIT_SYSFS", sysfs.path().to_str().unwrap()),
+            ("SMART_COMMIT_CPUINFO", cpuinfo.to_str().unwrap()),
+            ("SMART_COMMIT_OPENVINO_DIR", "/nonexistent/openvino"),
+            (
+                "SMART_COMMIT_LLAMACPP_URL",
+                "file:///nonexistent/llama.tar.gz",
+            ),
+            ("SMART_COMMIT_GGUF_URL", "file:///nonexistent/model.gguf"),
             ("SMART_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
             ("XDG_DATA_HOME", data.path().to_str().unwrap()),
         ],
     );
     assert!(output.status.success(), "{}", stderr(&output));
     let out = stdout(&output);
-    assert!(out.contains("==> Hardware"), "{out}");
-    assert!(
-        out.contains("Could not download the OpenVINO model"),
-        "{out}"
-    );
+    assert!(out.contains("==> Hardware\n  CPU  Test CPU"), "{out}");
+    assert!(out.contains("  GPU  none\n"), "{out}");
+    assert!(out.contains("not needed: OpenVINO"), "{out}");
+    assert!(out.contains("Could not install llama.cpp"), "{out}");
+    assert!(!out.contains("OpenVINO model"), "{out}");
     assert!(out.contains("smart-commit hook install"), "{out}");
 }
