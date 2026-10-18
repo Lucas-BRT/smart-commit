@@ -1,0 +1,20 @@
+---
+source: src/tui/review.rs
+expression: "draw(72, 16, |f| review().render(f))"
+---
+┌ Commit message ──────────────────────────────────────────────────────┐
+│feat(retry): add a retry loop                                         │
+│                                                                      │
+│Retries failed requests three times.                                  │
+│                                                                      │
+│                                                                      │
+│                                                                      │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+ qwen2.5-coder-1.5b on cpu · 1.6 s · from the model
+┌ Staged: 2 files ─────────────────────────────────────────────────────┐
+│ M src/retry.rs                                                       │
+│ R src/http.rs -> src/net.rs                                          │
+└──────────────────────────────────────────────────────────────────────┘
+
+[Enter] commit  [e] edit, then commit  [a] another message  [q] cancel

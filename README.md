@@ -66,7 +66,7 @@ installer's options and for building from source.
 | Command | Does |
 |---|---|
 | `smart-commit` | print a message for what is staged |
-| `smart-commit --commit` | open the editor with the message, then commit |
+| `smart-commit --commit` | review the message (commit, edit, ask for another), then commit |
 | `smart-commit hook install` | fill in the message of every `git commit` in this repository |
 | `smart-commit device` / `device use <device>` | show or change the device |
 | `smart-commit bench` | measure this machine's devices |

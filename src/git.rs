@@ -142,6 +142,19 @@ impl Repo {
     ///
     /// Git's own terminal handling applies: hooks run, an empty message
     /// aborts, and the editor gets the terminal.
+    /// Commits what is staged with `message`, as `git commit --message`:
+    /// hooks run, and git's output reaches the terminal.
+    pub fn commit(&self, message: &str) -> Result<(), GitError> {
+        let status = self.command(&["commit", "--message", message]).status()?;
+        if !status.success() {
+            return Err(GitError::Exited {
+                args: "commit --message".to_owned(),
+                status,
+            });
+        }
+        Ok(())
+    }
+
     pub fn commit_in_editor(&self, message: &str) -> Result<(), GitError> {
         let status = self
             .command(&["commit", "--edit", "--message", message])

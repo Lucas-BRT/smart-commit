@@ -44,13 +44,32 @@ pub fn generate(
     options: &PromptOptions,
     config: &GenerationConfig,
 ) -> Result<Generation, BackendError> {
+    generate_avoiding(ctx, files, backend, options, config, &[])
+}
+
+/// Like [`generate`], asking for a message other than those in `avoid`
+/// (messages the user turned down). Decoding is greedy, so only a different
+/// prompt can give a different message; this one depends on `avoid` alone.
+pub fn generate_avoiding(
+    ctx: &RepoContext,
+    files: &[FileDiff],
+    backend: &dyn Backend,
+    options: &PromptOptions,
+    config: &GenerationConfig,
+    avoid: &[String],
+) -> Result<Generation, BackendError> {
     let (convention, language) = prompt::effective_style(&ctx.style, options);
+    let avoid = avoid_note(avoid);
     let mut attempts: Vec<Attempt> = Vec::new();
     while attempts.len() < MAX_ATTEMPTS {
-        let note = attempts
+        let retry = attempts
             .last()
             .and_then(|a| a.rejected.as_ref())
             .map(|error| retry_note(error, convention));
+        let note = match (&avoid, retry) {
+            (Some(avoid), Some(retry)) => Some(format!("{avoid}\n{retry}")),
+            (avoid, retry) => retry.or_else(|| avoid.clone()),
+        };
         let prompt = prompt::build_with_note(ctx, files, options, note.as_deref());
         let raw = backend.generate(&prompt, config)?;
         match message::sanitize(&raw, convention) {
@@ -78,6 +97,36 @@ pub fn generate(
         source: Source::Fallback,
         attempts,
     })
+}
+
+/// Asks for a message other than the subjects of `messages`.
+pub fn avoid_note(messages: &[String]) -> Option<String> {
+    if messages.is_empty() {
+        return None;
+    }
+    let subjects: Vec<String> = messages
+        .iter()
+        .map(|m| {
+            let subject: String = m
+                .lines()
+                .next()
+                .unwrap_or_default()
+                .chars()
+                .take(message::SUBJECT_MAX)
+                .collect();
+            format!("\"{subject}\"")
+        })
+        .collect();
+    Some(format!(
+        "The user turned down {}: {}. Write a different message that describes \
+         the change better.",
+        if messages.len() == 1 {
+            "this message"
+        } else {
+            "these messages"
+        },
+        subjects.join("; ")
+    ))
 }
 
 /// Tells the model why its previous reply was rejected.
@@ -225,6 +274,64 @@ mod tests {
             &GenerationConfig::default(),
         );
         assert_eq!(result, Err(BackendError::Generation("device lost".into())));
+    }
+
+    #[test]
+    fn another_message_is_asked_for_deterministically() {
+        assert_eq!(avoid_note(&[]), None);
+        assert_eq!(
+            avoid_note(&["feat: add a\n\nbody".to_owned()]).unwrap(),
+            "The user turned down this message: \"feat: add a\". Write a different \
+             message that describes the change better."
+        );
+        let two = avoid_note(&["feat: a".to_owned(), "fix: b".to_owned()]).unwrap();
+        assert!(two.starts_with("The user turned down these messages: \"feat: a\"; \"fix: b\"."));
+
+        let ctx = context(&["feat: add login"]);
+        let files = files();
+        let backend = MockBackend::new(["feat: add retry"]);
+        let avoid = vec!["feat: add loop".to_owned()];
+        let generation = generate_avoiding(
+            &ctx,
+            &files,
+            &backend,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.message.subject, "feat: add retry");
+        let user = &generation.attempts[0].prompt.user;
+        assert!(user.contains(&avoid_note(&avoid).unwrap()), "{user}");
+        let again = generate_avoiding(
+            &ctx,
+            &files,
+            &MockBackend::new(["feat: add retry"]),
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(again.attempts[0].prompt, generation.attempts[0].prompt);
+    }
+
+    #[test]
+    fn a_retry_keeps_asking_for_another_message() {
+        let ctx = context(&["feat: add login", "fix: typo"]);
+        let backend = MockBackend::new(["", "feat: add retry"]);
+        let avoid = vec!["feat: add loop".to_owned()];
+        let generation = generate_avoiding(
+            &ctx,
+            &files(),
+            &backend,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        let user = &generation.attempts[1].prompt.user;
+        assert!(user.contains("The user turned down this message"), "{user}");
+        assert!(user.contains("Your previous reply was rejected"), "{user}");
     }
 
     #[test]

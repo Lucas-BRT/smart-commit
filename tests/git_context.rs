@@ -308,3 +308,22 @@ fn history_depth_limits_the_subjects() {
     );
     assert_eq!(ctx.style.sample_size, 2);
 }
+
+#[test]
+fn commits_what_is_staged_with_a_message() {
+    let repo = TestRepo::new();
+    repo.commit("feat: start");
+    repo.write("b.rs", "fn b() {}\n");
+    repo.git(&["add", "b.rs"]);
+    repo.repo().commit("feat: add b\n\nWith a body.").unwrap();
+    assert_eq!(
+        repo.git_output(&["log", "-1", "--format=%B"]).trim_end(),
+        "feat: add b\n\nWith a body."
+    );
+    assert_eq!(repo.git_output(&["status", "--porcelain"]), "");
+    // Nothing staged: git refuses, and so does commit.
+    assert!(matches!(
+        repo.repo().commit("feat: nothing"),
+        Err(GitError::Exited { .. })
+    ));
+}

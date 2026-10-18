@@ -1,22 +1,27 @@
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::time::Instant;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use smart_commit::backend::{Backend, BackendError, MockBackend};
-use smart_commit::config::{self, BackendKind, DeviceSetting, Resolved, Settings, Sources};
+use smart_commit::backend::{Backend, BackendError, GenerationConfig, MockBackend};
+use smart_commit::config::{
+    self, BackendKind, DeviceSetting, Origin, Resolved, Settings, Sources, Value,
+};
 use smart_commit::context::RepoContext;
 use smart_commit::device::{self, Target};
-use smart_commit::diff;
+use smart_commit::diff::{self, FileDiff};
 use smart_commit::genai::{Device, GenaiBackend};
-use smart_commit::generate::{self, Source};
+use smart_commit::generate::{self, Generation, Source};
 use smart_commit::git::Repo;
 use smart_commit::hook;
 use smart_commit::llamacpp::LlamaCppBackend;
 use smart_commit::message::CommitMessage;
 use smart_commit::paths;
-use smart_commit::prompt;
+use smart_commit::prompt::{self, PromptOptions};
 use smart_commit::trace::Trace;
+use smart_commit::tui::review::{self, Review};
+use smart_commit::tui::{self, Screen};
 
 mod bench_cmd;
 mod config_cmd;
@@ -129,7 +134,8 @@ struct GenerateArgs {
     /// Repository to work on.
     #[arg(short = 'C', long = "path", default_value = ".")]
     path: PathBuf,
-    /// Open the editor with the message, then commit.
+    /// Review the message (commit, edit, ask for another), then commit; outside
+    /// a terminal, open the editor with it.
     #[arg(long)]
     commit: bool,
     #[command(flatten)]
@@ -340,6 +346,9 @@ fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
 
 fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
     let repo = Repo::discover(&args.path)?;
+    if args.commit && tui::interactive() {
+        return review_and_commit(&repo, &args.backend);
+    }
     let message = generate_message(&repo, &args.backend)?.to_string();
     if args.commit {
         repo.commit_in_editor(&message)?;
@@ -349,8 +358,129 @@ fn run_generate(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// `--commit` in a terminal: shows the message, then commits it, opens the
+/// editor, asks the model for another one or gives up.
+fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Error>> {
+    let started = Instant::now();
+    let session = Session::start(repo, args)?;
+    let generation = session.generate(&[])?;
+    let mut review = Review::new(
+        &generation,
+        session.running.clone(),
+        started.elapsed().as_secs_f32(),
+        &session.context.staged,
+    );
+    let mut screen = Screen::new()?;
+    let action = loop {
+        screen.draw(|frame| review.render(frame))?;
+        match review.on_key(screen.key()?) {
+            review::Action::None => {}
+            review::Action::Another => {
+                review.working();
+                screen.draw(|frame| review.render(frame))?;
+                let started = Instant::now();
+                let generation = session.generate(&review.turned_down)?;
+                review.replace(&generation, started.elapsed().as_secs_f32());
+            }
+            action => break action,
+        }
+    };
+    drop(screen);
+    let message = review.message.to_string();
+    match action {
+        review::Action::Commit => repo.commit(&message)?,
+        review::Action::Edit => repo.commit_in_editor(&message)?,
+        _ => eprintln!("Cancelled: nothing was committed."),
+    }
+    Ok(())
+}
+
+/// A loaded model and what a message is made from, kept to ask again.
+struct Session {
+    context: RepoContext,
+    files: Vec<FileDiff>,
+    backend: Box<dyn Backend>,
+    options: PromptOptions,
+    config: GenerationConfig,
+    /// The model and the device, for people: `qwen2.5-coder-1.5b on cpu`.
+    running: String,
+    trace: Option<PathBuf>,
+}
+
+impl Session {
+    fn start(repo: &Repo, args: &BackendArgs) -> Result<Self, Box<dyn Error>> {
+        let resolved = resolve(Some(repo), args.flags()?)?;
+        warn_renamed(&resolved);
+        let settings = resolved.settings();
+        let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
+        let files = staged_files(repo)?;
+        let (backend, running): (Box<dyn Backend>, String) = match settings.backend {
+            BackendKind::Mock => (
+                Box::new(MockBackend::new(args.mock_responses.clone())),
+                "the mock backend".to_owned(),
+            ),
+            _ => {
+                let (backend, target) = load_model(&settings)?;
+                (
+                    backend,
+                    format!("{} on {target}", model_label(&resolved, target)),
+                )
+            }
+        };
+        Ok(Self {
+            context,
+            files,
+            backend,
+            options: settings.prompt_options(),
+            config: settings.generation_config(),
+            running,
+            trace: args.trace.clone(),
+        })
+    }
+
+    /// A message other than those in `avoid`, writing the trace if asked.
+    fn generate(&self, avoid: &[String]) -> Result<Generation, Box<dyn Error>> {
+        let generation = generate::generate_avoiding(
+            &self.context,
+            &self.files,
+            self.backend.as_ref(),
+            &self.options,
+            &self.config,
+            avoid,
+        )?;
+        if let Some(path) = &self.trace {
+            let trace = Trace::new(
+                &self.context,
+                &self.files,
+                self.backend.as_ref(),
+                &self.options,
+                &self.config,
+                &generation,
+            );
+            std::fs::write(path, trace.to_json())
+                .map_err(|err| format!("cannot write {}: {err}", path.display()))?;
+        }
+        Ok(generation)
+    }
+}
+
+/// The model's id, or the file's name when model.gguf or model.dir (for
+/// `target`) points elsewhere.
+fn model_label(resolved: &Resolved, target: Target) -> String {
+    let key = match target.backend() {
+        BackendKind::LlamaCpp => "model.gguf",
+        _ => "model.dir",
+    };
+    match resolved.get(key) {
+        Some((Value::Text(path), origin)) if *origin != Origin::Default => Path::new(path)
+            .file_name()
+            .map_or_else(|| path.clone(), |n| n.to_string_lossy().into_owned()),
+        _ => resolved.settings().model.id.to_owned(),
+    }
+}
+
 /// Loads the model on the configured device, or picks one for `auto`.
-fn load_model(settings: &Settings) -> Result<Box<dyn Backend>, Box<dyn Error>> {
+fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target), Box<dyn Error>> {
     let candidates = device::candidates(settings.backend, settings.device, &preferred_devices())?;
     let selection = device::load_first(&candidates, |target| load_on(settings, target))?;
     if settings.device == DeviceSetting::Auto && !selection.skipped.is_empty() {
@@ -361,7 +491,7 @@ fn load_model(settings: &Settings) -> Result<Box<dyn Backend>, Box<dyn Error>> {
             skipped.join(", ")
         );
     }
-    Ok(selection.backend)
+    Ok((selection.backend, selection.target))
 }
 
 /// Loads on `target`; on llama.cpp devices, with fast load as
@@ -423,30 +553,7 @@ fn preferred_devices() -> Vec<Target> {
 /// Generates a message for what is staged in `repo`, writing the trace if
 /// asked and warning when the fallback had to be used.
 fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Box<dyn Error>> {
-    let resolved = resolve(Some(repo), args.flags()?)?;
-    warn_renamed(&resolved);
-    let settings = resolved.settings();
-    let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
-    let files = staged_files(repo)?;
-    let backend: Box<dyn Backend> = match settings.backend {
-        BackendKind::Mock => Box::new(MockBackend::new(args.mock_responses.clone())),
-        _ => load_model(&settings)?,
-    };
-    let options = settings.prompt_options();
-    let config = settings.generation_config();
-    let generation = generate::generate(&context, &files, backend.as_ref(), &options, &config)?;
-    if let Some(path) = &args.trace {
-        let trace = Trace::new(
-            &context,
-            &files,
-            backend.as_ref(),
-            &options,
-            &config,
-            &generation,
-        );
-        std::fs::write(path, trace.to_json())
-            .map_err(|err| format!("cannot write {}: {err}", path.display()))?;
-    }
+    let generation = Session::start(repo, args)?.generate(&[])?;
     if generation.source == Source::Fallback {
         eprintln!(
             "warning: the model's output was unusable after {} attempts; \
@@ -467,7 +574,7 @@ fn run_replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Erro
             // The prompt options come from the trace; only where the model
             // runs comes from the settings (no repository: it may be gone).
             let settings = resolve(None, model.flags()?)?.settings();
-            let backend = load_model(&settings)?;
+            let (backend, _) = load_model(&settings)?;
             if backend.describe() != trace.backend {
                 eprintln!(
                     "note: recorded with `{}`, replaying with `{}`",

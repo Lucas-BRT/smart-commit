@@ -52,9 +52,33 @@ target/release/smart-commit setup
 ```bash
 git add -p                     # choose what goes into the commit
 smart-commit                   # print the suggested message
-smart-commit --commit          # open the editor with it, then commit
+smart-commit --commit          # review it, then commit
 smart-commit -C ../other-repo  # work on another repository
 ```
+
+In a terminal, `--commit` shows the message, the model and device that
+wrote it, how long it took and the staged files:
+
+```text
+┌ Commit message ─────────────────────────────────────────────────┐
+│feat(retry): add a retry loop                                    │
+│                                                                 │
+│Retries failed requests three times.                             │
+└─────────────────────────────────────────────────────────────────┘
+ qwen2.5-coder-1.5b on cpu · 1.6 s · from the model
+┌ Staged: 2 files ────────────────────────────────────────────────┐
+│ M src/retry.rs                                                  │
+│ R src/http.rs -> src/net.rs                                     │
+└─────────────────────────────────────────────────────────────────┘
+[Enter] commit  [e] edit, then commit  [a] another message  [q] cancel
+```
+
+**Another message** asks the model again with the messages turned down
+in the prompt: decoding is greedy, so only a different prompt gives a
+different message, and the same choices always give the same messages.
+The model stays loaded, so each new message costs only the generation.
+Outside a terminal (scripts, pipes), `--commit` opens the editor with the
+message, as before.
 
 The message follows the repository's style: its convention (Conventional
 Commits, gitmoji or free), its language (English or Portuguese), the scopes

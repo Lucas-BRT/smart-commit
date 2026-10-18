@@ -28,6 +28,7 @@ Everything except the model is deterministic and tested without hardware.
 | `device` | candidate devices and loading the first that works |
 | `bench` | measures every device on the embedded fixture prompts |
 | `models` | the recommended models, pinned on Hugging Face, and installing them |
+| `tui` | the full-screen screens (ratatui), shown only when stdin and stdout are terminals |
 | `config` | settings from flags, environment, repository and global files |
 | `trace` | records and replays generations |
 | `hook` | the `prepare-commit-msg` script and how it fills the message file |

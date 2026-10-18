@@ -18,3 +18,4 @@ pub mod paths;
 pub mod prompt;
 pub mod style;
 pub mod trace;
+pub mod tui;
