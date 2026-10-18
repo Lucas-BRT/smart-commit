@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::context::RepoContext;
 use crate::diff::{self, CompactDiff, FileDiff};
-use crate::style::{Convention, Language, Style, TicketStyle};
+use crate::style::{self, Convention, Language, Style, TicketStyle};
 
 /// The NPU pipeline's default `MAX_PROMPT_LEN`.
 pub const DEFAULT_MAX_PROMPT_TOKENS: usize = 1024;
@@ -30,6 +30,13 @@ pub struct PromptOptions {
     /// Used when the history is too short or mixed to tell.
     pub default_convention: Convention,
     pub default_language: Language,
+    /// Forces a convention instead of the detected one. Left out of traces
+    /// when unset, so older traces still read the same.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub convention: Option<Convention>,
+    /// Forces a language instead of the detected one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<Language>,
 }
 
 impl Default for PromptOptions {
@@ -38,21 +45,37 @@ impl Default for PromptOptions {
             max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
             default_convention: Convention::Conventional,
             default_language: Language::English,
+            convention: None,
+            language: None,
         }
     }
 }
 
-/// The convention and language the message must follow, after defaults.
+/// The convention and language the message must follow: forced ones
+/// first, then the detected ones, then the defaults.
 pub fn effective_style(style: &Style, options: &PromptOptions) -> (Convention, Language) {
-    let convention = match style.convention {
+    let convention = options.convention.unwrap_or(match style.convention {
         Convention::Unknown => options.default_convention,
         known => known,
-    };
-    let language = match style.language {
+    });
+    let language = options.language.unwrap_or(match style.language {
         Language::Unknown => options.default_language,
         known => known,
-    };
+    });
     (convention, language)
+}
+
+/// Examples that follow `convention`: when it is forced, history written
+/// in another style would contradict the rules.
+fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &String> {
+    style
+        .examples
+        .iter()
+        .filter(move |example| match convention {
+            Convention::Conventional => style::parse_conventional(example).is_some(),
+            Convention::Gitmoji => style::is_gitmoji(example),
+            Convention::Free | Convention::Unknown => true,
+        })
 }
 
 pub fn build(ctx: &RepoContext, files: &[FileDiff], options: &PromptOptions) -> Prompt {
@@ -134,9 +157,10 @@ fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
     }
     rule("Add a body only if the reason for the change is not obvious.");
 
-    if !style.examples.is_empty() {
+    let mut examples = examples_for(style, convention).peekable();
+    if examples.peek().is_some() {
         text.push_str("\nRecent subjects from this repository, follow their style:\n");
-        for example in &style.examples {
+        for example in examples {
             let _ = writeln!(text, "{example}");
         }
     }
@@ -251,6 +275,55 @@ mod tests {
         let mentioned = context(&["add login (ABC-1)", "fix crash, ABC-2"], Some("ABC-3"));
         let prompt = build(&mentioned, &files(), &PromptOptions::default());
         assert!(prompt.system.contains("Mention ABC-3 in the subject."));
+    }
+
+    #[test]
+    fn forced_style_overrides_the_detected_one() {
+        let options = PromptOptions {
+            convention: Some(Convention::Conventional),
+            language: Some(Language::Portuguese),
+            ..PromptOptions::default()
+        };
+        let english_free = style::detect(&["Add the parser", "Fix the crash"]);
+        assert_eq!(
+            effective_style(&english_free, &options),
+            (Convention::Conventional, Language::Portuguese)
+        );
+    }
+
+    #[test]
+    fn forced_convention_drops_examples_that_contradict_it() {
+        let ctx = context(
+            &["feat: add the parser", "Fix the crash on empty input"],
+            None,
+        );
+        let forced = PromptOptions {
+            convention: Some(Convention::Conventional),
+            ..PromptOptions::default()
+        };
+        let prompt = build(&ctx, &files(), &forced);
+        assert!(prompt.system.contains("Use Conventional Commits"));
+        assert!(prompt.system.contains("feat: add the parser"));
+        assert!(!prompt.system.contains("Fix the crash on empty input"));
+
+        // Gitmoji forced on a history without any: no examples at all.
+        let gitmoji = PromptOptions {
+            convention: Some(Convention::Gitmoji),
+            ..PromptOptions::default()
+        };
+        let prompt = build(&ctx, &files(), &gitmoji);
+        assert!(!prompt.system.contains("Recent subjects"));
+    }
+
+    #[test]
+    fn unset_overrides_are_left_out_of_traces() {
+        let json = serde_json::to_string(&PromptOptions::default()).unwrap();
+        assert!(!json.contains("\"convention\""), "{json}");
+        let old: PromptOptions = serde_json::from_str(
+            r#"{"max_prompt_tokens":1024,"default_convention":"conventional","default_language":"english"}"#,
+        )
+        .unwrap();
+        assert_eq!(old, PromptOptions::default());
     }
 
     #[test]
