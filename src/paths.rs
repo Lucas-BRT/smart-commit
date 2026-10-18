@@ -23,6 +23,11 @@ pub fn default_cache_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf
     Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("npu-commit/openvino"))
 }
 
+/// `$XDG_CONFIG_HOME/npu-commit/config.toml`, the global config.
+pub fn default_config_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_CONFIG_HOME", ".config")?.join("npu-commit/config.toml"))
+}
+
 /// The XDG variable if set to an absolute path (relative ones are invalid
 /// per the spec), else `$HOME/<fallback>`.
 fn xdg(env: &impl Fn(&str) -> Option<String>, var: &str, fallback: &str) -> Option<PathBuf> {
@@ -56,6 +61,10 @@ mod tests {
             default_cache_dir(env(&vars)).unwrap(),
             PathBuf::from("/home/me/.cache/npu-commit/openvino")
         );
+        assert_eq!(
+            default_config_file(env(&vars)).unwrap(),
+            PathBuf::from("/home/me/.config/npu-commit/config.toml")
+        );
     }
 
     #[test]
@@ -64,7 +73,12 @@ mod tests {
             ("HOME", "/home/me"),
             ("XDG_DATA_HOME", "/data"),
             ("XDG_CACHE_HOME", "/cache"),
+            ("XDG_CONFIG_HOME", "/config"),
         ];
+        assert_eq!(
+            default_config_file(env(&vars)).unwrap(),
+            PathBuf::from("/config/npu-commit/config.toml")
+        );
         assert_eq!(
             default_model_dir(env(&vars)).unwrap(),
             PathBuf::from("/data/npu-commit/models").join(DEFAULT_MODEL)
