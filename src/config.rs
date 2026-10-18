@@ -1078,6 +1078,24 @@ mod tests {
     }
 
     #[test]
+    fn every_key_is_documented() {
+        let page = include_str!("../docs/configuration.md");
+        for key in KEYS {
+            assert!(
+                page.contains(&format!("| `{}` |", key.name)),
+                "{} is missing from docs/configuration.md",
+                key.name
+            );
+            if let Some(var) = key.env {
+                assert!(
+                    page.contains(var),
+                    "{var} is missing from docs/configuration.md"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn set_and_unset_keep_comments() {
         let dir = tempfile::TempDir::new().unwrap();
         let path = dir.path().join("sub/config.toml");

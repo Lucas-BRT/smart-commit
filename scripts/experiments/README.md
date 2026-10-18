@@ -1,32 +1,34 @@
-# Experimentos exploratórios (2026-10-18)
+# Exploratory experiments (2026-10-18)
 
-Scripts que geraram as medições de `docs/08-plano-proximas-fases.md`. São
-exploratórios: rodam em Python, fora do `smart-commit`, só para decidir o que
-implementar. Os números oficiais vão sair do `smart-commit bench` (item C do
-plano).
+The scripts behind the device and model measurements in
+[docs/devices.md](../../docs/devices.md) and
+[docs/roadmap.md](../../docs/roadmap.md). They are exploratory: Python,
+outside smart-commit, written to decide what to build. Device comparisons for
+users come from `smart-commit bench`.
 
-Todos usam os prompts das fixtures (`tests/fixtures/traces`), então as
-entradas são as mesmas em qualquer máquina.
+They all run the prompts of the trace fixtures (`tests/fixtures/traces`), so
+the inputs are the same on every machine.
 
-## Ambiente
+## Environment
 
 ```bash
 uv venv --python 3.11.17 /tmp/genai-venv
 uv pip install --python /tmp/genai-venv/bin/python "openvino-genai==2026.3.1.0"
 ```
 
-Para a GPU sem instalar o runtime no sistema: extraia os `.deb` de
-`intel-opencl-icd`, `libigc2`, `libigdfcl2` e `libigdgmm12` (snapshot
-`20260830T100000Z` do PPA `kobuk-team/intel-graphics`) num diretório `ROOT`,
-rode `ldconfig -n ROOT/usr/lib/x86_64-linux-gnu` (sem os links de soname o
-runtime falha com `CL_OUT_OF_HOST_MEMORY`), crie um `vendors/intel.icd`
-apontando para `ROOT/usr/lib/x86_64-linux-gnu/intel-opencl/libigdrcl.so` e
-exporte `OCL_ICD_VENDORS=vendors LD_LIBRARY_PATH=ROOT/usr/lib/x86_64-linux-gnu`.
+To try the Intel GPU without installing its runtime system-wide: extract the
+`.deb` files of `intel-opencl-icd`, `libigc2`, `libigdfcl2` and `libigdgmm12`
+(snapshot `20260830T100000Z` of the `kobuk-team/intel-graphics` PPA) into a
+directory `ROOT`, run `ldconfig -n ROOT/usr/lib/x86_64-linux-gnu` (without
+the soname links the runtime fails with `CL_OUT_OF_HOST_MEMORY`), write a
+`vendors/intel.icd` that points at
+`ROOT/usr/lib/x86_64-linux-gnu/intel-opencl/libigdrcl.so`, and export
+`OCL_ICD_VENDORS=vendors LD_LIBRARY_PATH=ROOT/usr/lib/x86_64-linux-gnu`.
 
 ## Scripts
 
-| Script | Mede |
+| Script | Measures |
 |---|---|
-| `npu_hints.py MODEL FIXTURES CACHE` | NPU: `NPUW_LLM_PREFILL_CHUNK_SIZE` e `GENERATE_HINT`, com cache frio e quente |
-| `gpu_precision.py MODEL FIXTURES CACHE` | GPU: f16 (padrão) contra f32 |
-| `cand_gpu.py MODEL FIXTURES CACHE think\|nothink` | GPU: carga, TTFT, TPOT, memória e respostas de um modelo |
+| `npu_hints.py MODEL FIXTURES CACHE` | NPU: `NPUW_LLM_PREFILL_CHUNK_SIZE` and `GENERATE_HINT`, with cold and warm caches |
+| `gpu_precision.py MODEL FIXTURES CACHE` | GPU: f16 (the default) against f32 |
+| `cand_gpu.py MODEL FIXTURES CACHE think\|nothink` | GPU: load, time to first token, time per token, memory and replies of a model |

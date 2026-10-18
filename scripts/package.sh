@@ -59,7 +59,7 @@ for script in setup.sh setup-npu.sh setup-gpu.sh check-npu.sh fetch-model.sh exp
 done
 install -m 644 scripts/export/requirements.in scripts/export/requirements.lock \
     scripts/export/MANIFEST.sha256 "$stage/share/smart-commit/scripts/export/"
-install -m 644 LICENSE README.md docs/uso.md "$stage/share/doc/smart-commit/"
+install -m 644 LICENSE README.md docs/usage.md "$stage/share/doc/smart-commit/"
 echo "$VERSION" >"$stage/share/smart-commit/VERSION"
 
 mkdir -p "$OUT"

@@ -1,149 +1,146 @@
 # AGENTS.md
 
-Instruções para agentes (e pessoas) que trabalham neste repositório.
+Rules for agents, and people, who change this repository.
 
-## Projeto
+## Project
 
-CLI em Rust que gera mensagens de commit no estilo do repositório usando um
-LLM rodando localmente na NPU Intel. O design e o roadmap estão em
-[`docs/01-design.md`](docs/01-design.md), e cada fase concluída tem seu
-documento em `docs/`.
+smart-commit is a Rust CLI that writes commit messages in a repository's
+style with a small language model running locally, on an Intel NPU, a GPU
+(Intel through OpenVINO, AMD and NVIDIA through llama.cpp with Vulkan) or the
+CPU. [docs/architecture.md](docs/architecture.md) describes how it works.
 
-## Verificação
+## Checks
 
-O CI roda exatamente isto, e tudo precisa passar antes de qualquer commit:
+CI runs all of these on every push, and they must pass before any commit:
 
 ```bash
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked
+shellcheck install.sh scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh
+for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs Docker
 ```
 
-## Testes são obrigatórios
+## Tests come with every change
 
-**Toda implementação deve vir junto com testes, no mesmo commit.** Não existe
-"testes depois".
+**Every change ships with its tests, in the same commit.** There is no
+"tests later".
 
-- **Funcionalidade nova:** testes cobrindo o caso normal e as bordas (entrada
-  vazia, limites, erros).
-- **Correção de bug:** um teste de regressão que falha sem a correção e passa
-  com ela.
-- **Refatoração:** os testes existentes precisam continuar passando sem
-  alteração. Se for preciso mudar um teste, explique o motivo no commit.
+- **New behaviour:** tests for the normal case and the edges (empty input,
+  limits, errors).
+- **Bug fix:** a regression test that fails without the fix.
+- **Refactoring:** the existing tests keep passing unchanged; if one must
+  change, the commit message says why.
 
-Onde cada teste fica:
-
-| Tipo | Local |
+| Kind | Where |
 |---|---|
-| Unitário | `#[cfg(test)] mod tests` no próprio módulo em `src/` |
-| Snapshot de prompt | `insta::assert_snapshot!`, com arquivos em `src/snapshots/`. Atualize com `INSTA_UPDATE=always cargo test` e revise o diff |
-| Integração com git | `tests/git_context.rs`, usando o `TestRepo` de `tests/common/` (repositório temporário isolado da config do desenvolvedor) |
-| CLI de ponta a ponta | `tests/cli.rs`, rodando o binário via `CARGO_BIN_EXE_smart-commit` |
-| Scripts | `tests/scripts/test-*.sh`, contra sysfs, releases e binários falsos (sem rede, sudo ou hardware); `shellcheck` em todos |
-| Hardware (modelo real) | `tests/hardware.rs`, `#[ignore]`: `cargo test --test hardware -- --ignored --test-threads 1` (`SMART_COMMIT_TEST_DEVICE=cpu` sem NPU). Use os prompts das fixtures, nunca entradas ad hoc |
+| Unit | `#[cfg(test)] mod tests` in the module, under `src/` |
+| Prompt snapshots | `insta::assert_snapshot!`, files in `src/snapshots/`; update with `INSTA_UPDATE=always cargo test` and review the diff |
+| Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |
+| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
+| Trace fixtures | `tests/replay_fixtures.rs` |
+| Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |
+| Hardware | `tests/hardware.rs`, ignored by default: `cargo test --test hardware -- --ignored --test-threads 1`, with `SMART_COMMIT_TEST_DEVICE=npu\|gpu\|cpu\|vulkan`; use the fixture prompts, never ad hoc inputs |
 
-`cargo test` nunca pode depender da NPU, de rede ou da config git de quem
-roda os testes.
+`cargo test` never depends on an NPU or GPU, the network, the clock,
+randomness, or the machine's git config, smart-commit config, models and
+`SMART_COMMIT_*` variables: run commands through `tests/common::isolate`.
+Nothing that reaches the output may depend on `HashMap` iteration order.
 
-## Reprodutibilidade
+## Reproducibility
 
-Qualquer resultado (build, teste ou mensagem gerada) precisa poder ser
-reproduzido por outra pessoa, em outra máquina.
+Any result (a build, a test, a generated message) must be reproducible by
+someone else on another machine. [docs/reproducibility.md](docs/reproducibility.md)
+describes what is pinned and how it is checked.
 
-- **Build:** o toolchain fica fixado em `rust-toolchain.toml`, o
-  `Cargo.lock` é versionado e o CI usa `--locked`. Não atualize dependências
-  junto com outras mudanças; isso tem um commit próprio.
-- **Testes determinísticos:** sem rede, sem NPU, sem relógio, sem
-  aleatoriedade, sem a config git de quem roda e sem a config, os modelos e
-  as variáveis `SMART_COMMIT_*` da máquina (veja `tests/common::isolate`). Nada que
-  vá para a saída pode depender da ordem de iteração de um `HashMap`.
-- **Geração determinística:** decodificação gulosa e parâmetros de geração
-  explícitos (`GenerationConfig`), nunca padrões implícitos da biblioteca. Se
-  algo precisar de aleatoriedade, a semente também é explícita. Uma nova
-  tentativa precisa mudar o prompt de forma determinística, e não depender de
-  sorte.
-- **Dados de entrada versionados:** fixtures de teste ficam em
-  `tests/fixtures/` ou inline no teste, nunca em caminhos da máquina de quem
-  escreveu.
-- **Gerações gravadas:** `smart-commit --trace FILE` grava uma geração e
-  `smart-commit replay FILE` a refaz. Um caso ruim encontrado no uso real vira
-  fixture em `tests/fixtures/traces/`, que o `tests/replay_fixtures.rs`
-  reproduz. Mudanças que alteram o pipeline de propósito regeneram as
-  fixtures com `tests/fixtures/make-traces.sh`, no mesmo commit, e o diff das
-  fixtures é revisado. Fixtures nunca são editadas à mão.
+- **Builds:** the toolchain is pinned in `rust-toolchain.toml`, `Cargo.lock`
+  is versioned, CI uses `--locked`, and releases are built in the pinned
+  container of `scripts/build/Dockerfile`. Dependency updates get commits of
+  their own.
+- **Generation:** greedy decoding with explicit parameters
+  (`GenerationConfig` and what each backend sends), never library defaults.
+  A retry must change the prompt deterministically.
+- **Pinned downloads:** drivers, runtimes, llama.cpp and models are pinned by
+  version and SHA-256 in the scripts; change the version and the hash
+  together.
+- **Inputs are versioned:** fixtures live in `tests/fixtures/` or inline in
+  tests, never at paths of the author's machine.
+- **Traces:** a bad message found in real use becomes a fixture in
+  `tests/fixtures/traces/`. Changes that alter the pipeline on purpose
+  regenerate the fixtures with `tests/fixtures/make-traces.sh` in the same
+  commit, and their diff is reviewed. Fixtures are never edited by hand.
+- **Model export:** a change to the export (revision, flags, lock) needs two
+  identical exports from scratch, the new `scripts/export/MANIFEST.sha256`
+  committed with it, and the **Model** workflow run, which checks the export
+  on another machine and publishes it for `fetch-model.sh`.
 
 ## Commits
 
-### Um commit por objetivo
+### One purpose per commit
 
-Cada commit tem um objetivo só (uma funcionalidade, uma correção, uma
-refatoração, uma mudança de docs), e o projeto precisa compilar e passar nos
-testes em todos os commits.
+Each commit has one purpose (a feature, a fix, a refactoring, a docs change),
+and the project builds and passes its checks at every commit.
 
-### Mesmo arquivo, objetivos diferentes: adicione só os trechos
+### Same file, different purposes: stage hunks
 
-Quando um arquivo tem mudanças com objetivos diferentes (por exemplo, uma
-correção de bug e uma funcionalidade nova no mesmo `src/diff.rs`), **não
-adicione o arquivo inteiro**. Adicione só os trechos (hunks) de cada objetivo,
-um commit por vez:
+When a file has changes for different purposes, for example a bug fix and a
+feature in the same `src/diff.rs`, **do not stage the whole file**. Stage the
+hunks of one purpose, commit, and repeat:
 
 ```bash
-git add -p src/diff.rs        # escolha os hunks: y = adiciona, n = pula, s = divide, e = edita
-git diff --staged             # confira o que vai no commit
-git diff                      # confira o que fica para o próximo
+git add -p src/diff.rs        # y = stage, n = skip, s = split, e = edit
+git diff --staged             # what goes into this commit
+git diff                      # what is left for the next one
 ```
 
-Sem terminal interativo (agentes, scripts), faça o mesmo com um patch
-parcial:
+Without an interactive terminal (agents, scripts), do the same with a partial
+patch:
 
 ```bash
-git diff src/diff.rs > /tmp/parcial.patch
-# edite o patch e mantenha só os hunks deste objetivo
-git apply --cached /tmp/parcial.patch
+git diff src/diff.rs > /tmp/partial.patch
+# edit the patch, keeping only this purpose's hunks
+git apply --cached /tmp/partial.patch
 git diff --staged
 ```
 
-Antes de cada commit, confirme que **só o que está staged** compila e passa
-nos testes:
+Before each commit, check that **what is staged alone** builds and passes:
 
 ```bash
 git stash push --keep-index --include-untracked
-cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked
 git stash pop
 ```
 
-### Mensagens
+### Messages
 
-Siga o estilo do próprio histórico: Conventional Commits em português
-(`feat: ...`, `fix(diff): ...`, `docs: ...`, `test: ...`), com assunto de no
-máximo 72 colunas. Use o corpo para explicar o porquê, quando ele não for óbvio.
+Conventional Commits in English (`feat: ...`, `fix(diff): ...`, `docs: ...`,
+`test: ...`), with a subject of at most 72 columns, and `!` plus a
+`Breaking:` paragraph for breaking changes. The body explains why, when that
+is not obvious. Release notes are generated from these subjects.
 
 ## Releases
 
-- **Para lançar, suba `version` no `Cargo.toml`** (semver) num commit
-  `chore: lança a versão X.Y.Z` na `main`. O `.github/workflows/release.yml`
-  testa, empacota (`scripts/package.sh`, reproduzível) e publica a release,
-  com notas geradas a partir dos commits (`scripts/release-notes.sh`). Nunca
-  crie tags ou releases à mão.
-- O tarball precisa continuar reproduzível: `tests/scripts/test-install.sh`
-  empacota duas vezes e exige os mesmos bytes.
-- **Mudou a exportação do modelo** (revisão, flags, lock)? Exporte duas vezes
-  do zero, versione o novo `scripts/export/MANIFEST.sha256` e rode o workflow
-  **Model**, que confere a reprodutibilidade em outra máquina e publica o
-  modelo para o `fetch-model.sh`.
-- Versões de drivers, runtimes, llama.cpp e modelos ficam fixadas com
-  SHA-256 nos scripts; ao subir alguma, troque versão e hash juntos.
+- **To release, bump `version` in `Cargo.toml`** (semver) in a commit
+  `chore: release X.Y.Z` on `main`. `.github/workflows/release.yml` tests,
+  packages and publishes the release, with notes from the commits
+  (`scripts/release-notes.sh`). Never create tags or releases by hand.
+- The tarball must stay reproducible: `tests/scripts/test-install.sh`
+  packages twice and requires identical bytes, and CI prints the hash of
+  every commit.
 
-## Configuração
+## Configuration
 
-Toda configuração nova é declarada em `config::KEYS` (tipo, escopo,
-variável de ambiente, descrição), nunca lida direto de um arquivo ou do
-ambiente em outro lugar. Chaves sobre a máquina são `Scope::User` (só no
-global). Se ela afeta a geração, precisa chegar ao trace por
-`PromptOptions` ou `GenerationConfig`.
+Every setting is declared in `config::KEYS` (type, scope, environment
+variable, description), never read straight from a file or the environment
+elsewhere. Keys about the machine are `Scope::User` (global only). A setting
+that changes what is generated must reach traces through `PromptOptions` or
+`GenerationConfig`. [docs/configuration.md](docs/configuration.md) must list
+every key; a test checks it.
 
-## Documentação
+## Documentation
 
-Ao concluir uma fase do roadmap, crie `docs/0N-fase-X-<tema>.md` no formato
-dos anteriores (o que entrega, módulos, decisões, testes, limitações) e
-atualize o `README.md`.
+Docs describe the current state, in English. A change updates the pages it
+affects in the same commit (usage, configuration, devices, architecture,
+reproducibility); [docs/roadmap.md](docs/roadmap.md) tracks what is done and
+what is next. Numbers in the docs (timings, counts) come from measurements
+that can be repeated, never from memory.
