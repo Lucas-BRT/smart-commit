@@ -225,6 +225,31 @@ struct PciDevice {
 
 /// PCI devices whose class starts with `class_prefix`, in slot order (as the
 /// shell's glob lists them).
+/// Physical cores, from the CPU topology in sysfs: logical CPUs sharing a
+/// core (SMT) list the same `core_cpus_list`. `None` when unreadable.
+pub fn physical_cores(sysfs: &Path) -> Option<usize> {
+    let dir = std::fs::read_dir(sysfs.join("devices/system/cpu")).ok()?;
+    let mut cores = std::collections::BTreeSet::new();
+    for entry in dir.flatten() {
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        let is_cpu = name
+            .strip_prefix("cpu")
+            .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
+        if !is_cpu {
+            continue;
+        }
+        // Older kernels name it thread_siblings_list.
+        let topology = entry.path().join("topology");
+        let siblings = std::fs::read_to_string(topology.join("core_cpus_list"))
+            .or_else(|_| std::fs::read_to_string(topology.join("thread_siblings_list")));
+        if let Ok(siblings) = siblings {
+            cores.insert(siblings.trim().to_owned());
+        }
+    }
+    (!cores.is_empty()).then_some(cores.len())
+}
+
 fn pci_devices(sysfs: &Path, class_prefix: &str) -> Vec<PciDevice> {
     let Ok(dir) = std::fs::read_dir(sysfs.join("bus/pci/devices")) else {
         return Vec::new();
@@ -364,6 +389,48 @@ pub(crate) mod fake {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Logical CPUs, each with the siblings sharing its core.
+    fn topology(sysfs: &Path, file: &str, cpus: &[&str]) {
+        for (n, siblings) in cpus.iter().enumerate() {
+            let dir = sysfs.join(format!("devices/system/cpu/cpu{n}/topology"));
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::write(dir.join(file), format!("{siblings}\n")).unwrap();
+        }
+    }
+
+    #[test]
+    fn physical_cores_count_smt_siblings_once() {
+        let dir = tempfile::TempDir::new().unwrap();
+        // Ryzen 5 5500: 6 cores, 2 threads each; plus non-CPU entries.
+        let smt: Vec<String> = (0..12)
+            .map(|n| format!("{},{}", n % 6, n % 6 + 6))
+            .collect();
+        let smt: Vec<&str> = smt.iter().map(String::as_str).collect();
+        topology(dir.path(), "core_cpus_list", &smt);
+        std::fs::create_dir_all(dir.path().join("devices/system/cpu/cpufreq")).unwrap();
+        std::fs::create_dir_all(dir.path().join("devices/system/cpu/cpuidle")).unwrap();
+        assert_eq!(physical_cores(dir.path()), Some(6));
+
+        // Hybrid without SMT (Core Ultra 5 225H): every CPU is a core.
+        let hybrid = tempfile::TempDir::new().unwrap();
+        let cpus: Vec<String> = (0..14).map(|n| n.to_string()).collect();
+        let cpus: Vec<&str> = cpus.iter().map(String::as_str).collect();
+        topology(hybrid.path(), "core_cpus_list", &cpus);
+        assert_eq!(physical_cores(hybrid.path()), Some(14));
+
+        // Older kernels.
+        let old = tempfile::TempDir::new().unwrap();
+        topology(
+            old.path(),
+            "thread_siblings_list",
+            &["0-1", "0-1", "2-3", "2-3"],
+        );
+        assert_eq!(physical_cores(old.path()), Some(2));
+
+        let empty = tempfile::TempDir::new().unwrap();
+        assert_eq!(physical_cores(empty.path()), None);
+    }
 
     fn machine(build: fn(&Path)) -> (tempfile::TempDir, Hardware) {
         let dir = tempfile::TempDir::new().unwrap();

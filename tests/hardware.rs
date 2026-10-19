@@ -45,6 +45,8 @@ fn backend() -> Box<dyn Backend> {
                 },
                 max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
                 max_new_tokens: GenerationConfig::default().max_new_tokens,
+                threads_batch: smart_commit::hardware::physical_cores(std::path::Path::new("/sys"))
+                    .unwrap_or(1),
                 startup_timeout: std::time::Duration::from_secs(120),
                 fast_load: false,
             });
