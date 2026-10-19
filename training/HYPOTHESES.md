@@ -356,8 +356,7 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own once H1/H2 show the basic fine-tune
-works: it changes the reply format and the
-Rust side.
+works: it changes the reply format and the Rust side.
 
 - **Data.** CommitChronicle has no "should have been split" label: mixed
   commits carry one message. Synthesize positives by joining 2–3 real

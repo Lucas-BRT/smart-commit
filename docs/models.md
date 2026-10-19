@@ -72,9 +72,9 @@ dash is a pair not measured.
   commits) both pick the Conventional type of the real commit about 64% of
   the time, against 46% for `qwen2.5-coder-1.5b`, which answers `fix` to
   most changes; the 0.5B falls back to the file list more often on young
-  repositories (9% against 3%). Their model cards on Hugging Face list the evaluation, the
-  training and the limitations. Versions are new ids (`-v0.2`), never
-  replaced files.
+  repositories (9% against 3%). Their model cards on Hugging Face list
+  the evaluation, the training and the limitations. Versions are new ids
+  (`-v0.2`), never replaced files.
 
 ## Where they come from
 
