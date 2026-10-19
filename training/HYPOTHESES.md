@@ -109,6 +109,77 @@ went from 0.76 to 1.000 and copying from 0.37 to 0.06. On the CPU it is
 shorter prompt read and replies of 42 characters instead of 78. Kaggle T4,
 35 min, train loss 2.71.
 
+### H3. More data keeps helping, and cleaner labels help more — partly true
+
+Bundle b2 (`lucasbrt/smart-commit-training-b2`, uploaded before the scope
+map of H4, so trained on the prompt without it): a learning curve on the
+0.5B with nested subsets (`nest.py`) of 2.5k, 5k, 20k and 40k examples,
+the 40k set on the 1.5B, and h3a, the 0.5B on 9.3k examples whose
+selection command was not recorded (by its size, H1's set filtered with
+`select.py --supported-only`). Same recipe as H1/H2 otherwise.
+
+Scored with smart-commit at `db389c2` (Vulkan, Intel Arc iGPU), merged
+and re-quantized with `export_gguf.py`, against the controls of H0
+re-run with the same binary. That binary has the copy guard of H5, which
+rejects a first reply repeating a history subject: first_try is lower and
+copied is 0 for every model, so these numbers are comparable with each
+other only, not with the Results table above.
+
+eval-v1, conventional set (250), plus first_try and word_f1 on the free
+set (250):
+
+| Model | type_match | scope_known | first_try | fallback | word_f1 | ungrounded | free first_try | free word_f1 |
+|---|---|---|---|---|---|---|---|---|
+| 1.5B upstream | 0.456 | 0.580 | 0.908 | 0.068 | 0.245 | 0.180 | 0.840 | 0.143 |
+| 1.5B control | 0.408 | 0.516 | 0.928 | 0.004 | 0.245 | 0.172 | 0.868 | 0.139 |
+| c40k-1.5b | **0.644** | 0.852 | 0.948 | 0.016 | **0.362** | 0.084 | 0.908 | **0.257** |
+| 0.5B upstream | 0.168 | 0.756 | 0.392 | 0.400 | 0.133 | 0.368 | 0.756 | 0.101 |
+| 0.5B control | 0.236 | 0.880 | 0.424 | 0.512 | 0.153 | 0.296 | 0.720 | 0.098 |
+| c2500-0.5b | 0.516 | 0.852 | 0.932 | 0.056 | 0.296 | 0.084 | 0.924 | 0.217 |
+| c5k-0.5b | 0.552 | 0.864 | 0.904 | 0.064 | 0.301 | 0.096 | 0.864 | 0.214 |
+| h3a-0.5b | 0.564 | 0.856 | 0.904 | 0.060 | 0.308 | **0.068** | 0.916 | 0.228 |
+| c20k-0.5b | 0.632 | 0.828 | 0.936 | 0.036 | 0.323 | 0.080 | 0.924 | 0.231 |
+| c40k-0.5b | 0.640 | 0.856 | **0.980** | **0.012** | 0.342 | 0.108 | **0.928** | 0.233 |
+
+eval-short (197, young repositories):
+
+| Model | first_copied | fallback | ungrounded | word_f1 |
+|---|---|---|---|---|
+| 1.5B upstream | 0.147 | 0.102 | 0.142 | 0.167 |
+| 1.5B control | 0.152 | 0.051 | 0.127 | 0.160 |
+| c40k-1.5b | 0.112 | **0.030** | **0.107** | **0.295** |
+| 0.5B upstream | 0.371 | 0.345 | 0.320 | 0.125 |
+| 0.5B control | 0.365 | 0.386 | 0.315 | 0.125 |
+| c2500-0.5b | 0.096 | 0.081 | 0.127 | 0.214 |
+| c5k-0.5b | 0.157 | 0.142 | 0.137 | 0.232 |
+| h3a-0.5b | 0.112 | 0.086 | 0.137 | 0.242 |
+| c20k-0.5b | **0.081** | 0.081 | 0.117 | 0.237 |
+| c40k-0.5b | 0.137 | 0.091 | 0.137 | 0.246 |
+
+Training on Kaggle T4: 14, 22, 37, 75 and 147 min for c2500, c5k, h3a,
+c20k and c40k on the 0.5B (train loss 2.81, 2.73, 2.74, 2.63, 2.58), 394
+min for c40k on the 1.5B (2.35). Validation loss still fell from 20k to
+40k (2.84 → 2.78 on the 0.5B).
+
+- **The curve flattens at about 20k for the type.** type_match 0.516,
+  0.552, 0.632, 0.640 (standard error about 0.03): 20k → 40k is within
+  noise. 40k still buys first_try (0.936 → 0.980), fallback (0.036 →
+  0.012) and a little word_f1 (0.323 → 0.342).
+- **The 0.5B trained on 40k matches the 1.5B trained on 40k** on type and
+  scope (0.640 against 0.644); the 1.5B keeps a lead on word_f1 and on
+  young repositories (fallback 0.030 against 0.091).
+- **4× the data did not move the 1.5B**: H1 (10k) had 0.652 merged, c40k
+  0.644, though with an older binary.
+- **No amount of this data fixes young repositories**: the 0.5B falls
+  back on 8–14% of eval-short whatever the size. That is H5's case: the
+  sets have no short histories, more of them does not help.
+- **Filtered labels (h3a)** sit where ~10–15k unfiltered examples would,
+  with the lowest ungrounded (0.068); a small effect, not enough to
+  replace volume.
+
+Next: H5 and H6 in one bundle on 20k examples, plus short-history ones,
+rather than more of the same data.
+
 ### H4. Showing where each scope is used fixes scopes copied from the history — planned
 
 Found in real use, on this repository: for a staged `mise.toml` (Rust
