@@ -8,6 +8,10 @@ Per set (conventional, free) and overall:
 - copied: the subject is one of the history subjects verbatim
 - type_match: same Conventional type as the real subject (conventional set)
 - scope_known: no scope, or one already used in the history (conventional set)
+- scope_fits: the scope was used by history commits touching a directory
+  the staged files are in, or there is no scope and no history scope does
+  (conventional set; needs `history_files` in the inputs). scope_fits_real
+  is the same for the real subject
 - word_f1: word overlap with the real subject, a cheap proxy for content
 - exact: identical to the real subject
 - unsupported: names a specific (a version or number, an identifier in
@@ -65,6 +69,25 @@ def evidence(inputs: dict) -> str:
     for f in inputs["files"]:
         parts += [f["path"], f.get("old_path") or "", f["hunks"]]
     return "\n".join(parts).lower()
+
+
+def area(path: str) -> str:
+    """The directory a file is in, with a trailing slash; "" at the root."""
+    return path.rsplit("/", 1)[0] + "/" if "/" in path else ""
+
+
+def scope_fits(subject: str, inputs: dict) -> bool | None:
+    if "history_files" not in inputs:
+        return None
+    staged = {area(f["path"]) for f in inputs["files"]}
+    covered = collections.defaultdict(set)
+    for previous, files in zip(inputs["subjects"], inputs["history_files"]):
+        if m := SCOPE.match(previous):
+            covered[m.group(1)] |= {area(p) for p in files}
+    m = SCOPE.match(subject)
+    if m is None:
+        return not any(areas & staged for areas in covered.values())
+    return bool(covered.get(m.group(1), set()) & staged)
 
 
 def unsupported(subject: str, known: str) -> bool:
@@ -130,6 +153,10 @@ def main() -> None:
             scope = SCOPE.match(subject)
             known = {s.group(1) for h in history if (s := SCOPE.match(h))}
             row["scope_known"] = scope is None or scope.group(1) in known
+            fits = scope_fits(subject, t["inputs"])
+            if fits is not None:
+                row["scope_fits"] = fits
+                row["scope_fits_real"] = scope_fits(m["target"], t["inputs"])
         for key in (m["set"], "all"):
             sums[key]["n"] += 1
             for k, v in row.items():

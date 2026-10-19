@@ -14,7 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from build_inputs import inputs_of, keep_target, trim_context  # noqa: E402
-from score import description, specifics, ungrounded, unsupported  # noqa: E402
+from build_inputs import paths_of  # noqa: E402
+from score import area, description, scope_fits, specifics, ungrounded, unsupported  # noqa: E402
 
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
 
@@ -102,6 +103,33 @@ def test_faithfulness() -> None:
     assert ungrounded("fix: fix typo", known)
     assert ungrounded("docs: update docs", known)
     assert not ungrounded("fix(rx): guard combineLatest against empty arrays", known)
+
+
+def test_scope_fits() -> None:
+    assert area("src/diff.rs") == "src/" and area("mise.toml") == ""
+    inputs = {
+        "subjects": ["feat(training): add train.py", "fix(cli): parse flags", "docs: readme"],
+        "history_files": [["training/train.py"], ["src/main.rs"], ["README.md"]],
+        "files": [{"path": "mise.toml"}],
+    }
+    assert not scope_fits("feat(training): rust 1.99", inputs)
+    assert scope_fits("chore: update rust in mise.toml", inputs)
+    inputs["files"] = [{"path": "src/main.rs"}, {"path": "mise.toml"}]
+    assert scope_fits("fix(cli): handle -C", inputs)
+    assert not scope_fits("fix: handle -C", inputs)  # a scope fits but none given
+    assert not scope_fits("fix(api): handle -C", inputs)  # never used
+    assert scope_fits("fix: x", {"subjects": ["a"], "files": []}) is None
+
+
+def test_paths_of() -> None:
+    mods = [
+        {"change_type": "DELETE", "old_path": "b.rs", "new_path": None},
+        {"change_type": "RENAME", "old_path": "c.rs", "new_path": "a.rs"},
+        {"change_type": "MODIFY", "old_path": "a.rs", "new_path": "a.rs"},
+    ]
+    assert paths_of(mods) == ["a.rs", "b.rs"]
+    assert paths_of([{"change_type": "ADD", "old_path": None, "new_path": f"f{i:02}"}
+                     for i in range(30)]) == [f"f{i:02}" for i in range(20)]
 
 
 if __name__ == "__main__":

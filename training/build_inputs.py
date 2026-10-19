@@ -24,6 +24,7 @@ SUBJECT_MIN, SUBJECT_MAX = 8, 72
 CONTEXT = 1  # smart-commit runs `git diff -U1`
 MAX_FILES = 64
 MAX_DIFF_BYTES = 64 * 1024  # per file; the prompt keeps far less
+HISTORY_FILES = 20  # paths kept per history commit, like git::Repo::recent_commits
 
 STATUS = {
     "ADD": "added",
@@ -165,6 +166,14 @@ def line_counts(diff: str) -> tuple[int, int]:
     return added, deleted
 
 
+def paths_of(mods) -> list[str]:
+    """The paths a commit touched, as `git log --name-only` lists them (the
+    old path of deletions, the new one otherwise), sorted, at most
+    HISTORY_FILES."""
+    paths = {m["old_path"] if m["change_type"] == "DELETE" else m["new_path"] for m in mods or []}
+    return sorted(p for p in paths if p)[:HISTORY_FILES]
+
+
 def inputs_of(mods) -> dict | None:
     """`trace::Inputs` without branch and subjects, or None to skip."""
     if not mods or len(mods) > MAX_FILES:
@@ -222,6 +231,7 @@ def main() -> None:
                 # Stable: commits with the same date keep the shard's order.
                 rows.sort(key=lambda r: date_key(r["date"]))
                 subjects = [subject_of(r["message"]) for r in rows]
+                touched = [paths_of(r["mods"]) for r in rows]
                 for i, row in enumerate(rows):
                     stats["commits"] += 1
                     target = subjects[i]
@@ -232,8 +242,10 @@ def main() -> None:
                     if changes is None:
                         stats["dropped_mods"] += 1
                         continue
-                    history = subjects[max(0, i - HISTORY_DEPTH) : i][::-1]
-                    inputs = {"branch": args.branch, "subjects": history, **changes}
+                    first = max(0, i - HISTORY_DEPTH)
+                    history = subjects[first:i][::-1]
+                    inputs = {"branch": args.branch, "subjects": history,
+                              "history_files": touched[first:i][::-1], **changes}
                     meta = {
                         "repo": row["repo"],
                         "hash": row["hash"],
