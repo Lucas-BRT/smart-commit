@@ -288,9 +288,15 @@ What is published is one model per size smart-commit offers, named
 3. ~~Evaluation, and the base 1.5B and 0.5B scores.~~ Done: `smart-commit
    eval` and `training/score.py`; scores in
    [training/HYPOTHESES.md](../training/HYPOTHESES.md).
-4. LoRA on the 1.5B; compare; then the 0.5B. In progress, tracked in
+4. ~~LoRA on the 1.5B; compare; then the 0.5B.~~ Done: H1 to H3 in
    HYPOTHESES.md.
-5. Export, publish, add to the registry.
+5. ~~Export, publish, add to the registry.~~ Done for v0.1: the c40k runs
+   of H3, published as
+   [smart-commit-1.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-1.5b-v0.1)
+   and [smart-commit-0.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-0.5b-v0.1),
+   experimental models in `src/models.rs`.
+6. The next version: H5 (young repositories) and H6 (the rules in the
+   weights) in one bundle, on about 20k examples.
 
 Independent of training, on `main`: `--threads-batch` is passed explicitly
 (one thread per physical core, [devices](devices.md#threads-on-the-cpu));
