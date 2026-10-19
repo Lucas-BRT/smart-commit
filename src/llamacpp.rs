@@ -56,6 +56,10 @@ pub struct LlamaCppOptions {
     pub device: LlamaDevice,
     pub max_prompt_tokens: usize,
     pub max_new_tokens: usize,
+    /// Threads reading the prompt on the CPU, which is most of the time per
+    /// message there. Decoding keeps llama.cpp's default: changing it
+    /// changed replies, and replies are short.
+    pub threads_batch: usize,
     pub startup_timeout: Duration,
     /// Skips what llama-server does at every start that a small model with a
     /// fixed context rarely needs: repacking the weights for the CPU's vector
@@ -267,6 +271,8 @@ pub fn server_args(options: &LlamaCppOptions, socket: &Path) -> Vec<String> {
         &context.to_string(),
         "--parallel",
         "1",
+        "--threads-batch",
+        &options.threads_batch.to_string(),
         "--no-webui",
         "--offline",
     ]
@@ -457,8 +463,13 @@ fn describe(options: &LlamaCppOptions) -> String {
                 .map(|h| h.chars().take(16).collect::<String>())
         })
         .unwrap_or_else(|| "unverified".to_owned());
+    // Threads only matter where llama.cpp computes on the CPU.
+    let threads = match options.device {
+        LlamaDevice::Cpu => format!(" threads-batch={}", options.threads_batch),
+        LlamaDevice::Vulkan(_) => String::new(),
+    };
     format!(
-        "llama.cpp server={build} device={} model={} sha256={identity} ctx={}{}",
+        "llama.cpp server={build} device={} model={} sha256={identity} ctx={}{threads}{}",
         options.device,
         name(&options.model),
         options.max_prompt_tokens + options.max_new_tokens,
@@ -479,6 +490,7 @@ mod tests {
             device: LlamaDevice::Vulkan(1),
             max_prompt_tokens: 1024,
             max_new_tokens: 128,
+            threads_batch: 6,
             startup_timeout: Duration::from_secs(5),
             fast_load: false,
         }
@@ -501,6 +513,11 @@ mod tests {
         assert!(joined.contains("--ctx-size 1152"));
         assert!(joined.contains("--n-gpu-layers 999"));
         assert!(joined.contains("--offline"));
+        assert!(joined.contains("--threads-batch 6"));
+        assert!(
+            !joined.contains("--threads "),
+            "decoding keeps the default: {joined}"
+        );
     }
 
     #[test]
@@ -516,7 +533,8 @@ mod tests {
         assert!(joined.contains("--ctx-size 1152"), "{joined}");
         assert_eq!(
             describe(&options),
-            "llama.cpp server=llama-b11381 device=CPU model=model.gguf sha256=unverified ctx=1152"
+            "llama.cpp server=llama-b11381 device=CPU model=model.gguf sha256=unverified ctx=1152 \
+             threads-batch=6"
         );
     }
 

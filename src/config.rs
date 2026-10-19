@@ -135,6 +135,15 @@ pub const KEYS: &[Key] = &[
                       it where the last `smart-commit bench` found it faster.",
     },
     Key {
+        name: "model.threads_batch",
+        kind: Kind::Count { min: 0, max: 1024 },
+        scope: Scope::User,
+        env: None,
+        description: "llama.cpp on the CPU: threads that read the prompt (`--threads-batch`). \
+                      0: one per physical core, which llama.cpp's own default can miss on \
+                      hybrid CPUs. Replies do not depend on it.",
+    },
+    Key {
         name: "model.npu_prefill_chunk",
         kind: Kind::Count {
             min: 512,
@@ -572,6 +581,7 @@ impl Resolved {
             gguf: self.text("model.gguf").map(PathBuf::from),
             llama_server: self.text("model.llama_server").map(PathBuf::from),
             vulkan_device: self.count("model.vulkan_device"),
+            threads_batch: self.count("model.threads_batch"),
             fast_load: match choice("model.fast_load") {
                 "on" => FastLoad::On,
                 "off" => FastLoad::Off,
@@ -620,6 +630,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("model.name", text(models::DEFAULT)),
         ("model.vulkan_device", Value::Count(0)),
         ("model.fast_load", text("auto")),
+        ("model.threads_batch", Value::Count(0)),
         (
             "model.npu_prefill_chunk",
             Value::Count(NpuTuning::default().prefill_chunk),
@@ -695,6 +706,8 @@ pub struct Settings {
     pub gguf: Option<PathBuf>,
     pub llama_server: Option<PathBuf>,
     pub vulkan_device: usize,
+    /// `model.threads_batch`; 0 for one per physical core.
+    pub threads_batch: usize,
     pub fast_load: FastLoad,
     pub npu: NpuTuning,
     pub cache_dir: Option<PathBuf>,
@@ -784,6 +797,11 @@ impl Settings {
             },
             max_prompt_tokens: self.max_prompt_tokens,
             max_new_tokens: self.max_new_tokens,
+            threads_batch: match self.threads_batch {
+                0 => crate::hardware::physical_cores(Path::new("/sys"))
+                    .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, usize::from)),
+                n => n,
+            },
             startup_timeout: std::time::Duration::from_secs(120),
             fast_load,
         })
@@ -1173,6 +1191,20 @@ mod tests {
                 .unwrap_err()
                 .contains("model.llama_server")
         );
+    }
+
+    #[test]
+    fn threads_batch_is_one_per_core_unless_set() {
+        let options = |global: Option<&str>| {
+            resolve(global, None, HOME, vec![])
+                .unwrap()
+                .settings()
+                .llamacpp_options(Target::Cpu, false)
+                .unwrap()
+                .threads_batch
+        };
+        assert!(options(None) >= 1);
+        assert_eq!(options(Some("[model]\nthreads_batch = 3\n")), 3);
     }
 
     #[test]

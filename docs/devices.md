@@ -109,6 +109,27 @@ at least 5% per message (more than the noise between runs).
 which traces record, ends in `load=fast` when it is on. On the Ryzen 5 5500
 the replies to the five fixture prompts are the same in both modes.
 
+## Threads on the CPU
+
+Reading the prompt (prefill) is most of the time per message on the CPU,
+and it scales with the threads doing it. llama.cpp picks that count itself,
+and the pick depends on the processor, so smart-commit passes
+`--threads-batch` explicitly: one thread per physical core
+(`model.threads_batch` overrides it). The backend's description, which
+traces record, says `threads-batch=N` on the CPU.
+
+Measured with Qwen2.5-Coder-1.5B Q4_K_M and real prompts (llama.cpp b11381):
+
+| Machine | llama.cpp's default | One per physical core | Replies |
+|---|---|---|---|
+| Core Ultra 5 225H (14 cores, no SMT), 6 prompts | 2 threads, prefill 6992 ms | 14 threads, prefill 3369 ms | identical |
+| Ryzen 5 5500 (6 cores, 12 threads), 50 prompts | 2.92 s per message | 6 threads, 2.93 s per message | identical |
+
+On the Ryzen, llama.cpp's default was already one per core; counting the
+SMT threads too (12) made it slower, 3.24 s per message, with identical
+replies. Changing the decoding threads (`--threads`) changed replies on the
+Core Ultra, so that one keeps llama.cpp's default.
+
 ## Setting up the hardware
 
 `smart-commit hardware` prints the hardware list below without changing

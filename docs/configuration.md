@@ -45,6 +45,7 @@ value, for example when an environment variable is set.
 | `model.llama_server` | path | `$XDG_DATA_HOME/smart-commit/llama.cpp/llama-b11381/llama-server` | `SMART_COMMIT_LLAMA_SERVER` | global |
 | `model.vulkan_device` | 0–15 | 0 | | global |
 | `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
+| `model.threads_batch` | 0–1024 | 0 (one per physical core) | | global |
 | `model.npu_prefill_chunk` | 512–8192 | 512 | | global |
 | `model.npu_generate_hint` | `best_perf`, `fast_compile` | `best_perf` | | global |
 | `model.max_prompt_tokens` | 256–8192 | 1024 | | global |
@@ -79,6 +80,13 @@ value, for example when an environment variable is set.
   without a benchmark it stays off. If a fast load fails (a GPU short of
   memory), the model is loaded again normally, with a note. See
   [devices](devices.md#fast-load).
+- `model.threads_batch` sets llama-server's `--threads-batch`, the
+  threads that read the prompt on the `cpu` device, which is most of the
+  time per message there. 0 means one per physical core, from the CPU
+  topology in sysfs. llama.cpp's own default already does that on some
+  processors and not on others (2 threads on a 14-core Core Ultra 5 225H);
+  see [devices](devices.md#threads-on-the-cpu). Decoding keeps llama.cpp's
+  default thread count.
 - `model.npu_prefill_chunk` must divide `model.max_prompt_tokens`. Chunks
   smaller than 512 fail to compile with NPU driver 1.38.
 - `model.max_prompt_tokens` is also the prompt length the NPU compiles for.
