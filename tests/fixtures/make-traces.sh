@@ -121,3 +121,17 @@ printf '# Training\n\nPublish smart-commit-1.5b-v1.\n' > docs/training.md; git a
 "$BIN" --backend mock \
   --mock-response $'fix(AGENTS.md): update AGENTS.md with the latest changes\nfix(docs/training.md): update docs/training.md with the latest changes' \
   --trace "$OUT/conventional-en-two-subjects.json" >/dev/null
+
+# Found in real use, with smart-commit-0.5b-v0.1: a root config change in a
+# repository whose history is all scoped and never uses `chore`; the model
+# kept to the listed types and took the most frequent scope.
+fresh closed-types
+mkdir -p training docs src
+printf 'x\n' > training/export_gguf.py; git add .; commit "feat(training): keep the merged safetensors with export_gguf --merged"
+printf 'x\n' > AGENTS.md; git add .; commit "docs(agents): version fine-tunes as v0.x while the recipe changes"
+printf 'x\n' > src/models.rs; git add .; commit "feat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes"
+printf 'x\n' > docs/training.md; git add .; commit "docs(training): v0.1 is published and registered, H5 and H6 come next"
+printf 'x\n' > training/filter_supported.py; git add .; commit "fix(training): make h3a reproducible with filter_supported.py"
+printf '[tools]\nrust = "1.99"\n' > mise.toml; git add mise.toml
+"$BIN" --backend mock --mock-response "feat(training): add rust 1.99 to mise.toml" \
+  --trace "$OUT/conventional-en-closed-types.json" >/dev/null
