@@ -17,6 +17,11 @@
       "fix(diff): corrige o parse de renomeações",
       "feat(git): coleta o histórico de commits"
     ],
+    "history_files": [
+      [],
+      [],
+      []
+    ],
     "staged": [
       {
         "status": "added",

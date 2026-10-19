@@ -17,6 +17,11 @@
       "🐛 fix crash on logout",
       "✨ add login page"
     ],
+    "history_files": [
+      [],
+      [],
+      []
+    ],
     "staged": [
       {
         "status": "added",

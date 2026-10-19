@@ -16,6 +16,10 @@
       "Fix crash when the diff is empty",
       "Add support for renames"
     ],
+    "history_files": [
+      [],
+      []
+    ],
     "staged": [
       {
         "status": "added",

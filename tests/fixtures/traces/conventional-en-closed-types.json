@@ -1,0 +1,75 @@
+{
+  "format": 1,
+  "tool_version": "0.4.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "fix(training): make h3a reproducible with filter_supported.py",
+      "docs(training): v0.1 is published and registered, H5 and H6 come next",
+      "feat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes",
+      "docs(agents): version fine-tunes as v0.x while the recipe changes",
+      "feat(training): keep the merged safetensors with export_gguf --merged"
+    ],
+    "history_files": [
+      [
+        "training/filter_supported.py"
+      ],
+      [
+        "docs/training.md"
+      ],
+      [
+        "src/models.rs"
+      ],
+      [
+        "AGENTS.md"
+      ],
+      [
+        "training/export_gguf.py"
+      ]
+    ],
+    "staged": [
+      {
+        "status": "added",
+        "path": "mise.toml",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "mise.toml",
+        "old_path": null,
+        "lines": [
+          2,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,2 @@\n+[tools]\n+rust = \"1.99\"\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(training): add rust 1.99 to mise.toml",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix.\n- Scopes used here, with where their commits went: training (training/, docs/), agents (AGENTS.md), model (src/). Use a scope only if the changed files are in its places; otherwise omit the scope.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfix(training): make h3a reproducible with filter_supported.py\ndocs(training): v0.1 is published and registered, H5 and H6 come next\nfeat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes\ndocs(agents): version fine-tunes as v0.x while the recipe changes\nfeat(training): keep the merged safetensors with export_gguf --merged\n",
+          "user": "Files changed:\nmise.toml | +2 -0\n\nDiff:\n--- mise.toml\n@@ -0,0 +1,2 @@\n+[tools]\n+rust = \"1.99\"\n"
+        },
+        "raw": "feat(training): add rust 1.99 to mise.toml",
+        "rejected": null
+      }
+    ]
+  }
+}

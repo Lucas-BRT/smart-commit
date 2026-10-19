@@ -41,6 +41,10 @@ pub struct Trace {
 pub struct Inputs {
     pub branch: Option<String>,
     pub subjects: Vec<String>,
+    /// The paths each of `subjects` touched. Left out when empty, so older
+    /// traces read, and replay, the same.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub history_files: Vec<Vec<String>>,
     pub staged: Vec<FileChange>,
     pub files: Vec<FileDiff>,
     /// Staged paths `.gitattributes` marks `linguist-generated`. Left out
@@ -58,6 +62,7 @@ impl Inputs {
             self.subjects.clone(),
             self.staged.clone(),
         )
+        .with_history_files(self.history_files.clone())
         .with_generated(self.generated.clone())
     }
 }
@@ -97,6 +102,7 @@ impl Trace {
             inputs: Inputs {
                 branch: ctx.branch.clone(),
                 subjects: ctx.subjects.clone(),
+                history_files: ctx.history_files.clone(),
                 staged: ctx.staged.clone(),
                 files: files.to_vec(),
                 generated: ctx.generated.clone(),
@@ -285,6 +291,23 @@ mod tests {
         trace.inputs.subjects = vec!["Add history".into(), "Fix the crash".into()];
         let differences = trace.replay().unwrap().differences;
         assert!(differences.contains(&"attempt 1: system prompt differs".to_owned()));
+    }
+
+    #[test]
+    fn history_files_are_recorded_and_optional() {
+        let trace = recorded(&["fix(git): read the branch"]);
+        assert!(!trace.to_json().contains("history_files"));
+
+        let mut with_files = trace.clone();
+        with_files.inputs.history_files = vec![vec!["src/git.rs".into()], vec![]];
+        let json = with_files.to_json();
+        assert!(json.contains("\"history_files\""));
+        let read = Trace::from_json(&json).unwrap();
+        assert_eq!(read, with_files);
+        assert_eq!(
+            read.context().history_files,
+            with_files.inputs.history_files
+        );
     }
 
     #[test]

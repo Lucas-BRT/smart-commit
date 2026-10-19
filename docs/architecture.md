@@ -36,8 +36,8 @@ Everything except the model is deterministic and tested without hardware.
 | `hook` | the `prepare-commit-msg` script and how it fills the message file |
 | `paths` | XDG locations of config, models, caches and the benchmark |
 
-The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`) only parses
-arguments and wires these together.
+The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`, `model_cmd.rs`,
+`setup_cmd.rs`) only parses arguments and wires these together.
 
 ## Repository style
 
@@ -50,6 +50,12 @@ From the last `style.history_depth` (30) subjects, merges excluded:
   description (after the `type(scope):` or emoji prefix, so a `fix:` does not
   count as English). It needs at least 2 hits, and a tie is `Unknown`.
 - **Types and scopes:** ranked by use; the prompt lists the 8 most used.
+  Each scope comes with up to 3 places its commits touched, most often
+  first (a file's directory, or the file itself at the root, counted once
+  per commit), so the model can leave the scope out when the staged files
+  are elsewhere: `training (training/, docs/), cli (src/)`. Without known
+  paths (traces written before they were recorded, empty commits) the
+  scopes are listed alone.
 - **Tickets:** an uppercase Jira-style key (`ABC-123`) in the branch; it goes
   into the prompt only if at least 50% of the subjects cite one, at the start
   (also right after the convention prefix) or elsewhere.

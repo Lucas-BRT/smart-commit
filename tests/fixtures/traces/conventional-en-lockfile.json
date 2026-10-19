@@ -15,6 +15,9 @@
     "subjects": [
       "feat: Add a simple hello world program"
     ],
+    "history_files": [
+      []
+    ],
     "staged": [
       {
         "status": "added",

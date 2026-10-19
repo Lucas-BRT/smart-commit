@@ -175,9 +175,9 @@ smart-commit --trace bad.json  # or: SMART_COMMIT_TRACE=bad.json git commit
 smart-commit replay bad.json   # checks that it reproduces
 ```
 
-A trace contains the staged diff and recent commit subjects, but not the
-repository's path. Review it before sharing; with it, the case can become a
-test fixture.
+A trace contains the staged diff and recent commit subjects with the paths
+they touched, but not the repository's path. Review it before sharing; with
+it, the case can become a test fixture.
 
 ## Troubleshooting
 

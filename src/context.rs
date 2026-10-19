@@ -16,6 +16,9 @@ pub struct RepoContext {
     pub ticket: Option<String>,
     /// Subjects the style was learned from, most recent first.
     pub subjects: Vec<String>,
+    /// The paths each of `subjects` touched; empty when not collected
+    /// (traces written before it was).
+    pub history_files: Vec<Vec<String>>,
     pub style: Style,
     pub staged: Vec<FileChange>,
     /// Staged paths `.gitattributes` marks `linguist-generated`.
@@ -30,15 +33,17 @@ impl RepoContext {
     /// Like [`Self::collect`], learning the style from the last
     /// `history_depth` commits.
     pub fn collect_with_history(repo: &Repo, history_depth: usize) -> Result<Self, GitError> {
+        let (subjects, files) = repo.recent_commits(history_depth)?.into_iter().unzip();
         let staged = repo.staged_changes()?;
         let paths: Vec<&str> = staged.iter().map(|c| c.path.as_str()).collect();
         let generated = repo.generated_paths(&paths)?;
         Ok(Self::new(
             repo.root().to_path_buf(),
             repo.current_branch()?,
-            repo.recent_subjects(history_depth)?,
+            subjects,
             staged,
         )
+        .with_history_files(files)
         .with_generated(generated))
     }
 
@@ -56,9 +61,17 @@ impl RepoContext {
             branch,
             style: style::detect(&subjects),
             subjects,
+            history_files: Vec::new(),
             staged,
             generated: Vec::new(),
         }
+    }
+
+    /// Adds the paths each history subject touched, which tell the areas
+    /// each scope covers.
+    pub fn with_history_files(mut self, files: Vec<Vec<String>>) -> Self {
+        self.history_files = files;
+        self
     }
 
     /// Adds the staged paths marked `linguist-generated`.

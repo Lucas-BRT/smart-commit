@@ -57,9 +57,10 @@ weights matched but two files did not, which led to two fixes:
   `scripts/export/normalize_ir.py` renumbers them in order of appearance;
   nothing refers to nodes by those names, and the replies did not change.
 
-smart-commit hosts no models: `smart-commit setup` runs the export on each
-machine that has an Intel NPU or GPU, from the publisher's files on Hugging
-Face, and the manifest check makes the result the same everywhere. It needs
+smart-commit re-hosts no publisher's model: `smart-commit setup` runs the
+export on each machine that has an Intel NPU or GPU, from the publisher's
+files on Hugging Face, and the manifest check makes the result the same
+everywhere. It needs
 about 10 GB of disk while it runs; the Python environment and the source
 model are removed afterwards (`--keep` keeps them). The **Model** workflow
 (`.github/workflows/model.yml`) runs the export on CI after any change to
@@ -118,7 +119,8 @@ $ smart-commit replay t.json              # the pipeline again, with the recorde
 $ smart-commit replay t.json --with-model # asks the model again
 ```
 
-A trace holds what git reported (branch, subjects, staged files and diff),
+A trace holds what git reported (branch, subjects and the paths each one
+touched, staged files and diff),
 the prompt options, the generation config, the backend's description (device,
 model identity, NPU shapes) and every attempt: prompt, raw reply and why it
 was rejected. It leaves out the repository's path. `replay` rebuilds

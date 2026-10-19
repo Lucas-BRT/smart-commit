@@ -82,9 +82,9 @@ describes what is pinned and how it is checked.
   one repository per model and version (`LucasBRT/smart-commit-1.5b-v0.1`): the
   merged weights in safetensors and the Q4_K_M GGUF, with a model card (base
   model, data and its licence, prompt format, evaluation against the base,
-  limitations). Their OpenVINO export still runs on users' machines, from
-  those safetensors. A new version is a new name (`-v0.2`), never a
-  replaced file, and is pinned in `src/models.rs` by revision and SHA-256
+  limitations). Their OpenVINO export is to run on users' machines, from
+  those safetensors, like other models' (not done for v0.1). A new
+  version is a new name (`-v0.2`), never a replaced file, and is pinned in `src/models.rs` by revision and SHA-256
   like any other model.
 
 ## Commits
@@ -123,6 +123,22 @@ git stash push --keep-index --include-untracked
 cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked
 git stash pop
 ```
+
+### Ask smart-commit first
+
+Before each commit, with only that commit's changes staged, run the tool
+on its own change and keep the trace:
+
+```bash
+smart-commit --trace /tmp/trace.json            # the installed release
+target/release/smart-commit --trace /tmp/trace-dev.json   # this tree
+```
+
+Compare its message with the one you write. A wrong one (type, scope,
+invented details, a copied history subject, a fallback) is a bug found in
+real use: turn it into a fixture in `tests/fixtures/traces/` (via
+`tests/fixtures/make-traces.sh`), in a commit of its own. The trace is what
+makes it reproducible; a bad message without one cannot be investigated.
 
 ### Messages
 

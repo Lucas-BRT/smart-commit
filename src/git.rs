@@ -44,6 +44,9 @@ pub struct FileChange {
     pub old_path: Option<String>,
 }
 
+/// Paths kept per history commit: enough to tell the areas a scope covers.
+pub const HISTORY_FILES: usize = 20;
+
 #[derive(Debug, Clone)]
 pub struct Repo {
     root: PathBuf,
@@ -87,11 +90,43 @@ impl Repo {
 
     /// Subjects of the last `n` non-merge commits, most recent first.
     pub fn recent_subjects(&self, n: usize) -> Result<Vec<String>, GitError> {
+        Ok(self.recent_commits(n)?.into_iter().map(|c| c.0).collect())
+    }
+
+    /// The last `n` non-merge commits, most recent first: each subject with
+    /// the paths it touched (new paths of renames, old ones of deletions),
+    /// sorted, at most [`HISTORY_FILES`] of them.
+    pub fn recent_commits(&self, n: usize) -> Result<Vec<(String, Vec<String>)>, GitError> {
         if !self.has_commits()? {
             return Ok(Vec::new());
         }
-        let out = self.git(&["log", &format!("-n{n}"), "--no-merges", "--format=%s"])?;
-        Ok(out.lines().map(str::to_owned).collect())
+        // Records start with 0x1e; then the subject, NUL, and NUL-separated
+        // paths (after a newline).
+        let out = self.git(&[
+            "log",
+            &format!("-n{n}"),
+            "--no-merges",
+            "--format=%x1e%s",
+            "--name-only",
+            "-z",
+        ])?;
+        Ok(out
+            .split('\x1e')
+            .skip(1)
+            .map(|record| {
+                let (subject, rest) = record.split_once('\0').unwrap_or((record, ""));
+                let mut paths: Vec<String> = rest
+                    .split('\0')
+                    .map(|p| p.trim_start_matches('\n'))
+                    .filter(|p| !p.is_empty())
+                    .map(str::to_owned)
+                    .collect();
+                paths.sort();
+                paths.dedup();
+                paths.truncate(HISTORY_FILES);
+                (subject.to_owned(), paths)
+            })
+            .collect())
     }
 
     /// Current branch name, or `None` on a detached HEAD.
