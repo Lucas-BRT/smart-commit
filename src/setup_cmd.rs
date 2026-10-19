@@ -9,6 +9,7 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::time::Duration;
 
+use smart_commit::config;
 use smart_commit::hardware::{Hardware, Npu};
 use smart_commit::models::{self, Model};
 use smart_commit::paths;
@@ -23,6 +24,7 @@ fn env(name: &str) -> Option<String> {
 }
 
 pub fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
+    set_aside_invalid_settings()?;
     let exe = std::env::current_exe()?.canonicalize()?;
     let scripts = scripts_dir(&exe)?;
     if !yes && tui::interactive() {
@@ -42,6 +44,23 @@ pub fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Er
         .map_err(|err| format!("cannot run {}: {err}", script.display()))?;
     if !status.success() {
         return Err(format!("setup failed ({status})").into());
+    }
+    Ok(())
+}
+
+/// Setup is how a broken install gets fixed, so a global setting this
+/// version cannot read (a model a newer build added, say) must not stop it:
+/// it is removed with a warning naming the old value, and the default
+/// applies until something else is chosen.
+fn set_aside_invalid_settings() -> Result<(), Box<dyn Error>> {
+    let Some(path) = paths::default_config_file(env) else {
+        return Ok(());
+    };
+    for removed in config::set_aside_invalid(&path, env("HOME").as_deref())? {
+        eprintln!(
+            "warning: {removed}; removed, so the default applies \
+             (`smart-commit model` or `smart-commit config set` choose again)"
+        );
     }
     Ok(())
 }

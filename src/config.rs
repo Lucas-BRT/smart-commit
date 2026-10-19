@@ -921,6 +921,37 @@ pub fn unset_in_file(path: &Path, name: &str) -> Result<bool, ConfigError> {
     Ok(removed)
 }
 
+/// Removes from the global file at `path` every value this version cannot
+/// read, such as a `model.name` written by a newer build, so the defaults
+/// apply. Returns what was removed, the old value in each message. Other
+/// errors (unknown keys, bad syntax) are left for the user to fix.
+pub fn set_aside_invalid(path: &Path, home: Option<&str>) -> Result<Vec<ConfigError>, ConfigError> {
+    let origin = Origin::Global(path.to_owned());
+    let mut removed = Vec::new();
+    loop {
+        match read_file(path, &origin, home) {
+            Err(ConfigError::InvalidValue {
+                key,
+                location,
+                problem,
+            }) => {
+                let error = ConfigError::InvalidValue {
+                    key: key.clone(),
+                    location,
+                    problem,
+                };
+                // Never loop on a value that cannot be removed.
+                if !unset_in_file(path, &key)? {
+                    return Err(error);
+                }
+                removed.push(error);
+            }
+            Err(err) => return Err(err),
+            Ok(_) => return Ok(removed),
+        }
+    }
+}
+
 fn load_document(path: &Path) -> Result<DocumentMut, ConfigError> {
     let text = match std::fs::read_to_string(path) {
         Ok(text) => text,
@@ -1351,6 +1382,44 @@ mod tests {
             text.contains("# mine\n[model]\n") && !text.contains("device"),
             "{text}"
         );
+    }
+
+    #[test]
+    fn set_aside_invalid_removes_only_values_this_version_cannot_read() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        std::fs::write(
+            &path,
+            "# mine\n[model]\ndevice = \"vulkan\"\nname = \"smart-commit-9b-v9\"\n\
+             max_new_tokens = 5000\n[style]\nlanguage = \"english\"\n",
+        )
+        .unwrap();
+        let removed = set_aside_invalid(&path, None).unwrap();
+        let messages: Vec<_> = removed.iter().map(ToString::to_string).collect();
+        assert_eq!(messages.len(), 2, "{messages:?}");
+        assert!(
+            messages[0].contains("`model.name`") && messages[0].contains("\"smart-commit-9b-v9\"")
+        );
+        assert!(messages[1].contains("`model.max_new_tokens`"));
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(
+            text,
+            "# mine\n[model]\ndevice = \"vulkan\"\n[style]\nlanguage = \"english\"\n"
+        );
+        assert!(set_aside_invalid(&path, None).unwrap().is_empty());
+    }
+
+    #[test]
+    fn set_aside_invalid_leaves_other_errors_and_missing_files() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        assert!(set_aside_invalid(&path, None).unwrap().is_empty());
+        assert!(!path.exists());
+        for text in ["[model]\ndevise = \"cpu\"\n", "[model\n"] {
+            std::fs::write(&path, text).unwrap();
+            assert!(set_aside_invalid(&path, None).is_err(), "{text}");
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), text);
+        }
     }
 
     #[test]
