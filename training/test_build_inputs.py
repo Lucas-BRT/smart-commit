@@ -4,6 +4,7 @@ give git's `-U1` diff (headings aside). Seeded, so always the same cases.
     python -I test_build_inputs.py
 """
 
+import json
 import os
 import random
 import re
@@ -130,6 +131,27 @@ def test_paths_of() -> None:
     assert paths_of(mods) == ["a.rs", "b.rs"]
     assert paths_of([{"change_type": "ADD", "old_path": None, "new_path": f"f{i:02}"}
                      for i in range(30)]) == [f"f{i:02}" for i in range(20)]
+
+
+def test_filter_supported() -> None:
+    commits = [
+        ({"target": "feat(cli): add retry", "set": "conventional"}, "+fn retry() {}\n"),
+        ({"target": "chore(release): 1.2.3", "set": "conventional"}, "+x\n"),
+        ({"target": "fix: bump vue to 2.6.13", "set": "free"}, "+x\n"),
+        ({"target": "fix: bump vue to 2.6.13", "set": "free"}, '+"vue": "2.6.13"\n'),
+    ]
+    with tempfile.TemporaryDirectory() as tmp:
+        src, out = Path(tmp) / "src", Path(tmp) / "out"
+        src.mkdir()
+        inputs = [json.dumps({"subjects": [], "files": [{"path": "a", "hunks": h}]})
+                  for _, h in commits]
+        (src / "inputs.jsonl").write_text("".join(i + "\n" for i in inputs))
+        (src / "meta.jsonl").write_text("".join(json.dumps(m) + "\n" for m, _ in commits))
+        subprocess.run([sys.executable, "-I", str(Path(__file__).parent / "filter_supported.py"),
+                        str(src), str(out)], check=True, capture_output=True)
+        kept = (out / "inputs.jsonl").read_text().splitlines()
+        assert kept == [inputs[0], inputs[3]]
+        assert len((out / "meta.jsonl").read_text().splitlines()) == 2
 
 
 if __name__ == "__main__":

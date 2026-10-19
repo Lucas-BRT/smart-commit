@@ -114,9 +114,12 @@ shorter prompt read and replies of 42 characters instead of 78. Kaggle T4,
 Bundle b2 (`lucasbrt/smart-commit-training-b2`, uploaded before the scope
 map of H4, so trained on the prompt without it): a learning curve on the
 0.5B with nested subsets (`nest.py`) of 2.5k, 5k, 20k and 40k examples,
-the 40k set on the 1.5B, and h3a, the 0.5B on 9.3k examples whose
-selection command was not recorded (by its size, H1's set filtered with
-`select.py --supported-only`). Same recipe as H1/H2 otherwise.
+the 40k set on the 1.5B, and h3a, the 0.5B on 9,278 examples: H1's set
+with the unsupported and version-only targets dropped and nothing chosen
+in their place, `filter_supported.py data/h1 data/h3a` (first made with an
+unrecorded inline script; the versioned one rebuilds `inputs.jsonl`,
+`meta.jsonl` and the bundle's `examples.jsonl`, sha256 `27747f54…`, byte for
+byte). Same recipe as H1/H2 otherwise.
 
 Scored with smart-commit at `db389c2` (Vulkan, Intel Arc iGPU), merged
 and re-quantized with `export_gguf.py`, against the controls of H0

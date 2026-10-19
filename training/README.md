@@ -41,6 +41,8 @@ uv run --locked python -I build_inputs.py data/test0 $C/commit-chronicle/5fd076e
 uv run --locked python -I select.py data/test0 data/eval-v1 --conventional 250 --free 250
 uv run --locked python -I select.py data/train12 data/h1 --conventional 6000 --free 4000 \
   --max-type-share 0.3 --per-repo 100
+# h3a (H3): the same commits without the targets the label filters reject.
+uv run --locked python -I filter_supported.py data/h1 data/h3a
 
 # 3. Prompts built by smart-commit, joined with the targets.
 uv run --locked python -I make_examples.py data/h1 $SC
