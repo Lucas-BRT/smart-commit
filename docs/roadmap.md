@@ -10,8 +10,10 @@
 - llama.cpp backend with Vulkan for AMD, NVIDIA and Intel GPUs, and on the
   CPU, so machines without Intel devices need no OpenVINO.
 - `auto` device selection, `bench` and `device`.
-- Recommended models downloaded from their publishers on Hugging Face,
-  pinned and checked (`smart-commit model`), or any GGUF file from disk.
+- Recommended models downloaded from Hugging Face, pinned and checked
+  (`smart-commit model`), or any GGUF file from disk.
+- The first fine-tunes, `smart-commit-1.5b-v0.1` and
+  `smart-commit-0.5b-v0.1`, as experimental models.
 - Fast load for llama.cpp (`--no-repack --fit off`), turned on per device
   by the benchmark.
 - Global and per-repository configuration.

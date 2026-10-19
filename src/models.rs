@@ -1,9 +1,10 @@
 //! The models smart-commit recommends, and installing them.
 //!
-//! Models are never served by this project: each one is downloaded from its
-//! publisher's Hugging Face repository, pinned to a revision and checked
-//! against the SHA-256 of the file at that revision. Any other GGUF file can
-//! be used from disk instead (`model.gguf`), unverified.
+//! Each model is downloaded from Hugging Face, pinned to a revision and
+//! checked against the SHA-256 of the file at that revision: other
+//! publishers' models from their own repositories (never re-hosted), and the
+//! project's fine-tunes from [`OWN_ACCOUNT`]. Any other GGUF file can be used
+//! from disk instead (`model.gguf`), unverified.
 //!
 //! The OpenVINO devices (`npu`, `intel-gpu`, `openvino-cpu`) need the model
 //! exported for OpenVINO, which only models with a pinned export have.
@@ -19,6 +20,10 @@ use sha2::{Digest, Sha256};
 /// Where models are downloaded from.
 pub const HUGGING_FACE: &str = "https://huggingface.co";
 
+/// The Hugging Face account the project's own fine-tunes are published
+/// under, one repository per model and version (AGENTS.md).
+pub const OWN_ACCOUNT: &str = "LucasBRT";
+
 /// The model used unless `model.name` says otherwise.
 pub const DEFAULT: &str = "qwen2.5-coder-1.5b";
 
@@ -27,6 +32,8 @@ pub const IDS: &[&str] = &[
     "qwen2.5-coder-1.5b",
     "qwen2.5-coder-0.5b",
     "qwen2.5-coder-7b",
+    "smart-commit-1.5b-v0.1",
+    "smart-commit-0.5b-v0.1",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -125,6 +132,36 @@ pub const REGISTRY: &[Model] = &[
             file: "qwen2.5-coder-7b-instruct-q4_k_m.gguf",
             size: 4_683_073_536,
             sha256: "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
+        },
+        openvino: None,
+    },
+    Model {
+        id: "smart-commit-1.5b-v0.1",
+        name: "smart-commit 1.5B v0.1",
+        license: "Apache-2.0",
+        status: Status::Experimental,
+        summary: "Qwen2.5-Coder-1.5B fine-tuned for smart-commit: the right commit types",
+        gguf: Gguf {
+            repo: "LucasBRT/smart-commit-1.5b-v0.1",
+            revision: "9147da25797e21b63815f9ad80a1e79547198a37",
+            file: "smart-commit-1.5b-v0.1-q4_k_m.gguf",
+            size: 986_048_192,
+            sha256: "7b8f456ff62c050e43ebdb90593960990e490e1dd7c2635652a82929a040d9f7",
+        },
+        openvino: None,
+    },
+    Model {
+        id: "smart-commit-0.5b-v0.1",
+        name: "smart-commit 0.5B v0.1",
+        license: "Apache-2.0",
+        status: Status::Experimental,
+        summary: "Qwen2.5-Coder-0.5B fine-tuned: as good as the 1.5B on types, faster",
+        gguf: Gguf {
+            repo: "LucasBRT/smart-commit-0.5b-v0.1",
+            revision: "829633003d096d47256a8dd12fe666ea29f89cb1",
+            file: "smart-commit-0.5b-v0.1-q4_k_m.gguf",
+            size: 397_807_616,
+            sha256: "83b9acfc91e67cba1a2b669a0afe59ddc1b3ce5909617355b88d3a2ff6e66c11",
         },
         openvino: None,
     },
@@ -319,6 +356,35 @@ mod tests {
             assert_eq!(
                 model.license, "Apache-2.0",
                 "{}: open licences only",
+                model.id
+            );
+        }
+    }
+
+    #[test]
+    fn own_fine_tunes_follow_the_naming_rule() {
+        let own: Vec<&Model> = REGISTRY
+            .iter()
+            .filter(|m| m.gguf.repo.starts_with(&format!("{OWN_ACCOUNT}/")))
+            .collect();
+        assert!(!own.is_empty());
+        for model in &own {
+            // smart-commit-<size>-v<version>, one repository per version.
+            let rest = model.id.strip_prefix("smart-commit-").unwrap();
+            let (size, version) = rest.split_once("-v").unwrap();
+            assert!(size.ends_with('b'), "{}", model.id);
+            assert!(
+                version.split('.').all(|n| n.parse::<u32>().is_ok()),
+                "{}",
+                model.id
+            );
+            assert_eq!(model.gguf.repo, format!("{OWN_ACCOUNT}/{}", model.id));
+            assert_eq!(model.gguf.file, format!("{}-q4_k_m.gguf", model.id));
+        }
+        for model in REGISTRY.iter().filter(|m| !own.contains(m)) {
+            assert!(
+                !model.id.starts_with("smart-commit-"),
+                "{}: smart-commit-* names only the project's own fine-tunes",
                 model.id
             );
         }

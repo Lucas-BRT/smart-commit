@@ -72,8 +72,20 @@ describes what is pinned and how it is checked.
 - **Model export:** a change to the export (revision, flags, lock) needs two
   identical exports from scratch, the new `scripts/export/MANIFEST.sha256`
   committed with it, and the **Model** workflow run, which checks the export
-  on another machine. Models are never hosted by this project: users'
-  machines download them from their publishers and export them.
+  on another machine.
+- **Where models come from:** other publishers' models are never
+  re-hosted: users' machines download them from their publishers and
+  export them. The project's own fine-tunes
+  (`smart-commit-<size>-v<version>`, e.g. `smart-commit-1.5b-v0.1`; 0.x
+  while the training recipe still changes) are published on Hugging Face
+  under the project's account, [LucasBRT](https://huggingface.co/LucasBRT),
+  one repository per model and version (`LucasBRT/smart-commit-1.5b-v0.1`): the
+  merged weights in safetensors and the Q4_K_M GGUF, with a model card (base
+  model, data and its licence, prompt format, evaluation against the base,
+  limitations). Their OpenVINO export still runs on users' machines, from
+  those safetensors. A new version is a new name (`-v0.2`), never a
+  replaced file, and is pinned in `src/models.rs` by revision and SHA-256
+  like any other model.
 
 ## Commits
 
