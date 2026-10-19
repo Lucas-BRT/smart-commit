@@ -19,6 +19,7 @@ import tomllib
 from pathlib import Path
 
 HERE = Path(__file__).parent
+USER = "lucasbrt"  # Kaggle username
 BASES = {
     # The revision scripts/export-model.sh pins.
     "1.5b": {"repo": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
@@ -58,7 +59,7 @@ def main() -> None:
     (out / "runs.json").write_text(json.dumps({"runs": runs}, indent=2) + "\n")
     (out / "dataset-metadata.json").write_text(json.dumps({
         "title": f"smart-commit-training-{out.name}",
-        "id": f"USERNAME/smart-commit-training-{out.name}",
+        "id": f"{USER}/smart-commit-training-{out.name}",
         "licenses": [{"name": "other"}],
     }, indent=2) + "\n")
     for run in runs:

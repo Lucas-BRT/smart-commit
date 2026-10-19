@@ -52,6 +52,14 @@ uv run --locked python -I train.py data/h1/examples.jsonl $M runs/h1 --quant 16b
 uv run --locked python -I export_gguf.py $M runs/h1/model-q4_k_m.gguf --adapter runs/h1/adapter \
   --llama-src $C/llama.cpp-src/llama.cpp-b11381 --llama-bin ~/.local/share/smart-commit/llama.cpp/llama-b11381
 
+# 5b. Or keep the upstream GGUF and apply the adapter on it (no re-quantization noise).
+uv run --locked python -I export_lora.py $M runs/h1/adapter runs/h1/adapter.gguf \
+  --llama-src $C/llama.cpp-src/llama.cpp-b11381
+#     then run step 6 with, instead of SMART_COMMIT_GGUF:
+#     SMART_COMMIT_LLAMA_SERVER=$PWD/llama-server-lora.sh LORA_GGUF=$PWD/runs/h1/adapter.gguf \
+#     LORA_SERVER=~/.local/share/smart-commit/llama.cpp/llama-b11381/llama-server
+#     (traces then name the base model only: the adapter is not recorded).
+
 # 6. Evaluate with smart-commit itself, then score.
 XDG_CONFIG_HOME=$C/empty-config SMART_COMMIT_GGUF=$PWD/runs/h1/model-q4_k_m.gguf \
   $SC eval data/eval-v1/inputs.jsonl --device vulkan > data/eval-v1/h1.jsonl
