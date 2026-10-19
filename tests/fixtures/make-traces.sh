@@ -97,3 +97,15 @@ commit "test(fixtures): trace a docs-only change answered with fix"
 printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n\n### Ask smart-commit first\n\nBefore each commit, run smart-commit on the staged change with --trace\nand compare its message with yours.\n' > AGENTS.md; git add AGENTS.md
 "$BIN" --backend mock --mock-response "fix(agents): trace a docs-only change" \
   --trace "$OUT/conventional-en-partial-copy.json" >/dev/null
+
+# Found in real use: a reply one column over the limit; the subject is cut
+# at a word boundary and ends mid-sentence ("... to reflect the").
+fresh too-long
+mkdir docs
+printf '# AGENTS.md\n\nModels are never hosted here.\n' > AGENTS.md; printf '# Training\n' > docs/training.md; git add .
+commit "docs(agents): add the model rules"
+printf '# AGENTS.md\n\nFine-tunes are published on Hugging Face.\n' > AGENTS.md
+printf '# Training\n\nPublish smart-commit-1.5b-v1.\n' > docs/training.md; git add .
+"$BIN" --backend mock \
+  --mock-response "fix(agents): update AGENTS.md and docs/training.md to reflect the changes" \
+  --trace "$OUT/conventional-en-too-long.json" >/dev/null
