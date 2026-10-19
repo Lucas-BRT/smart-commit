@@ -66,10 +66,21 @@ XDG_CONFIG_HOME=$C/empty-config SMART_COMMIT_GGUF=$PWD/runs/h1/model-q4_k_m.gguf
 uv run --locked python -I score.py data/eval-v1 data/eval-v1/h1.jsonl
 ```
 
-`data/eval-v1` is frozen: it was selected with the `build_inputs.py` of
-commit 35a1ae8, before the version-only filter, which today's `select.py`
-applies too; it is identified by its hashes, `inputs.jsonl` sha256 `6d275f0d92c607e5f80cc3be204d5a8a4444391e029abc907eb311b3f29e428c`,
+`data/eval-v1` is frozen: it was built and selected with the
+`build_inputs.py` and `select.py` of commit 35a1ae8, before the version-only
+filter, which today's scripts apply; today's `select.py` alone gives other
+hashes. It is identified by its hashes, `inputs.jsonl` sha256 `6d275f0d92c607e5f80cc3be204d5a8a4444391e029abc907eb311b3f29e428c`,
 `meta.jsonl` sha256 `9b8d53df9863d6b214c53d2de2839ce18f26fc088d9a3e8a2f84202a44e0faaf`.
+To rebuild it:
+
+```bash
+O=$(mktemp -d)
+git show 35a1ae8:training/build_inputs.py > $O/build_inputs.py
+git show 35a1ae8:training/select.py > $O/select.py
+uv run --locked python -I $O/build_inputs.py data/test0-v1 $C/commit-chronicle/5fd076e/test-00000.parquet
+uv run --locked python -I $O/select.py data/test0-v1 data/eval-v1 --conventional 250 --free 250
+sha256sum data/eval-v1/*.jsonl
+```
 
 `data/eval-short` (young repositories, see H5 in HYPOTHESES.md):
 `select.py data/test2to5h data/eval-short --conventional 100 --free 150
