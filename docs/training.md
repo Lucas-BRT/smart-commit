@@ -40,7 +40,7 @@ Two expected gains:
   Python; generate the inputs with the Rust code (see
   [Dataset](#dataset)).
 - **The fine-tunes are published on Hugging Face by the project**, as
-  `smart-commit-<size>-v<N>` (AGENTS.md, "Where models come from"); other
+  `smart-commit-<size>-v<version>` (AGENTS.md, "Where models come from"); other
   publishers' models are still never re-hosted.
 - **Evaluation comes before training.** Without a held-out set and metrics
   there is no way to tell whether a fine-tune, a smaller prompt budget or
@@ -248,9 +248,9 @@ same numbers judge every model:
 ## Export and publication
 
 What is published is one model per size smart-commit offers, named
-`smart-commit-<size>-v<N>` (`smart-commit-1.5b-v1`, `smart-commit-0.5b-v1`),
-not the experiment runs: those stay in `training/runs/` and their numbers in
-HYPOTHESES.md. A later training is a new version, never a replaced file.
+`smart-commit-<size>-v<version>` (`smart-commit-1.5b-v0.1`,
+`smart-commit-0.5b-v0.1`), not the experiment runs: those stay in
+`training/runs/` and their numbers in HYPOTHESES.md. A later training is a new version, never a replaced file.
 
 1. Merge the adapter and quantize to Q4_K_M with `export_gguf.py` (the
    llama.cpp tag smart-commit pins, b11381), and judge it against the
@@ -263,7 +263,7 @@ HYPOTHESES.md. A later training is a new version, never a replaced file.
    **Model** workflow).
 3. Upload both to the project's Hugging Face account,
    [LucasBRT](https://huggingface.co/LucasBRT), one repository per model and
-   version (`LucasBRT/smart-commit-1.5b-v1`): the merged safetensors, the
+   version (`LucasBRT/smart-commit-1.5b-v0.1`): the merged safetensors, the
    Q4_K_M GGUF and a model card with the base model (`base_model:` in its
    metadata), the dataset, the prompt format (smart-commit's), the
    evaluation against the base model, and the limitations (languages).
