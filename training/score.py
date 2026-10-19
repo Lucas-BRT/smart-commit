@@ -6,6 +6,8 @@ Per set (conventional, free) and overall:
 - first_try: the first reply passed the sanitizer
 - fallback: every attempt failed; the message came from the file list
 - copied: the subject is one of the history subjects verbatim
+- first_copied: the first reply repeated a history subject (smart-commit
+  rejects that and retries, so copied alone hides it)
 - type_match: same Conventional type as the real subject (conventional set)
 - scope_known: no scope, or one already used in the history (conventional set)
 - scope_fits: the scope was used by history commits touching a directory
@@ -145,6 +147,7 @@ def main() -> None:
             "first_try": g["attempts"][0]["rejected"] is None,
             "fallback": g["source"] == "fallback",
             "copied": subject in history,
+            "first_copied": "copied_history" in (g["attempts"][0]["rejected"] or {}),
             "word_f1": f1(subject, m["target"]),
             "exact": subject == m["target"],
         }

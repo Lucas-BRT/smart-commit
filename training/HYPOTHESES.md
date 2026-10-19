@@ -150,6 +150,44 @@ even rewards that: `training` is a known scope, just the wrong one.
   leave out places shared by most scopes, the way idf discounts common
   words.
 
+### H5. Training on young repositories stops the copying — planned
+
+Found in real use: a new repository with one commit (`feat: Add a simple
+hello world program`) and a one-line change adding a `println!` with a sum.
+Every model tried, base and fine-tuned, 0.5B and 1.5B, answered with the
+history subject verbatim; H1 came closest (`... with a print statement`).
+
+Cause in our data: `select.py` requires `--min-history 10`, for training
+and for eval-v1, so neither has ever seen a young repository. With one
+example and "follow their style", repeating it is the easy answer.
+
+- **Guard, done on main** (`fix(generate): retry when the reply repeats a
+  history subject`): a reply repeating a history subject is rejected and
+  retried with a note naming it; repeated again, it falls back to the file
+  list. Nothing copied reaches the user, but the fallback is generic.
+- **eval-short**: young repositories, 1–5 history subjects, from test
+  shards 2–5 (`select.py --min-history 1 --max-history 5 --per-repo 5`):
+  47 Conventional commits from 13 repositories, 150 others from 132.
+  Too few Conventional commits for type_match; it measures copying.
+
+  | Model | first reply copied | fallback | ungrounded | word_f1 |
+  |---|---|---|---|---|
+  | base 1.5B | 0.142 | 0.102 | 0.142 | 0.170 |
+  | base 0.5B | 0.365 | 0.350 | 0.325 | 0.122 |
+  | H1 | 0.041 | 0.010 | 0.142 | 0.288 |
+  | H2 | 0.102 | 0.071 | 0.107 | 0.222 |
+
+  The fine-tunes copy far less than the base models, but H2 still falls
+  back on 7% of young repositories, against none on eval-v1.
+- **Data.** Add examples with 0–9 history subjects (`--min-history 0`),
+  about a fifth of the set, so the model learns to describe the diff when
+  the history says little. Watch that eval-v1 does not get worse.
+- **Prompt, if data is not enough.** With a very short history, present
+  the examples as a format reference only ("follow their format, do not
+  repeat them").
+- **Expectation.** first reply copied and fallback on eval-short down to
+  H1's level for the 0.5B, eval-v1 unchanged.
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own (`training-split`, from `training`) once

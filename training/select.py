@@ -5,7 +5,7 @@ depend on the dataset's order; at most `--per-repo` per repository keeps one
 large repository from dominating.
 
     python -I select.py SRC_DIR OUT_DIR --conventional N --free N [--per-repo K]
-                        [--min-history H] [--max-type-share F]
+                        [--min-history H] [--max-history H] [--max-type-share F]
 """
 
 import argparse
@@ -30,6 +30,8 @@ def main() -> None:
                         help="commits from repos that are mostly not Conventional")
     parser.add_argument("--per-repo", type=int, default=40)
     parser.add_argument("--min-history", type=int, default=10)
+    parser.add_argument("--max-history", type=int, default=None,
+                        help="e.g. 5 for young repositories, which the default leaves out")
     parser.add_argument("--supported-only", action="store_true",
                         help="drop commits whose real subject names a version, number or "
                              "identifier absent from the diff and the history")
@@ -62,7 +64,9 @@ def main() -> None:
     pools = {"conventional": [], "free": []}
     dropped = 0
     for i, m in enumerate(meta):
-        if m["history"] < args.min_history:
+        if m["history"] < args.min_history or (
+            args.max_history is not None and m["history"] > args.max_history
+        ):
             continue
         # Filters added after the inputs were built apply here too.
         if not keep_target(m["target"]):

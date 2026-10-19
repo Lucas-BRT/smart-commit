@@ -70,3 +70,9 @@ uv run --locked python -I score.py data/eval-v1 data/eval-v1/h1.jsonl
 commit 35a1ae8, before the version-only filter, which today's `select.py`
 applies too; it is identified by its hashes, `inputs.jsonl` sha256 `6d275f0d92c607e5f80cc3be204d5a8a4444391e029abc907eb311b3f29e428c`,
 `meta.jsonl` sha256 `9b8d53df9863d6b214c53d2de2839ce18f26fc088d9a3e8a2f84202a44e0faaf`.
+
+`data/eval-short` (young repositories, see H5 in HYPOTHESES.md):
+`select.py data/test2to5h data/eval-short --conventional 100 --free 150
+--min-history 1 --max-history 5 --per-repo 5`, from `build_inputs.py` over
+`test-00002`…`test-00005`; `inputs.jsonl` sha256 starts `42d212c0d2687dad`,
+`meta.jsonl` `867c9faf4c5e80bd`.
