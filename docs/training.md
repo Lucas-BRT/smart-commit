@@ -263,11 +263,17 @@ HYPOTHESES.md. A later training is a new version, never a replaced file.
    **Model** workflow).
 3. Upload both to the project's Hugging Face account,
    [LucasBRT](https://huggingface.co/LucasBRT), one repository per model and
-   version (`LucasBRT/smart-commit-1.5b-v1`): the merged safetensors, the Q4_K_M GGUF and a model card with the
-   base model (`base_model:` in its metadata), the dataset and its licence
-   (check that CommitChronicle's allows publishing weights trained on it),
-   the prompt format (smart-commit's), the evaluation against the base
-   model, and the limitations (languages).
+   version (`LucasBRT/smart-commit-1.5b-v1`): the merged safetensors, the
+   Q4_K_M GGUF and a model card with the base model (`base_model:` in its
+   metadata), the dataset, the prompt format (smart-commit's), the
+   evaluation against the base model, and the limitations (languages).
+   The weights are Apache-2.0, like the base model. CommitChronicle has no
+   single licence (`license: other`): it gathers commits from repositories
+   under MIT, Apache-2.0 and BSD-3-Clause and asks that uses follow their
+   terms, attribution included. The card therefore cites CommitChronicle
+   (revision `5fd076e`), says the training commits come from repositories
+   under those licences, and points to the dataset's per-commit provenance
+   (its `repo` and `license` fields).
 4. Add it to `REGISTRY` in `src/models.rs` with the repository, the commit
    revision (never a branch), the size and the SHA-256, initially as
    `Status::Experimental`; update the pages that say models come only from
