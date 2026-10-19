@@ -120,6 +120,25 @@ is rejected too, the message is built from the file list alone (for example
 repository's language and convention, and a warning says so. Backend errors
 are reported, never hidden by the fallback.
 
+## Lockfiles and generated files only
+
+When every staged file was written by a tool, the prompt would show the
+model nothing but their names (their diffs are left out as noise), and
+small models then tend to repeat the history. The message is then built
+from the file list (`chore: add Cargo.lock`) **without loading the model**,
+which also makes it instant. The evidence must be strong:
+
+- a known lockfile name (`Cargo.lock`, `package-lock.json`, `go.sum`…) or
+  the `.lock` extension;
+- a generator's marker (`@generated`, `DO NOT EDIT`) in the first lines of
+  the new file, as Cargo, Go, protoc, sqlc and OpenAPI generators write;
+- `linguist-generated` in `.gitattributes`, read from the index.
+
+Directory guesses such as `build/` or `vendor/` are not enough: they only
+hide the diff from the prompt. A lockfile the list does not know goes to
+the model like any file. Asking for another message in the review asks
+the model.
+
 ## Git hook
 
 `smart-commit hook install` writes `prepare-commit-msg`, honouring

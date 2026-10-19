@@ -59,6 +59,20 @@ pub trait Backend {
     }
 }
 
+/// Stands in when no model is needed (see [`crate::generate::by_rules`]),
+/// so nothing is loaded; asking it to generate is a bug.
+pub struct NoModel;
+
+impl Backend for NoModel {
+    fn describe(&self) -> String {
+        "none".to_owned()
+    }
+
+    fn generate(&self, _: &Prompt, _: &GenerationConfig) -> Result<String, BackendError> {
+        Err(BackendError::Unavailable("no model was loaded".to_owned()))
+    }
+}
+
 /// Replies with scripted responses in order, then with empty ones, and
 /// records the prompts it was given.
 #[derive(Debug, Default)]

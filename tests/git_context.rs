@@ -338,6 +338,30 @@ fn history_records_the_paths_of_each_commit() {
 }
 
 #[test]
+fn gitattributes_mark_generated_files() {
+    let repo = TestRepo::new();
+    repo.write(
+        ".gitattributes",
+        "api/*.ts linguist-generated\nweb/*.js linguist-generated=true\n\
+         api/hand.ts -linguist-generated\n",
+    );
+    for dir in ["api", "web"] {
+        std::fs::create_dir(repo.path().join(dir)).unwrap();
+    }
+    for file in ["api/user.ts", "api/hand.ts", "web/app.js", "main.rs"] {
+        repo.write(file, "x\n");
+    }
+    repo.git(&["add", "."]);
+    let generated = repo
+        .repo()
+        .generated_paths(&["api/user.ts", "api/hand.ts", "web/app.js", "main.rs"])
+        .unwrap();
+    assert_eq!(generated, ["api/user.ts", "web/app.js"]);
+    assert_eq!(repo.context().generated, ["api/user.ts", "web/app.js"]);
+    assert!(repo.repo().generated_paths(&[]).unwrap().is_empty());
+}
+
+#[test]
 fn history_depth_limits_the_subjects() {
     let repo = TestRepo::new();
     for n in 1..=5 {

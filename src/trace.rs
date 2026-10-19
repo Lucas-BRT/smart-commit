@@ -47,6 +47,10 @@ pub struct Inputs {
     pub history_files: Vec<Vec<String>>,
     pub staged: Vec<FileChange>,
     pub files: Vec<FileDiff>,
+    /// Staged paths `.gitattributes` marks `linguist-generated`. Left out
+    /// when empty, so older traces read, and replay, the same.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub generated: Vec<String>,
 }
 
 impl Inputs {
@@ -59,6 +63,7 @@ impl Inputs {
             self.staged.clone(),
         )
         .with_history_files(self.history_files.clone())
+        .with_generated(self.generated.clone())
     }
 }
 
@@ -100,6 +105,7 @@ impl Trace {
                 history_files: ctx.history_files.clone(),
                 staged: ctx.staged.clone(),
                 files: files.to_vec(),
+                generated: ctx.generated.clone(),
             },
             generation: generation.clone(),
         }
@@ -302,6 +308,17 @@ mod tests {
             read.context().history_files,
             with_files.inputs.history_files
         );
+    }
+
+    #[test]
+    fn generated_paths_are_recorded_and_optional() {
+        let trace = recorded(&["fix(git): read the branch"]);
+        assert!(!trace.to_json().contains("\"generated\""));
+        let mut marked = trace.clone();
+        marked.inputs.generated = vec!["src/git.rs".into()];
+        let read = Trace::from_json(&marked.to_json()).unwrap();
+        assert_eq!(read, marked);
+        assert_eq!(read.context().generated, ["src/git.rs"]);
     }
 
     #[test]

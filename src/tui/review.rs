@@ -131,6 +131,9 @@ impl Review {
             Source::Fallback => {
                 "built from the file list: the model's replies were unusable".to_owned()
             }
+            Source::Rules => {
+                "built from the file list: only lockfiles and generated files".to_owned()
+            }
         };
         frame.render_widget(
             Paragraph::new(Line::styled(
