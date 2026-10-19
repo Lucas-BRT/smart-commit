@@ -2,10 +2,11 @@
 upstream file smart-commit pins (Q4_K_M), with llama.cpp b11381.
 
     python -I export_gguf.py BASE_DIR OUT.gguf --llama-src DIR --llama-bin DIR
-                             [--adapter DIR] [--quant Q4_K_M]
+                             [--adapter DIR [--merged DIR]] [--quant Q4_K_M]
 
 Without --adapter it re-quantizes the base model, the control that tells
-our quantization apart from the fine-tune.
+our quantization apart from the fine-tune. --merged keeps the merged
+safetensors the GGUF is made from, the files a fine-tune is published with.
 """
 
 import argparse
@@ -26,10 +27,13 @@ def main() -> None:
     parser.add_argument("base", type=Path)
     parser.add_argument("out", type=Path)
     parser.add_argument("--adapter", type=Path)
+    parser.add_argument("--merged", type=Path, help="keep the merged model here")
     parser.add_argument("--llama-src", type=Path, required=True)
     parser.add_argument("--llama-bin", type=Path, required=True)
     parser.add_argument("--quant", default="Q4_K_M")
     args = parser.parse_args()
+    if args.merged and not args.adapter:
+        parser.error("--merged needs --adapter")
 
     with tempfile.TemporaryDirectory(dir=args.out.parent) as tmp:
         tmp = Path(tmp)
@@ -37,7 +41,7 @@ def main() -> None:
         if args.adapter:
             model = AutoModelForCausalLM.from_pretrained(args.base, dtype=torch.bfloat16)
             model = PeftModel.from_pretrained(model, args.adapter).merge_and_unload()
-            source = tmp / "merged"
+            source = args.merged or tmp / "merged"
             model.save_pretrained(source)
             AutoTokenizer.from_pretrained(args.base).save_pretrained(source)
         bf16 = tmp / "model-bf16.gguf"
