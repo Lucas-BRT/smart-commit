@@ -295,8 +295,9 @@ What is published is one model per size smart-commit offers, named
    [smart-commit-1.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-1.5b-v0.1)
    and [smart-commit-0.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-0.5b-v0.1),
    experimental models in `src/models.rs`.
-6. The next version: H5 (young repositories) and H6 (the rules in the
-   weights) in one bundle, on about 20k examples.
+6. The next version: H5 (young repositories), H6 (the rules in the
+   weights), H4b (the scope map) and H7 (types and scopes outside the
+   lists) in one bundle, on about 20k examples.
 
 Independent of training, on `main`: `--threads-batch` is passed explicitly
 (one thread per physical core, [devices](devices.md#threads-on-the-cpu));

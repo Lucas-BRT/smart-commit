@@ -296,6 +296,49 @@ for moves into the weights; the prompt shrinks.
   the format; an untrained model with the switch on would fall apart, so
   the switch must follow the model, never be a free setting.
 
+### H7. The lists in the prompt are read as closed because the data rarely leaves them — planned
+
+Found in real use with v0.1 (smart-commit 0.5.0, Vulkan), each with a
+trace fixture:
+
+- `mise.toml` added at the root of this repository, whose recent subjects
+  are all scoped and never `chore` ("Types used here: docs, feat, fix,
+  test"). 0.5B: `feat(training): add rust 1.99 to mise.toml`
+  (`conventional-en-closed-types`); 1.5B: `docs(mise): add rust to tools`
+  (`conventional-en-file-scope`). The base 0.5B answered `chore: add
+  mise.toml`.
+- The 0.5.0 version bump: `feat(model): update smart-commit to 0.5b-v0.1`
+  (`conventional-en-release`), with `chore` in the list: the version is
+  taken from the last subject's model name.
+- Fixtures added one after the other: the 0.5B repeated the previous
+  commit's subject, then another history subject after the retry named
+  the first, and the message came from the file list
+  (`conventional-en-copied-twice`).
+
+Cause in our data, measured on `data/curve/clean-40000.jsonl` (c40k, the
+v0.1 set), on the 25,652 targets matching `type(scope)!: `:
+
+- The target's type is in "Types used here" for 87.7%: the model learned
+  to choose inside the list, and `chore` or `build` are out of reach when
+  the recent history lacks them.
+- When every history subject has a scope (8,441 examples), only 6.1% of
+  the targets omit it. Across the 18,918 examples with a scope list, the
+  target's scope is in the list 35.9% of the time (the first one listed
+  16.0%), new 30.9%, absent 33.1%.
+  With no listed scope fitting `mise.toml`, the 0.5B takes the most
+  frequent one, the 1.5B makes one from the file name.
+
+- **Data.** Raise the share of targets whose type is outside the list and
+  of unscoped targets under a fully scoped history, by selection in
+  `select.py`, not by editing targets. Train with the scope map of H4
+  (H4b) so "no scope fits" is visible in the prompt.
+- **Prompt, if data is not enough.** List the standard Conventional types
+  after the ones used here, so `chore` and `build` are always offered.
+- **Metric.** On eval-v1, type_match restricted to commits whose type is
+  not in the prompt's list, and scope_fits; the four fixtures' cases read
+  by hand.
+- **Expectation.** Those rates up, overall type_match within noise.
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own (`training-split`, from `training`) once
