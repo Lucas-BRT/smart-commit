@@ -139,3 +139,20 @@ printf '[tools]\nrust = "1.99"\n' > mise.toml; git add mise.toml
 # scope made from the file name.
 "$BIN" --backend mock --mock-response "docs(mise): add rust to tools" \
   --trace "$OUT/conventional-en-file-scope.json" >/dev/null
+
+# Found in real use, with smart-commit-0.5b-v0.1: a release's version bump;
+# the model answered `feat` and took a model name from the last subject for
+# the version.
+fresh release
+mkdir -p src docs
+printf '[package]\nname = "smart-commit"\nversion = "0.4.0"\nedition = "2024"\n' > Cargo.toml
+printf '[[package]]\nname = "smart-commit"\nversion = "0.4.0"\n' > Cargo.lock
+git add .; commit "chore: release 0.4.0"
+printf 'x\n' > docs/roadmap.md; git add .; commit "docs(roadmap): plan a model server that stays up, KV caching and grammars"
+printf 'x\n' > AGENTS.md; git add .; commit "docs(agents): publish the project's fine-tunes on Hugging Face"
+printf 'y\n' > AGENTS.md; git add .; commit "docs(agents): host the fine-tunes on the LucasBRT Hugging Face account"
+printf 'z\n' > AGENTS.md; git add .; commit "docs(agents): version fine-tunes as v0.x while the recipe changes"
+printf 'x\n' > src/models.rs; git add .; commit "feat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes"
+sed -i 's/0\.4\.0/0.5.0/' Cargo.toml Cargo.lock; git add Cargo.toml Cargo.lock
+"$BIN" --backend mock --mock-response "feat(model): update smart-commit to 0.5b-v0.1" \
+  --trace "$OUT/conventional-en-release.json" >/dev/null
