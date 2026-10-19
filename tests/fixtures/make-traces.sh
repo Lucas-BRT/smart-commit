@@ -86,3 +86,14 @@ printf 'y\n' > training/select.py; git add .; commit "fix(training): salt the ra
 printf '# Training\n\nRun build_inputs.py, then select.py.\n\nThe frozen set needs the build_inputs.py and select.py of 35a1ae8:\n\n    git show 35a1ae8:training/select.py > /tmp/select.py\n' > training/README.md; git add training/README.md
 "$BIN" --backend mock --mock-response "fix(training): update build inputs and select scripts" \
   --trace "$OUT/conventional-en-docs-only.json" >/dev/null
+
+# Found in real use: a new section in AGENTS.md; the model answered `fix` and
+# reused most of the last history subject, which the exact-copy guard misses.
+fresh partial-copy
+printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n' > AGENTS.md; git add .
+commit "docs(agents): add the commit rules"
+mkdir -p tests/fixtures; printf 'x\n' > tests/fixtures/make-traces.sh; git add .
+commit "test(fixtures): trace a docs-only change answered with fix"
+printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n\n### Ask smart-commit first\n\nBefore each commit, run smart-commit on the staged change with --trace\nand compare its message with yours.\n' > AGENTS.md; git add AGENTS.md
+"$BIN" --backend mock --mock-response "fix(agents): trace a docs-only change" \
+  --trace "$OUT/conventional-en-partial-copy.json" >/dev/null
