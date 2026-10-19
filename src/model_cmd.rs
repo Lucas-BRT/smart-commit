@@ -46,7 +46,7 @@ fn list() -> Result<(), Box<dyn Error>> {
     let settings = resolved.settings();
     let models_dir = paths::default_models_dir(env);
     println!(
-        "  {:<20} {:>7}  {:<11} {:<13} installed",
+        "  {:<22} {:>7}  {:<11} {:<13} installed",
         "model", "size", "licence", "status"
     );
     for model in models::REGISTRY {
@@ -60,7 +60,7 @@ fn list() -> Result<(), Box<dyn Error>> {
             ""
         };
         println!(
-            "  {:<20} {:>7}  {:<11} {:<13} {}{mark}",
+            "  {:<22} {:>7}  {:<11} {:<13} {}{mark}",
             model.id,
             models::size(model.gguf.size),
             model.license,
@@ -79,7 +79,7 @@ fn list() -> Result<(), Box<dyn Error>> {
         } else {
             "; llama.cpp devices only (vulkan, cpu)"
         };
-        println!("  {:<20} {}{openvino}", model.id, model.summary);
+        println!("  {:<22} {}{openvino}", model.id, model.summary);
     }
     println!();
     let origin = resolved
@@ -95,7 +95,8 @@ fn list() -> Result<(), Box<dyn Error>> {
         }
     }
     println!(
-        "Models come from their publishers on Hugging Face, pinned and checked.\n\
+        "Models come from Hugging Face, pinned and checked: their publishers' files,\n\
+         or smart-commit's own fine-tunes (smart-commit-*).\n\
          To change: smart-commit model use <id>, or a GGUF file: smart-commit model use FILE"
     );
     Ok(())

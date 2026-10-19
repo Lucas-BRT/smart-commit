@@ -145,9 +145,9 @@ smart-commit model use qwen2.5-coder-7b  # download it from Hugging Face and use
 smart-commit model use ~/models/my.gguf  # use a GGUF file from disk, unverified
 ```
 
-Recommended models are downloaded from their publishers' Hugging Face
-repositories, pinned to a revision and checked against a SHA-256. See
-[models](models.md).
+Recommended models are downloaded from Hugging Face (their publishers'
+repositories, or the project's account for smart-commit's own fine-tunes),
+pinned to a revision and checked against a SHA-256. See [models](models.md).
 
 ## Settings
 

@@ -180,14 +180,13 @@ impl Picker {
         .areas(frame.area());
         frame.render_widget(
             Paragraph::new(Line::styled(
-                " Models: downloaded from their publishers on Hugging Face, pinned and checked",
+                " Models: downloaded from Hugging Face, pinned and checked",
                 theme::title(),
             )),
             title,
         );
 
-        let header =
-            Row::new(["model", "size", "licence", "status", "installed", ""]).style(theme::dim());
+        let header = Row::new(["model", "size", "status", "installed", ""]).style(theme::dim());
         let mut rows: Vec<Row> = self
             .entries
             .iter()
@@ -206,7 +205,6 @@ impl Picker {
                 Row::new(vec![
                     Cell::from(e.model.id),
                     Cell::from(models::size(e.model.gguf.size)),
-                    Cell::from(e.model.license),
                     Cell::from(e.model.status.to_string()),
                     Cell::from(installed),
                     Cell::from(mark),
@@ -217,9 +215,10 @@ impl Picker {
         let table = Table::new(
             rows,
             [
-                Constraint::Length(19),
+                // Every model is Apache-2.0 (models::tests): the licence is
+                // in the details, the room goes to the ids.
+                Constraint::Length(22),
                 Constraint::Length(7),
-                Constraint::Length(10),
                 Constraint::Length(12),
                 Constraint::Length(14),
                 Constraint::Length(9),
@@ -411,6 +410,27 @@ mod tests {
         picker.on_key(key(KeyCode::Up));
         picker.on_key(key(KeyCode::Up));
         assert!(draw(90, 20, |f| picker.render(f)).contains("every device"));
+    }
+
+    #[test]
+    fn a_fine_tune_shows_where_it_comes_from() {
+        let mut picker = picker();
+        let index = models::REGISTRY
+            .iter()
+            .position(|m| m.id == "smart-commit-0.5b-v0.1")
+            .unwrap();
+        for _ in 0..index {
+            picker.on_key(key(KeyCode::Down));
+        }
+        let screen = draw(90, 20, |f| picker.render(f));
+        assert!(screen.contains("> smart-commit-0.5b-v0.1"), "{screen}");
+        assert!(screen.contains("smart-commit 0.5B v0.1"), "{screen}");
+        assert!(
+            screen.contains("huggingface.co/LucasBRT/smart-commit-0.5b-v0.1"),
+            "{screen}"
+        );
+        assert!(screen.contains("commit 829633003d09"), "{screen}");
+        assert!(screen.contains("licence  Apache-2.0"), "{screen}");
     }
 
     #[test]
