@@ -36,8 +36,8 @@ Everything except the model is deterministic and tested without hardware.
 | `hook` | the `prepare-commit-msg` script and how it fills the message file |
 | `paths` | XDG locations of config, models, caches and the benchmark |
 
-The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`) only parses
-arguments and wires these together.
+The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`, `model_cmd.rs`,
+`setup_cmd.rs`) only parses arguments and wires these together.
 
 ## Repository style
 

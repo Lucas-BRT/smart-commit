@@ -69,6 +69,7 @@ installer's options and for building from source.
 | `smart-commit --commit` | review the message (commit, edit, ask for another), then commit |
 | `smart-commit hook install` | fill in the message of every `git commit` in this repository |
 | `smart-commit device` / `device use <device>` | show or change the device |
+| `smart-commit model` / `model use <id>` | show or change the [model](docs/models.md), including smart-commit's fine-tunes |
 | `smart-commit bench` | measure this machine's devices |
 | `smart-commit config list --show-origin` | show every setting and where it comes from |
 | `smart-commit context` / `prompt` | show the detected style and the exact prompt |
