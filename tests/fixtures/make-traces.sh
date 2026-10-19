@@ -41,3 +41,16 @@ printf 'fn main() {}\n' > main.rs; git add main.rs
 "$BIN" --backend mock \
   --mock-response $'<think>The diff adds main.</think>\nSure! Here is a commit message:\n"Add the main entry point."\n\nThis commit message describes the change.' \
   --trace "$OUT/free-en-chatty.json" >/dev/null
+
+# Found in real use: a root config change in a repository whose recent
+# history mostly uses one scope (`training`); the prompt shows where each
+# scope's commits went.
+fresh scopes
+mkdir -p training src docs
+printf 'x\n' > src/main.rs; git add .; commit "feat(cli): add the prompt command"
+printf 'x\n' > training/train.py; git add .; commit "feat(training): add the training script"
+printf 'x\n' > docs/training.md; git add .; commit "docs(training): record the results"
+printf 'y\n' > training/train.py; git add .; commit "fix(training): salt the ranking"
+printf '[tools]\nrust = "1.99"\n' > mise.toml; git add mise.toml
+"$BIN" --backend mock --mock-response "chore: pin rust 1.99 in mise.toml" \
+  --trace "$OUT/conventional-en-scopes.json" >/dev/null

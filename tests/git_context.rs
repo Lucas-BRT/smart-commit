@@ -296,6 +296,48 @@ fn comment_prefix_defaults_to_hash() {
 }
 
 #[test]
+fn history_records_the_paths_of_each_commit() {
+    let repo = TestRepo::new();
+    repo.write("a.rs", "a\n");
+    repo.write("b.rs", "b\n");
+    std::fs::create_dir(repo.path().join("src")).unwrap();
+    repo.write("src/c.rs", "c\n");
+    repo.git(&["add", "."]);
+    repo.commit("feat: add files");
+    repo.git(&["mv", "a.rs", "src/a.rs"]);
+    repo.git(&["rm", "--quiet", "b.rs"]);
+    repo.commit("refactor(src): move a, drop b");
+    repo.commit("chore: empty");
+    for n in 0..25 {
+        repo.write(&format!("f{n:02}.txt"), "x\n");
+    }
+    repo.git(&["add", "."]);
+    repo.commit("feat: many files");
+
+    let commits = repo.repo().recent_commits(10).unwrap();
+    let subjects: Vec<&str> = commits.iter().map(|c| c.0.as_str()).collect();
+    assert_eq!(
+        subjects,
+        [
+            "feat: many files",
+            "chore: empty",
+            "refactor(src): move a, drop b",
+            "feat: add files"
+        ]
+    );
+    let many: Vec<String> = (0..20).map(|n| format!("f{n:02}.txt")).collect();
+    assert_eq!(commits[0].1, many);
+    assert!(commits[1].1.is_empty());
+    assert_eq!(commits[2].1, ["b.rs", "src/a.rs"]);
+    assert_eq!(commits[3].1, ["a.rs", "b.rs", "src/c.rs"]);
+
+    let ctx = repo.context();
+    assert_eq!(ctx.subjects, subjects);
+    assert_eq!(ctx.history_files.len(), 4);
+    assert_eq!(ctx.history_files[2], ["b.rs", "src/a.rs"]);
+}
+
+#[test]
 fn history_depth_limits_the_subjects() {
     let repo = TestRepo::new();
     for n in 1..=5 {

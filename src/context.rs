@@ -16,6 +16,9 @@ pub struct RepoContext {
     pub ticket: Option<String>,
     /// Subjects the style was learned from, most recent first.
     pub subjects: Vec<String>,
+    /// The paths each of `subjects` touched; empty when not collected
+    /// (traces written before it was).
+    pub history_files: Vec<Vec<String>>,
     pub style: Style,
     pub staged: Vec<FileChange>,
 }
@@ -28,12 +31,14 @@ impl RepoContext {
     /// Like [`Self::collect`], learning the style from the last
     /// `history_depth` commits.
     pub fn collect_with_history(repo: &Repo, history_depth: usize) -> Result<Self, GitError> {
+        let (subjects, files) = repo.recent_commits(history_depth)?.into_iter().unzip();
         Ok(Self::new(
             repo.root().to_path_buf(),
             repo.current_branch()?,
-            repo.recent_subjects(history_depth)?,
+            subjects,
             repo.staged_changes()?,
-        ))
+        )
+        .with_history_files(files))
     }
 
     /// Derives everything else from what git reports, so a context can be
@@ -50,8 +55,16 @@ impl RepoContext {
             branch,
             style: style::detect(&subjects),
             subjects,
+            history_files: Vec::new(),
             staged,
         }
+    }
+
+    /// Adds the paths each history subject touched, which tell the areas
+    /// each scope covers.
+    pub fn with_history_files(mut self, files: Vec<Vec<String>>) -> Self {
+        self.history_files = files;
+        self
     }
 }
 

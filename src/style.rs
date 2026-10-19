@@ -95,6 +95,37 @@ pub fn detect<S: AsRef<str>>(subjects: &[S]) -> Style {
     }
 }
 
+/// Where a scope's commits went: the areas (a file's directory, or the file
+/// itself at the root) of the files touched by the commits using `scope`,
+/// most frequent first, at most `max`. `files` holds the paths of each of
+/// `subjects`.
+pub fn scope_areas<S: AsRef<str>>(
+    scope: &str,
+    subjects: &[S],
+    files: &[Vec<String>],
+    max: usize,
+) -> Vec<String> {
+    let areas = subjects
+        .iter()
+        .zip(files)
+        .filter(|(subject, _)| {
+            parse_conventional(subject.as_ref().trim()).and_then(|h| h.scope) == Some(scope)
+        })
+        .flat_map(|(_, paths)| {
+            let mut areas: Vec<&str> = paths.iter().map(|p| area(p)).collect();
+            // Counted once per commit, so one wide commit does not decide.
+            areas.sort_unstable();
+            areas.dedup();
+            areas
+        });
+    rank(areas).into_iter().take(max).map(|(a, _)| a).collect()
+}
+
+/// `src/diff.rs` -> `src/`; `mise.toml` -> `mise.toml`.
+fn area(path: &str) -> &str {
+    path.rfind('/').map_or(path, |slash| &path[..=slash])
+}
+
 /// Parses a conventional commit header: `type(scope)!: description`.
 pub fn parse_conventional(subject: &str) -> Option<ConventionalHeader<'_>> {
     let kind_len = subject
@@ -398,6 +429,46 @@ fn rank<'a>(items: impl Iterator<Item = &'a str>) -> Vec<(String, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scope_areas_rank_places_once_per_commit() {
+        let subjects = [
+            "feat(cli): add context",
+            "fix(cli): parse -C",
+            "docs: readme",
+            "fix(cli): wide change",
+            "feat(git): history",
+        ];
+        let files: Vec<Vec<String>> = [
+            &["src/main.rs", "tests/cli.rs"][..],
+            &["src/main.rs"],
+            &["README.md"],
+            &["src/a.rs", "src/b.rs", "src/c.rs", "docs/usage.md"],
+            &["src/git.rs"],
+        ]
+        .iter()
+        .map(|p| p.iter().map(|s| s.to_string()).collect())
+        .collect();
+        assert_eq!(
+            scope_areas("cli", &subjects, &files, 3),
+            ["src/", "docs/", "tests/"]
+        );
+        assert_eq!(scope_areas("cli", &subjects, &files, 1), ["src/"]);
+        assert_eq!(scope_areas("git", &subjects, &files, 3), ["src/"]);
+        assert!(scope_areas("api", &subjects, &files, 3).is_empty());
+        // Root files are their own place; missing files lists are no places.
+        let root = vec![vec!["mise.toml".to_string()]];
+        assert_eq!(
+            scope_areas("ci", &["ci(x): y"], &root, 3),
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            scope_areas("ci", &["ci: y"], &root, 3),
+            Vec::<String>::new()
+        );
+        assert_eq!(scope_areas("x", &["ci(x): y"], &root, 3), ["mise.toml"]);
+        assert!(scope_areas("x", &["ci(x): y"], &[], 3).is_empty());
+    }
 
     #[test]
     fn parses_full_conventional_header() {

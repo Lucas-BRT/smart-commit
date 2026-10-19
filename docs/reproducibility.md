@@ -110,7 +110,8 @@ $ smart-commit replay t.json              # the pipeline again, with the recorde
 $ smart-commit replay t.json --with-model # asks the model again
 ```
 
-A trace holds what git reported (branch, subjects, staged files and diff),
+A trace holds what git reported (branch, subjects and the paths each one
+touched, staged files and diff),
 the prompt options, the generation config, the backend's description (device,
 model identity, NPU shapes) and every attempt: prompt, raw reply and why it
 was rejected. It leaves out the repository's path. `replay` rebuilds
