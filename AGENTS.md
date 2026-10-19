@@ -77,8 +77,9 @@ describes what is pinned and how it is checked.
   re-hosted: users' machines download them from their publishers and
   export them. The project's own fine-tunes (`smart-commit-<size>-v<N>`,
   e.g. `smart-commit-1.5b-v1`) are published on Hugging Face under the
-  project's account: the merged weights in safetensors and the Q4_K_M GGUF,
-  each version in a commit of that repository with a model card (base
+  project's account, [LucasBRT](https://huggingface.co/LucasBRT), one
+  repository per model and version (`LucasBRT/smart-commit-1.5b-v1`): the
+  merged weights in safetensors and the Q4_K_M GGUF, with a model card (base
   model, data and its licence, prompt format, evaluation against the base,
   limitations). Their OpenVINO export still runs on users' machines, from
   those safetensors. A new version is a new name (`-v2`), never a
