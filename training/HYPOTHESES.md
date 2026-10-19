@@ -77,6 +77,49 @@ differs (311 against 369 ms). If it gets within noise of H1 on type_match
 and word_f1, with first_try ≥ 0.98, it is the better default for slow
 CPUs; it still has no OpenVINO export for the NPU and Intel GPU.
 
+### H-split. The model can tell when the staged changes are several commits — planned
+
+To be tried on a branch of its own (`training-split`, from `training`) once
+H1/H2 show the basic fine-tune works: it changes the reply format and the
+Rust side.
+
+- **Data.** CommitChronicle has no "should have been split" label: mixed
+  commits carry one message. Synthesize positives by joining 2–3 real
+  commits of the same repository, close in time and with **no file in
+  common**, into one input; the target is the split reply with their real
+  subjects. Pairs chosen by hash, deterministic like the rest.
+- **Negatives.** Ordinary commits (most of the data), and hard negatives:
+  large single-purpose commits (refactors across many files, renames), so
+  "many files" does not become "split".
+- **Reply format.** Files grouped, validated by the program like the
+  sanitizer validates messages: the groups must partition the staged files
+  exactly, every path must exist, every subject must pass the sanitizer;
+  otherwise the suggestion is dropped and the normal message is used. A
+  GBNF grammar can enforce the shape.
+
+  ```
+  !split
+  feat(diff): parse renamed files | src/diff.rs src/git.rs
+  docs: describe rename detection | docs/usage.md
+  ```
+
+  Alternative in two steps: one call only groups the files, then the
+  current pipeline runs per group on that group's diff. More calls, but it
+  reuses this prompt and model, and each message sees its whole diff
+  instead of sharing the 1024 tokens.
+- **Product.** The hook never blocks: it writes the message for the whole
+  change plus comment lines git drops (`# smart-commit: looks like 2
+  commits: src/diff.rs src/git.rs | docs/usage.md`). The interactive review
+  gets a "split" action that unstages, stages and commits each group. Split
+  by file first; hunks within one file (partial patches) later.
+- **Metrics.** Precision and recall of the detection on a held-out
+  synthetic set (unseen repositories), precision first: a false alarm
+  costs more than a miss. A small set of real mixed commits labelled by
+  hand, since synthetic ones are too obvious. eval-v1 must not get worse.
+- **Baseline to beat.** A deterministic heuristic without the model
+  (files in unrelated areas, code with docs and lockfiles), for the hook's
+  hint only.
+
 ## Ideas not tried yet
 
 - Train without the rules in the system prompt (shorter prefill); needs a
