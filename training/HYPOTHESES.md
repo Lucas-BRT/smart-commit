@@ -188,6 +188,40 @@ example and "follow their style", repeating it is the easy answer.
 - **Expectation.** first reply copied and fallback on eval-short down to
   H1's level for the 0.5B, eval-v1 unchanged.
 
+### H6. The rules can live in the weights instead of the prompt — planned
+
+Context distillation: train the model on prompts without the fixed rules
+(reply with the message only, 72 columns, the imperative, the Conventional
+Commits format), keeping only what varies per repository (types, scopes,
+examples, language, ticket) and the diff. The behaviour the rules asked
+for moves into the weights; the prompt shrinks.
+
+- **Why not soft prompts.** Learning a few embedding vectors to replace the
+  rules (prompt or prefix tuning) would save the same tokens, but neither
+  llama-server nor OpenVINO GenAI accept embeddings in place of text, so it
+  needs runtime changes on every backend. Context distillation needs none.
+- **Gain.** The fixed rules are about 200–250 tokens, the median prompt
+  about 400 with the chat template (2000 prompts of train shard 0: p50 406,
+  p90 816 tokens).
+  Prefill scales about linearly with prompt tokens and is about 90% of the
+  time per message on the CPU, so typical prompts would read 40–60% faster.
+  Measure it, do not trust this estimate.
+- **Rust.** A `PromptOptions` switch (e.g. `prompt.rules = full | none`)
+  that a trained model turns on; base models keep the full rules. It must
+  reach traces through `PromptOptions`, like every setting that changes
+  what is generated. Which models need `none` could be recorded in
+  `models::REGISTRY`, so the user does not set it by hand.
+- **Training.** The same pipeline, with `make_examples.py` building prompts
+  with the switch on. Best trained together with H5 (young repositories) in
+  one bundle, plus more data if the b2 learning curve says so.
+- **Metrics.** eval-v1 and eval-short with the switch on against H2/H1 with
+  the full prompt: first_try and fallback must not move (they are what the
+  rules were for), type_match and word_f1 within noise; CPU seconds per
+  message on the same 50 commits as before.
+- **Risk.** A model trained without the rules depends on the training for
+  the format; an untrained model with the switch on would fall apart, so
+  the switch must follow the model, never be a free setting.
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own (`training-split`, from `training`) once

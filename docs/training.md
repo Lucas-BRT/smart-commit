@@ -272,6 +272,9 @@ same numbers judge every model:
    HYPOTHESES.md.
 5. Export, publish, add to the registry.
 
-Independent of training, worth doing on `main`: `--threads-batch` and
-`-b`/`-ub` passed explicitly to `llama-server` and shown in `describe()`; a
-large trace fixture for `bench`; a GBNF grammar for the conventions.
+Independent of training, on `main`: `--threads-batch` is passed explicitly
+(one thread per physical core, [devices](devices.md#threads-on-the-cpu));
+a model server that stays up, KV caching of the fixed prompt prefix and a
+GBNF grammar for the conventions are in the [roadmap](roadmap.md). Still
+to do: a large trace fixture for `bench`, whose ~250-token prompts
+underestimate prefill.
