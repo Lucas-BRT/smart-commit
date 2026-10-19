@@ -134,6 +134,21 @@ even rewards that: `training` is a known scope, just the wrong one.
   H1/H2 and the real subjects.
 - **Expectation.** scope_fits up on the conventional set, type_match and
   word_f1 not worse, at a cost of a few dozen prompt tokens.
+- **Baseline of the metric** (eval-v1h: eval-v1 plus the paths of each
+  history commit, from the same shard): the real subjects fit 0.752; base
+  1.5B 0.464, base 0.5B 0.564; H1 0.708, H2 0.728. The fine-tunes already
+  got most of the way on CommitChronicle; the real-use case may be typical
+  of repositories with one dominant recent scope.
+- **The prompt alone does nothing** (implemented: `feat(prompt): show where
+  each scope's commits went`). scope_fits: base 1.5B 0.464 → 0.484, base
+  0.5B 0.564 → 0.564, H1 0.708 → 0.688, H2 0.728 → 0.688 (trained on the
+  old prompt); all within noise, and H2 still writes `feat(training)` for
+  the mise.toml case. It needs training with the new prompt: H4b.
+- **Weakness seen on this repository:** docs/ is among the places of almost
+  every scope (each feature updates the docs here), so the map is long
+  (~100 tokens for 8 scopes) and tells scopes apart less. Possible fix:
+  leave out places shared by most scopes, the way idf discounts common
+  words.
 
 ### H-split. The model can tell when the staged changes are several commits — planned
 
