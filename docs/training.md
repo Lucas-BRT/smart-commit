@@ -261,8 +261,9 @@ HYPOTHESES.md. A later training is a new version, never a replaced file.
    published safetensors through `scripts/export/`, following AGENTS.md's
    model export rules (two identical exports, `MANIFEST.sha256`, the
    **Model** workflow).
-3. Upload both to the project's Hugging Face account, one repository per
-   size: the merged safetensors, the Q4_K_M GGUF and a model card with the
+3. Upload both to the project's Hugging Face account,
+   [LucasBRT](https://huggingface.co/LucasBRT), one repository per model and
+   version (`LucasBRT/smart-commit-1.5b-v1`): the merged safetensors, the Q4_K_M GGUF and a model card with the
    base model (`base_model:` in its metadata), the dataset and its licence
    (check that CommitChronicle's allows publishing weights trained on it),
    the prompt format (smart-commit's), the evaluation against the base
