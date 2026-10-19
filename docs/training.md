@@ -39,6 +39,9 @@ Two expected gains:
   smart-commit builds at run time.** Never write a second prompt builder in
   Python; generate the inputs with the Rust code (see
   [Dataset](#dataset)).
+- **The fine-tunes are published on Hugging Face by the project**, as
+  `smart-commit-<size>-v<N>` (AGENTS.md, "Where models come from"); other
+  publishers' models are still never re-hosted.
 - **Evaluation comes before training.** Without a held-out set and metrics
   there is no way to tell whether a fine-tune, a smaller prompt budget or
   another model is better.
@@ -244,20 +247,30 @@ same numbers judge every model:
 
 ## Export and publication
 
-1. Convert the adapter to GGUF with `convert_lora_to_gguf.py` from the
-   llama.cpp tag smart-commit pins (b11381), and check it with
-   `llama-server --lora`. Alternatively, merge and quantize to Q4_K_M for a
-   standalone GGUF.
-2. For the OpenVINO devices (NPU, Intel GPU), either check that OpenVINO
-   GenAI applies the adapter on those devices, or merge and re-export through
-   `scripts/export/` following AGENTS.md's model export rules (two identical
-   exports, `MANIFEST.sha256`, the **Model** workflow).
-3. Upload to Hugging Face with a model card: base model, dataset and its
-   license, prompt format (smart-commit's), evaluation against the base
-   model, limitations (languages).
+What is published is one model per size smart-commit offers, named
+`smart-commit-<size>-v<N>` (`smart-commit-1.5b-v1`, `smart-commit-0.5b-v1`),
+not the experiment runs: those stay in `training/runs/` and their numbers in
+HYPOTHESES.md. A later training is a new version, never a replaced file.
+
+1. Merge the adapter and quantize to Q4_K_M with `export_gguf.py` (the
+   llama.cpp tag smart-commit pins, b11381), and judge it against the
+   control as H0 explains. The merged GGUF runs with no change to
+   smart-commit (`SMART_COMMIT_GGUF`); the adapter alone
+   (`export_lora.py`, `llama-server --lora`) is for evaluation only.
+2. For the OpenVINO devices (NPU, Intel GPU), users' machines export the
+   published safetensors through `scripts/export/`, following AGENTS.md's
+   model export rules (two identical exports, `MANIFEST.sha256`, the
+   **Model** workflow).
+3. Upload both to the project's Hugging Face account, one repository per
+   size: the merged safetensors, the Q4_K_M GGUF and a model card with the
+   base model (`base_model:` in its metadata), the dataset and its licence
+   (check that CommitChronicle's allows publishing weights trained on it),
+   the prompt format (smart-commit's), the evaluation against the base
+   model, and the limitations (languages).
 4. Add it to `REGISTRY` in `src/models.rs` with the repository, the commit
    revision (never a branch), the size and the SHA-256, initially as
-   `Status::Experimental`; update `docs/models.md` and
+   `Status::Experimental`; update the pages that say models come only from
+   their publishers (`docs/models.md`, `docs/usage.md`, README) and
    `docs/reproducibility.md`.
 
 ## Next steps, in order
