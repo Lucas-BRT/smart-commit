@@ -72,7 +72,13 @@ pub fn generate_avoiding(
         };
         let prompt = prompt::build_with_note(ctx, files, options, note.as_deref());
         let raw = backend.generate(&prompt, config)?;
-        match message::sanitize(&raw, convention) {
+        let checked = message::sanitize(&raw, convention).and_then(|message| {
+            match copied_from(&message.subject, &ctx.subjects) {
+                Some(subject) => Err(SanitizeError::CopiedHistory(subject.to_owned())),
+                None => Ok(message),
+            }
+        });
+        match checked {
             Ok(message) => {
                 attempts.push(Attempt {
                     prompt,
@@ -97,6 +103,16 @@ pub fn generate_avoiding(
         source: Source::Fallback,
         attempts,
     })
+}
+
+/// The history subject `subject` repeats, ignoring case and a final period.
+fn copied_from<'a>(subject: &str, history: &'a [String]) -> Option<&'a str> {
+    let normalize = |s: &str| s.trim().trim_end_matches('.').to_lowercase();
+    let subject = normalize(subject);
+    history
+        .iter()
+        .find(|h| normalize(h) == subject)
+        .map(String::as_str)
 }
 
 /// Asks for a message other than the subjects of `messages`.
@@ -136,6 +152,13 @@ pub fn retry_note(error: &SanitizeError, convention: Convention) -> String {
         SanitizeError::NotConventional(subject) => {
             let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
             format!("\"{subject}\" does not follow `type(scope): description`")
+        }
+        SanitizeError::CopiedHistory(subject) => {
+            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
+            format!(
+                "\"{subject}\" repeats an earlier commit of this repository; \
+                 describe what this diff changes instead"
+            )
         }
     };
     let format = match convention {
@@ -227,6 +250,53 @@ mod tests {
             ))
         );
         assert_eq!(generation.attempts[1].rejected, None);
+    }
+
+    #[test]
+    fn a_copied_history_subject_is_retried() {
+        // Real use: one commit of history, a one-line diff, and every model
+        // repeated the history subject.
+        let history = &["feat: Add a simple hello world program"];
+        let mock = MockBackend::new([
+            "feat: add a simple hello world program.",
+            "feat: print the sum of 1 + 1",
+        ]);
+        let generation = run(history, &mock);
+        assert_eq!(generation.source, Source::Model);
+        assert_eq!(generation.message.subject, "feat: print the sum of 1 + 1");
+        assert_eq!(
+            generation.attempts[0].rejected,
+            Some(SanitizeError::CopiedHistory(
+                "feat: Add a simple hello world program".into()
+            ))
+        );
+        assert!(mock.prompts()[1].user.ends_with(
+            "Your previous reply was rejected because \"feat: Add a simple hello world \
+             program\" repeats an earlier commit of this repository; describe what this \
+             diff changes instead. Reply again with only the commit message in the \
+             `type(scope): description` format.\n"
+        ));
+    }
+
+    #[test]
+    fn copying_twice_falls_back() {
+        let mock = MockBackend::new(["fix(git): handle detached HEAD"; 2]);
+        let generation = run(CONVENTIONAL, &mock);
+        assert_eq!(generation.source, Source::Fallback);
+        assert!(
+            generation
+                .attempts
+                .iter()
+                .all(|a| matches!(a.rejected, Some(SanitizeError::CopiedHistory(_))))
+        );
+    }
+
+    #[test]
+    fn a_subject_that_only_resembles_the_history_is_kept() {
+        let mock = MockBackend::new(["fix(git): handle detached HEAD in hooks"]);
+        let generation = run(CONVENTIONAL, &mock);
+        assert_eq!(generation.attempts.len(), 1);
+        assert_eq!(generation.source, Source::Model);
     }
 
     #[test]
