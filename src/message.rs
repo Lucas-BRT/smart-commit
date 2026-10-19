@@ -41,6 +41,10 @@ pub enum SanitizeError {
     Empty,
     #[error("subject does not follow Conventional Commits: {0:?}")]
     NotConventional(String),
+    /// The subject repeats one from the history, as small models do when
+    /// the history is short or the diff says little.
+    #[error("subject repeats an earlier commit: {0:?}")]
+    CopiedHistory(String),
 }
 
 /// Labels the model puts before the message, compared lowercase.
