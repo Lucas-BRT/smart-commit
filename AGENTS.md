@@ -83,8 +83,8 @@ describes what is pinned and how it is checked.
   merged weights in safetensors and the Q4_K_M GGUF, with a model card (base
   model, data and its licence, prompt format, evaluation against the base,
   limitations). Their OpenVINO export is to run on users' machines, from
-  those safetensors, like other models' (not done for v0.1). A new version is a new name (`-v0.2`), never a
-  replaced file, and is pinned in `src/models.rs` by revision and SHA-256
+  those safetensors, like other models' (not done for v0.1). A new
+  version is a new name (`-v0.2`), never a replaced file, and is pinned in `src/models.rs` by revision and SHA-256
   like any other model.
 
 ## Commits
