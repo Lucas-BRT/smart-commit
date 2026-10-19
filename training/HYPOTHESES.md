@@ -109,6 +109,32 @@ went from 0.76 to 1.000 and copying from 0.37 to 0.06. On the CPU it is
 shorter prompt read and replies of 42 characters instead of 78. Kaggle T4,
 35 min, train loss 2.71.
 
+### H4. Showing where each scope is used fixes scopes copied from the history — planned
+
+Found in real use, on this repository: for a staged `mise.toml` (Rust
+toolchain bump), H2 wrote `feat(training): rust 1.99`, taking the scope the
+recent history uses most; H1 wrote `chore: update rust version in
+mise.toml`. The prompt lists the scopes used here but not which files each
+one covers, so a small model picks the most frequent one. `scope_known`
+even rewards that: `training` is a known scope, just the wrong one.
+
+- **Prompt (Rust).** `Scopes used here: training (training/,
+  docs/training.md), cli (src/main.rs)`: for each scope, the paths its
+  commits touched most, from `git log --name-only` over the same
+  `style.history_depth` commits, deterministic and cheap. A change touching
+  none of them should get no scope, as the rule already says. It changes
+  the prompt: snapshots, the trace fixtures regenerated with
+  `tests/fixtures/make-traces.sh`, `trace::Inputs` extended (old traces
+  must still read), and eval-v1 before and after on the base models.
+- **Training data.** CommitChronicle has the files of every commit, so the
+  same map can be built for the history of each example.
+- **Metric.** `scope_fits`: the generated scope was used before by commits
+  touching the same areas (top-level directory or file) as the staged
+  ones, or there is no scope and none fits. Report it for the base models,
+  H1/H2 and the real subjects.
+- **Expectation.** scope_fits up on the conventional set, type_match and
+  word_f1 not worse, at a cost of a few dozen prompt tokens.
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own (`training-split`, from `training`) once
