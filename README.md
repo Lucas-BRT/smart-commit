@@ -117,5 +117,6 @@ and how releases are made.
 ## License
 
 smart-commit is released under the [MIT License](LICENSE). The models are
-not part of it: they are downloaded from their publishers on Hugging Face,
-under their own licences (the recommended ones are Apache-2.0).
+not part of it: they are downloaded from Hugging Face under their own
+licences (the recommended ones are Apache-2.0), from their publishers, or
+for smart-commit's own fine-tunes from the project's account.

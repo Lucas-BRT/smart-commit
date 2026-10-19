@@ -78,14 +78,23 @@ fn list_shows_every_recommended_model_and_the_one_in_use() {
     assert!(output.status.success(), "{}", stderr(&output));
     let out = stdout(&output);
     assert!(
-        out.contains("  qwen2.5-coder-1.5b    1.1 GB  Apache-2.0  validated     -  <- in use"),
+        out.contains("  qwen2.5-coder-1.5b      1.1 GB  Apache-2.0  validated     -  <- in use"),
         "{out}"
     );
     assert!(
-        out.contains("  qwen2.5-coder-0.5b    491 MB  Apache-2.0  experimental  gguf\n"),
+        out.contains("  qwen2.5-coder-0.5b      491 MB  Apache-2.0  experimental  gguf\n"),
         "{out}"
     );
     assert!(out.contains("  qwen2.5-coder-7b "), "{out}");
+    assert!(
+        out.contains("  smart-commit-1.5b-v0.1  986 MB  Apache-2.0  experimental  -\n"),
+        "{out}"
+    );
+    assert!(out.contains("  smart-commit-0.5b-v0.1  397 MB  "), "{out}");
+    assert!(
+        out.contains("or smart-commit's own fine-tunes (smart-commit-*)"),
+        "{out}"
+    );
     assert!(
         out.contains("llama.cpp devices only (vulkan, cpu)"),
         "{out}"
@@ -123,6 +132,46 @@ fn use_switches_to_an_installed_model() {
         "{dir}"
     );
     assert!(stdout(&home.run(&["model"])).contains("experimental  gguf  <- in use"));
+}
+
+#[test]
+fn use_switches_to_a_fine_tune() {
+    let home = Home::new();
+    home.install(model("smart-commit-0.5b-v0.1"));
+    let output = home.run(&["model", "use", "smart-commit-0.5b-v0.1"]);
+    assert!(output.status.success(), "{}", stderr(&output));
+    let out = stdout(&output);
+    assert!(out.contains("model.name = smart-commit-0.5b-v0.1"), "{out}");
+    assert!(
+        out.contains("smart-commit-0.5b-v0.1 has no OpenVINO version"),
+        "{out}"
+    );
+    let gguf = stdout(&home.run(&["config", "get", "model.gguf"]));
+    assert!(
+        gguf.contains("smart-commit-0.5b-v0.1-q4_k_m.gguf"),
+        "{gguf}"
+    );
+    assert!(stdout(&home.run(&["model"])).contains("In use: smart-commit-0.5b-v0.1"));
+}
+
+#[test]
+fn a_fine_tune_downloads_from_the_project_account() {
+    let home = Home::new();
+    let output = home.run(&["model", "use", "smart-commit-1.5b-v0.1"]);
+    assert_eq!(output.status.code(), Some(1));
+    let err = stderr(&output);
+    assert!(
+        err.contains("downloading smart-commit 1.5B v0.1 (986 MB, Apache-2.0)"),
+        "{err}"
+    );
+    assert!(
+        err.contains(
+            "cannot download file:///nonexistent/hf/LucasBRT/smart-commit-1.5b-v0.1/resolve/\
+             9147da25797e21b63815f9ad80a1e79547198a37/smart-commit-1.5b-v0.1-q4_k_m.gguf"
+        ),
+        "{err}"
+    );
+    assert_eq!(home.config(), "");
 }
 
 #[test]
@@ -203,7 +252,7 @@ fn use_refuses_what_is_not_a_model() {
     assert!(
         stderr(&output).contains(
             "llama-3 is neither a recommended model (qwen2.5-coder-1.5b, qwen2.5-coder-0.5b, \
-             qwen2.5-coder-7b) nor a file"
+             qwen2.5-coder-7b, smart-commit-1.5b-v0.1, smart-commit-0.5b-v0.1) nor a file"
         ),
         "{}",
         stderr(&output)

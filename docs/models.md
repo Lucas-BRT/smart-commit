@@ -1,9 +1,11 @@
 # Models
 
-smart-commit does not ship or host models. It recommends a few, downloads
-them from their publishers' Hugging Face repositories when asked, and checks
-that each file is exactly the one it pinned. Any other GGUF model can be
-used from disk.
+smart-commit does not ship models. It recommends a few, downloads them from
+Hugging Face when asked, and checks that each file is exactly the one it
+pinned: other publishers' models from their own repositories, never
+re-hosted, and smart-commit's own fine-tunes (`smart-commit-*`) from the
+project's account, [LucasBRT](https://huggingface.co/LucasBRT). Any other
+GGUF model can be used from disk.
 
 In a terminal, `smart-commit model` opens a picker: the models with what is
 installed and in use, the chosen one's source and pinned commit, a
@@ -13,17 +15,22 @@ progress bar while it downloads, and a path prompt for a model on disk.
 
 ```console
 $ smart-commit model list
-  model                   size  licence     status        installed
-  qwen2.5-coder-1.5b    1.1 GB  Apache-2.0  validated     gguf, openvino  <- in use
-  qwen2.5-coder-0.5b    491 MB  Apache-2.0  experimental  -
-  qwen2.5-coder-7b      4.7 GB  Apache-2.0  experimental  -
+  model                     size  licence     status        installed
+  qwen2.5-coder-1.5b      1.1 GB  Apache-2.0  validated     gguf, openvino  <- in use
+  qwen2.5-coder-0.5b      491 MB  Apache-2.0  experimental  -
+  qwen2.5-coder-7b        4.7 GB  Apache-2.0  experimental  -
+  smart-commit-1.5b-v0.1  986 MB  Apache-2.0  experimental  -
+  smart-commit-0.5b-v0.1  397 MB  Apache-2.0  experimental  -
 
-  qwen2.5-coder-1.5b   the default: fast on every device, code-focused
-  qwen2.5-coder-0.5b   the smallest: faster, for slow CPUs; weaker messages; llama.cpp devices only (vulkan, cpu)
-  qwen2.5-coder-7b     the largest: better messages, but slow to load (8 s on a GPU); llama.cpp devices only (vulkan, cpu)
+  qwen2.5-coder-1.5b     the default: fast on every device, code-focused
+  qwen2.5-coder-0.5b     the smallest: faster, for slow CPUs; weaker messages; llama.cpp devices only (vulkan, cpu)
+  qwen2.5-coder-7b       the largest: better messages, but slow to load (8 s on a GPU); llama.cpp devices only (vulkan, cpu)
+  smart-commit-1.5b-v0.1 Qwen2.5-Coder-1.5B fine-tuned for smart-commit: the right commit types; llama.cpp devices only (vulkan, cpu)
+  smart-commit-0.5b-v0.1 Qwen2.5-Coder-0.5B fine-tuned: as good as the 1.5B on types, faster; llama.cpp devices only (vulkan, cpu)
 
 In use: qwen2.5-coder-1.5b (model.name, default).
-Models come from their publishers on Hugging Face, pinned and checked.
+Models come from Hugging Face, pinned and checked: their publishers' files,
+or smart-commit's own fine-tunes (smart-commit-*).
 To change: smart-commit model use <id>, or a GGUF file: smart-commit model use FILE
 
 $ smart-commit model use qwen2.5-coder-0.5b
@@ -36,26 +43,39 @@ The last benchmark measured the previous model: run `smart-commit bench` again.
 
 ## Recommended models
 
-| Model | Size | Status | Devices | Per message, Ryzen 5 5500 (`cpu` / `vulkan` on an RTX 3050) |
-|---|---|---|---|---|
-| `qwen2.5-coder-1.5b` (default) | 1.1 GB | validated | all | 1.9 s / 2.3 s |
-| `qwen2.5-coder-0.5b` | 491 MB | experimental | `vulkan`, `cpu` | 1.1 s / 1.3 s |
-| `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` | 6.7 s / 8.3 s |
+| Model | Size | Status | Devices | Per message, Ryzen 5 5500 (`cpu` / `vulkan` on an RTX 3050) | Per message, Core Ultra 5 225H (`cpu` / `vulkan` on its Arc iGPU) |
+|---|---|---|---|---|---|
+| `qwen2.5-coder-1.5b` (default) | 1.1 GB | validated | all | 1.9 s / 2.3 s | 1.7 s / 1.5 s |
+| `qwen2.5-coder-0.5b` | 491 MB | experimental | `vulkan`, `cpu` | 1.1 s / 1.3 s | 1.3 s / 0.9 s |
+| `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` | 6.7 s / 8.3 s | — |
+| `smart-commit-1.5b-v0.1` | 986 MB | experimental | `vulkan`, `cpu` | — | 1.7 s / 1.6 s |
+| `smart-commit-0.5b-v0.1` | 397 MB | experimental | `vulkan`, `cpu` | — | 1.3 s / 0.8 s |
 
-Times are `smart-commit bench` with fast load, on the fixture prompts.
+Times are `smart-commit bench` with fast load, on the fixture prompts; a
+dash is a pair not measured.
 
 - **Validated** models are the ones the prompt was tuned on, checked on the
   fixture prompts and the hardware tests.
-- **Experimental** models load and answer, but their messages have not been
-  evaluated. On the fixture prompts the 0.5B model wrote placeholders
+- **Experimental** models load and answer, but have not been through the
+  checks above. On the fixture prompts the 0.5B model wrote placeholders
   (`type(diff): …`), broke the gitmoji style and copied history examples
   more often than the 1.5B model; the retry and the fallback still apply.
   The 7B model wrote the most fitting messages, but most of its time is
   loading: on the RTX 3050, 7.8 s of 8.3 s is copying 4.4 GB to the GPU,
   and generating takes 0.45 s.
-- All three are Qwen's official GGUF files (Q4_K_M), Apache-2.0. Models
-  with restrictive licences are not recommended (see the
+- The `qwen2.5-coder-*` models are Qwen's official GGUF files (Q4_K_M),
+  Apache-2.0. Models with restrictive licences are not recommended (see the
   [roadmap](roadmap.md#model-candidates)).
+- The `smart-commit-*` models are Qwen2.5-Coder fine-tuned on
+  smart-commit's own prompt with commits from CommitChronicle, merged and
+  quantized to Q4_K_M, Apache-2.0 like their base. On eval-v1 (500 held-out
+  commits) both pick the Conventional type of the real commit about 64% of
+  the time, against 46% for `qwen2.5-coder-1.5b`, which answers `fix` to
+  most changes; the 0.5B falls back to the file list more often on young
+  repositories (9% against 3%). They were trained without the scope map of
+  the prompt. Their model cards on Hugging Face list the evaluation, the
+  training and the limitations. Versions are new ids (`-v0.2`), never
+  replaced files.
 
 ## Where they come from
 
@@ -98,7 +118,9 @@ and `auto` uses `vulkan` or `cpu`.
 
 ## Adding a recommended model
 
-1. An open licence, and the publisher's own GGUF file.
+1. An open licence, and the publisher's own GGUF file, or for a fine-tune
+   of this project, its repository under the project's account (AGENTS.md,
+   "Where models come from").
 2. Its repository commit, file size and SHA-256 (the Hugging Face API lists
    them: `https://huggingface.co/api/models/<repo>?blobs=true`), in
    `src/models.rs`.

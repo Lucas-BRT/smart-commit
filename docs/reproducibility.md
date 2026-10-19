@@ -67,11 +67,19 @@ it, to check that it reproduces on another machine. On a Ryzen 5 5500 the
 export from scratch (uv, Python, the packages and the source model
 downloaded) took 1 min 47 s and matched the manifest.
 
-The GGUF models for llama.cpp are the publishers' own files on Hugging
-Face (Qwen's for every recommended model), each pinned in `src/models.rs` to
-a repository commit and to the file's SHA-256 at that commit:
-`smart-commit model use` refuses any other file. A model chosen from disk
-(`model.gguf`) is not checked; traces name it `sha256=unverified`.
+The GGUF models for llama.cpp are files on Hugging Face, each pinned in
+`src/models.rs` to a repository commit and to the file's SHA-256 at that
+commit: `smart-commit model use` refuses any other file. They are the
+publishers' own files (Qwen's for the `qwen2.5-coder-*` models), or for
+smart-commit's fine-tunes (`smart-commit-*`) the project's own, published
+under its account. A model chosen from disk (`model.gguf`) is not checked;
+traces name it `sha256=unverified`.
+
+Training a fine-tune is not bit-for-bit reproducible (GPU kernels are not
+deterministic), so its weights are a pinned input like any publisher's
+file: published with the exact data, recipe and scripts (on the `training`
+branch), never retrained in place. A new training is a new version, a new
+id. Generating with it is reproducible like with any other model.
 
 ## System dependencies
 

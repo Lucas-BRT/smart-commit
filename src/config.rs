@@ -85,7 +85,7 @@ pub const KEYS: &[Key] = &[
         scope: Scope::User,
         env: Some("SMART_COMMIT_MODEL"),
         description: "Which recommended model runs (`smart-commit model` lists them), \
-                      downloaded from its publisher on Hugging Face.",
+                      downloaded from Hugging Face, pinned and checked.",
     },
     Key {
         name: "model.dir",
