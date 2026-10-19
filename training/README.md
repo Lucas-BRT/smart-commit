@@ -1,6 +1,6 @@
 # Training pipeline
 
-Exploratory work on the `training` branch; see
+Exploratory work toward smart-commit's own models; see
 [docs/training.md](../docs/training.md) for the goal and the decisions, and
 [HYPOTHESES.md](HYPOTHESES.md) for what was tried and measured.
 

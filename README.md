@@ -101,6 +101,7 @@ Vulkan, with the fast load the benchmark turned on. See [devices](docs/devices.m
 - [Models](docs/models.md): the recommended models, where they come from, using your own
 - [Architecture](docs/architecture.md): how a message is made
 - [Reproducibility](docs/reproducibility.md): what is pinned and how it is checked
+- [Training](docs/training.md): how smart-commit's own models are trained and measured
 - [Roadmap](docs/roadmap.md): what comes next, and the model candidates
 
 ## Contributing
