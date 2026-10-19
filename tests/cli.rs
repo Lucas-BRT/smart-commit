@@ -226,6 +226,70 @@ fn prompt_from_invalid_inputs_names_the_line() {
 }
 
 #[test]
+fn eval_writes_a_replayable_trace_per_input() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n{inputs}\n")).unwrap();
+
+    let output = smart_commit(
+        &[
+            "eval",
+            file.to_str().unwrap(),
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: add the entry point",
+            "--mock-response",
+            "Add the entry point",
+            "--mock-response",
+            "feat(cli): add main",
+        ],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(
+        stderr(&output),
+        "evaluating 2 input(s) with the mock backend\n"
+    );
+    let out = stdout(&output);
+    let traces: Vec<&str> = out.lines().collect();
+    assert_eq!(traces.len(), 2);
+    for (line, (attempts, message)) in traces
+        .iter()
+        .zip([(1, "feat: add the entry point"), (2, "feat(cli): add main")])
+    {
+        let trace = dir.path().join("trace.json");
+        std::fs::write(&trace, line).unwrap();
+        let output = smart_commit(&["replay", trace.to_str().unwrap()], dir.path());
+        assert!(output.status.success(), "{}", stderr(&output));
+        assert_eq!(
+            stdout(&output),
+            format!("reproduced: {attempts} attempt(s), Model message\n{message}\n")
+        );
+    }
+}
+
+#[test]
+fn eval_of_no_inputs_prints_nothing() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, "\n").unwrap();
+    let path = file.to_str().unwrap();
+    let output = smart_commit(&["eval", path, "--backend", "mock"], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "");
+
+    let output = smart_commit(
+        &["eval", path, "--backend", "mock", "--trace", "t.json"],
+        dir.path(),
+    );
+    assert_eq!(output.status.code(), Some(1));
+    assert!(stderr(&output).contains("--trace does not apply"));
+}
+
+#[test]
 fn lockfiles_alone_get_a_message_without_loading_a_model() {
     let repo = TestRepo::new();
     repo.commit("feat: Add a simple hello world program");
