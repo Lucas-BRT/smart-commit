@@ -156,3 +156,17 @@ printf 'x\n' > src/models.rs; git add .; commit "feat(model): add the smart-comm
 sed -i 's/0\.4\.0/0.5.0/' Cargo.toml Cargo.lock; git add Cargo.toml Cargo.lock
 "$BIN" --backend mock --mock-response "feat(model): update smart-commit to 0.5b-v0.1" \
   --trace "$OUT/conventional-en-release.json" >/dev/null
+
+# Found in real use, with smart-commit-0.5b-v0.1: a change much like the last
+# commit's; the model repeated that commit's subject, and again after the
+# retry named it, so the message came from the file list.
+fresh copied-twice
+mkdir -p tests/fixtures/traces
+printf 'x\n' > tests/fixtures/make-traces.sh; git add .; commit "feat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes"
+printf 'y\n' > tests/fixtures/make-traces.sh; printf '{}\n' > tests/fixtures/traces/closed-types.json; git add .
+commit "test(fixtures): trace a config change kept to the listed types"
+printf 'z\n' > tests/fixtures/make-traces.sh; printf '{}\n' > tests/fixtures/traces/file-scope.json; git add .
+"$BIN" --backend mock \
+  --mock-response "test(fixtures): trace a config change kept to the listed types" \
+  --mock-response "test(fixtures): trace a config change kept to the listed types" \
+  --trace "$OUT/conventional-en-copied-twice.json" >/dev/null 2>&1
