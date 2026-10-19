@@ -112,6 +112,18 @@ smart-commit context           # the style detected in the history
 smart-commit prompt            # the exact prompt for what is staged
 ```
 
+`smart-commit prompt --inputs FILE` builds prompts without a repository, from
+JSON Lines of the `inputs` object of [traces](reproducibility.md) (`-` reads
+stdin), and prints one `{"system": ..., "user": ...}` per line. Only global
+settings apply. It gives a training or evaluation set the exact prompts
+smart-commit sends.
+
+`smart-commit eval FILE` reads the same JSON Lines and runs the whole
+pipeline on each input (prompt, model, sanitizer, retry, fallback), loading
+the model once. It prints one compact trace per line, which `replay` accepts,
+and takes the generation options (`--device`, `--backend`...); the model file
+comes from the settings, e.g. `SMART_COMMIT_GGUF`.
+
 ## Devices
 
 ```bash

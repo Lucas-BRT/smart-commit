@@ -1,5 +1,6 @@
 use std::cell::OnceCell;
 use std::error::Error;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;
@@ -21,7 +22,7 @@ use smart_commit::llamacpp::LlamaCppBackend;
 use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::paths;
 use smart_commit::prompt::{self, PromptOptions};
-use smart_commit::trace::Trace;
+use smart_commit::trace::{Inputs, Trace};
 use smart_commit::tui::review::{self, Review};
 use smart_commit::tui::{self, Screen};
 
@@ -52,8 +53,17 @@ enum Command {
     /// Show the prompt the model would get for the staged changes.
     Prompt {
         /// Repository to work on.
-        #[arg(short = 'C', long = "path", default_value = ".")]
+        #[arg(
+            short = 'C',
+            long = "path",
+            default_value = ".",
+            conflicts_with = "inputs"
+        )]
         path: PathBuf,
+        /// Build prompts without a repository from JSON Lines of trace
+        /// inputs (`-` for stdin), printing one `{"system", "user"}` per line.
+        #[arg(long, value_name = "FILE")]
+        inputs: Option<PathBuf>,
     },
     /// Run a recorded generation again and check it is reproduced exactly.
     Replay {
@@ -64,6 +74,15 @@ enum Command {
         with_model: bool,
         #[command(flatten)]
         model: ModelArgs,
+    },
+    /// Generate a message for each of many recorded inputs, without a
+    /// repository, printing one compact trace per line.
+    Eval {
+        /// JSON Lines of trace inputs, as `prompt --inputs` reads (`-` for
+        /// stdin).
+        inputs: PathBuf,
+        #[command(flatten)]
+        backend: BackendArgs,
     },
     /// Manage the `prepare-commit-msg` git hook.
     #[command(subcommand)]
@@ -286,12 +305,17 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
         Some(Command::Context { path }) => run_context(&path),
-        Some(Command::Prompt { path }) => run_prompt(&path),
+        Some(Command::Prompt {
+            inputs: Some(inputs),
+            ..
+        }) => run_prompt_inputs(&inputs),
+        Some(Command::Prompt { path, inputs: None }) => run_prompt(&path),
         Some(Command::Replay {
             trace,
             with_model,
             model,
         }) => run_replay(&trace, with_model.then_some(&model)),
+        Some(Command::Eval { inputs, backend }) => run_eval(&inputs, &backend),
         Some(Command::Hook(HookCommand::Install { path, force })) => run_hook_install(&path, force),
         Some(Command::Hook(HookCommand::Uninstall { path })) => run_hook_uninstall(&path),
         Some(Command::Hook(HookCommand::Run {
@@ -350,6 +374,76 @@ fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
         "===== ~{tokens} of {} tokens =====",
         options.max_prompt_tokens
     );
+    Ok(())
+}
+
+/// `prompt --inputs`: the prompts of many recorded inputs, e.g. to build a
+/// training set with the exact prompts smart-commit sends. Only the user's
+/// global settings apply, since there is no repository.
+fn run_prompt_inputs(path: &Path) -> Result<(), Box<dyn Error>> {
+    let inputs = read_inputs(path)?;
+    let options = resolve(None, Vec::new())?.settings().prompt_options();
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    for case in &inputs {
+        let prompt = prompt::build(&case.context(), &case.files, &options);
+        writeln!(out, "{}", serde_json::to_string(&prompt)?)?;
+    }
+    out.flush()?;
+    Ok(())
+}
+
+/// Reads JSON Lines of trace inputs from `path`, or stdin for `-`.
+fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {
+    let text = if path == Path::new("-") {
+        std::io::read_to_string(std::io::stdin())?
+    } else {
+        std::fs::read_to_string(path)
+            .map_err(|err| format!("cannot read {}: {err}", path.display()))?
+    };
+    let mut inputs = Vec::new();
+    for (index, line) in text.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        inputs.push(
+            serde_json::from_str(line).map_err(|err| {
+                format!("{}:{}: invalid inputs: {err}", path.display(), index + 1)
+            })?,
+        );
+    }
+    Ok(inputs)
+}
+
+/// `eval`: the whole pipeline (prompt, model, sanitizer, retry, fallback)
+/// on each recorded input, loading the model once. Each trace replays like
+/// those of `--trace`. Like `prompt --inputs`, only global settings apply.
+fn run_eval(path: &Path, args: &BackendArgs) -> Result<(), Box<dyn Error>> {
+    if args.trace.is_some() {
+        return Err("eval writes its traces to stdout; --trace does not apply".into());
+    }
+    let inputs = read_inputs(path)?;
+    let resolved = resolve(None, args.flags()?)?;
+    warn_renamed(&resolved);
+    let settings = resolved.settings();
+    let (options, config) = (settings.prompt_options(), settings.generation_config());
+    let (backend, running) = start_backend(&resolved, &args.mock_responses)?;
+    eprintln!("evaluating {} input(s) with {running}", inputs.len());
+    let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    for case in &inputs {
+        let ctx = case.context();
+        let generation =
+            generate::generate(&ctx, &case.files, backend.as_ref(), &options, &config)?;
+        let trace = Trace::new(
+            &ctx,
+            &case.files,
+            backend.as_ref(),
+            &options,
+            &config,
+            &generation,
+        );
+        writeln!(out, "{}", serde_json::to_string(&trace)?)?;
+    }
+    out.flush()?;
     Ok(())
 }
 
@@ -446,18 +540,7 @@ impl Session {
         if let Some(loaded) = self.backend.get() {
             return Ok(loaded);
         }
-        let settings = self.resolved.settings();
-        let loaded: Loaded = match settings.backend {
-            BackendKind::Mock => (
-                Box::new(MockBackend::new(self.mock_responses.clone())),
-                "the mock backend".to_owned(),
-            ),
-            _ => {
-                let (backend, target) = load_model(&settings)?;
-                let label = format!("{} on {target}", model_label(&self.resolved, target));
-                (backend, label)
-            }
-        };
+        let loaded = start_backend(&self.resolved, &self.mock_responses)?;
         Ok(self.backend.get_or_init(|| loaded))
     }
 
@@ -499,6 +582,24 @@ impl Session {
         }
         Ok(generation)
     }
+}
+
+/// The backend `resolved` asks for, and its model and device for people.
+fn start_backend(resolved: &Resolved, mock_responses: &[String]) -> Result<Loaded, Box<dyn Error>> {
+    let settings = resolved.settings();
+    Ok(match settings.backend {
+        BackendKind::Mock => (
+            Box::new(MockBackend::new(mock_responses.to_vec())),
+            "the mock backend".to_owned(),
+        ),
+        _ => {
+            let (backend, target) = load_model(&settings)?;
+            (
+                backend,
+                format!("{} on {target}", model_label(resolved, target)),
+            )
+        }
+    })
 }
 
 /// The model's id, or the file's name when model.gguf or model.dir (for
