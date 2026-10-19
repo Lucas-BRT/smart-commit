@@ -109,3 +109,15 @@ printf '# Training\n\nPublish smart-commit-1.5b-v1.\n' > docs/training.md; git a
 "$BIN" --backend mock \
   --mock-response "fix(agents): update AGENTS.md and docs/training.md to reflect the changes" \
   --trace "$OUT/conventional-en-too-long.json" >/dev/null
+
+# Found in real use: one subject per file, on consecutive lines; the second
+# subject becomes the body.
+fresh two-subjects
+mkdir docs
+printf '# AGENTS.md\n' > AGENTS.md; printf '# Training\n' > docs/training.md; git add .
+commit "docs: add AGENTS.md and the training page"
+printf '# AGENTS.md\n\nFine-tunes are published on Hugging Face.\n' > AGENTS.md
+printf '# Training\n\nPublish smart-commit-1.5b-v1.\n' > docs/training.md; git add .
+"$BIN" --backend mock \
+  --mock-response $'fix(AGENTS.md): update AGENTS.md with the latest changes\nfix(docs/training.md): update docs/training.md with the latest changes' \
+  --trace "$OUT/conventional-en-two-subjects.json" >/dev/null
