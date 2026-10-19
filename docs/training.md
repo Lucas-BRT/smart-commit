@@ -1,6 +1,6 @@
 # Training a commit-message model
 
-Work in progress on the `training` branch. This page is the hand-off for
+Work in progress, under `training/`. This page is the hand-off for
 whoever trains the model (a person, or an agent on the training machine): what
 was measured, what was decided, and what is left to do. Read
 [AGENTS.md](../AGENTS.md) first; its rules apply here too.

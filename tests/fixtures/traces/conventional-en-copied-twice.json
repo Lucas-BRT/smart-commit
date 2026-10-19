@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "tool_version": "0.4.0",
+  "tool_version": "0.5.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
@@ -67,7 +67,7 @@
     "attempts": [
       {
         "prompt": {
-          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, test.\n- Scopes used here, with where their commits went: fixtures (tests/fixtures/, tests/fixtures/traces/), model (tests/fixtures/). Use a scope only if the changed files are in its places; otherwise omit the scope.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace a config change kept to the listed types\nfeat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes\n",
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, test.\n- Scopes used here: fixtures, model. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace a config change kept to the listed types\nfeat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes\n",
           "user": "Files changed:\ntests/fixtures/make-traces.sh | +1 -1\ntests/fixtures/traces/file-scope.json | +1 -0\n\nDiff:\n--- tests/fixtures/make-traces.sh\n@@ -1 +1 @@\n-y\n+z\n--- tests/fixtures/traces/file-scope.json\n@@ -0,0 +1 @@\n+{}\n"
         },
         "raw": "test(fixtures): trace a config change kept to the listed types",
@@ -77,7 +77,7 @@
       },
       {
         "prompt": {
-          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, test.\n- Scopes used here, with where their commits went: fixtures (tests/fixtures/, tests/fixtures/traces/), model (tests/fixtures/). Use a scope only if the changed files are in its places; otherwise omit the scope.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace a config change kept to the listed types\nfeat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes\n",
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, test.\n- Scopes used here: fixtures, model. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace a config change kept to the listed types\nfeat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes\n",
           "user": "Files changed:\ntests/fixtures/make-traces.sh | +1 -1\ntests/fixtures/traces/file-scope.json | +1 -0\n\nDiff:\n--- tests/fixtures/make-traces.sh\n@@ -1 +1 @@\n-y\n+z\n--- tests/fixtures/traces/file-scope.json\n@@ -0,0 +1 @@\n+{}\n\nYour previous reply was rejected because \"test(fixtures): trace a config change kept to the listed types\" repeats an earlier commit of this repository; describe what this diff changes instead. Reply again with only the commit message in the `type(scope): description` format.\n"
         },
         "raw": "test(fixtures): trace a config change kept to the listed types",

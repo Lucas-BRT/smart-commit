@@ -17,8 +17,6 @@ pub const DEFAULT_MAX_PROMPT_TOKENS: usize = 1024;
 const TEMPLATE_OVERHEAD_TOKENS: usize = 40;
 /// Types and scopes beyond these are rarely used and only cost tokens.
 const MAX_LISTED: usize = 8;
-/// Places shown per scope: enough to tell scopes apart.
-const MAX_AREAS: usize = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Prompt {
@@ -131,34 +129,7 @@ fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
             } else {
                 rule(&format!("Types used here: {}.", names(&style.types)));
             }
-            let scopes: Vec<(&str, Vec<String>)> = style
-                .scopes
-                .iter()
-                .take(MAX_LISTED)
-                .map(|(scope, _)| {
-                    let areas =
-                        style::scope_areas(scope, &ctx.subjects, &ctx.history_files, MAX_AREAS);
-                    (scope.as_str(), areas)
-                })
-                .collect();
-            if scopes.iter().any(|(_, areas)| !areas.is_empty()) {
-                let listed: Vec<String> = scopes
-                    .iter()
-                    .map(|(scope, areas)| {
-                        if areas.is_empty() {
-                            (*scope).to_owned()
-                        } else {
-                            format!("{scope} ({})", areas.join(", "))
-                        }
-                    })
-                    .collect();
-                rule(&format!(
-                    "Scopes used here, with where their commits went: {}. Use a scope only \
-                     if the changed files are in its places; otherwise omit the scope.",
-                    listed.join(", ")
-                ));
-            } else if !scopes.is_empty() {
-                // No paths known (older traces, empty commits): the old rule.
+            if !style.scopes.is_empty() {
                 rule(&format!(
                     "Scopes used here: {}. Omit the scope if none fits.",
                     names(&style.scopes)
@@ -274,43 +245,22 @@ mod tests {
     }
 
     #[test]
-    fn scopes_show_where_their_commits_went() {
-        let paths = |p: &[&str]| p.iter().map(|s| s.to_string()).collect::<Vec<_>>();
-        let ctx = context(
-            &[
-                "feat(training): add train.py",
-                "docs(training): record results",
-                "fix(cli): parse -C",
-                "feat(training): add score.py",
-            ],
-            None,
-        )
-        .with_history_files(vec![
-            paths(&["training/train.py"]),
-            paths(&["docs/training.md", "training/HYPOTHESES.md"]),
-            paths(&["src/main.rs", "tests/cli.rs"]),
-            paths(&["training/score.py"]),
-        ]);
-        let prompt = build(&ctx, &files(), &PromptOptions::default());
-        insta::assert_snapshot!(prompt.system);
-    }
-
-    #[test]
-    fn scopes_without_history_files_keep_the_old_rule() {
+    fn scopes_are_listed_without_their_places() {
+        // The places of each scope are recorded but not shown: alone they
+        // did not help the models (training H4), and cost prompt tokens.
         let subjects = ["feat(cli): add context", "fix(git): read branch"];
-        let empty_commits = context(&subjects, None).with_history_files(vec![vec![], vec![]]);
-        let prompt = build(&empty_commits, &files(), &PromptOptions::default());
-        assert!(
-            prompt
-                .system
-                .contains("- Scopes used here: cli, git. Omit the scope if none fits.\n")
-        );
-        let ctx = context(&subjects, None);
+        let paths = vec![
+            vec!["src/main.rs".to_string()],
+            vec!["src/git.rs".to_string()],
+        ];
+        let ctx = context(&subjects, None).with_history_files(paths);
         let prompt = build(&ctx, &files(), &PromptOptions::default());
         assert!(
             prompt
                 .system
-                .contains("- Scopes used here: cli, git. Omit the scope if none fits.\n")
+                .contains("- Scopes used here: cli, git. Omit the scope if none fits.\n"),
+            "{}",
+            prompt.system
         );
     }
 
