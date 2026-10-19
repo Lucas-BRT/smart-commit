@@ -66,5 +66,7 @@ XDG_CONFIG_HOME=$C/empty-config SMART_COMMIT_GGUF=$PWD/runs/h1/model-q4_k_m.gguf
 uv run --locked python -I score.py data/eval-v1 data/eval-v1/h1.jsonl
 ```
 
-`data/eval-v1`: `inputs.jsonl` sha256 `6d275f0d92c607e5f80cc3be204d5a8a4444391e029abc907eb311b3f29e428c`,
+`data/eval-v1` is frozen: it was selected with the `build_inputs.py` of
+commit 35a1ae8, before the version-only filter, which today's `select.py`
+applies too; it is identified by its hashes, `inputs.jsonl` sha256 `6d275f0d92c607e5f80cc3be204d5a8a4444391e029abc907eb311b3f29e428c`,
 `meta.jsonl` sha256 `9b8d53df9863d6b214c53d2de2839ce18f26fc088d9a3e8a2f84202a44e0faaf`.

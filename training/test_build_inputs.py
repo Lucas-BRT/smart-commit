@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from build_inputs import inputs_of, keep_target, trim_context  # noqa: E402
+from score import description, specifics, ungrounded, unsupported  # noqa: E402
 
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
 
@@ -64,8 +65,10 @@ def test_trim_matches_git() -> None:
 
 def test_targets() -> None:
     assert keep_target("feat(diff): parse renames")
+    assert keep_target("chore: bump vue to 2.6.13")
     for bad in ["Merge branch 'x'", "Revert \"x\"", "fixup! feat: x", "WIP on parser",
-                "chore: release 1.2.0", "v1.2.3", "#123", "fix #12", "short", "x" * 73]:
+                "chore: release 1.2.0", "v1.2.3", "chore(release): 0.3.8",
+                "chore(publish): 5.5.0-beta.6", "Release v2.0.0", "bump 1.2.3", "#123", "fix #12", "short", "x" * 73]:
         assert not keep_target(bad), bad
 
 
@@ -85,6 +88,20 @@ def test_inputs() -> None:
     assert got["files"][2]["lines"] is None
     assert inputs_of([]) is None
     assert inputs_of([{"change_type": "UNKNOWN", "old_path": "a", "new_path": "a", "diff": ""}]) is None
+
+
+def test_faithfulness() -> None:
+    assert description("feat(cli): add `eval`") == "add `eval`"
+    assert description("✨ add login page") == "add login page"
+    assert specifics("bump to v5.5.0-beta.6 for PR 1234, use `foo` in fooBar and my_var") == [
+        "v5.5.0-beta.6", "1234", "foo", "fooBar", "my_var"]
+    known = "src/combinelatest.ts\n+  const foobar = 1\n"  # evidence() lowercases
+    assert not unsupported("fix(rx): rename fooBar", known)
+    assert unsupported("chore(release): 1.1.0", known)
+    assert not unsupported("fix: handle empty input", known)
+    assert ungrounded("fix: fix typo", known)
+    assert ungrounded("docs: update docs", known)
+    assert not ungrounded("fix(rx): guard combineLatest against empty arrays", known)
 
 
 if __name__ == "__main__":

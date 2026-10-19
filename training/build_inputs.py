@@ -44,6 +44,9 @@ DROP = [
         r"\bwip\b",
         r"^(chore(\([^)]*\))?: )?(release|bump version|version bump|prepare release)\b",
         r"^v?\d+(\.\d+)+\S*$",
+        # A description that is only a version: "chore(release): 0.3.8".
+        r"^\S+?(\([^)]*\))?!?:\s*(release\s+|version\s+)?v?\d+(\.\d+)+\S*$",
+        r"^(release|version|bump)\s+v?\d+(\.\d+)+\S*$",
         r"^(\W*(#|gh-)\d+\W*)+$",
         r"^(update|fix|close[sd]?|resolve[sd]?)\s+#\d+$",
     )

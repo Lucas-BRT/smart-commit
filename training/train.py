@@ -115,6 +115,8 @@ def main() -> None:
     parser.add_argument("--accum", type=int, default=4)
     parser.add_argument("--max-length", type=int, default=1536)
     parser.add_argument("--limit", type=int, default=0, help="first N examples only")
+    parser.add_argument("--val", type=Path,
+                        help="examples from other repositories; their loss is logged ~10 times")
     parser.add_argument("--max-steps", type=int, default=-1)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
@@ -124,17 +126,16 @@ def main() -> None:
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     tok = AutoTokenizer.from_pretrained(args.base)
-    lines = args.examples.read_text().splitlines()
-    if args.limit:
-        lines = lines[: args.limit]
-    data, skipped = [], 0
-    for line in lines:
-        enc = encode(tok, json.loads(line), args.max_length)
-        if enc is None:
-            skipped += 1
-        else:
-            data.append(enc)
+    def load(path: Path, limit: int = 0) -> tuple[list[dict], int]:
+        lines = path.read_text().splitlines()
+        if limit:
+            lines = lines[:limit]
+        encoded = [encode(tok, json.loads(line), args.max_length) for line in lines]
+        return [e for e in encoded if e is not None], sum(e is None for e in encoded)
+
+    data, skipped = load(args.examples, args.limit)
     print(f"{len(data)} examples, {skipped} longer than {args.max_length} tokens skipped")
+    val = load(args.val)[0] if args.val else None
 
     if args.quant == "4bit":
         model = AutoModelForCausalLM.from_pretrained(
@@ -185,6 +186,10 @@ def main() -> None:
         save_strategy="steps",
         save_steps=200,
         save_total_limit=2,
+        eval_strategy="steps" if val else "no",
+        eval_steps=0.1,
+        per_device_eval_batch_size=args.batch,
+        prediction_loss_only=True,
         train_sampling_strategy="group_by_length",
         seed=args.seed,
         data_seed=args.seed,
@@ -198,6 +203,7 @@ def main() -> None:
         model=model,
         args=training_args,
         train_dataset=data,
+        eval_dataset=val,
         data_collator=Collator(tok.pad_token_id),
     )
     started = time.time()
@@ -214,6 +220,7 @@ def main() -> None:
     run = {
         "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         "examples_sha256": sha256(args.examples),
+        "val_sha256": sha256(args.val) if args.val else None,
         "examples": len(data),
         "skipped_too_long": skipped,
         "base_config": json.loads((args.base / "config.json").read_text()).get("_name_or_path"),

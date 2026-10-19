@@ -10,6 +10,14 @@ Per set (conventional, free) and overall:
 - scope_known: no scope, or one already used in the history (conventional set)
 - word_f1: word overlap with the real subject, a cheap proxy for content
 - exact: identical to the real subject
+- unsupported: names a specific (a version or number, an identifier in
+  camelCase, snake_case or backticks) found neither in the diff, the paths
+  nor the history: likely invented
+- ungrounded: no content word of the description is in the diff or the
+  paths: likely vague ("fix typo", "update code")
+- unsupported_real / ungrounded_real: the same for the real subject, the
+  level a human reaches with the same diff (often more than the prompt
+  shows, since the diff is cut to fit)
 
 Metrics of the conventional set are averaged over that set in "all" too.
 """
@@ -26,6 +34,46 @@ from build_inputs import CONVENTIONAL  # noqa: E402
 
 SCOPE = re.compile(r"^[a-z]+\(([^()]+)\)")
 WORD = re.compile(r"[a-z0-9]+")
+HEADER = re.compile(r"^(?:[a-z]+(?:\([^()]*\))?!?:\s*|\W+\s*)")
+SPECIFIC = re.compile(
+    r"`([^`]+)`"                              # `anything`
+    r"|\b(v?\d+(?:\.\d+)+[\w.-]*)"          # versions: 1.2, v5.5.0-beta.6
+    r"|\b(\d{2,})\b"                          # numbers of 2+ digits
+    r"|\b([a-z]+[A-Z]\w*|[A-Z][a-z0-9]+[A-Z]\w*)\b"  # camelCase, PascalCase
+    r"|\b(\w+_\w+)\b"                         # snake_case
+)
+STOP = set("""a an the and or of to in on for with from by into onto when then
+than that this these those it its is are be was were as at not no only all
+any some more less new old use used using add adds added fix fixes fixed
+update updates updated remove removes removed make makes made change changes
+changed support allow allows move moves rename renames improve improves
+refactor clean cleanup minor small bug bugs issue issues code file files
+test tests docs doc""".split())
+
+
+def description(subject: str) -> str:
+    """The subject without its Conventional header or leading emoji."""
+    return HEADER.sub("", subject, count=1)
+
+
+def specifics(text: str) -> list[str]:
+    return [next(g for g in m.groups() if g) for m in SPECIFIC.finditer(text)]
+
+
+def evidence(inputs: dict) -> str:
+    parts = list(inputs["subjects"])
+    for f in inputs["files"]:
+        parts += [f["path"], f.get("old_path") or "", f["hunks"]]
+    return "\n".join(parts).lower()
+
+
+def unsupported(subject: str, known: str) -> bool:
+    return any(s.lower() not in known for s in specifics(description(subject)))
+
+
+def ungrounded(subject: str, diff: str) -> bool:
+    content = [w for w in words(description(subject)) if len(w) >= 3 and w not in STOP]
+    return not any(w in diff for w in content)
 
 
 def words(text: str) -> list[str]:
@@ -64,7 +112,13 @@ def main() -> None:
         g = t["generation"]
         subject = g["message"]["subject"]
         history = t["inputs"]["subjects"]
+        known = evidence(t["inputs"])
+        diff = evidence({**t["inputs"], "subjects": []})
         row = {
+            "unsupported": unsupported(subject, known),
+            "unsupported_real": unsupported(m["target"], known),
+            "ungrounded": ungrounded(subject, diff),
+            "ungrounded_real": ungrounded(m["target"], diff),
             "first_try": g["attempts"][0]["rejected"] is None,
             "fallback": g["source"] == "fallback",
             "copied": subject in history,
