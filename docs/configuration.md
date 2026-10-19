@@ -107,6 +107,9 @@ generation to that file, see [reproducibility](reproducibility.md)).
 - **Unknown keys and invalid values are errors**, with the file and the key
   in the message: a mistyped `model.devise` never goes unnoticed. In the git
   hook the error becomes a warning, so a broken file never blocks a commit.
+  `smart-commit setup` removes from the global file the values this version
+  cannot read, such as a model added by a newer build, with a warning that
+  names the old value, so the defaults apply and the setup still runs.
 - **Machine keys are global only.** `backend` and every `model.*` key are
   refused in `.smart-commit.toml`, whether by `config set --repo` or by
   editing the file. Cloning a repository must not change which model runs

@@ -667,13 +667,13 @@ fn flags_override_the_environment() {
     assert_eq!(stdout(&output), "fix: from the flag\n");
 }
 
-#[test]
-fn setup_runs_the_guided_setup_next_to_the_binary() {
+/// `smart-commit setup` on an empty machine (no GPU, no NPU), without
+/// drivers or a benchmark, and with downloads that do not exist: llama.cpp
+/// fails gracefully and nothing touches the network or depends on this
+/// machine's hardware.
+fn offline_setup(extra: &[(&str, &str)]) -> Output {
     let dir = tempfile::TempDir::new().unwrap();
     let data = tempfile::TempDir::new().unwrap();
-    // An empty machine (no GPU, no NPU), no drivers, no benchmark, and
-    // downloads that do not exist: llama.cpp fails gracefully and nothing
-    // touches the network or depends on this machine's hardware.
     let sysfs = tempfile::TempDir::new().unwrap();
     let cpuinfo = sysfs.path().join("cpuinfo");
     std::fs::write(
@@ -681,22 +681,25 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {
         "vendor_id\t: AuthenticAMD\nmodel name\t: Test CPU\n",
     )
     .unwrap();
-    let output = smart_commit_with(
-        &["setup", "--no-drivers", "--no-bench"],
-        dir.path(),
-        &[
-            ("SMART_COMMIT_SYSFS", sysfs.path().to_str().unwrap()),
-            ("SMART_COMMIT_CPUINFO", cpuinfo.to_str().unwrap()),
-            ("SMART_COMMIT_OPENVINO_DIR", "/nonexistent/openvino"),
-            (
-                "SMART_COMMIT_LLAMACPP_URL",
-                "file:///nonexistent/llama.tar.gz",
-            ),
-            ("SMART_COMMIT_GGUF_URL", "file:///nonexistent/model.gguf"),
-            ("SMART_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
-            ("XDG_DATA_HOME", data.path().to_str().unwrap()),
-        ],
-    );
+    let mut env = vec![
+        ("SMART_COMMIT_SYSFS", sysfs.path().to_str().unwrap()),
+        ("SMART_COMMIT_CPUINFO", cpuinfo.to_str().unwrap()),
+        ("SMART_COMMIT_OPENVINO_DIR", "/nonexistent/openvino"),
+        (
+            "SMART_COMMIT_LLAMACPP_URL",
+            "file:///nonexistent/llama.tar.gz",
+        ),
+        ("SMART_COMMIT_GGUF_URL", "file:///nonexistent/model.gguf"),
+        ("SMART_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
+        ("XDG_DATA_HOME", data.path().to_str().unwrap()),
+    ];
+    env.extend_from_slice(extra);
+    smart_commit_with(&["setup", "--no-drivers", "--no-bench"], dir.path(), &env)
+}
+
+#[test]
+fn setup_runs_the_guided_setup_next_to_the_binary() {
+    let output = offline_setup(&[]);
     assert!(output.status.success(), "{}", stderr(&output));
     let out = stdout(&output);
     assert!(out.contains("==> Hardware\n  CPU  Test CPU"), "{out}");
@@ -705,4 +708,32 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {
     assert!(out.contains("Could not install llama.cpp"), "{out}");
     assert!(!out.contains("OpenVINO model"), "{out}");
     assert!(out.contains("smart-commit hook install"), "{out}");
+}
+
+// Found in real use: a model a newer build added, in the global config,
+// made the installer's setup stop with an error before doing anything.
+#[test]
+fn setup_removes_a_setting_this_version_cannot_read() {
+    let config_home = tempfile::TempDir::new().unwrap();
+    let file = config_home.path().join("smart-commit/config.toml");
+    std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+    std::fs::write(
+        &file,
+        "[model]\ndevice = \"cpu\"\nname = \"smart-commit-9b-v9\"\n",
+    )
+    .unwrap();
+    let output = offline_setup(&[("XDG_CONFIG_HOME", config_home.path().to_str().unwrap())]);
+    assert!(output.status.success(), "{}", stderr(&output));
+    let err = stderr(&output);
+    assert!(
+        err.contains("`model.name`")
+            && err.contains("\"smart-commit-9b-v9\"")
+            && err.contains("removed"),
+        "{err}"
+    );
+    assert!(stdout(&output).contains("==> Hardware"));
+    assert_eq!(
+        std::fs::read_to_string(&file).unwrap(),
+        "[model]\ndevice = \"cpu\"\n"
+    );
 }
