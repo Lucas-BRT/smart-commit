@@ -46,7 +46,7 @@ uv run --locked python -I select.py data/train12 data/h1 --conventional 6000 --f
 uv run --locked python -I make_examples.py data/h1 $SC
 
 # 4. Train (writes runs/h1/adapter and runs/h1/run.json).
-uv run --locked python -I train.py data/h1/examples.jsonl $M runs/h1 --quant bf16
+uv run --locked python -I train.py data/h1/examples.jsonl $M runs/h1 --quant 16bit
 
 # 5. Merge and quantize like the upstream GGUF.
 uv run --locked python -I export_gguf.py $M runs/h1/model-q4_k_m.gguf --adapter runs/h1/adapter \

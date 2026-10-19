@@ -99,7 +99,13 @@ def main() -> None:
     parser.add_argument("examples", type=Path)
     parser.add_argument("base", type=Path)
     parser.add_argument("out", type=Path)
-    parser.add_argument("--quant", choices=["4bit", "bf16"], default="4bit")
+    parser.add_argument("--quant", choices=["4bit", "16bit", "bf16"], default="4bit",
+                        help="base weights: 4-bit (QLoRA) or 16-bit in --dtype (LoRA; "
+                             "`bf16` is the old name of `16bit`)")
+    parser.add_argument("--dtype", choices=["bf16", "fp16"], default="bf16",
+                        help="compute precision; fp16 for GPUs without bf16 (T4, P100)")
+    parser.add_argument("--resume", action="store_true",
+                        help="continue from the last checkpoint in OUT_DIR, if any")
     parser.add_argument("--rank", type=int, default=16)
     parser.add_argument("--alpha", type=int, default=32)
     parser.add_argument("--dropout", type=float, default=0.05)
@@ -114,6 +120,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
+    dtype = torch.bfloat16 if args.dtype == "bf16" else torch.float16
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     tok = AutoTokenizer.from_pretrained(args.base)
@@ -135,16 +142,16 @@ def main() -> None:
             quantization_config=BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_compute_dtype=dtype,
                 bnb_4bit_use_double_quant=True,
             ),
-            dtype=torch.bfloat16,
+            dtype=dtype,
             device_map={"": 0},
         )
         model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
     else:
         model = AutoModelForCausalLM.from_pretrained(
-            args.base, dtype=torch.bfloat16, device_map={"": 0}
+            args.base, dtype=dtype, device_map={"": 0}
         )
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
@@ -170,7 +177,10 @@ def main() -> None:
         lr_scheduler_type="cosine",
         warmup_steps=0.03,
         weight_decay=0.0,
-        bf16=True,
+        # The adapters stay in fp32 (peft's default), so fp16 mixed
+        # precision can unscale their gradients.
+        bf16=args.dtype == "bf16",
+        fp16=args.dtype == "fp16",
         logging_steps=10,
         save_strategy="steps",
         save_steps=200,
@@ -191,7 +201,9 @@ def main() -> None:
         data_collator=Collator(tok.pad_token_id),
     )
     started = time.time()
-    result = trainer.train()
+    checkpoints = args.out / "checkpoints"
+    resume = args.resume and checkpoints.is_dir() and any(checkpoints.glob("checkpoint-*"))
+    result = trainer.train(resume_from_checkpoint=True if resume else None)
     model.save_pretrained(args.out / "adapter")
     tok.save_pretrained(args.out / "adapter")
 
@@ -212,6 +224,7 @@ def main() -> None:
         "gpu": gpu,
         "python": platform.python_version(),
         "train_seconds": round(time.time() - started),
+        "resumed": resume,
         "train_loss": result.training_loss,
         "peak_vram_gib": round(torch.cuda.max_memory_allocated() / 2**30, 2),
         "log": trainer.state.log_history,
