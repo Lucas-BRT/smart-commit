@@ -112,6 +112,22 @@ cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo
 git stash pop
 ```
 
+### Ask smart-commit first
+
+Before each commit, with only that commit's changes staged, run the tool
+on its own change and keep the trace:
+
+```bash
+smart-commit --trace /tmp/trace.json            # the installed release
+target/release/smart-commit --trace /tmp/trace-dev.json   # this tree
+```
+
+Compare its message with the one you write. A wrong one (type, scope,
+invented details, a copied history subject, a fallback) is a bug found in
+real use: turn it into a fixture in `tests/fixtures/traces/` (via
+`tests/fixtures/make-traces.sh`), in a commit of its own. The trace is what
+makes it reproducible; a bad message without one cannot be investigated.
+
 ### Messages
 
 Conventional Commits in English (`feat: ...`, `fix(diff): ...`, `docs: ...`,
