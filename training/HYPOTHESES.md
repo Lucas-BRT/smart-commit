@@ -183,7 +183,7 @@ min for c40k on the 1.5B (2.35). Validation loss still fell from 20k to
 Next: H5 and H6 in one bundle on 20k examples, plus short-history ones,
 rather than more of the same data.
 
-### H4. Showing where each scope is used fixes scopes copied from the history — planned
+### H4. Showing where each scope is used fixes scopes copied from the history — prompt alone: no effect; H4b planned
 
 Found in real use, on this repository: for a staged `mise.toml` (Rust
 toolchain bump), H2 wrote `feat(training): rust 1.99`, taking the scope the
@@ -287,7 +287,7 @@ for moves into the weights; the prompt shrinks.
   `models::REGISTRY`, so the user does not set it by hand.
 - **Training.** The same pipeline, with `make_examples.py` building prompts
   with the switch on. Best trained together with H5 (young repositories) in
-  one bundle, plus more data if the b2 learning curve says so.
+  one bundle, on about 20k examples, where H3's curve flattens.
 - **Metrics.** eval-v1 and eval-short with the switch on against H2/H1 with
   the full prompt: first_try and fallback must not move (they are what the
   rules were for), type_match and word_f1 within noise; CPU seconds per
@@ -328,6 +328,10 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
   With no listed scope fitting `mise.toml`, the 0.5B takes the most
   frequent one, the 1.5B makes one from the file name.
 
+- **Release bumps.** `build_inputs.py` drops every release bump
+  (`chore: release …`, version-only descriptions), so the models never saw
+  one. Keep those whose version is in the diff (a `version = ` line), where
+  the target is predictable; keep dropping version-only ones without it.
 - **Data.** Raise the share of targets whose type is outside the list and
   of unscoped targets under a fully scoped history, by selection in
   `select.py`, not by editing targets. Train with the scope map of H4
@@ -338,6 +342,12 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
   not in the prompt's list, and scope_fits; the four fixtures' cases read
   by hand.
 - **Expectation.** Those rates up, overall type_match within noise.
+- **Headroom on eval-v1 is small**: the real type is outside the prompt's
+  list for 14 of its 250 conventional commits (5.6%), and the c40k runs
+  already get 7 of them (`data/eval-v1/c40k-*-lora.jsonl`); unscoped targets
+  under a fully scoped history are 3, all answered without a scope. H7
+  matters for repositories like this one, not for the benchmark: data
+  changes only, no goal of its own for v0.2.
 
 ### H-split. The model can tell when the staged changes are several commits — planned
 
@@ -384,11 +394,8 @@ Rust side.
 
 ## Ideas not tried yet
 
-- Train without the rules in the system prompt (shorter prefill); needs a
-  `PromptOptions` switch in smart-commit.
-- More data / a second epoch: the loss was still falling at the end of
-  H1 and H2. A learning curve (2.5k, 5k, 10k, 20k, 40k examples) finds the
-  plateau; it needs the rest of CommitChronicle and a validation loss in
-  train.py.
-- A faithfulness metric (see H1's failure modes) before optimising further.
+- An LLM judge for faithfulness, validated against a sample rated by
+  hand; `unsupported` and `ungrounded` in `score.py` are the cheap checks.
 - A body in the target when the real commit has one.
+- A second epoch instead of more data (H3's curve flattens at about 20k).
+- Portuguese and gitmoji targets: v0.1 is English, and eval-v1 has neither.

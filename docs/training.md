@@ -14,9 +14,10 @@ publish it on Hugging Face, and add it to the recommended models
 Two expected gains:
 
 - **Quality.** The current default, Qwen2.5-Coder-1.5B-Instruct, labels
-  almost every change `fix` (6 of 6 in the measurements below, where most
-  commits were `feat`), sometimes uses a file path as the scope, and needs a
-  retry when the reply does not follow the convention.
+  86.8% of the conventional commits of eval-v1 `fix`, where 41% really are
+  ([HYPOTHESES.md](../training/HYPOTHESES.md)), sometimes uses a file path
+  as the scope, and needs a retry when the reply does not follow the
+  convention.
 - **Speed, indirectly.** A model trained on the format does not need the
   ~250 tokens of rules in the system prompt, and a fine-tuned
   Qwen2.5-Coder-0.5B may become usable (untrained, it copies the history
@@ -29,12 +30,13 @@ Two expected gains:
   the upstream GGUF files: a pinned input, published together with the exact
   dataset and recipe. `docs/reproducibility.md` must say so when the model is
   added. Inference stays greedy and reproducible.
-- **Training happens on the machine with the RTX 3050** (Ryzen 5 5500), not
-  on the development laptop. Check the VRAM with `nvidia-smi` (the desktop
-  3050 has 8 GB; QLoRA on a 1.5B model fits).
-- **Base model: Qwen2.5-Coder-1.5B-Instruct first**, then the 0.5B with the
-  same pipeline. A LoRA on the 1.5B can be applied by llama.cpp (`--lora`)
-  on top of the GGUF that is already pinned.
+- **Training runs on Kaggle** (`kaggle_train.ipynb`, T4 GPUs without bf16,
+  so QLoRA: a 4-bit NF4 base with fp16 compute). The first local run, on the
+  RTX 3050 (Ryzen 5 5500), stalled when the machine suspended; that machine
+  builds the data and runs the evaluations.
+- **Base models: Qwen2.5-Coder-1.5B-Instruct and 0.5B**, with the same
+  pipeline. What is published is the merged model; an adapter applied with
+  llama.cpp's `--lora` on the upstream GGUF is for evaluation only.
 - **The prompt the model sees in training must be byte-identical to what
   smart-commit builds at run time.** Never write a second prompt builder in
   Python; generate the inputs with the Rust code (see
@@ -71,16 +73,17 @@ End to end with `smart-commit --device ...` on three of the same commits:
 
 Findings:
 
-- `llama-server` is started without `--threads`/`--threads-batch`, so it uses
-  its own default, which on this hybrid CPU used 2 threads. Setting
+- `llama-server` was started without `--threads`/`--threads-batch`, so it
+  used its own default, which on this hybrid CPU was 2 threads. Setting
   `--threads-batch` to the core count halves prefill and gave **identical
-  replies** on all 6 prompts. Changing `--threads` (decode) changed the
-  replies and made decode slower, so leave it alone. This is also a
-  reproducibility issue: thread counts are library defaults today.
+  replies** on all 6 prompts; smart-commit now passes it
+  ([devices](devices.md#threads-on-the-cpu)). Changing `--threads` (decode)
+  changed the replies and made decode slower, so it keeps the default.
 - `smart-commit bench` uses the trace fixtures, whose prompts are ~250
   tokens, so it underestimates prefill: it reports ~2.6 s per message for
   `cpu` on this machine, against ~7.9 s with real prompts. A large fixture
-  is needed before `auto` can pick devices well.
+  is needed before `auto` can pick devices well (in the
+  [roadmap](roadmap.md)).
 - Prefill scales about linearly with prompt tokens: halving the budget
   halves it, at a cost in quality (with 512 some scopes became file paths,
   like `fix(src/bench.rs)`).
@@ -158,12 +161,14 @@ configs `default`, `subset_cmg` (204k), `subset_llm` (4.03k). Fields:
 `DELETE`/…, `old_path`, `new_path`, `diff` with `@@` hunks), `language`,
 `license`, `repo`.
 
-**Open question, blocking publication:** the dataset's license is listed as
-"other". Read its full terms before publishing weights trained on it.
+Its licence is listed as "other": it gathers commits from repositories
+under MIT, Apache-2.0 and BSD-3-Clause; how the fine-tunes credit it is in
+[Export and publication](#export-and-publication).
 
-Portuguese is scarce there. Options: repositories with Portuguese history
-collected separately, or labels written by a larger model (check that
-model's terms allow training on its outputs). Start with English.
+Portuguese is scarce there, and v0.1 was trained on English only. Options:
+repositories with Portuguese history collected separately, or labels
+written by a larger model (check that model's terms allow training on its
+outputs).
 
 ### From a commit to a training example
 
@@ -209,7 +214,9 @@ time.
 - Keep commits whose subject is a valid message for the repository's
   convention (Conventional Commits, gitmoji or free), 8 to 72 columns.
 - Drop merges, reverts, `fixup!`/`squash!`, WIP, release bumps, bot authors,
-  and messages that only reference an issue.
+  and messages that only reference an issue. Dropping release bumps means
+  the models never see one: v0.1 answered the 0.5.0 bump with `feat(model)`
+  (fixture `conventional-en-release`, H7 in HYPOTHESES.md).
 - Balance the `type` distribution, or the model learns the dataset's bias
   instead of the base model's.
 - Split by **repository**, never by commit, so the evaluation measures
@@ -217,27 +224,28 @@ time.
 
 ## Evaluation
 
-Build it first, and use it for every later decision (fine-tune, 0.5B vs 1.5B,
-prompt budget, grammar). It is item 1 of the [roadmap](roadmap.md)
-(`smart-commit eval`), which already lists the metrics, including copied
-history examples; build that rather than a separate Python evaluator, so the
-same numbers judge every model:
+Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
+`smart-commit eval`, which runs the whole pipeline, and
+`training/score.py`, so the same numbers judge every model:
 
-- A held-out set of repositories, a few hundred commits, prompts built by
-  smart-commit.
-- Automatic metrics: the sanitizer accepts the reply without retry; the type
-  matches the real one; the language matches; the subject fits 72 columns;
-  the scope is one of the repository's scopes.
-- Optional: an LLM judge for faithfulness to the diff, validated against a
-  sample rated by hand.
-- Always report the base model's scores on the same set.
+- **eval-v1**: 500 commits of CommitChronicle's test split, from 70
+  repositories never seen in training, 250 Conventional and 250 free;
+  **eval-short**: 197 commits of young repositories (1–5 history subjects).
+  How to rebuild both is in [training/README.md](../training/README.md).
+- Metrics: first_try, fallback, copied, type_match, scope_known,
+  scope_fits, word_f1, and two cheap faithfulness checks, `unsupported`
+  (specifics found nowhere in the input) and `ungrounded` (a description
+  with no word from the diff); `score.py`'s docstring defines them.
+- Always report the base model's scores on the same set and binary.
+- Not covered yet: gitmoji, Portuguese, and an LLM judge for faithfulness
+  validated against a sample rated by hand.
 
 ## Training
 
 - LoRA with `transformers` and `peft`, in a Python environment with every
-  version pinned (`training/uv.lock`). On the 3050 the 1.5B fits in bf16
-  (4.8 GiB peak), which was faster than QLoRA (0.69 against 0.85 s per
-  example); `train.py --quant 4bit` keeps QLoRA for larger models.
+  version pinned (`training/uv.lock`). On Kaggle's T4, QLoRA
+  (`train.py --quant 4bit`); on the 3050 the 1.5B also fits in bf16
+  (4.8 GiB peak, 0.69 against 0.85 s per example for QLoRA).
 - Format each example with the model's own chat template (system + user →
   assistant), and compute the loss on the assistant reply only.
 - Sequence length: the prompt budget (1024) plus the reply (128).
@@ -257,10 +265,11 @@ What is published is one model per size smart-commit offers, named
    control as H0 explains. The merged GGUF runs with no change to
    smart-commit (`SMART_COMMIT_GGUF`); the adapter alone
    (`export_lora.py`, `llama-server --lora`) is for evaluation only.
-2. For the OpenVINO devices (NPU, Intel GPU), users' machines export the
-   published safetensors through `scripts/export/`, following AGENTS.md's
-   model export rules (two identical exports, `MANIFEST.sha256`, the
-   **Model** workflow).
+2. For the OpenVINO devices (NPU, Intel GPU), users' machines are to
+   export the published safetensors through `scripts/export/`, following
+   AGENTS.md's model export rules (two identical exports, `MANIFEST.sha256`,
+   the **Model** workflow). Not done for v0.1, which runs on `vulkan` and
+   `cpu` only.
 3. Upload both to the project's Hugging Face account,
    [LucasBRT](https://huggingface.co/LucasBRT), one repository per model and
    version (`LucasBRT/smart-commit-1.5b-v0.1`): the merged safetensors, the
@@ -295,13 +304,8 @@ What is published is one model per size smart-commit offers, named
    [smart-commit-1.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-1.5b-v0.1)
    and [smart-commit-0.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-0.5b-v0.1),
    experimental models in `src/models.rs`.
-6. The next version: H5 (young repositories), H6 (the rules in the
-   weights), H4b (the scope map) and H7 (types and scopes outside the
-   lists) in one bundle, on about 20k examples.
-
-Independent of training, on `main`: `--threads-batch` is passed explicitly
-(one thread per physical core, [devices](devices.md#threads-on-the-cpu));
-a model server that stays up, KV caching of the fixed prompt prefix and a
-GBNF grammar for the conventions are in the [roadmap](roadmap.md). Still
-to do: a large trace fixture for `bench`, whose ~250-token prompts
-underestimate prefill.
+6. The next version, v0.2: H5 (young repositories), H6 (the rules in the
+   weights) and H4b (the scope map) in one bundle on about 20k examples,
+   with H7's cheap data changes (release bumps kept when the diff shows
+   the version). The order and the work outside training are in the
+   [roadmap](roadmap.md).
