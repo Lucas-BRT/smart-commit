@@ -18,8 +18,20 @@ noise.
 | base 1.5B, our Q4_K_M (control) | 0.416 | 0.544 | 0.996 | 0.000 | 0.068 / 0.112 | 0.246 / 0.138 |
 | base 0.5B, upstream Q4_K_M | 0.260 | 0.788 | 0.756 | 0.072 | 0.372 / 0.156 | 0.182 / 0.113 |
 | base 0.5B, our Q4_K_M (control) | 0.332 | 0.888 | 0.864 | 0.068 | 0.468 / 0.188 | 0.191 / 0.121 |
-| H1 (1.5B) | pending | | | | | |
-| H2 (0.5B) | pending | | | | | |
+| H1 (1.5B), LoRA on upstream GGUF | **0.660** | 0.860 | 1.000 | 0.000 | 0.040 / 0.076 | **0.365 / 0.254** |
+| H1 (1.5B), merged, our Q4_K_M | 0.652 | 0.840 | 1.000 | 0.000 | 0.032 / 0.032 | 0.352 / 0.238 |
+| H2 (0.5B), LoRA on upstream GGUF | 0.604 | 0.848 | 1.000 | 0.000 | 0.064 / 0.068 | 0.333 / 0.237 |
+| H2 (0.5B), merged, our Q4_K_M | 0.624 | 0.856 | 1.000 | 0.000 | 0.044 / 0.064 | 0.329 / 0.242 |
+
+Speed on the CPU (Ryzen 5 5500, 6 cores, `--device cpu` as shipped, the
+first 50 commits of eval-v1, model load counted once):
+
+| Model | s/message | attempts | chars/reply |
+|---|---|---|---|
+| base 1.5B | 2.88 | 52 | 72 |
+| H1 merged | 2.61 | 50 | 46 |
+| base 0.5B | 1.78 | 62 | 78 |
+| H2 merged | **1.26** | 50 | 42 |
 
 Reference: answering `fix` to every conventional commit gives a
 type_match of 0.41 (102 of 250).
@@ -51,7 +63,7 @@ our control, and as a LoRA applied on the upstream GGUF
 The second isolates the fine-tune; the first is what a published merged
 model would be.
 
-### H1. A LoRA on 10k examples fixes the type bias — running
+### H1. A LoRA on 10k examples fixes the type bias — confirmed
 
 - Data: `data/h1`, 6000 Conventional commits from 131 repositories (at most
   30% of any type: fix 1800, feat 1473, chore 1037, refactor 581, docs
@@ -66,8 +78,21 @@ model would be.
   base with fp16 compute.
 - Expectation: type_match well above the control's 0.416, copied down,
   word_f1 up; first_try must not drop.
+- **Result.** type_match 0.48 → 0.66 against upstream (0.416 → 0.652
+  merged, against the control), scope_known 0.57 → 0.86 (no more file
+  paths as scopes), word_f1 +0.11 on both sets, first_try 1.000, copying
+  halved. The generated types now follow the real distribution (fix 104
+  vs 102 real, feat 55 vs 52, docs 32 vs 31, chore 19 vs 27). Merged and adapter agree
+  within noise, so the merged model is publishable as is. Kaggle T4, 76 min,
+  train loss 2.46 (3.19 at the start, still falling at the end).
+- **New failure modes, seen by reading samples**: vaguer subjects ("fix
+  type error", "fix typo") and invented specifics: `chore(release): 1.1.0`
+  for a real `chore(publish): 5.5.0-beta.6`, a version the diff may not
+  show. word_f1 cannot catch either; a faithfulness check is needed (the
+  LLM judge of docs/training.md, or a deterministic one: numbers and
+  identifiers in the subject must appear in the diff or the history).
 
-### H2. The 0.5B, trained the same way, gets close to the trained 1.5B — running
+### H2. The 0.5B, trained the same way, gets close to the trained 1.5B — confirmed
 
 Same data and recipe as H1, on Kaggle's second T4. The 0.5B reads the
 prompt about 1.6× faster on the CPU (prefill 1916 against 2998 ms in
@@ -76,6 +101,13 @@ copied history subjects and ran to the 128-token limit. Load time barely
 differs (311 against 369 ms). If it gets within noise of H1 on type_match
 and word_f1, with first_try ≥ 0.98, it is the better default for slow
 CPUs; it still has no OpenVINO export for the NPU and Intel GPU.
+
+**Result.** type_match 0.60–0.62, within ~0.04 of H1 (about one standard
+error), and better than the untrained 1.5B on every metric; first_try
+went from 0.76 to 1.000 and copying from 0.37 to 0.06. On the CPU it is
+2.3× faster than the shipped 1.5B (1.26 against 2.88 s/message), from a
+shorter prompt read and replies of 42 characters instead of 78. Kaggle T4,
+35 min, train loss 2.71.
 
 ### H-split. The model can tell when the staged changes are several commits — planned
 
@@ -124,5 +156,9 @@ Rust side.
 
 - Train without the rules in the system prompt (shorter prefill); needs a
   `PromptOptions` switch in smart-commit.
-- More data / a second epoch, if H1 improves and the loss keeps falling.
+- More data / a second epoch: the loss was still falling at the end of
+  H1 and H2. A learning curve (2.5k, 5k, 10k, 20k, 40k examples) finds the
+  plateau; it needs the rest of CommitChronicle and a validation loss in
+  train.py.
+- A faithfulness metric (see H1's failure modes) before optimising further.
 - A body in the target when the real commit has one.
