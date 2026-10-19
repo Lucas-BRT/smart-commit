@@ -135,3 +135,7 @@ printf 'x\n' > training/filter_supported.py; git add .; commit "fix(training): m
 printf '[tools]\nrust = "1.99"\n' > mise.toml; git add mise.toml
 "$BIN" --backend mock --mock-response "feat(training): add rust 1.99 to mise.toml" \
   --trace "$OUT/conventional-en-closed-types.json" >/dev/null
+# The same change, with smart-commit-1.5b-v0.1: still a listed type, and a
+# scope made from the file name.
+"$BIN" --backend mock --mock-response "docs(mise): add rust to tools" \
+  --trace "$OUT/conventional-en-file-scope.json" >/dev/null
