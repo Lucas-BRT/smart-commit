@@ -117,6 +117,30 @@ impl Repo {
         Ok(diff::parse(&numstat, &patch))
     }
 
+    /// The paths among `paths` that `.gitattributes` marks
+    /// `linguist-generated`, read from the index so that what is staged
+    /// decides.
+    pub fn generated_paths(&self, paths: &[&str]) -> Result<Vec<String>, GitError> {
+        let mut generated = Vec::new();
+        // In chunks, to stay far from the command line's length limit.
+        for chunk in paths.chunks(256) {
+            let mut args = vec!["check-attr", "--cached", "-z", "linguist-generated", "--"];
+            args.extend_from_slice(chunk);
+            let out = self.git(&args)?;
+            // NUL-separated triplets: path, attribute, value.
+            let fields: Vec<&str> = out.split('\0').collect();
+            generated.extend(
+                fields
+                    .as_chunks::<3>()
+                    .0
+                    .iter()
+                    .filter(|[_, _, value]| matches!(*value, "set" | "true"))
+                    .map(|[path, _, _]| (*path).to_owned()),
+            );
+        }
+        Ok(generated)
+    }
+
     /// Where git looks for hooks, honouring `core.hooksPath`.
     pub fn hooks_dir(&self) -> Result<PathBuf, GitError> {
         let out = self.git(&["rev-parse", "--git-path", "hooks"])?;

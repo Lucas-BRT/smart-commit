@@ -1,10 +1,11 @@
+use std::cell::OnceCell;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use smart_commit::backend::{Backend, BackendError, GenerationConfig, MockBackend};
+use smart_commit::backend::{Backend, BackendError, GenerationConfig, MockBackend, NoModel};
 use smart_commit::config::{
     self, BackendKind, DeviceSetting, Origin, Resolved, Settings, Sources, Value,
 };
@@ -17,7 +18,7 @@ use smart_commit::git::Repo;
 use smart_commit::hardware::{self, Hardware};
 use smart_commit::hook;
 use smart_commit::llamacpp::LlamaCppBackend;
-use smart_commit::message::CommitMessage;
+use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::paths;
 use smart_commit::prompt::{self, PromptOptions};
 use smart_commit::trace::Trace;
@@ -374,7 +375,7 @@ fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Erro
     let generation = session.generate(&[])?;
     let mut review = Review::new(
         &generation,
-        session.running.clone(),
+        session.running(),
         started.elapsed().as_secs_f32(),
         &session.context.staged,
     );
@@ -403,15 +404,21 @@ fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Erro
     Ok(())
 }
 
-/// A loaded model and what a message is made from, kept to ask again.
+/// A loaded backend, with the model and the device for people:
+/// `qwen2.5-coder-1.5b on cpu`.
+type Loaded = (Box<dyn Backend>, String);
+
+/// What a message is made from, and the model once it is needed, kept to
+/// ask again.
 struct Session {
     context: RepoContext,
     files: Vec<FileDiff>,
-    backend: Box<dyn Backend>,
+    /// Loaded on the first message that needs it: lockfiles alone need none.
+    backend: OnceCell<Loaded>,
+    resolved: Resolved,
+    mock_responses: Vec<String>,
     options: PromptOptions,
     config: GenerationConfig,
-    /// The model and the device, for people: `qwen2.5-coder-1.5b on cpu`.
-    running: String,
     trace: Option<PathBuf>,
 }
 
@@ -422,36 +429,58 @@ impl Session {
         let settings = resolved.settings();
         let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
         let files = staged_files(repo)?;
-        let (backend, running): (Box<dyn Backend>, String) = match settings.backend {
-            BackendKind::Mock => (
-                Box::new(MockBackend::new(args.mock_responses.clone())),
-                "the mock backend".to_owned(),
-            ),
-            _ => {
-                let (backend, target) = load_model(&settings)?;
-                (
-                    backend,
-                    format!("{} on {target}", model_label(&resolved, target)),
-                )
-            }
-        };
         Ok(Self {
             context,
             files,
-            backend,
+            backend: OnceCell::new(),
             options: settings.prompt_options(),
             config: settings.generation_config(),
-            running,
+            resolved,
+            mock_responses: args.mock_responses.clone(),
             trace: args.trace.clone(),
         })
     }
 
+    /// The backend, loaded the first time.
+    fn backend(&self) -> Result<&Loaded, Box<dyn Error>> {
+        if let Some(loaded) = self.backend.get() {
+            return Ok(loaded);
+        }
+        let settings = self.resolved.settings();
+        let loaded: Loaded = match settings.backend {
+            BackendKind::Mock => (
+                Box::new(MockBackend::new(self.mock_responses.clone())),
+                "the mock backend".to_owned(),
+            ),
+            _ => {
+                let (backend, target) = load_model(&settings)?;
+                let label = format!("{} on {target}", model_label(&self.resolved, target));
+                (backend, label)
+            }
+        };
+        Ok(self.backend.get_or_init(|| loaded))
+    }
+
+    /// What wrote the messages, for people.
+    fn running(&self) -> String {
+        match self.backend.get() {
+            Some((_, label)) => label.clone(),
+            None => "no model".to_owned(),
+        }
+    }
+
     /// A message other than those in `avoid`, writing the trace if asked.
     fn generate(&self, avoid: &[String]) -> Result<Generation, Box<dyn Error>> {
+        let backend: &dyn Backend =
+            if avoid.is_empty() && generate::by_rules(&self.context, &self.files) {
+                &NoModel
+            } else {
+                self.backend()?.0.as_ref()
+            };
         let generation = generate::generate_avoiding(
             &self.context,
             &self.files,
-            self.backend.as_ref(),
+            backend,
             &self.options,
             &self.config,
             avoid,
@@ -460,7 +489,7 @@ impl Session {
             let trace = Trace::new(
                 &self.context,
                 &self.files,
-                self.backend.as_ref(),
+                backend,
                 &self.options,
                 &self.config,
                 &generation,
@@ -563,11 +592,22 @@ fn preferred_devices() -> Vec<Target> {
 fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage, Box<dyn Error>> {
     let generation = Session::start(repo, args)?.generate(&[])?;
     if generation.source == Source::Fallback {
-        eprintln!(
-            "warning: the model's output was unusable after {} attempts; \
-             using a message built from the file list",
-            generation.attempts.len()
-        );
+        let copied = generation
+            .attempts
+            .iter()
+            .all(|a| matches!(a.rejected, Some(SanitizeError::CopiedHistory(_))));
+        if copied {
+            eprintln!(
+                "warning: the model only repeated earlier commit messages; \
+                 using a message built from the file list"
+            );
+        } else {
+            eprintln!(
+                "warning: the model's output was unusable after {} attempts; \
+                 using a message built from the file list",
+                generation.attempts.len()
+            );
+        }
     }
     Ok(generation.message)
 }

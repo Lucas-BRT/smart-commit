@@ -18,6 +18,8 @@ pub struct RepoContext {
     pub subjects: Vec<String>,
     pub style: Style,
     pub staged: Vec<FileChange>,
+    /// Staged paths `.gitattributes` marks `linguist-generated`.
+    pub generated: Vec<String>,
 }
 
 impl RepoContext {
@@ -28,12 +30,16 @@ impl RepoContext {
     /// Like [`Self::collect`], learning the style from the last
     /// `history_depth` commits.
     pub fn collect_with_history(repo: &Repo, history_depth: usize) -> Result<Self, GitError> {
+        let staged = repo.staged_changes()?;
+        let paths: Vec<&str> = staged.iter().map(|c| c.path.as_str()).collect();
+        let generated = repo.generated_paths(&paths)?;
         Ok(Self::new(
             repo.root().to_path_buf(),
             repo.current_branch()?,
             repo.recent_subjects(history_depth)?,
-            repo.staged_changes()?,
-        ))
+            staged,
+        )
+        .with_generated(generated))
     }
 
     /// Derives everything else from what git reports, so a context can be
@@ -51,7 +57,14 @@ impl RepoContext {
             style: style::detect(&subjects),
             subjects,
             staged,
+            generated: Vec::new(),
         }
+    }
+
+    /// Adds the staged paths marked `linguist-generated`.
+    pub fn with_generated(mut self, generated: Vec<String>) -> Self {
+        self.generated = generated;
+        self
     }
 }
 
