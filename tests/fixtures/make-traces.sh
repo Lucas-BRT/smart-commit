@@ -43,8 +43,8 @@ printf 'fn main() {}\n' > main.rs; git add main.rs
   --trace "$OUT/free-en-chatty.json" >/dev/null
 
 # Found in real use: a root config change in a repository whose recent
-# history mostly uses one scope (`training`); the prompt shows where each
-# scope's commits went.
+# history mostly uses one scope (`training`); the trace records where each
+# scope's commits went, which the prompt does not show yet (training H4b).
 fresh scopes
 mkdir -p training src docs
 printf 'x\n' > src/main.rs; git add .; commit "feat(cli): add the prompt command"

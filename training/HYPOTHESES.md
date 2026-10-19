@@ -218,6 +218,10 @@ even rewards that: `training` is a known scope, just the wrong one.
   0.5B 0.564 → 0.564, H1 0.708 → 0.688, H2 0.728 → 0.688 (trained on the
   old prompt); all within noise, and H2 still writes `feat(training)` for
   the mise.toml case. It needs training with the new prompt: H4b.
+- **Taken out of the prompt again** (`style::scope_areas` and the paths in
+  traces stay): with no model trained on it, it only cost tokens. It comes
+  back with H4b, switched on for the model trained with it, like H6's
+  switch.
 - **Weakness seen on this repository:** docs/ is among the places of almost
   every scope (each feature updates the docs here), so the map is long
   (~100 tokens for 8 scopes) and tells scopes apart less. Possible fix:
