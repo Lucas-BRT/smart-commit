@@ -231,9 +231,10 @@ same numbers judge every model:
 
 ## Training
 
-- QLoRA (4-bit base, LoRA adapters) with `transformers`, `peft`, `trl` and
-  `bitsandbytes`, in a Python environment with every version pinned (a
-  lockfile in `training/`).
+- LoRA with `transformers` and `peft`, in a Python environment with every
+  version pinned (`training/uv.lock`). On the 3050 the 1.5B fits in bf16
+  (4.8 GiB peak), which was faster than QLoRA (0.69 against 0.85 s per
+  example); `train.py --quant 4bit` keeps QLoRA for larger models.
 - Format each example with the model's own chat template (system + user →
   assistant), and compute the loss on the assistant reply only.
 - Sequence length: the prompt budget (1024) plus the reply (128).
@@ -262,10 +263,13 @@ same numbers judge every model:
 ## Next steps, in order
 
 1. ~~`smart-commit prompt --inputs` (Rust, with tests).~~ Done.
-2. Dataset builder: CommitChronicle → `Inputs` → prompts → JSON Lines with
-   targets, split by repository.
-3. Evaluation script, and the base 1.5B and 0.5B scores.
-4. QLoRA on the 1.5B; compare; then the 0.5B.
+2. ~~Dataset builder: CommitChronicle → `Inputs` → prompts → JSON Lines with
+   targets, split by repository.~~ Done: [training/](../training/README.md).
+3. ~~Evaluation, and the base 1.5B and 0.5B scores.~~ Done: `smart-commit
+   eval` and `training/score.py`; scores in
+   [training/HYPOTHESES.md](../training/HYPOTHESES.md).
+4. LoRA on the 1.5B; compare; then the 0.5B. In progress, tracked in
+   HYPOTHESES.md.
 5. Export, publish, add to the registry.
 
 Independent of training, worth doing on `main`: `--threads-batch` and

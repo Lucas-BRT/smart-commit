@@ -1,0 +1,21 @@
+[project]
+name = "smart-commit-training"
+version = "0"
+description = "Dataset, training and export of smart-commit's commit-message model"
+requires-python = "==3.12.*"
+dependencies = [
+    "torch==2.14.1",
+    "transformers",
+    "peft",
+    "trl",
+    "bitsandbytes",
+    "accelerate",
+    "datasets",
+    "pyarrow",
+    "sentencepiece",
+    "numpy",
+    "pyyaml",
+]
+
+[tool.uv]
+package = false
