@@ -192,3 +192,15 @@ bench_fixture p25 21d4671 src/message.rs "fix(generate): retry when the reply re
 bench_fixture p50 ff3e7f3 src/context.rs "feat(context): build the context from recorded data"
 bench_fixture p75 cd1ef5c src/context.rs "feat(context): read the ticket from the branch"
 bench_fixture p90 482ba4d src/style.rs "feat(style): find where each scope's commits went"
+
+# A diff of checksums fills the budget with dense tokens: Qwen splits every
+# digit, so characters / 3 was up to 2.1 times short on such prompts. The
+# hardware tests run it on every device, the NPU's compiled length included.
+fresh dense
+for s in "feat: publish the 1.0 archives" "docs: list the mirrors"; do commit "$s"; done
+for n in $(seq 1 60); do
+    printf '%s  smart-commit-%s.tar.gz\n' "$(printf 'archive %s' "$n" | sha256sum | cut -c1-64)" "$n"
+done > SHA256SUMS
+git add SHA256SUMS
+"$BIN" --backend mock --mock-response "chore: add the checksums of the archives" \
+  --trace "$OUT/conventional-en-dense.json" >/dev/null

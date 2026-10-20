@@ -230,8 +230,9 @@ misleading `CL_OUT_OF_HOST_MEMORY`.
 
 ## The NPU
 
-The NPU compiles the model for fixed shapes: a prompt of
-`model.max_prompt_tokens` (1024) and a reply of `model.max_new_tokens` (128).
+The NPU compiles the model for fixed shapes: a prompt of half again
+`model.max_prompt_tokens` (1536 for 1024, room for prompts whose tokens were
+underestimated) and a reply of `model.max_new_tokens` (128).
 
 - **Cache.** The first load compiles the graph (11.7 s); later loads read it
   from `$XDG_CACHE_HOME/smart-commit/openvino` (1.7 s, 246 MB).

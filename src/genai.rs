@@ -214,6 +214,21 @@ impl Backend for GenaiBackend {
     }
 }
 
+/// The prompt length the NPU compiles for: the prompt budget, half again as
+/// room for a prompt whose tokens were underestimated (at most 1.25 times
+/// on the prompts measured, see [`crate::diff::estimate_tokens`]), rounded
+/// up to whole prefill chunks. With chunked prefill only the prompt's real
+/// length is processed, so the room costs a prompt nothing until it is used.
+pub fn compiled_prompt_len(options: &GenaiOptions) -> usize {
+    let len = options.max_prompt_tokens + options.max_prompt_tokens / 2;
+    let chunk = options.npu.prefill_chunk;
+    if chunk < len {
+        len.div_ceil(chunk) * chunk
+    } else {
+        len
+    }
+}
+
 /// Device properties for the pipeline. The NPU-only ones are rejected by
 /// the other devices.
 pub fn pipeline_properties(options: &GenaiOptions) -> Vec<(&'static str, String)> {
@@ -222,7 +237,7 @@ pub fn pipeline_properties(options: &GenaiOptions) -> Vec<(&'static str, String)
         options.cache_dir.to_string_lossy().into_owned(),
     )];
     if options.device == Device::Npu {
-        properties.push(("MAX_PROMPT_LEN", options.max_prompt_tokens.to_string()));
+        properties.push(("MAX_PROMPT_LEN", compiled_prompt_len(options).to_string()));
         properties.push(("MIN_RESPONSE_LEN", options.max_new_tokens.to_string()));
         properties.push((
             "NPUW_LLM_PREFILL_CHUNK_SIZE",
@@ -268,7 +283,7 @@ fn describe(options: &GenaiOptions, identity: &str) -> String {
     if options.device == Device::Npu {
         description.push_str(&format!(
             " max_prompt_len={} min_response_len={} prefill_chunk={} generate_hint={}",
-            options.max_prompt_tokens,
+            compiled_prompt_len(options),
             options.max_new_tokens,
             options.npu.prefill_chunk,
             if options.npu.best_perf {
@@ -306,13 +321,32 @@ mod tests {
     }
 
     #[test]
+    fn the_npu_compiles_with_room_over_the_budget() {
+        // A prompt estimated at the budget may be up to 1.25 times longer
+        // (diff::estimate_tokens); the NPU fails past its compiled length.
+        let mut options = options(Path::new("/m"), Device::Npu);
+        assert_eq!(options.max_prompt_tokens, 1024);
+        assert_eq!(compiled_prompt_len(&options), 1536);
+        assert!(compiled_prompt_len(&options) >= 1024 * 125 / 100);
+        // Whole chunks, which the NPU needs below the compiled length.
+        options.npu.prefill_chunk = 1024;
+        assert_eq!(compiled_prompt_len(&options), 2048);
+        // A chunk at least as long is one static shape.
+        options.npu.prefill_chunk = 2048;
+        assert_eq!(compiled_prompt_len(&options), 1536);
+        options.max_prompt_tokens = 512;
+        options.npu.prefill_chunk = 512;
+        assert_eq!(compiled_prompt_len(&options), 768 + 256);
+    }
+
+    #[test]
     fn npu_gets_static_shape_properties() {
         let npu = pipeline_properties(&options(Path::new("/m"), Device::Npu));
         assert_eq!(
             npu,
             [
                 ("CACHE_DIR", "/cache/smart-commit/openvino".to_owned()),
-                ("MAX_PROMPT_LEN", "1024".to_owned()),
+                ("MAX_PROMPT_LEN", "1536".to_owned()),
                 ("MIN_RESPONSE_LEN", "128".to_owned()),
                 ("NPUW_LLM_PREFILL_CHUNK_SIZE", "512".to_owned()),
                 ("GENERATE_HINT", "BEST_PERF".to_owned()),
@@ -360,7 +394,7 @@ mod tests {
         assert_eq!(
             describe(&options(dir, Device::Npu), "0123456789abcdef"),
             "openvino-genai device=NPU model=qwen-int4 manifest=0123456789abcdef \
-             max_prompt_len=1024 min_response_len=128 prefill_chunk=512 generate_hint=best_perf"
+             max_prompt_len=1536 min_response_len=128 prefill_chunk=512 generate_hint=best_perf"
         );
         assert_eq!(
             describe(&options(dir, Device::Cpu), "unverified"),

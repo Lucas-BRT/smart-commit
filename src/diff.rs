@@ -13,12 +13,57 @@ use serde::{Deserialize, Serialize};
 /// length fails the generation, while underfilling only loses some context.
 pub const CHARS_PER_TOKEN: usize = 3;
 
+/// Letters per token in long runs mixing letters and digits (hashes,
+/// base64, keys), which split into short tokens.
+const DENSE_LETTERS_PER_TOKEN: usize = 2;
+
+/// Runs at least this long, of letters and digits mixed, count as dense.
+const DENSE_RUN: usize = 16;
+
 /// Below this, a file's hunks are dropped instead of truncated: a few lines
 /// of a large change mislead more than they help.
 const MIN_FILE_TOKENS: usize = 24;
 
+/// The tokens of `text` for Qwen's tokenizer, from above for most text:
+/// [`CHARS_PER_TOKEN`] characters per token, except that every digit is a
+/// token of its own and the letters of dense runs (hashes, base64) go
+/// [`DENSE_LETTERS_PER_TOKEN`] per token. Characters / 3 alone was up to 2.1
+/// times short on such diffs; this is at most 1.25 on eval-v1, eval-short
+/// and 3,000 training prompts, which the backends' headroom covers.
 pub fn estimate_tokens(text: &str) -> usize {
-    text.chars().count().div_ceil(CHARS_PER_TOKEN)
+    // (digits, letters of dense runs, other characters)
+    let mut counts = (0, 0, 0);
+    let mut run_start = None;
+    let add_run = |run: &str, counts: &mut (usize, usize, usize)| {
+        let digits = run.chars().filter(char::is_ascii_digit).count();
+        let letters = run.chars().filter(char::is_ascii_alphabetic).count();
+        let len = run.chars().count();
+        counts.0 += digits;
+        if len >= DENSE_RUN && digits > 0 && letters > 0 {
+            counts.1 += letters;
+            counts.2 += len - digits - letters;
+        } else {
+            counts.2 += len - digits;
+        }
+    };
+    for (i, c) in text.char_indices() {
+        let in_run = c.is_ascii_alphanumeric() || "+/=_-".contains(c);
+        match (in_run, run_start) {
+            (true, None) => run_start = Some(i),
+            (false, Some(start)) => {
+                add_run(&text[start..i], &mut counts);
+                run_start = None;
+                counts.2 += 1;
+            }
+            (false, None) => counts.2 += 1,
+            (true, Some(_)) => {}
+        }
+    }
+    if let Some(start) = run_start {
+        add_run(&text[start..], &mut counts);
+    }
+    let (digits, dense_letters, other) = counts;
+    digits + dense_letters.div_ceil(DENSE_LETTERS_PER_TOKEN) + other.div_ceil(CHARS_PER_TOKEN)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -386,6 +431,25 @@ fn fit_file(file: &FileDiff, tokens: usize) -> (String, bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn estimate_counts_digits_and_dense_runs_apart() {
+        // Prose and code: about 3 characters per token.
+        assert_eq!(estimate_tokens("fix the parser"), 5);
+        assert_eq!(estimate_tokens(""), 0);
+        // Every digit is a token of its own.
+        assert_eq!(estimate_tokens("v1.2.3"), 3 + 1);
+        // A hash: 40 digits, 24 letters at 2 per token.
+        let sha = "141eb93384ad59f77eba3a21bde871851c766de891f778c5686218c214c48f11";
+        let digits = sha.chars().filter(char::is_ascii_digit).count();
+        assert_eq!(estimate_tokens(sha), digits + (64 - digits).div_ceil(2));
+        assert!(estimate_tokens(sha) > sha.len().div_ceil(CHARS_PER_TOKEN) * 3 / 2);
+        // A long word without digits is not dense.
+        let word = "configurationvaluesbuilder";
+        assert_eq!(estimate_tokens(word), word.len().div_ceil(3));
+        // Short runs mixing letters and digits are not dense either.
+        assert_eq!(estimate_tokens("abc123"), 3 + 1);
+    }
 
     fn file(path: &str, hunks: &str) -> FileDiff {
         let added = hunks.lines().filter(|l| l.starts_with('+')).count();

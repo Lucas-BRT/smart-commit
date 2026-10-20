@@ -64,12 +64,16 @@ From the last `style.history_depth` (30) subjects, merges excluded:
 ## Fitting the diff
 
 The NPU has a fixed prompt length, so the diff is reduced to a budget, in
-tokens estimated as characters / 3. That is pessimistic for most prompts
-(3.4–3.75 characters per token), not for all: hashes, base64 and long
-numbers take more tokens (Qwen's tokenizer splits every digit), and on
-eval-v1 the estimate was up to 1.45 times short for 2–3% of the prompts.
-llama.cpp starts its server with half the budget again as room, so such a
-prompt is read a little longer instead of failing.
+tokens estimated from the characters: 3 per token, except that every digit
+is a token (Qwen's tokenizer splits them) and the letters of long runs
+mixing letters and digits (hashes, base64) go 2 per token. Characters / 3
+alone was up to 2.1 times short on diffs of checksums or keys; measured
+against the tokenizer on eval-v1, eval-short and 3,000 training prompts,
+this estimate is at most 1.25 times short. Every backend leaves half the
+budget again as room: the NPU compiles for 1536 tokens, llama.cpp starts
+its server with that context, so such a prompt is read a little longer
+instead of failing; with chunked prefill the NPU only processes the
+prompt's real length.
 
 1. The patch has one line of context (`-U1`), without external diff tools
    or colours. Patch sections are paired with `--numstat` entries by order;
