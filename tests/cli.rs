@@ -811,3 +811,90 @@ fn server_commands_with_nothing_kept_loaded() {
         stdout(&output)
     );
 }
+
+/// A kept model's directory in `runtime`, answering `/health` like a loaded
+/// server for as long as the test runs.
+fn fake_kept_model(runtime: &Path) -> std::path::PathBuf {
+    use std::io::{Read, Write};
+    let dir = runtime.join("0123456789abcdef");
+    std::fs::create_dir_all(&dir).unwrap();
+    let spec = r#"{"options":{"server":"/x/llama-server","model":"/x/m.gguf","device":"Cpu",
+        "max_prompt_tokens":1024,"max_new_tokens":128,"threads_batch":1,
+        "startup_timeout":{"secs":1,"nanos":0},"fast_load":false},"keep":{"secs":600,"nanos":0}}"#;
+    std::fs::write(dir.join("spec.json"), spec).unwrap();
+    std::fs::write(dir.join("used"), "").unwrap();
+    let listener = std::os::unix::net::UnixListener::bind(dir.join("server.sock")).unwrap();
+    std::thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { return };
+            let mut request = Vec::new();
+            let mut buf = [0; 1024];
+            while !request.windows(4).any(|w| w == b"\r\n\r\n") {
+                match stream.read(&mut buf) {
+                    Ok(0) | Err(_) => break,
+                    Ok(n) => request.extend_from_slice(&buf[..n]),
+                }
+            }
+            let _ = stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}");
+        }
+    });
+    dir
+}
+
+#[test]
+fn changing_a_model_setting_stops_the_model_kept_loaded() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let runtime = tempfile::TempDir::new().unwrap();
+    let env = [
+        ("XDG_CONFIG_HOME", dir.path().to_str().unwrap()),
+        ("XDG_RUNTIME_DIR", runtime.path().to_str().unwrap()),
+    ];
+    let kept = fake_kept_model(&runtime.path().join("smart-commit"));
+    let output = smart_commit_with(
+        &["config", "set", "style.language", "english"],
+        dir.path(),
+        &env,
+    );
+    assert!(!stdout(&output).contains("stopped"), "{}", stdout(&output));
+    assert!(kept.exists());
+    let output = smart_commit_with(
+        &["config", "set", "model.keep_loaded", "0"],
+        dir.path(),
+        &env,
+    );
+    assert!(
+        stdout(&output).contains("stopped the model kept loaded, since model.keep_loaded changed"),
+        "{}",
+        stdout(&output)
+    );
+    assert!(!kept.exists());
+    let kept = fake_kept_model(&runtime.path().join("smart-commit"));
+    let output = smart_commit_with(&["device", "use", "cpu"], dir.path(), &env);
+    assert!(
+        stdout(&output).contains("since model.device changed"),
+        "{}",
+        stdout(&output)
+    );
+    assert!(!kept.exists());
+}
+
+#[test]
+fn a_failed_load_points_at_the_model_kept_loaded() {
+    let repo = staged_repo();
+    let runtime = tempfile::TempDir::new().unwrap();
+    fake_kept_model(&runtime.path().join("smart-commit"));
+    let output = smart_commit_with(
+        &["--device", "cpu"],
+        repo.path(),
+        &[
+            ("XDG_RUNTIME_DIR", runtime.path().to_str().unwrap()),
+            ("SMART_COMMIT_LLAMA_SERVER", "/nonexistent/llama-server"),
+        ],
+    );
+    assert!(!output.status.success());
+    assert!(
+        stderr(&output).contains("`smart-commit server stop` frees it"),
+        "{}",
+        stderr(&output)
+    );
+}

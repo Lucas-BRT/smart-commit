@@ -143,4 +143,5 @@ real use becomes a new fixture.
   releases and stub binaries.
 - `tests/hardware.rs` (ignored by default) runs the real model on the fixture
   prompts: replies are non-empty and stable, the token estimate never
-  undercounts, and the NPU tuning does not change replies.
+  undercounts, the NPU tuning does not change replies, and neither does a
+  model kept loaded (`model.keep_loaded`).

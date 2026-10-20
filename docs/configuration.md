@@ -94,7 +94,10 @@ value, for example when an environment variable is set.
   while it stays loaded. The server listens in `$XDG_RUNTIME_DIR`; without
   that variable, or if it cannot start, the model is loaded for the commit
   only, with a note. Replies are the same. `smart-commit server status`
-  lists what is kept loaded, `smart-commit server stop` stops it.
+  lists what is kept loaded, `smart-commit server stop` stops it. Changing a
+  `model.*` setting with smart-commit (`config set` or `unset`, `model use`,
+  `device use`) stops it too, since it runs the old settings; a load that
+  fails while a model is kept says so.
 - `model.npu_prefill_chunk` must divide `model.max_prompt_tokens`. Chunks
   smaller than 512 fail to compile with NPU driver 1.38.
 - `model.max_prompt_tokens` is also the prompt length the NPU compiles for.

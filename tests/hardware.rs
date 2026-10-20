@@ -22,36 +22,47 @@ use smart_commit::paths;
 use smart_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
 use smart_commit::trace::Trace;
 
-fn backend() -> Box<dyn Backend> {
-    let env = |name: &str| std::env::var(name).ok();
-    let path = |var: &str, default: Option<PathBuf>| {
-        env(var)
-            .map(PathBuf::from)
-            .or(default)
-            .expect("HOME or the override variable")
-    };
+fn env(name: &str) -> Option<String> {
+    std::env::var(name).ok()
+}
+
+fn path(var: &str, default: Option<PathBuf>) -> PathBuf {
+    env(var)
+        .map(PathBuf::from)
+        .or(default)
+        .expect("HOME or the override variable")
+}
+
+/// The llama.cpp options of `SMART_COMMIT_TEST_DEVICE`, if it is one of
+/// llama.cpp's devices.
+fn llamacpp_options() -> Option<LlamaCppOptions> {
     let device = match env("SMART_COMMIT_TEST_DEVICE").as_deref() {
-        Some(name @ ("vulkan" | "cpu")) => {
-            let backend = LlamaCppBackend::start(&LlamaCppOptions {
-                server: path(
-                    "SMART_COMMIT_LLAMA_SERVER",
-                    paths::default_llama_server(env),
-                ),
-                model: path("SMART_COMMIT_GGUF", paths::default_gguf_file(env)),
-                device: if name == "cpu" {
-                    LlamaDevice::Cpu
-                } else {
-                    LlamaDevice::Vulkan(0)
-                },
-                max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
-                max_new_tokens: GenerationConfig::default().max_new_tokens,
-                threads_batch: smart_commit::hardware::physical_cores(std::path::Path::new("/sys"))
-                    .unwrap_or(1),
-                startup_timeout: std::time::Duration::from_secs(120),
-                fast_load: false,
-            });
-            return Box::new(backend.unwrap_or_else(|err| panic!("{err}")));
-        }
+        Some("cpu") => LlamaDevice::Cpu,
+        Some("vulkan") => LlamaDevice::Vulkan(0),
+        _ => return None,
+    };
+    Some(LlamaCppOptions {
+        server: path(
+            "SMART_COMMIT_LLAMA_SERVER",
+            paths::default_llama_server(env),
+        ),
+        model: path("SMART_COMMIT_GGUF", paths::default_gguf_file(env)),
+        device,
+        max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
+        max_new_tokens: GenerationConfig::default().max_new_tokens,
+        threads_batch: smart_commit::hardware::physical_cores(std::path::Path::new("/sys"))
+            .unwrap_or(1),
+        startup_timeout: std::time::Duration::from_secs(120),
+        fast_load: false,
+    })
+}
+
+fn backend() -> Box<dyn Backend> {
+    if let Some(options) = llamacpp_options() {
+        let backend = LlamaCppBackend::start(&options);
+        return Box::new(backend.unwrap_or_else(|err| panic!("{err}")));
+    }
+    let device = match env("SMART_COMMIT_TEST_DEVICE").as_deref() {
         Some("openvino-cpu") => Device::Cpu,
         Some("intel-gpu") => Device::Gpu,
         Some("npu") | None => Device::Npu,
@@ -104,6 +115,32 @@ fn generates_a_reply_for_every_fixture_prompt() {
         println!("{name}: {reply:?}\n  {metrics:?}");
         assert!(!reply.trim().is_empty(), "{name}: empty reply");
         assert!(metrics.output_tokens <= config.max_new_tokens, "{name}");
+    }
+}
+
+#[test]
+#[ignore = "needs OpenVINO GenAI and an exported model"]
+fn a_model_kept_loaded_gives_the_same_replies() {
+    let Some(options) = llamacpp_options() else {
+        println!("only the llama.cpp devices keep a model loaded");
+        return;
+    };
+    let config = GenerationConfig::default();
+    let runtime = tempfile::TempDir::new().unwrap();
+    let exe = Path::new(env!("CARGO_BIN_EXE_smart-commit"));
+    let keep = std::time::Duration::from_secs(120);
+    let mut replies = Vec::new();
+    for (name, prompt) in fixture_prompts() {
+        let fresh = LlamaCppBackend::start(&options).unwrap();
+        let expected = fresh.generate(&prompt, &config).unwrap();
+        drop(fresh);
+        // Connects to the same kept server for every prompt but the first.
+        let kept = smart_commit::server::connect(runtime.path(), &options, keep, exe).unwrap();
+        replies.push((name, expected, kept.generate(&prompt, &config).unwrap()));
+    }
+    assert_eq!(smart_commit::server::stop(runtime.path()), 1);
+    for (name, expected, kept) in replies {
+        assert_eq!(kept, expected, "{name}");
     }
 }
 

@@ -130,8 +130,10 @@ the Ryzen 5 5500 with the RTX 3050; the replies were the same either way:
 | `qwen2.5-coder-7b`, `vulkan` | 7.5 s | 0.57 s |
 
 One model is kept at a time: a commit with another model or device stops
-the one kept, and `smart-commit bench` stops it before measuring, since it
-holds memory the GPU may need (two 7B models do not fit in 8 GB).
+the one kept, and so do `smart-commit bench` before measuring and any
+change of a `model.*` setting, since it holds memory the GPU may need (two
+7B models do not fit in 8 GB). A hardware test checks that a kept model
+gives the same replies as a fresh one.
 
 ## Threads on the CPU
 

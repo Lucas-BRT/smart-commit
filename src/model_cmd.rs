@@ -282,6 +282,7 @@ pub fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error>> {
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.name", model.id, None)?;
     let mut lines = vec![format!("model.name = {}  ({origin})", model.id)];
+    lines.extend(crate::stop_kept_after("model.name"));
     for key in ["model.gguf", "model.dir"] {
         if config::unset_in_file(&path, key)? {
             lines.push(format!(
@@ -331,18 +332,21 @@ fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
     let origin = Origin::Global(config_path.clone());
     let text = path.to_string_lossy();
     config::set_in_file(&config_path, &origin, key, &text, None)?;
+    let stopped = crate::stop_kept_after(key);
     let devices = if key == "model.gguf" {
         "vulkan and cpu"
     } else {
         "npu, intel-gpu and openvino-cpu"
     };
-    Ok(vec![
+    let mut lines = vec![
         format!("{key} = {text}  ({origin})"),
         format!(
             "{devices} now run this file, unverified: smart-commit did not choose it and \
              cannot check it. `smart-commit model use <id>` goes back to a recommended model."
         ),
-    ])
+    ];
+    lines.extend(stopped);
+    Ok(lines)
 }
 
 /// Uses a model file or directory chosen in the setup's picker.
