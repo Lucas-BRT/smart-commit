@@ -129,12 +129,18 @@ pub fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
             let home = env("HOME");
             let value = config::set_in_file(&path, &origin, &key, &value, home.as_deref())?;
             println!("{key} = {value}  ({origin})");
+            if let Some(note) = crate::stop_kept_after(&key) {
+                println!("{note}");
+            }
             warn_if_shadowed(&key, &target, &origin)?;
         }
         ConfigCommand::Unset { key, target } => {
             let (path, origin) = target.file()?;
             if config::unset_in_file(&path, &key)? {
                 println!("removed {key} from {}", path.display());
+                if let Some(note) = crate::stop_kept_after(&key) {
+                    println!("{note}");
+                }
             } else {
                 println!("{key} is not set in {}", path.display());
             }

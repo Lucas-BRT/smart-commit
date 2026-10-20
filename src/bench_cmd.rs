@@ -369,6 +369,9 @@ fn use_device(device: DeviceArg) -> Result<(), Box<dyn Error>> {
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", device.name(), None)?;
     println!("model.device = {}  ({origin})", device.name());
+    if let Some(note) = crate::stop_kept_after("model.device") {
+        println!("{note}");
+    }
     if env("SMART_COMMIT_DEVICE").is_some_and(|v| !v.is_empty()) {
         eprintln!("note: SMART_COMMIT_DEVICE is set and overrides the config.");
     }

@@ -436,6 +436,17 @@ fn run_server(command: ServerCommand) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// After `key` changed: a model kept loaded was started with the old
+/// settings, so it is stopped (and its memory freed) rather than left
+/// until idle. Returns what to tell the user, if anything was stopped.
+pub fn stop_kept_after(key: &str) -> Option<String> {
+    if key != "backend" && !key.starts_with("model.") {
+        return None;
+    }
+    let stopped = server::stop(&paths::runtime_dir(env)?);
+    (stopped > 0).then(|| format!("stopped the model kept loaded, since {key} changed"))
+}
+
 fn env(name: &str) -> Option<String> {
     std::env::var(name).ok()
 }
@@ -760,7 +771,8 @@ fn load_with(
             if let Some(backend) = keep_loaded(settings, &options) {
                 return Ok(Box::new(backend));
             }
-            let (backend, note) = LlamaCppBackend::start_or_load_normally(&options)?;
+            let (backend, note) =
+                LlamaCppBackend::start_or_load_normally(&options).map_err(with_kept_model_hint)?;
             if let Some(note) = note {
                 eprintln!("note: {note}");
             }
@@ -794,6 +806,18 @@ fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCp
             eprintln!("note: cannot keep the model loaded ({err}); loading it for this commit")
         })
         .ok()
+}
+
+/// A model kept loaded may hold the memory a load needed: the error says so,
+/// and how to free it.
+fn with_kept_model_hint(err: BackendError) -> BackendError {
+    let kept = paths::runtime_dir(env).is_some_and(|runtime| !server::status(&runtime).is_empty());
+    match err {
+        BackendError::Unavailable(text) if kept => BackendError::Unavailable(format!(
+            "{text}; a model kept loaded holds memory too: `smart-commit server stop` frees it"
+        )),
+        other => other,
+    }
 }
 
 /// Devices in the order the last benchmark ranked them, fastest first.
