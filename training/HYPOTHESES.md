@@ -449,6 +449,49 @@ grouped by path rules: docs, tests, CI, build files, else code):
   The `fix`/`feat` boundary needs better labels or more context, not
   another mix.
 
+### H9. A larger prompt budget helps the trained models — a trend, within noise overall
+
+The diff shares a 1024-token budget; a trained model may describe better
+seeing more of it. v0.1 on eval-v1 with `model.max_prompt_tokens` 1536
+against 1024 (Vulkan, RTX 3050, one binary): only the 109 of 500 commits
+whose diff was cut get another prompt, so the other 391 give the same
+reply.
+
+| On the 109 cut commits | word_f1 | ungrounded | unsupported | type_match (50 Conventional) |
+|---|---|---|---|---|
+| v0.1 0.5B, 1024 → 1536 | 0.240 → 0.258 | 0.055 → 0.055 | 0.018 → 0.000 | 0.54 → 0.56 |
+| v0.1 1.5B, 1024 → 1536 | 0.269 → 0.279 | 0.083 → 0.037 | 0.046 → 0.009 | 0.64 → 0.64 |
+
+- Seeing more of the diff, the models invent fewer specifics and write
+  fewer vague descriptions: consistent, but a handful of commits each.
+- Over the 500, within noise: type_match +0.004 (both), type_macro_f1
+  +0.03 and +0.02, word_f1 +0.008 and +0.009.
+- Cost: 7–9% more time over eval-v1 on Vulkan (68 → 73 s for the 0.5B,
+  127 → 139 s for the 1.5B); on the CPU, where prefill dominates, the cut
+  commits' prompts grow by up to half.
+- The NPU compiles for a fixed prompt length, so a budget per device or
+  per model would be needed; H6 already frees about 105 tokens for the
+  diff. Not pursued for now.
+
+### H10. The 7B base model can teach the small ones — false
+
+The labels are the limit of the type (H8); a larger model's replies could
+replace them (distillation). Qwen2.5-Coder-7B, installed for users who want
+it, scored on eval-v1 like the others (1024 tokens, Vulkan):
+
+| eval-v1, Conventional | type_match | type_macro_f1 | word_f1 | ungrounded | 500 messages |
+|---|---|---|---|---|---|
+| base 1.5B | 0.452 | 0.183 | 0.248 | 0.188 | 149 s |
+| base 7B | 0.468 | 0.365 | 0.278 | 0.116 | 414 s |
+| v0.1 0.5B | 0.636 | 0.542 | 0.340 | 0.104 | 68 s |
+| v0.1 1.5B | 0.656 | 0.545 | 0.367 | 0.084 | 127 s |
+
+The 7B is better than the 1.5B base but behind both fine-tunes on every
+metric, and three times slower than v0.1 1.5B: as a teacher it would make
+the small models worse. Fine-tuning on the task beats four times the
+parameters. Better labels have to come from elsewhere (checked datasets,
+or preference training on the failure modes).
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own once H1/H2 show the basic fine-tune
