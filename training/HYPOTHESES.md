@@ -393,9 +393,11 @@ grouped by path rules: docs, tests, CI, build files, else code):
   errors (`fix→feat` alone 30) and 25 of the 1.5B's 89; then `fix→chore`
   (10, 11) and `refactor→feat`.
 - The 0.5B finds 51% of the `fix` commits and 79% of the `feat` ones. The
-  selection caps each type at 30% (`select.py --max-type-share 0.3`), so
-  `fix` is 28.8% of c40k against 41% of eval-v1: the cap that cured the
-  base model's `fix` bias overshoots.
+  selection caps each type at 30% (`select.py --max-type-share 0.3`). Less
+  than it seemed: without the cap, `fix` is 34.9% of the same selection
+  (a cap of 0.45 does not bind and gives the same commits), and the 41% of
+  eval-v1 is its own: 20% to 70% across its 7 Conventional repositories.
+  The cap moves `fix` by 5 points, not 11.
 - `score.py` now reports each type's precision, recall and F1 and their
   mean, `type_macro_f1`: base 1.5B 0.172, v0.1 0.5B 0.537, v0.1 1.5B
   0.548 (type_match 0.480, 0.588, 0.648 on the same traces). Spellings of
@@ -404,12 +406,16 @@ grouped by path rules: docs, tests, CI, build files, else code):
 - Not worth it here: dropping subjects with two types (`chore: refactor:
   …`), 9 of c40k's 40,000 and none of eval-v1.
 
-- **Experiment.** The 0.5B on c20k selected with `--max-type-share 0.45`
-  against c20k (0.3), the same recipe: 75 min on a Kaggle T4.
-- **Expectation.** `fix` recall up, `fix→feat` down, type_match up, and
-  type_macro_f1 not lower (the rarer types must not pay for it). With the
-  literature's ceiling near 0.64 on balanced types, the goal is the
-  `fix`/`feat` boundary, not a much higher type_match.
+- **Experiment, bundle `h8`.** The 0.5B on c20k without the cap
+  (`c20k-nocap-0.5b`, 19,403 of its 20,000 commits shared with c20k)
+  against c20k retrained in the same session (`c20k-ctl-0.5b`, the bytes
+  b2 trained on), one per Kaggle T4, ~75 min. The control retrained also
+  measures the training noise: its scores against b2's c20k-0.5b.
+- **Expectation.** A small contrast: `fix` recall up a few points at most,
+  likely within noise (102 `fix` commits in eval-v1, a standard error near
+  0.05). If so, the cap is not what keeps `fix` low, and v0.2 can drop it
+  (the base model's bias it was for is gone after fine-tuning). Report
+  type_match, type_macro_f1, `fix` recall and `fix→feat`.
 
 ### H-split. The model can tell when the staged changes are several commits — planned
 
