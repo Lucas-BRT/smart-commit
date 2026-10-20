@@ -1,0 +1,245 @@
+# Level 2: one file, ten to a hundred lines.
+level = 2
+
+[[case]]
+id = "new-methods"
+title = "métodos novos"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "append", path = "src/cafeteria/pedido.py", text = """
+    def quantidade_itens(self) -> int:
+        return sum(linha.quantidade for linha in self.linhas)
+
+    def vazio(self) -> bool:
+        return not self.linhas
+""" }]
+target = "adiciona contagem de itens ao pedido"
+expect = ["quantidade|contagem|conta|itens", "pedido|vazio"]
+tags = ["feature"]
+
+[[case]]
+id = "delete-method"
+title = "apaga um método"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "src/cafeteria/pedido.py", old = """    def remover(self, codigo: str) -> None:
+        self.linhas = [l for l in self.linhas if l.item.codigo != codigo]
+
+""", new = "" }]
+target = "remove o método remover do pedido"
+expect = ["remov|apaga|tira", "remover|metodo"]
+tags = ["cleanup"]
+
+[[case]]
+id = "new-query"
+title = "consulta nova"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "append", path = "src/cafeteria/estoque.py", text = """
+    def abaixo_do_minimo(self, minimo: int) -> list[tuple[str, int]]:
+        \"\"\"Itens com menos de `minimo` unidades, do mais escasso ao menos.\"\"\"
+        return self.conexao.execute(
+            "select codigo, quantidade from estoque where quantidade < ? order by quantidade",
+            (minimo,),
+        ).fetchall()
+""" }]
+target = "lista os itens abaixo do estoque mínimo"
+expect = ["minimo|abaixo|escass", "estoque|itens"]
+tags = ["feature"]
+
+[[case]]
+id = "extract-helper"
+title = "extrai uma função auxiliar"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "src/cafeteria/relatorio.py", old = """    linhas = "\\n".join(
+        f"{l.quantidade}x {l.item.nome:<24} {config.moeda} {l.subtotal:>6.2f}" for l in pedido.linhas
+    )""", new = """    linhas = "\\n".join(_linha_do_recibo(l, config) for l in pedido.linhas)""" }, { op = "replace", path = "src/cafeteria/relatorio.py", old = "def recibo(", new = """def _linha_do_recibo(linha, config: Config) -> str:
+    return f"{linha.quantidade}x {linha.item.nome:<24} {config.moeda} {linha.subtotal:>6.2f}"
+
+
+def recibo(""" }]
+target = "extrai a formatação da linha do recibo"
+expect = ["extrai|separa|refator", "linha|recibo"]
+tags = ["refactor"]
+
+[[case]]
+id = "rename-locals"
+title = "renomeia variáveis locais"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "regex", path = "src/cafeteria/relatorio.py", pattern = "\\bvendidos\\b", repl = "quantidades" }, { op = "regex", path = "src/cafeteria/relatorio.py", pattern = "\\btabela\\b", repl = "texto" }]
+target = "renomeia variáveis do resumo do dia"
+expect = ["renome|nome", "variav|resumo"]
+tags = ["rename"]
+
+[[case]]
+id = "rewrite-function"
+title = "reescreve uma função"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "src/cafeteria/cardapio.py", old = """def buscar(codigo: str) -> Item:
+    try:
+        return CARDAPIO[codigo]
+    except KeyError:
+        raise ValueError(f"item desconhecido: {codigo}") from None""", new = """def buscar(codigo: str) -> Item:
+    chave = codigo.strip().lower().replace(" ", "-")
+    item = CARDAPIO.get(chave)
+    if item is None:
+        raise ValueError(f"item desconhecido: {codigo}")
+    return item""" }]
+target = "busca no cardápio ignora maiúsculas e espaços"
+expect = ["busca|codigo", "maiuscul|espac|normaliz"]
+tags = ["feature"]
+
+[[case]]
+id = "new-test-file"
+title = "arquivo de teste novo"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "write", path = "tests/test_cardapio.py", text = """import pytest
+
+from cafeteria.cardapio import buscar, por_categoria
+
+
+def test_busca_item_conhecido():
+    assert buscar("cafe").preco == 6.00
+
+
+def test_item_desconhecido_da_erro():
+    with pytest.raises(ValueError):
+        buscar("pizza")
+
+
+def test_bebidas():
+    assert {item.codigo for item in por_categoria("bebida")} == {
+        "cafe", "espresso", "capuccino", "cha",
+    }
+""" }]
+target = "testes do cardápio"
+expect = ["test", "cardapio"]
+tags = ["tests"]
+
+[[case]]
+id = "delete-file"
+title = "apaga um arquivo"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "git", args = ["rm", "-q", "src/cafeteria/estoque.py"] }]
+target = "remove o controle de estoque"
+expect = ["remov|apaga|tira", "estoque"]
+tags = ["delete"]
+
+[[case]]
+id = "project-config"
+title = "configuração de projeto nova"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "write", path = "pyproject.toml", text = """[project]
+name = "cafeteria"
+version = "0.3.0"
+requires-python = ">=3.11"
+dependencies = ["tabulate==0.9.0", "python-dateutil==2.9.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+""" }]
+target = "adiciona pyproject com pytest e ruff"
+expect = ["pyproject|projeto|config"]
+tags = ["config", "new-file"]
+
+[[case]]
+id = "docstrings-everywhere"
+title = "docstrings em todo o arquivo"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "replace", path = "src/cafeteria/cardapio.py", old = "class Item:\n", new = "class Item:\n    \"\"\"Um item do cardápio, com o preço em reais.\"\"\"\n\n" },
+  { op = "replace", path = "src/cafeteria/cardapio.py", old = "def buscar(codigo: str) -> Item:\n", new = "def buscar(codigo: str) -> Item:\n    \"\"\"O item com esse código; ValueError se não existir.\"\"\"\n" },
+  { op = "replace", path = "src/cafeteria/cardapio.py", old = "def por_categoria(categoria: str) -> list[Item]:\n", new = "def por_categoria(categoria: str) -> list[Item]:\n    \"\"\"Os itens de uma categoria, na ordem do cardápio.\"\"\"\n" },
+]
+target = "documenta o cardápio"
+expect = ["document|docstring|comenta", "cardapio"]
+tags = ["comments"]
+
+[[case]]
+id = "report-totals"
+title = "função nova"
+repo = "ledger"
+split = "train"
+ops = [{ op = "append", path = "src/report.ts", text = """
+/** The sum of the balances of each kind of account. */
+export function totals(registry: Registry): Map<string, string> {
+  const sums = new Map<string, Money>();
+  for (const account of registry.all()) {
+    sums.set(account.kind, (sums.get(account.kind) ?? Money.fromCents(0)).plus(account.balance));
+  }
+  return new Map([...sums].map(([kind, sum]) => [kind, sum.toString()]));
+}
+""" }, { op = "replace", path = "src/report.ts", old = "import { Account, Registry } from \"./accounts.js\";", new = "import { Account, Registry } from \"./accounts.js\";\nimport { Money } from \"./money.js\";" }]
+target = "feat(report): add totals per account kind"
+expect = ["^feat\\(report\\)", "total|sum"]
+tags = ["feature"]
+
+[[case]]
+id = "extract-format"
+title = "extrai uma função de formatação"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "replace", path = "src/money.ts", old = """  toString(): string {
+    const sign = this.cents < 0 ? "-" : "";
+    const abs = Math.abs(this.cents);
+    return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
+  }""", new = """  toString(): string {
+    return formatCents(this.cents);
+  }
+}
+
+function formatCents(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;""" }]
+target = "refactor(money): extract cents formatting"
+expect = ["^refactor\\(money\\)", "format|extract"]
+tags = ["refactor"]
+
+[[case]]
+id = "more-tests"
+title = "testes novos num arquivo existente"
+repo = "ledger"
+split = "train"
+ops = [{ op = "append", path = "test/money.test.ts", text = """
+test("adds and subtracts", () => {
+  const a = Money.parse("10.50");
+  const b = Money.parse("0.75");
+  assert.equal(a.plus(b).toString(), "11.25");
+  assert.equal(b.minus(a).toString(), "-9.75");
+});
+
+test("rejects garbage", () => {
+  assert.throws(() => Money.parse("ten"));
+  assert.throws(() => Money.parse("1.234"));
+});
+""" }]
+target = "test(money): cover arithmetic and invalid amounts"
+expect = ["^test\\(money\\)"]
+tags = ["tests"]
+
+[[case]]
+id = "memo-search"
+title = "busca nova"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "append", path = "src/transactions.ts", text = """
+/** Transfers whose memo contains `text`, ignoring case. */
+export function searchMemos(journal: Journal, text: string): Transfer[] {
+  const needle = text.toLowerCase();
+  return journal.entries.filter((t) => t.memo.toLowerCase().includes(needle));
+}
+""" }]
+target = "feat(transactions): search transfers by memo"
+expect = ["^feat\\(transactions\\)", "memo|search"]
+tags = ["feature"]

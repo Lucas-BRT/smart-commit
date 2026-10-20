@@ -15,6 +15,7 @@ mise install python@3.12.15
 export UV_PYTHON=$(mise where python@3.12.15)/bin/python3 UV_PYTHON_DOWNLOADS=never
 cd training && uv sync --locked
 uv run --locked python -I test_build_inputs.py   # checks -U1 trimming against git
+uv run --locked python -I test_scenarios.py ../target/release/smart-commit   # the scenarios
 ```
 
 ## Inputs
@@ -123,6 +124,14 @@ the validation set's `f6350a3c5cb71b58` (b2's).
 `select.py data/test1 data/val1 --conventional 250 --free 250 --max-type-share 0.3 --supported-only`
 (`meta.jsonl` sha256 starts `2fb1dedba6e20939`; `val1-h4` is the same with
 the history paths, as `select.py` writes it today).
+
+## Scenarios
+
+Hand-written cases from `scenarios/`, in the same layout as a selection:
+`build_scenarios.py build data/scenarios-eval $SC --split eval` (or
+`--split train`) writes `inputs.jsonl` and `meta.jsonl`, which step 3
+(`make_examples.py`) and step 6 (`smart-commit eval`, `score.py`) take
+unchanged. How to write a case: [scenarios/README.md](scenarios/README.md).
 
 ## Bundle b3 (v0.2)
 

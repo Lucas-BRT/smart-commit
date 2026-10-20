@@ -231,13 +231,21 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
   repositories never seen in training, 250 Conventional and 250 free;
   **eval-short**: 197 commits of young repositories (1–5 history subjects).
   How to rebuild both is in [training/README.md](../training/README.md).
+- **Scenarios**: hand-written cases of git operations on two synthetic
+  repositories (Python in Portuguese with free style, TypeScript with
+  Conventional Commits), by level of complexity from a typo to a merge in
+  progress, each with its target; `score.py` reports them per level and
+  checks the words a right subject must have (`expected`). Each case is in
+  the train or the eval split, never both; those whose target depends on
+  what the inputs do not record (merge, revert, file modes) are eval only.
+  See [training/scenarios/README.md](../training/scenarios/README.md).
 - Metrics: first_try, fallback, copied, type_match, scope_known,
   scope_fits, word_f1, and two cheap faithfulness checks, `unsupported`
   (specifics found nowhere in the input) and `ungrounded` (a description
   with no word from the diff); `score.py`'s docstring defines them.
 - Always report the base model's scores on the same set and binary.
-- Not covered yet: gitmoji, Portuguese, and an LLM judge for faithfulness
-  validated against a sample rated by hand.
+- Not covered yet: gitmoji, Portuguese beyond the scenarios, and an LLM
+  judge for faithfulness validated against a sample rated by hand.
 
 ## Training
 

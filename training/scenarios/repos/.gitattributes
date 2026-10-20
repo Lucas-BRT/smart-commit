@@ -1,0 +1,3 @@
+# The base repositories are inputs: keep their bytes (CRLF on purpose in
+# ledger/files/tsconfig.json), whatever core.autocrlf says.
+* -text

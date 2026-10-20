@@ -1,0 +1,105 @@
+# Level 0: changes with little or no code meaning (typos, whitespace, line
+# endings, file modes). The message must name what changed without
+# inventing a behaviour.
+level = 0
+
+[[case]]
+id = "typo-in-string"
+title = "typo numa mensagem de erro"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "replace", path = "src/cafeteria/estoque.py", old = "insuficente", new = "insuficiente" }]
+target = "corrige typo na mensagem de estoque insuficiente"
+expect = ["typo|digita|ortograf|corrig", "estoque|insuficiente"]
+tags = ["typo"]
+
+[[case]]
+id = "typo-in-comment"
+title = "typo num comentário de documentação"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "replace", path = "src/report.ts", old = "per acount", new = "per account" }]
+target = "docs(report): fix typo in balances comment"
+expect = ["typo|spell", "^docs|^style|^chore"]
+tags = ["typo", "comments"]
+
+[[case]]
+id = "trailing-whitespace"
+title = "remove espaços no fim das linhas"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "regex", path = "src/cafeteria/cli.py", pattern = "[ \\t]+$", repl = "" }]
+target = "remove espaços no fim das linhas do cli"
+expect = ["espaco|whitespace|branco"]
+tags = ["whitespace"]
+
+[[case]]
+id = "wrap-long-line"
+title = "só quebra uma linha longa"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "replace", path = "src/report.ts", old = "  return [`${\"account\".padEnd(width)}  ${\"balance\".padStart(12)}`, ...accounts.map((a) => line(a, width))].join(\"\\n\");", new = """  const header = `${"account".padEnd(width)}  ${"balance".padStart(12)}`;
+  return [header, ...accounts.map((a) => line(a, width))].join("\\n");""" }]
+target = "style(report): split the long return line"
+expect = ["^style|^refactor", "line|format|wrap|split"]
+tags = ["formatting"]
+
+[[case]]
+id = "make-executable"
+title = "só chmod +x"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "chmod", path = "scripts/backup.sh", mode = "755" }]
+target = "torna o script de backup executável"
+expect = ["execut|permiss|chmod", "backup|script"]
+tags = ["file-mode"]
+
+[[case]]
+id = "final-newline"
+title = "adiciona a quebra de linha final"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "append", path = "requirements.txt", text = "\n" }]
+target = "adiciona quebra de linha no fim do requirements.txt"
+expect = ["quebra|newline|linha", "requirements"]
+tags = ["whitespace"]
+
+[[case]]
+id = "normalize-line-endings"
+title = "CRLF para LF"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "regex", path = "tsconfig.json", pattern = "\\r$", repl = "" }]
+target = "chore: normalize line endings in tsconfig.json"
+expect = ["line ending|crlf|lf|newline", "tsconfig"]
+tags = ["whitespace"]
+
+[[case]]
+id = "empty-marker-file"
+title = "arquivo vazio novo"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "write", path = "src/cafeteria/py.typed", text = "" }]
+target = "marca o pacote como tipado com py.typed"
+expect = ["py.?typed|tipad"]
+tags = ["new-file"]
+
+[[case]]
+id = "symlink"
+title = "symlink novo"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "symlink", path = "ledger", target = "dist/index.js" }]
+target = "chore: add a ledger symlink to the built CLI"
+expect = ["link|symlink", "^chore|^build"]
+tags = ["file-mode", "new-file"]
+
+[[case]]
+id = "nothing-staged"
+title = "nada staged"
+repo = "cafeteria"
+split = "eval"
+stage = "none"
+ops = [{ op = "replace", path = "src/cafeteria/config.py", old = "0.30", new = "0.25" }]
+outcome = "error"
+target = ""
