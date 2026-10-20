@@ -8,7 +8,11 @@ Per set (conventional, free) and overall:
 - copied: the subject is one of the history subjects verbatim
 - first_copied: the first reply repeated a history subject (smart-commit
   rejects that and retries, so copied alone hides it)
-- type_match: same Conventional type as the real subject (conventional set)
+- type_match: same Conventional type as the real subject (conventional set),
+  with spellings of one type folded (`tests` is `test`)
+- type_macro_f1: the F1 of each real type, averaged over the types, with
+  each type's precision, recall and F1 in type_scores: type_match is
+  dominated by `fix`, the most frequent type
 - scope_known: no scope, or one already used in the history (conventional set)
 - scope_fits: the scope was used by history commits touching a directory
   the staged files are in, or there is no scope and no history scope does
@@ -36,7 +40,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from build_inputs import CONVENTIONAL  # noqa: E402
+from build_inputs import TYPE_ALIASES, conventional_type  # noqa: E402
 
 SCOPE = re.compile(r"^[a-z]+\(([^()]+)\)")
 WORD = re.compile(r"[a-z0-9]+")
@@ -115,8 +119,27 @@ def f1(a: str, b: str) -> float:
 
 
 def conv_type(subject: str) -> str | None:
-    m = CONVENTIONAL.match(subject)
-    return m.group("type") if m else None
+    return conventional_type(subject)
+
+
+def per_type(pairs: collections.Counter) -> tuple[dict, float]:
+    """Precision, recall and F1 of each real type, from (real, generated)
+    counts, and their mean over the real types (macro F1): accuracy alone is
+    dominated by `fix`, the most frequent type."""
+    real, generated, hits = collections.Counter(), collections.Counter(), collections.Counter()
+    for (r, g), n in pairs.items():
+        real[r] += n
+        generated[g] += n
+        if r == g:
+            hits[r] += n
+    scores = {}
+    for t in sorted(real, key=lambda t: (-real[t], t)):
+        p = hits[t] / generated[t] if generated[t] else 0.0
+        r = hits[t] / real[t]
+        f = 2 * p * r / (p + r) if p + r else 0.0
+        scores[t] = {"n": real[t], "precision": round(p, 3), "recall": round(r, 3), "f1": round(f, 3)}
+    macro = sum(s["f1"] for s in scores.values()) / len(scores) if scores else 0.0
+    return scores, round(macro, 3)
 
 
 def main() -> None:
@@ -152,7 +175,8 @@ def main() -> None:
             "exact": subject == m["target"],
         }
         if m["set"] == "conventional":
-            row["type_match"] = conv_type(subject) == m["type"]
+            real_type = TYPE_ALIASES.get(m["type"], m["type"])
+            row["type_match"] = conv_type(subject) == real_type
             scope = SCOPE.match(subject)
             known = {s.group(1) for h in history if (s := SCOPE.match(h))}
             row["scope_known"] = scope is None or scope.group(1) in known
@@ -166,14 +190,19 @@ def main() -> None:
                 sums[key][k] += float(v)
                 counts[key][k] += 1
             if m["set"] == "conventional":
-                types[key][f"{m['type']}->{conv_type(subject)}"] += 1
+                types[key][(real_type, conv_type(subject))] += 1
 
     report = {}
     for key, c in sums.items():
         n = c.pop("n")
         report[key] = {"n": int(n), **{k: round(v / counts[key][k], 3) for k, v in sorted(c.items())}}
         if types[key]:
-            report[key]["types (real->generated)"] = dict(types[key].most_common())
+            scores, macro = per_type(types[key])
+            report[key]["type_macro_f1"] = macro
+            report[key]["types (real->generated)"] = {
+                f"{r}->{g}": n for (r, g), n in types[key].most_common()
+            }
+            report[key]["type_scores"] = scores
     if args.json:
         print(json.dumps(report, indent=2))
         return

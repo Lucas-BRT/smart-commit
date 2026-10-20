@@ -4,6 +4,7 @@ give git's `-U1` diff (headings aside). Seeded, so always the same cases.
     python -I test_build_inputs.py
 """
 
+import collections
 import json
 import os
 import random
@@ -18,6 +19,8 @@ from build_inputs import inputs_of, keep_target, trim_context  # noqa: E402
 from build_inputs import paths_of  # noqa: E402
 from score import area, description, scope_fits, specifics, ungrounded, unsupported  # noqa: E402
 from make_examples import make_examples  # noqa: E402
+from build_inputs import conventional_type  # noqa: E402
+from score import per_type  # noqa: E402
 
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
 
@@ -170,6 +173,20 @@ def test_make_examples_passes_the_rules() -> None:
             example = json.loads((d / "examples.jsonl").read_text())
             assert example["system"] == f"prompt --inputs {d / 'inputs.jsonl'} --rules {rules}"
             assert example["target"] == "feat: add x" and example["user"] == "u"
+
+
+def test_type_scores() -> None:
+    assert conventional_type("tests(cli): cover -C") == "test"
+    assert conventional_type("test: x") == "test" and conventional_type("Fix: x") is None
+    pairs = collections.Counter({("fix", "fix"): 3, ("fix", "feat"): 1, ("feat", "feat"): 1,
+                                 ("docs", None): 2})
+    scores, macro = per_type(pairs)
+    assert list(scores) == ["fix", "docs", "feat"]
+    assert scores["fix"] == {"n": 4, "precision": 1.0, "recall": 0.75, "f1": 0.857}
+    assert scores["feat"] == {"n": 1, "precision": 0.5, "recall": 1.0, "f1": 0.667}
+    assert scores["docs"] == {"n": 2, "precision": 0.0, "recall": 0.0, "f1": 0.0}
+    assert macro == round((0.857 + 0.667 + 0.0) / 3, 3)
+    assert per_type(collections.Counter()) == ({}, 0.0)
 
 
 if __name__ == "__main__":

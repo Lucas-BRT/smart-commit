@@ -36,6 +36,9 @@ STATUS = {
 
 TYPES = "feat|fix|docs|style|refactor|perf|test|tests|build|ci|chore|revert"
 CONVENTIONAL = re.compile(rf"^(?P<type>{TYPES})(\([^()]+\))?!?: \S")
+# Spellings of one type, folded for selection and scoring; the target keeps
+# the repository's own spelling, which the model should follow.
+TYPE_ALIASES = {"tests": "test"}
 DROP = [
     re.compile(p, re.IGNORECASE)
     for p in (
@@ -67,7 +70,7 @@ def keep_target(subject: str) -> bool:
 
 def conventional_type(subject: str) -> str | None:
     m = CONVENTIONAL.match(subject)
-    return m.group("type") if m else None
+    return TYPE_ALIASES.get(m.group("type"), m.group("type")) if m else None
 
 
 def date_key(date: str) -> datetime:
