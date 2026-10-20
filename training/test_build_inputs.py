@@ -215,6 +215,23 @@ def test_releases() -> None:
             assert len((out / "meta.jsonl").read_text().splitlines()) == kept
 
 
+def test_score_reads_rule_messages() -> None:
+    """A message from rules (a lockfile) has no attempt; score.py crashed on it."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        meta = {"repo": "r", "hash": "h", "target": "chore(deps): update lockfile", "type": "chore",
+                "history": 1, "set": "conventional"}
+        trace = {"inputs": {"branch": "main", "subjects": ["a"], "staged": [], "files": []},
+                 "generation": {"message": {"subject": "chore(deps): update package-lock.json", "body": None},
+                                "source": "rules", "attempts": []}}
+        (d / "meta.jsonl").write_text(json.dumps(meta) + "\n")
+        (d / "traces.jsonl").write_text(json.dumps(trace) + "\n")
+        result = subprocess.run([sys.executable, "-I", str(Path(__file__).parent / "score.py"), str(d),
+                                 str(d / "traces.jsonl"), "--json"], capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        assert json.loads(result.stdout)["all"]["first_try"] == 1.0
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

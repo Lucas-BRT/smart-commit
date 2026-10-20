@@ -162,15 +162,17 @@ def main() -> None:
         history = t["inputs"]["subjects"]
         known = evidence(t["inputs"])
         diff = evidence({**t["inputs"], "subjects": []})
+        # Messages from rules (lockfiles, generated files) have no attempt.
+        first = g["attempts"][0]["rejected"] if g["attempts"] else None
         row = {
             "unsupported": unsupported(subject, known),
             "unsupported_real": unsupported(m["target"], known),
             "ungrounded": ungrounded(subject, diff),
             "ungrounded_real": ungrounded(m["target"], diff),
-            "first_try": g["attempts"][0]["rejected"] is None,
+            "first_try": first is None,
             "fallback": g["source"] == "fallback",
             "copied": subject in history,
-            "first_copied": "copied_history" in (g["attempts"][0]["rejected"] or {}),
+            "first_copied": "copied_history" in (first or {}),
             "word_f1": f1(subject, m["target"]),
             "exact": subject == m["target"],
         }
