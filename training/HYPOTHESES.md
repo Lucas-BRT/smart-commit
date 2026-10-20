@@ -529,6 +529,17 @@ counted once): 0.5B 1.150 → 0.976 s per message, 1.5B 2.532 → 2.156 s.
 - **The 0.5B keeps its eval-v1 quality;** the 1.5B loses a little on the
   type (−0.028, about one standard error; type_macro_f1 −0.047) and its
   descriptions are vaguer in young repositories (ungrounded +0.04).
+- **The 1.5B leans on the rules more than the 0.5B.** Given the full
+  prompt anyway, v0.2 1.5B scores type_match 0.644 and type_macro_f1 0.514
+  (against 0.628 and 0.498 without the rules, 0.656 and 0.545 for v0.1),
+  and in young repositories ungrounded 0.112 (0.142 without); v0.2 0.5B
+  with the full prompt loses instead (type_match 0.612, type_macro_f1
+  0.448). Twenty thousand examples without the rules may not be enough for
+  the 1.5B to take them in; v0.1 1.5B had forty thousand. To try in v0.3.
+- Both are on Hugging Face, private until checked on the notebook:
+  `LucasBRT/smart-commit-0.5b-v0.2` (revision `bdb93a5`, registered on the
+  `feat/model-v0.2` branch) and `LucasBRT/smart-commit-1.5b-v0.2`
+  (`4bca5dc`, not registered: v0.1 stays the recommended 1.5B).
 - Building b3 found a bug in the prompt budget's token estimate: see
   `docs/architecture.md`, Fitting the diff.
 
