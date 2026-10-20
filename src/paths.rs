@@ -51,6 +51,14 @@ pub fn default_config_file(env: impl Fn(&str) -> Option<String>) -> Option<PathB
     Some(xdg(&env, "XDG_CONFIG_HOME", ".config")?.join("smart-commit/config.toml"))
 }
 
+/// `$XDG_RUNTIME_DIR/smart-commit`, where models kept loaded listen
+/// (`model.keep_loaded`): private to the user and emptied at logout. No
+/// fallback: without it, models are not kept loaded.
+pub fn runtime_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    let dir = env("XDG_RUNTIME_DIR").map(PathBuf::from)?;
+    dir.is_absolute().then(|| dir.join("smart-commit"))
+}
+
 /// The XDG variable if set to an absolute path (relative ones are invalid
 /// per the spec), else `$HOME/<fallback>`.
 fn xdg(env: &impl Fn(&str) -> Option<String>, var: &str, fallback: &str) -> Option<PathBuf> {
@@ -71,6 +79,16 @@ mod tests {
                 .find(|(k, _)| *k == name)
                 .map(|(_, v)| (*v).to_owned())
         }
+    }
+
+    #[test]
+    fn runtime_dir_needs_xdg_runtime_dir() {
+        assert_eq!(
+            runtime_dir(env(&[("XDG_RUNTIME_DIR", "/run/user/1000")])).unwrap(),
+            PathBuf::from("/run/user/1000/smart-commit")
+        );
+        assert_eq!(runtime_dir(env(&[("HOME", "/home/me")])), None);
+        assert_eq!(runtime_dir(env(&[("XDG_RUNTIME_DIR", "run")])), None);
     }
 
     #[test]

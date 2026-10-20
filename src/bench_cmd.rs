@@ -53,6 +53,10 @@ fn measure_all(
     stop: &AtomicBool,
     mut progress: impl FnMut(Progress),
 ) -> Option<Report> {
+    // A model kept loaded holds memory the measured loads need.
+    if let Some(runtime) = paths::runtime_dir(crate::env) {
+        smart_commit::server::stop(&runtime);
+    }
     let prompts = bench::prompts();
     let config = settings.generation_config();
     let mut entries = Vec::new();

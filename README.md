@@ -76,6 +76,7 @@ installer's options and for building from source.
 | `smart-commit --trace FILE` / `replay FILE` | record and replay a generation |
 | `smart-commit setup` | install drivers and models, then benchmark |
 | `smart-commit hardware` | list the CPU, GPUs and NPU, and the devices each gives |
+| `smart-commit server status` / `stop` | the model kept loaded between commits (`model.keep_loaded`) |
 
 ## Supported hardware
 
