@@ -260,6 +260,11 @@ example and "follow their style", repeating it is the easy answer.
 - **Data.** Add examples with 0–9 history subjects (`--min-history 0`),
   about a fifth of the set, so the model learns to describe the diff when
   the history says little. Watch that eval-v1 does not get worse.
+  `train-all` holds 86,332 such commits from 9,509 repositories, spread
+  evenly from 0 to 9 subjects, 4,233 of them Conventional. Selected:
+  `data/h5`, 1,600 Conventional (447 repositories) and 2,400 free (2,120),
+  at most 5 per repository like eval-short (commands in
+  [README.md](README.md)).
 - **Prompt, if data is not enough.** With a very short history, present
   the examples as a format reference only ("follow their format, do not
   repeat them").
@@ -343,6 +348,11 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
   (`chore: release …`, version-only descriptions), so the models never saw
   one. Keep those whose version is in the diff (a `version = ` line), where
   the target is predictable; keep dropping version-only ones without it.
+  Built: `build_inputs.py --releases` keeps only those (the filters stay
+  as they are, so earlier sets rebuild the same): 7,639 of the train
+  split's 7.66M commits, from 988 repositories, 1,125 Conventional (1,023
+  `chore`). Selected: `data/h7`, 219 Conventional and 200 free, at most 5
+  per repository (`select.py --releases`), about 2% of a 20k bundle.
 - **Data.** Raise the share of targets whose type is outside the list and
   of unscoped targets under a fully scoped history, by selection in
   `select.py`, not by editing targets. Train with the scope map of H4

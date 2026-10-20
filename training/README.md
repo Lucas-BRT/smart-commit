@@ -47,6 +47,13 @@ uv run --locked python -I select.py data/train-all data/curve --conventional 240
   --max-type-share 0.3 --per-repo 150 --supported-only
 uv run --locked python -I select.py data/train-all data/h8 --conventional 24000 --free 16000 \
   --per-repo 150 --supported-only
+# v0.2's extra slices: young repositories (H5) and release bumps whose version
+# the diff adds (H7), which the target filters otherwise drop.
+uv run --locked python -I select.py data/train-all data/h5 --conventional 1600 --free 2400 \
+  --min-history 0 --max-history 9 --per-repo 5 --supported-only
+uv run --locked python -I build_inputs.py data/releases $C/commit-chronicle/5fd076e/train-*.parquet --releases
+uv run --locked python -I select.py data/releases data/h7 --conventional 400 --free 200 \
+  --min-history 0 --per-repo 5 --supported-only --releases
 # h3a (H3): the same commits without the targets the label filters reject.
 uv run --locked python -I filter_supported.py data/h1 data/h3a
 
@@ -107,3 +114,7 @@ c20k-nocap-0.5b=0.5b:data/h8/nocap-20000.jsonl
 c20k-ctl-0.5b=0.5b:data/curve/clean-20000.jsonl`. The examples' sha256
 start `6da30e215758959e` and `3d69c19fc6bd0577` (the c20k b2 trained on),
 the validation set's `f6350a3c5cb71b58` (b2's).
+
+`data/releases` (H7): `inputs.jsonl` sha256 starts `cbd4239e8433a438`,
+`meta.jsonl` `c7e2d480aca635b9`; `data/h5` `9827ecc272759ec9` and
+`513484be87384cf5`; `data/h7` `4c6a2cad2087a047` and `a35b23326e894b96`.
