@@ -279,8 +279,18 @@ impl Backend for LlamaCppBackend {
 
 /// Everything explicit: all layers on the chosen GPU, a context that fits
 /// exactly our prompt budget and reply, one slot, no web UI, no network.
+/// The context the server is started with: the prompt budget, half again
+/// as room for a prompt whose tokens were underestimated (the budget counts
+/// about 3 characters per token, and hashes, base64 or long numbers take
+/// up to twice as many tokens: Qwen splits every digit), and the reply. A
+/// longer prompt is read a little longer instead of failing; the KV cache
+/// it costs is a few megabytes for the small models.
+pub fn context_size(options: &LlamaCppOptions) -> usize {
+    options.max_prompt_tokens + options.max_prompt_tokens / 2 + options.max_new_tokens
+}
+
 pub fn server_args(options: &LlamaCppOptions, socket: &Path) -> Vec<String> {
-    let context = options.max_prompt_tokens + options.max_new_tokens;
+    let context = context_size(options);
     let (layers, device) = match options.device {
         // `none` keeps llama.cpp from offloading anything to a GPU it finds.
         LlamaDevice::Cpu => ("0", "none".to_owned()),
@@ -514,7 +524,7 @@ pub fn describe(options: &LlamaCppOptions) -> String {
         "llama.cpp server={build} device={} model={} sha256={identity} ctx={}{threads}{}",
         options.device,
         name(&options.model),
-        options.max_prompt_tokens + options.max_new_tokens,
+        context_size(options),
         if options.fast_load { " load=fast" } else { "" }
     )
 }
@@ -552,7 +562,7 @@ mod tests {
         assert!(joined.contains("--model /d/model.gguf"));
         assert!(joined.contains("--host /tmp/x/server.sock"));
         assert!(joined.contains("--device Vulkan1"));
-        assert!(joined.contains("--ctx-size 1152"));
+        assert!(joined.contains("--ctx-size 1664"));
         assert!(joined.contains("--n-gpu-layers 999"));
         assert!(joined.contains("--offline"));
         assert!(joined.contains("--threads-batch 6"));
@@ -572,10 +582,10 @@ mod tests {
         assert!(joined.contains("--n-gpu-layers 0"), "{joined}");
         assert!(joined.contains("--device none"), "{joined}");
         assert!(!joined.contains("Vulkan"), "{joined}");
-        assert!(joined.contains("--ctx-size 1152"), "{joined}");
+        assert!(joined.contains("--ctx-size 1664"), "{joined}");
         assert_eq!(
             describe(&options),
-            "llama.cpp server=llama-b11381 device=CPU model=model.gguf sha256=unverified ctx=1152 \
+            "llama.cpp server=llama-b11381 device=CPU model=model.gguf sha256=unverified ctx=1664 \
              threads-batch=6"
         );
     }
@@ -596,8 +606,8 @@ mod tests {
             args.ends_with(&FAST_LOAD_FLAGS.map(String::from)),
             "{args:?}"
         );
-        assert!(describe(&fast).ends_with(" ctx=1152 load=fast"));
-        assert!(describe(&options(Path::new("/d"))).ends_with(" ctx=1152"));
+        assert!(describe(&fast).ends_with(" ctx=1664 load=fast"));
+        assert!(describe(&options(Path::new("/d"))).ends_with(" ctx=1664"));
     }
 
     #[test]
@@ -728,6 +738,18 @@ mod tests {
     }
 
     #[test]
+    fn the_context_fits_prompts_whose_tokens_were_underestimated() {
+        // Found evaluating without the fixed rules: a diff of SSH keys
+        // estimated at 905 tokens was 1292, over the 1280 of a context
+        // sized for the budget; across eval-v1 the estimate was at worst
+        // 1.45 times short.
+        let options = options(Path::new("/d"));
+        assert_eq!(options.max_prompt_tokens, 1024);
+        assert!(context_size(&options) >= 1292 + options.max_new_tokens);
+        assert!(context_size(&options) >= 1024 * 145 / 100 + options.max_new_tokens);
+    }
+
+    #[test]
     fn generates_through_the_socket() {
         let dir = tempfile::TempDir::new().unwrap();
         let socket = dir.path().join("server.sock");
@@ -802,7 +824,7 @@ mod tests {
         let options = options(dir.path());
         assert_eq!(
             describe(&options),
-            "llama.cpp server=llama-b11381 device=Vulkan1 model=model.gguf sha256=unverified ctx=1152"
+            "llama.cpp server=llama-b11381 device=Vulkan1 model=model.gguf sha256=unverified ctx=1664"
         );
         std::fs::write(
             dir.path().join("model.gguf.sha256"),
