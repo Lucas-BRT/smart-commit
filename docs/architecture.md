@@ -89,6 +89,13 @@ them, and the history examples. The user message has the file list, the diff
 and, when files were cut, a note saying so. A forced convention
 (`style.convention`) drops the examples that contradict it.
 
+A model trained to follow the fixed instructions without being told
+(training H6) gets a shorter system message, `PromptRules::Omitted`: only
+what varies by repository (types, scopes, examples) and what its training
+lacks (a ticket, Portuguese, gitmoji). The rules follow the model file that
+runs, from its entry in `models::REGISTRY` and the checked SHA-256 next to
+it, and are recorded in traces; any other file gets every rule.
+
 ## Sanitizing the output
 
 Small models wrap answers in code fences, quote them, announce them ("Here is

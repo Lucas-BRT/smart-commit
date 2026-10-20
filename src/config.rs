@@ -22,7 +22,7 @@ use crate::genai::{Device, GenaiOptions, NpuTuning};
 use crate::llamacpp::{LlamaCppOptions, LlamaDevice};
 use crate::models::{self, Model};
 use crate::paths;
-use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions};
+use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions, PromptRules};
 use crate::style::{Convention, Language};
 
 /// The per-repository file, at the root of the work tree.
@@ -728,6 +728,11 @@ impl Settings {
             default_language: self.default_language,
             convention: self.convention,
             language: self.language,
+            // The rules follow the model file that runs, never a setting.
+            rules: self
+                .gguf
+                .as_deref()
+                .map_or(PromptRules::Full, models::prompt_rules),
         }
     }
 

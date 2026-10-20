@@ -17,6 +17,8 @@ use std::time::Duration;
 
 use sha2::{Digest, Sha256};
 
+use crate::prompt::PromptRules;
+
 /// Where models are downloaded from.
 pub const HUGGING_FACE: &str = "https://huggingface.co";
 
@@ -87,6 +89,9 @@ pub struct Model {
     /// The directory `scripts/export-model.sh` writes, for the OpenVINO
     /// devices; `None` when the model has no pinned export yet.
     pub openvino: Option<&'static str>,
+    /// The instructions the model needs: [`PromptRules::Omitted`] only for
+    /// a model trained without them (training H6).
+    pub rules: PromptRules,
 }
 
 pub const REGISTRY: &[Model] = &[
@@ -104,6 +109,7 @@ pub const REGISTRY: &[Model] = &[
             sha256: "cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046",
         },
         openvino: Some("qwen2.5-coder-1.5b-instruct-int4-sym-g128"),
+        rules: PromptRules::Full,
     },
     Model {
         id: "qwen2.5-coder-0.5b",
@@ -119,6 +125,7 @@ pub const REGISTRY: &[Model] = &[
             sha256: "1d9614638d18024d0fbb36575a15f1302a3adf044df10345688ec4f6e1c4ff32",
         },
         openvino: None,
+        rules: PromptRules::Full,
     },
     Model {
         id: "qwen2.5-coder-7b",
@@ -134,6 +141,7 @@ pub const REGISTRY: &[Model] = &[
             sha256: "509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c",
         },
         openvino: None,
+        rules: PromptRules::Full,
     },
     Model {
         id: "smart-commit-1.5b-v0.1",
@@ -149,6 +157,7 @@ pub const REGISTRY: &[Model] = &[
             sha256: "7b8f456ff62c050e43ebdb90593960990e490e1dd7c2635652a82929a040d9f7",
         },
         openvino: None,
+        rules: PromptRules::Full,
     },
     Model {
         id: "smart-commit-0.5b-v0.1",
@@ -164,6 +173,7 @@ pub const REGISTRY: &[Model] = &[
             sha256: "83b9acfc91e67cba1a2b669a0afe59ddc1b3ce5909617355b88d3a2ff6e66c11",
         },
         openvino: None,
+        rules: PromptRules::Full,
     },
 ];
 
@@ -232,6 +242,16 @@ pub fn is_installed(gguf: &Gguf, file: &Path) -> bool {
     let recorded = std::fs::read_to_string(sidecar(file)).unwrap_or_default();
     recorded.split_whitespace().next() == Some(gguf.sha256)
         && std::fs::metadata(file).is_ok_and(|m| m.len() == gguf.size)
+}
+
+/// The instructions the GGUF at `file` needs: those of the recommended
+/// model it was checked to be, or all of them for any other file, since
+/// only a model trained without them can do without.
+pub fn prompt_rules(file: &Path) -> PromptRules {
+    REGISTRY
+        .iter()
+        .find(|model| is_installed(&model.gguf, file))
+        .map_or(PromptRules::Full, |model| model.rules)
 }
 
 /// Downloads `model`'s GGUF into `dir` from `base` (normally
@@ -328,6 +348,37 @@ pub fn check_gguf(path: &Path) -> Result<(), ModelError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn prompt_rules_follow_the_checked_file() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let model = &REGISTRY[0];
+        let file = dir.path().join(model.gguf.file);
+        // Sparse: the size is checked, not the bytes.
+        std::fs::File::create(&file)
+            .unwrap()
+            .set_len(model.gguf.size)
+            .unwrap();
+        std::fs::write(sidecar(&file), format!("{}  x\n", model.gguf.sha256)).unwrap();
+        assert_eq!(prompt_rules(&file), model.rules);
+        // Any other file gets every rule, whatever it is called.
+        std::fs::write(sidecar(&file), "0000  x\n").unwrap();
+        assert_eq!(prompt_rules(&file), PromptRules::Full);
+        assert_eq!(
+            prompt_rules(&dir.path().join("missing.gguf")),
+            PromptRules::Full
+        );
+    }
+
+    #[test]
+    fn no_model_drops_the_rules_it_was_not_trained_without() {
+        // Base models fall apart without them (training H6), and v0.1 was
+        // trained with the full prompt. A model trained without them
+        // changes this test on purpose.
+        for model in REGISTRY {
+            assert_eq!(model.rules, PromptRules::Full, "{}", model.id);
+        }
+    }
 
     #[test]
     fn ids_follow_the_registry() {
