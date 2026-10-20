@@ -1,0 +1,47 @@
+# A coffee shop's order system: Python, Portuguese identifiers and history,
+# free style (no prefixes), informal like many student projects.
+convention = "free"
+
+[[commit]]
+message = "commit inicial"
+paths = ["README.md", "requirements.txt", ".gitignore", "src/cafeteria/__init__.py"]
+
+[[commit]]
+message = "cardápio com preços"
+paths = ["src/cafeteria/cardapio.py"]
+
+[[commit]]
+message = "adiciona pedidos"
+paths = ["src/cafeteria/pedido.py", "src/cafeteria/config.py"]
+
+[[commit]]
+message = "controle de estoque no sqlite"
+paths = ["src/cafeteria/estoque.py"]
+
+[[commit]]
+message = "testes do pedido"
+paths = ["tests/test_pedido.py"]
+
+[[commit]]
+message = "cli básica com pedido e relatorio"
+paths = ["src/cafeteria/cli.py"]
+
+[[commit]]
+message = "recibo em texto e resumo do dia"
+paths = ["src/cafeteria/relatorio.py", "templates/recibo.txt"]
+
+[[commit]]
+message = "fix do preço do capuccino"
+ops = [{ op = "replace", path = "src/cafeteria/cardapio.py", old = "11.00", new = "12.00" }]
+
+[[commit]]
+message = "script de backup do banco"
+paths = ["scripts/backup.sh"]
+
+[[commit]]
+message = "taxa de serviço configurável e outros ajustes menores"
+ops = [
+  { op = "replace", path = "src/cafeteria/config.py", old = "taxa_servico: float = 0.10", new = "taxa_servico: float = 0.12" },
+  { op = "replace", path = "tests/test_pedido.py", old = "== 13.2", new = "== 13.44" },
+  { op = "replace", path = "tests/test_pedido.py", old = "9 * 1.1 * 0.7", new = "9 * 1.12 * 0.7" },
+]

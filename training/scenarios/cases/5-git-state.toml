@@ -1,0 +1,211 @@
+# Level 5: git states and unusual situations. Most targets depend on what
+# the trace inputs do not record (a merge or revert in progress, a deletion
+# left unstaged): tagged git-state, they only measure.
+level = 5
+
+[[case]]
+id = "revert"
+title = "git revert do último commit"
+repo = "cafeteria"
+split = "eval"
+stage = "none"
+ops = [{ op = "git", args = ["revert", "--no-commit", "HEAD"] }]
+target = "Revert \"taxa de serviço configurável e outros ajustes menores\""
+expect = ["revert|desfaz|revers"]
+tags = ["git-state"]
+
+[[case]]
+id = "revert-conventional"
+title = "git revert num repo Conventional"
+repo = "ledger"
+split = "eval"
+stage = "none"
+ops = [{ op = "git", args = ["revert", "--no-commit", "HEAD"] }]
+target = "Revert \"refactor(report): sort accounts by name\""
+expect = ["revert"]
+tags = ["git-state"]
+
+[[case]]
+id = "cherry-pick"
+title = "cherry-pick de outra branch"
+repo = "cafeteria"
+split = "train"
+stage = "none"
+ops = [
+  { op = "git", args = ["checkout", "-q", "-b", "sazonal", "HEAD~2"] },
+  { op = "replace", path = "src/cafeteria/cardapio.py", old = "    \"bolo\":", new = "    \"cha-gelado\": Item(\"cha-gelado\", \"Chá gelado de hibisco\", 7.00, \"bebida\"),\n    \"bolo\":" },
+  { op = "git", args = ["commit", "-q", "-am", "chá gelado no cardápio de verão"] },
+  { op = "git", args = ["checkout", "-q", "main"] },
+  { op = "git", args = ["cherry-pick", "-n", "{{commit:chá gelado no cardápio de verão}}"] },
+]
+target = "adiciona chá gelado de hibisco ao cardápio"
+expect = ["cha|hibisco", "cardapio|adiciona"]
+tags = ["cherry-pick"]
+
+[[case]]
+id = "merge-kept-ours"
+title = "merge com conflito resolvido pelo nosso lado"
+repo = "cafeteria"
+split = "eval"
+stage = "none"
+issue = "the resolution equals HEAD, so smart-commit says nothing staged, while git commit works"
+ops = [
+  { op = "git", args = ["checkout", "-q", "-b", "desconto"] },
+  { op = "replace", path = "src/cafeteria/config.py", old = "desconto_maximo: float = 0.30", new = "desconto_maximo: float = 0.50" },
+  { op = "git", args = ["commit", "-q", "-am", "desconto de até 50%"] },
+  { op = "git", args = ["checkout", "-q", "main"] },
+  { op = "replace", path = "src/cafeteria/config.py", old = "desconto_maximo: float = 0.30", new = "desconto_maximo: float = 0.20" },
+  { op = "git", args = ["commit", "-q", "-am", "desconto de até 20%"] },
+  { op = "git", args = ["merge", "-q", "desconto"], check = false },
+  { op = "git", args = ["checkout", "-q", "--ours", "src/cafeteria/config.py"] },
+  { op = "git", args = ["add", "-A"] },
+]
+target = "Merge branch 'desconto'"
+expect = ["merge|mescla", "desconto"]
+tags = ["git-state", "merge"]
+
+[[case]]
+id = "merge-took-theirs"
+title = "merge com conflito resolvido pelo lado deles"
+repo = "cafeteria"
+split = "eval"
+stage = "none"
+ops = [
+  { op = "git", args = ["checkout", "-q", "-b", "desconto"] },
+  { op = "replace", path = "src/cafeteria/config.py", old = "desconto_maximo: float = 0.30", new = "desconto_maximo: float = 0.50" },
+  { op = "git", args = ["commit", "-q", "-am", "desconto de até 50%"] },
+  { op = "git", args = ["checkout", "-q", "main"] },
+  { op = "replace", path = "src/cafeteria/config.py", old = "desconto_maximo: float = 0.30", new = "desconto_maximo: float = 0.20" },
+  { op = "git", args = ["commit", "-q", "-am", "desconto de até 20%"] },
+  { op = "git", args = ["merge", "-q", "desconto"], check = false },
+  { op = "git", args = ["checkout", "-q", "--theirs", "src/cafeteria/config.py"] },
+  { op = "git", args = ["add", "-A"] },
+]
+target = "Merge branch 'desconto'"
+expect = ["merge|mescla", "desconto"]
+tags = ["git-state", "merge"]
+
+[[case]]
+id = "merge-clean"
+title = "merge sem conflito com --no-commit"
+repo = "ledger"
+split = "eval"
+stage = "none"
+ops = [
+  { op = "git", args = ["checkout", "-q", "-b", "docs/cli"] },
+  { op = "append", path = "docs/usage.md", text = "\nRun `ledger` without arguments to see the usage.\n" },
+  { op = "git", args = ["commit", "-q", "-am", "docs: mention the usage message"] },
+  { op = "replace", path = "README.md", old = "Amounts are kept in integer cents.", new = "Amounts are kept in integer cents, so sums never drift." },
+  { op = "git", args = ["commit", "-q", "-am", "docs: explain integer cents"] },
+  { op = "git", args = ["checkout", "-q", "main"] },
+  { op = "git", args = ["merge", "-q", "--no-ff", "--no-commit", "docs/cli"] },
+]
+target = "Merge branch 'docs/cli'"
+expect = ["merge"]
+tags = ["git-state", "merge"]
+
+[[case]]
+id = "first-commit"
+title = "primeiro commit de um repositório"
+repo = "cafeteria"
+split = "eval"
+history = false
+ops = []
+target = "commit inicial"
+expect = ["inicial|initial|primeiro"]
+tags = ["first-commit"]
+
+[[case]]
+id = "first-commit-conventional"
+title = "primeiro commit, sem histórico para ditar o estilo"
+repo = "ledger"
+split = "train"
+history = false
+ops = []
+target = "chore: initial commit"
+expect = ["initial|inicial|first"]
+tags = ["first-commit"]
+
+[[case]]
+id = "ticket-branch"
+title = "branch com ticket num repo que não usa tickets"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "git", args = ["checkout", "-q", "-b", "feature/CAF-12-cupom"] },
+  { op = "replace", path = "src/cafeteria/pedido.py", old = "    desconto: float = 0.0\n", new = "    desconto: float = 0.0\n    cupom: str = \"\"\n" },
+]
+target = "campo de cupom no pedido"
+expect = ["cupom"]
+tags = ["branch"]
+
+[[case]]
+id = "detached-head"
+title = "HEAD destacado"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "git", args = ["checkout", "-q", "--detach", "HEAD~1"] },
+  { op = "replace", path = "src/cafeteria/config.py", old = "moeda: str = \"R$\"", new = "moeda: str = \"BRL\"" },
+]
+target = "moeda vira BRL em vez de R$"
+expect = ["moeda|brl"]
+tags = ["branch"]
+
+[[case]]
+id = "partial-stage"
+title = "duas mudanças no arquivo, só uma staged"
+repo = "cafeteria"
+split = "train"
+stage = "none"
+ops = [
+  { op = "replace", path = "src/cafeteria/pedido.py", old = "            raise ValueError(\"quantidade deve ser positiva\")", new = "            raise ValueError(f\"quantidade deve ser positiva: {quantidade}\")" },
+  { op = "git", args = ["add", "-A"] },
+  { op = "replace", path = "src/cafeteria/pedido.py", old = "    def subtotal(self) -> float:\n        return sum(", new = "    # TODO: guardar o subtotal em vez de recalcular\n    def subtotal(self) -> float:\n        return sum(" },
+]
+target = "mostra a quantidade inválida no erro do pedido"
+expect = ["quantidade|erro|mensagem"]
+tags = ["partial"]
+
+[[case]]
+id = "half-rename"
+title = "mv sem git: só o arquivo novo staged"
+repo = "cafeteria"
+split = "eval"
+stage = "none"
+ops = [
+  { op = "move", from = "src/cafeteria/cli.py", to = "src/cafeteria/__main__.py" },
+  { op = "git", args = ["add", "src/cafeteria/__main__.py"] },
+]
+target = "renomeia cli.py para __main__.py"
+expect = ["renome|move", "main"]
+tags = ["git-state", "rename"]
+
+[[case]]
+id = "deleted-then-recreated"
+title = "apagado staged, recriado fora do stage"
+repo = "cafeteria"
+split = "train"
+stage = "none"
+ops = [
+  { op = "git", args = ["rm", "-q", "src/cafeteria/estoque.py"] },
+  { op = "write", path = "src/cafeteria/estoque.py", text = "class Estoque:\n    pass\n" },
+]
+target = "remove o controle de estoque"
+expect = ["remov|apaga|tira", "estoque"]
+tags = ["partial", "delete"]
+
+[[case]]
+id = "linguist-generated"
+title = "arquivo marcado linguist-generated"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "write", path = ".gitattributes", text = "src/cafeteria/precos_gerados.py linguist-generated\n" },
+  { op = "git", args = ["add", ".gitattributes"] },
+  { op = "git", args = ["commit", "-q", "-m", "marca precos_gerados.py como gerado"] },
+  { op = "write", path = "src/cafeteria/precos_gerados.py", text = "PRECO_{{i}} = {{i}}.50\n", repeat = 200 },
+]
+target = "tabela de preços gerada"
+expect = ["preco|gerad|tabela"]
+tags = ["generated"]

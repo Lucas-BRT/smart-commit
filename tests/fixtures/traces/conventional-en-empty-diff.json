@@ -1,0 +1,607 @@
+{
+  "format": 1,
+  "tool_version": "0.6.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "docs(training): v0.2's results, the 0.5B gains and the 1.5B trades",
+      "chore: release 0.6.0",
+      "fix(llamacpp): leave room for prompts whose tokens were underestimated"
+    ],
+    "history_files": [
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "added",
+        "path": "training/scenario_02.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_05.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_08.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_11.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_14.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_17.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_20.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_23.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_26.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_29.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_32.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_35.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenario_38.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-03.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-06.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-09.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-12.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-15.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-18.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-21.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-24.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-27.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-30.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-33.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-36.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/cases/case-39.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-01.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-04.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-07.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-10.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-13.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-16.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-19.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-22.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-25.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-28.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-31.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-34.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-37.py",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "training/scenarios/repos/file-40.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/scenario_02.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_02_1 = \"line 1 of a new scenario file\"\n+value_02_2 = \"line 2 of a new scenario file\"\n+value_02_3 = \"line 3 of a new scenario file\"\n+value_02_4 = \"line 4 of a new scenario file\"\n+value_02_5 = \"line 5 of a new scenario file\"\n+value_02_6 = \"line 6 of a new scenario file\"\n+value_02_7 = \"line 7 of a new scenario file\"\n+value_02_8 = \"line 8 of a new scenario file\"\n+value_02_9 = \"line 9 of a new scenario file\"\n+value_02_10 = \"line 10 of a new scenario file\"\n+value_02_11 = \"line 11 of a new scenario file\"\n+value_02_12 = \"line 12 of a new scenario file\"\n+value_02_13 = \"line 13 of a new scenario file\"\n+value_02_14 = \"line 14 of a new scenario file\"\n+value_02_15 = \"line 15 of a new scenario file\"\n+value_02_16 = \"line 16 of a new scenario file\"\n+value_02_17 = \"line 17 of a new scenario file\"\n+value_02_18 = \"line 18 of a new scenario file\"\n+value_02_19 = \"line 19 of a new scenario file\"\n+value_02_20 = \"line 20 of a new scenario file\"\n+value_02_21 = \"line 21 of a new scenario file\"\n+value_02_22 = \"line 22 of a new scenario file\"\n+value_02_23 = \"line 23 of a new scenario file\"\n+value_02_24 = \"line 24 of a new scenario file\"\n+value_02_25 = \"line 25 of a new scenario file\"\n+value_02_26 = \"line 26 of a new scenario file\"\n+value_02_27 = \"line 27 of a new scenario file\"\n+value_02_28 = \"line 28 of a new scenario file\"\n+value_02_29 = \"line 29 of a new scenario file\"\n+value_02_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_05.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_05_1 = \"line 1 of a new scenario file\"\n+value_05_2 = \"line 2 of a new scenario file\"\n+value_05_3 = \"line 3 of a new scenario file\"\n+value_05_4 = \"line 4 of a new scenario file\"\n+value_05_5 = \"line 5 of a new scenario file\"\n+value_05_6 = \"line 6 of a new scenario file\"\n+value_05_7 = \"line 7 of a new scenario file\"\n+value_05_8 = \"line 8 of a new scenario file\"\n+value_05_9 = \"line 9 of a new scenario file\"\n+value_05_10 = \"line 10 of a new scenario file\"\n+value_05_11 = \"line 11 of a new scenario file\"\n+value_05_12 = \"line 12 of a new scenario file\"\n+value_05_13 = \"line 13 of a new scenario file\"\n+value_05_14 = \"line 14 of a new scenario file\"\n+value_05_15 = \"line 15 of a new scenario file\"\n+value_05_16 = \"line 16 of a new scenario file\"\n+value_05_17 = \"line 17 of a new scenario file\"\n+value_05_18 = \"line 18 of a new scenario file\"\n+value_05_19 = \"line 19 of a new scenario file\"\n+value_05_20 = \"line 20 of a new scenario file\"\n+value_05_21 = \"line 21 of a new scenario file\"\n+value_05_22 = \"line 22 of a new scenario file\"\n+value_05_23 = \"line 23 of a new scenario file\"\n+value_05_24 = \"line 24 of a new scenario file\"\n+value_05_25 = \"line 25 of a new scenario file\"\n+value_05_26 = \"line 26 of a new scenario file\"\n+value_05_27 = \"line 27 of a new scenario file\"\n+value_05_28 = \"line 28 of a new scenario file\"\n+value_05_29 = \"line 29 of a new scenario file\"\n+value_05_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_08.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_08_1 = \"line 1 of a new scenario file\"\n+value_08_2 = \"line 2 of a new scenario file\"\n+value_08_3 = \"line 3 of a new scenario file\"\n+value_08_4 = \"line 4 of a new scenario file\"\n+value_08_5 = \"line 5 of a new scenario file\"\n+value_08_6 = \"line 6 of a new scenario file\"\n+value_08_7 = \"line 7 of a new scenario file\"\n+value_08_8 = \"line 8 of a new scenario file\"\n+value_08_9 = \"line 9 of a new scenario file\"\n+value_08_10 = \"line 10 of a new scenario file\"\n+value_08_11 = \"line 11 of a new scenario file\"\n+value_08_12 = \"line 12 of a new scenario file\"\n+value_08_13 = \"line 13 of a new scenario file\"\n+value_08_14 = \"line 14 of a new scenario file\"\n+value_08_15 = \"line 15 of a new scenario file\"\n+value_08_16 = \"line 16 of a new scenario file\"\n+value_08_17 = \"line 17 of a new scenario file\"\n+value_08_18 = \"line 18 of a new scenario file\"\n+value_08_19 = \"line 19 of a new scenario file\"\n+value_08_20 = \"line 20 of a new scenario file\"\n+value_08_21 = \"line 21 of a new scenario file\"\n+value_08_22 = \"line 22 of a new scenario file\"\n+value_08_23 = \"line 23 of a new scenario file\"\n+value_08_24 = \"line 24 of a new scenario file\"\n+value_08_25 = \"line 25 of a new scenario file\"\n+value_08_26 = \"line 26 of a new scenario file\"\n+value_08_27 = \"line 27 of a new scenario file\"\n+value_08_28 = \"line 28 of a new scenario file\"\n+value_08_29 = \"line 29 of a new scenario file\"\n+value_08_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_11.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_11_1 = \"line 1 of a new scenario file\"\n+value_11_2 = \"line 2 of a new scenario file\"\n+value_11_3 = \"line 3 of a new scenario file\"\n+value_11_4 = \"line 4 of a new scenario file\"\n+value_11_5 = \"line 5 of a new scenario file\"\n+value_11_6 = \"line 6 of a new scenario file\"\n+value_11_7 = \"line 7 of a new scenario file\"\n+value_11_8 = \"line 8 of a new scenario file\"\n+value_11_9 = \"line 9 of a new scenario file\"\n+value_11_10 = \"line 10 of a new scenario file\"\n+value_11_11 = \"line 11 of a new scenario file\"\n+value_11_12 = \"line 12 of a new scenario file\"\n+value_11_13 = \"line 13 of a new scenario file\"\n+value_11_14 = \"line 14 of a new scenario file\"\n+value_11_15 = \"line 15 of a new scenario file\"\n+value_11_16 = \"line 16 of a new scenario file\"\n+value_11_17 = \"line 17 of a new scenario file\"\n+value_11_18 = \"line 18 of a new scenario file\"\n+value_11_19 = \"line 19 of a new scenario file\"\n+value_11_20 = \"line 20 of a new scenario file\"\n+value_11_21 = \"line 21 of a new scenario file\"\n+value_11_22 = \"line 22 of a new scenario file\"\n+value_11_23 = \"line 23 of a new scenario file\"\n+value_11_24 = \"line 24 of a new scenario file\"\n+value_11_25 = \"line 25 of a new scenario file\"\n+value_11_26 = \"line 26 of a new scenario file\"\n+value_11_27 = \"line 27 of a new scenario file\"\n+value_11_28 = \"line 28 of a new scenario file\"\n+value_11_29 = \"line 29 of a new scenario file\"\n+value_11_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_14.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_14_1 = \"line 1 of a new scenario file\"\n+value_14_2 = \"line 2 of a new scenario file\"\n+value_14_3 = \"line 3 of a new scenario file\"\n+value_14_4 = \"line 4 of a new scenario file\"\n+value_14_5 = \"line 5 of a new scenario file\"\n+value_14_6 = \"line 6 of a new scenario file\"\n+value_14_7 = \"line 7 of a new scenario file\"\n+value_14_8 = \"line 8 of a new scenario file\"\n+value_14_9 = \"line 9 of a new scenario file\"\n+value_14_10 = \"line 10 of a new scenario file\"\n+value_14_11 = \"line 11 of a new scenario file\"\n+value_14_12 = \"line 12 of a new scenario file\"\n+value_14_13 = \"line 13 of a new scenario file\"\n+value_14_14 = \"line 14 of a new scenario file\"\n+value_14_15 = \"line 15 of a new scenario file\"\n+value_14_16 = \"line 16 of a new scenario file\"\n+value_14_17 = \"line 17 of a new scenario file\"\n+value_14_18 = \"line 18 of a new scenario file\"\n+value_14_19 = \"line 19 of a new scenario file\"\n+value_14_20 = \"line 20 of a new scenario file\"\n+value_14_21 = \"line 21 of a new scenario file\"\n+value_14_22 = \"line 22 of a new scenario file\"\n+value_14_23 = \"line 23 of a new scenario file\"\n+value_14_24 = \"line 24 of a new scenario file\"\n+value_14_25 = \"line 25 of a new scenario file\"\n+value_14_26 = \"line 26 of a new scenario file\"\n+value_14_27 = \"line 27 of a new scenario file\"\n+value_14_28 = \"line 28 of a new scenario file\"\n+value_14_29 = \"line 29 of a new scenario file\"\n+value_14_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_17.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_17_1 = \"line 1 of a new scenario file\"\n+value_17_2 = \"line 2 of a new scenario file\"\n+value_17_3 = \"line 3 of a new scenario file\"\n+value_17_4 = \"line 4 of a new scenario file\"\n+value_17_5 = \"line 5 of a new scenario file\"\n+value_17_6 = \"line 6 of a new scenario file\"\n+value_17_7 = \"line 7 of a new scenario file\"\n+value_17_8 = \"line 8 of a new scenario file\"\n+value_17_9 = \"line 9 of a new scenario file\"\n+value_17_10 = \"line 10 of a new scenario file\"\n+value_17_11 = \"line 11 of a new scenario file\"\n+value_17_12 = \"line 12 of a new scenario file\"\n+value_17_13 = \"line 13 of a new scenario file\"\n+value_17_14 = \"line 14 of a new scenario file\"\n+value_17_15 = \"line 15 of a new scenario file\"\n+value_17_16 = \"line 16 of a new scenario file\"\n+value_17_17 = \"line 17 of a new scenario file\"\n+value_17_18 = \"line 18 of a new scenario file\"\n+value_17_19 = \"line 19 of a new scenario file\"\n+value_17_20 = \"line 20 of a new scenario file\"\n+value_17_21 = \"line 21 of a new scenario file\"\n+value_17_22 = \"line 22 of a new scenario file\"\n+value_17_23 = \"line 23 of a new scenario file\"\n+value_17_24 = \"line 24 of a new scenario file\"\n+value_17_25 = \"line 25 of a new scenario file\"\n+value_17_26 = \"line 26 of a new scenario file\"\n+value_17_27 = \"line 27 of a new scenario file\"\n+value_17_28 = \"line 28 of a new scenario file\"\n+value_17_29 = \"line 29 of a new scenario file\"\n+value_17_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_20.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_20_1 = \"line 1 of a new scenario file\"\n+value_20_2 = \"line 2 of a new scenario file\"\n+value_20_3 = \"line 3 of a new scenario file\"\n+value_20_4 = \"line 4 of a new scenario file\"\n+value_20_5 = \"line 5 of a new scenario file\"\n+value_20_6 = \"line 6 of a new scenario file\"\n+value_20_7 = \"line 7 of a new scenario file\"\n+value_20_8 = \"line 8 of a new scenario file\"\n+value_20_9 = \"line 9 of a new scenario file\"\n+value_20_10 = \"line 10 of a new scenario file\"\n+value_20_11 = \"line 11 of a new scenario file\"\n+value_20_12 = \"line 12 of a new scenario file\"\n+value_20_13 = \"line 13 of a new scenario file\"\n+value_20_14 = \"line 14 of a new scenario file\"\n+value_20_15 = \"line 15 of a new scenario file\"\n+value_20_16 = \"line 16 of a new scenario file\"\n+value_20_17 = \"line 17 of a new scenario file\"\n+value_20_18 = \"line 18 of a new scenario file\"\n+value_20_19 = \"line 19 of a new scenario file\"\n+value_20_20 = \"line 20 of a new scenario file\"\n+value_20_21 = \"line 21 of a new scenario file\"\n+value_20_22 = \"line 22 of a new scenario file\"\n+value_20_23 = \"line 23 of a new scenario file\"\n+value_20_24 = \"line 24 of a new scenario file\"\n+value_20_25 = \"line 25 of a new scenario file\"\n+value_20_26 = \"line 26 of a new scenario file\"\n+value_20_27 = \"line 27 of a new scenario file\"\n+value_20_28 = \"line 28 of a new scenario file\"\n+value_20_29 = \"line 29 of a new scenario file\"\n+value_20_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_23.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_23_1 = \"line 1 of a new scenario file\"\n+value_23_2 = \"line 2 of a new scenario file\"\n+value_23_3 = \"line 3 of a new scenario file\"\n+value_23_4 = \"line 4 of a new scenario file\"\n+value_23_5 = \"line 5 of a new scenario file\"\n+value_23_6 = \"line 6 of a new scenario file\"\n+value_23_7 = \"line 7 of a new scenario file\"\n+value_23_8 = \"line 8 of a new scenario file\"\n+value_23_9 = \"line 9 of a new scenario file\"\n+value_23_10 = \"line 10 of a new scenario file\"\n+value_23_11 = \"line 11 of a new scenario file\"\n+value_23_12 = \"line 12 of a new scenario file\"\n+value_23_13 = \"line 13 of a new scenario file\"\n+value_23_14 = \"line 14 of a new scenario file\"\n+value_23_15 = \"line 15 of a new scenario file\"\n+value_23_16 = \"line 16 of a new scenario file\"\n+value_23_17 = \"line 17 of a new scenario file\"\n+value_23_18 = \"line 18 of a new scenario file\"\n+value_23_19 = \"line 19 of a new scenario file\"\n+value_23_20 = \"line 20 of a new scenario file\"\n+value_23_21 = \"line 21 of a new scenario file\"\n+value_23_22 = \"line 22 of a new scenario file\"\n+value_23_23 = \"line 23 of a new scenario file\"\n+value_23_24 = \"line 24 of a new scenario file\"\n+value_23_25 = \"line 25 of a new scenario file\"\n+value_23_26 = \"line 26 of a new scenario file\"\n+value_23_27 = \"line 27 of a new scenario file\"\n+value_23_28 = \"line 28 of a new scenario file\"\n+value_23_29 = \"line 29 of a new scenario file\"\n+value_23_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_26.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_26_1 = \"line 1 of a new scenario file\"\n+value_26_2 = \"line 2 of a new scenario file\"\n+value_26_3 = \"line 3 of a new scenario file\"\n+value_26_4 = \"line 4 of a new scenario file\"\n+value_26_5 = \"line 5 of a new scenario file\"\n+value_26_6 = \"line 6 of a new scenario file\"\n+value_26_7 = \"line 7 of a new scenario file\"\n+value_26_8 = \"line 8 of a new scenario file\"\n+value_26_9 = \"line 9 of a new scenario file\"\n+value_26_10 = \"line 10 of a new scenario file\"\n+value_26_11 = \"line 11 of a new scenario file\"\n+value_26_12 = \"line 12 of a new scenario file\"\n+value_26_13 = \"line 13 of a new scenario file\"\n+value_26_14 = \"line 14 of a new scenario file\"\n+value_26_15 = \"line 15 of a new scenario file\"\n+value_26_16 = \"line 16 of a new scenario file\"\n+value_26_17 = \"line 17 of a new scenario file\"\n+value_26_18 = \"line 18 of a new scenario file\"\n+value_26_19 = \"line 19 of a new scenario file\"\n+value_26_20 = \"line 20 of a new scenario file\"\n+value_26_21 = \"line 21 of a new scenario file\"\n+value_26_22 = \"line 22 of a new scenario file\"\n+value_26_23 = \"line 23 of a new scenario file\"\n+value_26_24 = \"line 24 of a new scenario file\"\n+value_26_25 = \"line 25 of a new scenario file\"\n+value_26_26 = \"line 26 of a new scenario file\"\n+value_26_27 = \"line 27 of a new scenario file\"\n+value_26_28 = \"line 28 of a new scenario file\"\n+value_26_29 = \"line 29 of a new scenario file\"\n+value_26_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_29.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_29_1 = \"line 1 of a new scenario file\"\n+value_29_2 = \"line 2 of a new scenario file\"\n+value_29_3 = \"line 3 of a new scenario file\"\n+value_29_4 = \"line 4 of a new scenario file\"\n+value_29_5 = \"line 5 of a new scenario file\"\n+value_29_6 = \"line 6 of a new scenario file\"\n+value_29_7 = \"line 7 of a new scenario file\"\n+value_29_8 = \"line 8 of a new scenario file\"\n+value_29_9 = \"line 9 of a new scenario file\"\n+value_29_10 = \"line 10 of a new scenario file\"\n+value_29_11 = \"line 11 of a new scenario file\"\n+value_29_12 = \"line 12 of a new scenario file\"\n+value_29_13 = \"line 13 of a new scenario file\"\n+value_29_14 = \"line 14 of a new scenario file\"\n+value_29_15 = \"line 15 of a new scenario file\"\n+value_29_16 = \"line 16 of a new scenario file\"\n+value_29_17 = \"line 17 of a new scenario file\"\n+value_29_18 = \"line 18 of a new scenario file\"\n+value_29_19 = \"line 19 of a new scenario file\"\n+value_29_20 = \"line 20 of a new scenario file\"\n+value_29_21 = \"line 21 of a new scenario file\"\n+value_29_22 = \"line 22 of a new scenario file\"\n+value_29_23 = \"line 23 of a new scenario file\"\n+value_29_24 = \"line 24 of a new scenario file\"\n+value_29_25 = \"line 25 of a new scenario file\"\n+value_29_26 = \"line 26 of a new scenario file\"\n+value_29_27 = \"line 27 of a new scenario file\"\n+value_29_28 = \"line 28 of a new scenario file\"\n+value_29_29 = \"line 29 of a new scenario file\"\n+value_29_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_32.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_32_1 = \"line 1 of a new scenario file\"\n+value_32_2 = \"line 2 of a new scenario file\"\n+value_32_3 = \"line 3 of a new scenario file\"\n+value_32_4 = \"line 4 of a new scenario file\"\n+value_32_5 = \"line 5 of a new scenario file\"\n+value_32_6 = \"line 6 of a new scenario file\"\n+value_32_7 = \"line 7 of a new scenario file\"\n+value_32_8 = \"line 8 of a new scenario file\"\n+value_32_9 = \"line 9 of a new scenario file\"\n+value_32_10 = \"line 10 of a new scenario file\"\n+value_32_11 = \"line 11 of a new scenario file\"\n+value_32_12 = \"line 12 of a new scenario file\"\n+value_32_13 = \"line 13 of a new scenario file\"\n+value_32_14 = \"line 14 of a new scenario file\"\n+value_32_15 = \"line 15 of a new scenario file\"\n+value_32_16 = \"line 16 of a new scenario file\"\n+value_32_17 = \"line 17 of a new scenario file\"\n+value_32_18 = \"line 18 of a new scenario file\"\n+value_32_19 = \"line 19 of a new scenario file\"\n+value_32_20 = \"line 20 of a new scenario file\"\n+value_32_21 = \"line 21 of a new scenario file\"\n+value_32_22 = \"line 22 of a new scenario file\"\n+value_32_23 = \"line 23 of a new scenario file\"\n+value_32_24 = \"line 24 of a new scenario file\"\n+value_32_25 = \"line 25 of a new scenario file\"\n+value_32_26 = \"line 26 of a new scenario file\"\n+value_32_27 = \"line 27 of a new scenario file\"\n+value_32_28 = \"line 28 of a new scenario file\"\n+value_32_29 = \"line 29 of a new scenario file\"\n+value_32_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_35.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_35_1 = \"line 1 of a new scenario file\"\n+value_35_2 = \"line 2 of a new scenario file\"\n+value_35_3 = \"line 3 of a new scenario file\"\n+value_35_4 = \"line 4 of a new scenario file\"\n+value_35_5 = \"line 5 of a new scenario file\"\n+value_35_6 = \"line 6 of a new scenario file\"\n+value_35_7 = \"line 7 of a new scenario file\"\n+value_35_8 = \"line 8 of a new scenario file\"\n+value_35_9 = \"line 9 of a new scenario file\"\n+value_35_10 = \"line 10 of a new scenario file\"\n+value_35_11 = \"line 11 of a new scenario file\"\n+value_35_12 = \"line 12 of a new scenario file\"\n+value_35_13 = \"line 13 of a new scenario file\"\n+value_35_14 = \"line 14 of a new scenario file\"\n+value_35_15 = \"line 15 of a new scenario file\"\n+value_35_16 = \"line 16 of a new scenario file\"\n+value_35_17 = \"line 17 of a new scenario file\"\n+value_35_18 = \"line 18 of a new scenario file\"\n+value_35_19 = \"line 19 of a new scenario file\"\n+value_35_20 = \"line 20 of a new scenario file\"\n+value_35_21 = \"line 21 of a new scenario file\"\n+value_35_22 = \"line 22 of a new scenario file\"\n+value_35_23 = \"line 23 of a new scenario file\"\n+value_35_24 = \"line 24 of a new scenario file\"\n+value_35_25 = \"line 25 of a new scenario file\"\n+value_35_26 = \"line 26 of a new scenario file\"\n+value_35_27 = \"line 27 of a new scenario file\"\n+value_35_28 = \"line 28 of a new scenario file\"\n+value_35_29 = \"line 29 of a new scenario file\"\n+value_35_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenario_38.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_38_1 = \"line 1 of a new scenario file\"\n+value_38_2 = \"line 2 of a new scenario file\"\n+value_38_3 = \"line 3 of a new scenario file\"\n+value_38_4 = \"line 4 of a new scenario file\"\n+value_38_5 = \"line 5 of a new scenario file\"\n+value_38_6 = \"line 6 of a new scenario file\"\n+value_38_7 = \"line 7 of a new scenario file\"\n+value_38_8 = \"line 8 of a new scenario file\"\n+value_38_9 = \"line 9 of a new scenario file\"\n+value_38_10 = \"line 10 of a new scenario file\"\n+value_38_11 = \"line 11 of a new scenario file\"\n+value_38_12 = \"line 12 of a new scenario file\"\n+value_38_13 = \"line 13 of a new scenario file\"\n+value_38_14 = \"line 14 of a new scenario file\"\n+value_38_15 = \"line 15 of a new scenario file\"\n+value_38_16 = \"line 16 of a new scenario file\"\n+value_38_17 = \"line 17 of a new scenario file\"\n+value_38_18 = \"line 18 of a new scenario file\"\n+value_38_19 = \"line 19 of a new scenario file\"\n+value_38_20 = \"line 20 of a new scenario file\"\n+value_38_21 = \"line 21 of a new scenario file\"\n+value_38_22 = \"line 22 of a new scenario file\"\n+value_38_23 = \"line 23 of a new scenario file\"\n+value_38_24 = \"line 24 of a new scenario file\"\n+value_38_25 = \"line 25 of a new scenario file\"\n+value_38_26 = \"line 26 of a new scenario file\"\n+value_38_27 = \"line 27 of a new scenario file\"\n+value_38_28 = \"line 28 of a new scenario file\"\n+value_38_29 = \"line 29 of a new scenario file\"\n+value_38_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-03.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_03_1 = \"line 1 of a new scenario file\"\n+value_03_2 = \"line 2 of a new scenario file\"\n+value_03_3 = \"line 3 of a new scenario file\"\n+value_03_4 = \"line 4 of a new scenario file\"\n+value_03_5 = \"line 5 of a new scenario file\"\n+value_03_6 = \"line 6 of a new scenario file\"\n+value_03_7 = \"line 7 of a new scenario file\"\n+value_03_8 = \"line 8 of a new scenario file\"\n+value_03_9 = \"line 9 of a new scenario file\"\n+value_03_10 = \"line 10 of a new scenario file\"\n+value_03_11 = \"line 11 of a new scenario file\"\n+value_03_12 = \"line 12 of a new scenario file\"\n+value_03_13 = \"line 13 of a new scenario file\"\n+value_03_14 = \"line 14 of a new scenario file\"\n+value_03_15 = \"line 15 of a new scenario file\"\n+value_03_16 = \"line 16 of a new scenario file\"\n+value_03_17 = \"line 17 of a new scenario file\"\n+value_03_18 = \"line 18 of a new scenario file\"\n+value_03_19 = \"line 19 of a new scenario file\"\n+value_03_20 = \"line 20 of a new scenario file\"\n+value_03_21 = \"line 21 of a new scenario file\"\n+value_03_22 = \"line 22 of a new scenario file\"\n+value_03_23 = \"line 23 of a new scenario file\"\n+value_03_24 = \"line 24 of a new scenario file\"\n+value_03_25 = \"line 25 of a new scenario file\"\n+value_03_26 = \"line 26 of a new scenario file\"\n+value_03_27 = \"line 27 of a new scenario file\"\n+value_03_28 = \"line 28 of a new scenario file\"\n+value_03_29 = \"line 29 of a new scenario file\"\n+value_03_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-06.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_06_1 = \"line 1 of a new scenario file\"\n+value_06_2 = \"line 2 of a new scenario file\"\n+value_06_3 = \"line 3 of a new scenario file\"\n+value_06_4 = \"line 4 of a new scenario file\"\n+value_06_5 = \"line 5 of a new scenario file\"\n+value_06_6 = \"line 6 of a new scenario file\"\n+value_06_7 = \"line 7 of a new scenario file\"\n+value_06_8 = \"line 8 of a new scenario file\"\n+value_06_9 = \"line 9 of a new scenario file\"\n+value_06_10 = \"line 10 of a new scenario file\"\n+value_06_11 = \"line 11 of a new scenario file\"\n+value_06_12 = \"line 12 of a new scenario file\"\n+value_06_13 = \"line 13 of a new scenario file\"\n+value_06_14 = \"line 14 of a new scenario file\"\n+value_06_15 = \"line 15 of a new scenario file\"\n+value_06_16 = \"line 16 of a new scenario file\"\n+value_06_17 = \"line 17 of a new scenario file\"\n+value_06_18 = \"line 18 of a new scenario file\"\n+value_06_19 = \"line 19 of a new scenario file\"\n+value_06_20 = \"line 20 of a new scenario file\"\n+value_06_21 = \"line 21 of a new scenario file\"\n+value_06_22 = \"line 22 of a new scenario file\"\n+value_06_23 = \"line 23 of a new scenario file\"\n+value_06_24 = \"line 24 of a new scenario file\"\n+value_06_25 = \"line 25 of a new scenario file\"\n+value_06_26 = \"line 26 of a new scenario file\"\n+value_06_27 = \"line 27 of a new scenario file\"\n+value_06_28 = \"line 28 of a new scenario file\"\n+value_06_29 = \"line 29 of a new scenario file\"\n+value_06_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-09.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_09_1 = \"line 1 of a new scenario file\"\n+value_09_2 = \"line 2 of a new scenario file\"\n+value_09_3 = \"line 3 of a new scenario file\"\n+value_09_4 = \"line 4 of a new scenario file\"\n+value_09_5 = \"line 5 of a new scenario file\"\n+value_09_6 = \"line 6 of a new scenario file\"\n+value_09_7 = \"line 7 of a new scenario file\"\n+value_09_8 = \"line 8 of a new scenario file\"\n+value_09_9 = \"line 9 of a new scenario file\"\n+value_09_10 = \"line 10 of a new scenario file\"\n+value_09_11 = \"line 11 of a new scenario file\"\n+value_09_12 = \"line 12 of a new scenario file\"\n+value_09_13 = \"line 13 of a new scenario file\"\n+value_09_14 = \"line 14 of a new scenario file\"\n+value_09_15 = \"line 15 of a new scenario file\"\n+value_09_16 = \"line 16 of a new scenario file\"\n+value_09_17 = \"line 17 of a new scenario file\"\n+value_09_18 = \"line 18 of a new scenario file\"\n+value_09_19 = \"line 19 of a new scenario file\"\n+value_09_20 = \"line 20 of a new scenario file\"\n+value_09_21 = \"line 21 of a new scenario file\"\n+value_09_22 = \"line 22 of a new scenario file\"\n+value_09_23 = \"line 23 of a new scenario file\"\n+value_09_24 = \"line 24 of a new scenario file\"\n+value_09_25 = \"line 25 of a new scenario file\"\n+value_09_26 = \"line 26 of a new scenario file\"\n+value_09_27 = \"line 27 of a new scenario file\"\n+value_09_28 = \"line 28 of a new scenario file\"\n+value_09_29 = \"line 29 of a new scenario file\"\n+value_09_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-12.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_12_1 = \"line 1 of a new scenario file\"\n+value_12_2 = \"line 2 of a new scenario file\"\n+value_12_3 = \"line 3 of a new scenario file\"\n+value_12_4 = \"line 4 of a new scenario file\"\n+value_12_5 = \"line 5 of a new scenario file\"\n+value_12_6 = \"line 6 of a new scenario file\"\n+value_12_7 = \"line 7 of a new scenario file\"\n+value_12_8 = \"line 8 of a new scenario file\"\n+value_12_9 = \"line 9 of a new scenario file\"\n+value_12_10 = \"line 10 of a new scenario file\"\n+value_12_11 = \"line 11 of a new scenario file\"\n+value_12_12 = \"line 12 of a new scenario file\"\n+value_12_13 = \"line 13 of a new scenario file\"\n+value_12_14 = \"line 14 of a new scenario file\"\n+value_12_15 = \"line 15 of a new scenario file\"\n+value_12_16 = \"line 16 of a new scenario file\"\n+value_12_17 = \"line 17 of a new scenario file\"\n+value_12_18 = \"line 18 of a new scenario file\"\n+value_12_19 = \"line 19 of a new scenario file\"\n+value_12_20 = \"line 20 of a new scenario file\"\n+value_12_21 = \"line 21 of a new scenario file\"\n+value_12_22 = \"line 22 of a new scenario file\"\n+value_12_23 = \"line 23 of a new scenario file\"\n+value_12_24 = \"line 24 of a new scenario file\"\n+value_12_25 = \"line 25 of a new scenario file\"\n+value_12_26 = \"line 26 of a new scenario file\"\n+value_12_27 = \"line 27 of a new scenario file\"\n+value_12_28 = \"line 28 of a new scenario file\"\n+value_12_29 = \"line 29 of a new scenario file\"\n+value_12_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-15.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_15_1 = \"line 1 of a new scenario file\"\n+value_15_2 = \"line 2 of a new scenario file\"\n+value_15_3 = \"line 3 of a new scenario file\"\n+value_15_4 = \"line 4 of a new scenario file\"\n+value_15_5 = \"line 5 of a new scenario file\"\n+value_15_6 = \"line 6 of a new scenario file\"\n+value_15_7 = \"line 7 of a new scenario file\"\n+value_15_8 = \"line 8 of a new scenario file\"\n+value_15_9 = \"line 9 of a new scenario file\"\n+value_15_10 = \"line 10 of a new scenario file\"\n+value_15_11 = \"line 11 of a new scenario file\"\n+value_15_12 = \"line 12 of a new scenario file\"\n+value_15_13 = \"line 13 of a new scenario file\"\n+value_15_14 = \"line 14 of a new scenario file\"\n+value_15_15 = \"line 15 of a new scenario file\"\n+value_15_16 = \"line 16 of a new scenario file\"\n+value_15_17 = \"line 17 of a new scenario file\"\n+value_15_18 = \"line 18 of a new scenario file\"\n+value_15_19 = \"line 19 of a new scenario file\"\n+value_15_20 = \"line 20 of a new scenario file\"\n+value_15_21 = \"line 21 of a new scenario file\"\n+value_15_22 = \"line 22 of a new scenario file\"\n+value_15_23 = \"line 23 of a new scenario file\"\n+value_15_24 = \"line 24 of a new scenario file\"\n+value_15_25 = \"line 25 of a new scenario file\"\n+value_15_26 = \"line 26 of a new scenario file\"\n+value_15_27 = \"line 27 of a new scenario file\"\n+value_15_28 = \"line 28 of a new scenario file\"\n+value_15_29 = \"line 29 of a new scenario file\"\n+value_15_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-18.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_18_1 = \"line 1 of a new scenario file\"\n+value_18_2 = \"line 2 of a new scenario file\"\n+value_18_3 = \"line 3 of a new scenario file\"\n+value_18_4 = \"line 4 of a new scenario file\"\n+value_18_5 = \"line 5 of a new scenario file\"\n+value_18_6 = \"line 6 of a new scenario file\"\n+value_18_7 = \"line 7 of a new scenario file\"\n+value_18_8 = \"line 8 of a new scenario file\"\n+value_18_9 = \"line 9 of a new scenario file\"\n+value_18_10 = \"line 10 of a new scenario file\"\n+value_18_11 = \"line 11 of a new scenario file\"\n+value_18_12 = \"line 12 of a new scenario file\"\n+value_18_13 = \"line 13 of a new scenario file\"\n+value_18_14 = \"line 14 of a new scenario file\"\n+value_18_15 = \"line 15 of a new scenario file\"\n+value_18_16 = \"line 16 of a new scenario file\"\n+value_18_17 = \"line 17 of a new scenario file\"\n+value_18_18 = \"line 18 of a new scenario file\"\n+value_18_19 = \"line 19 of a new scenario file\"\n+value_18_20 = \"line 20 of a new scenario file\"\n+value_18_21 = \"line 21 of a new scenario file\"\n+value_18_22 = \"line 22 of a new scenario file\"\n+value_18_23 = \"line 23 of a new scenario file\"\n+value_18_24 = \"line 24 of a new scenario file\"\n+value_18_25 = \"line 25 of a new scenario file\"\n+value_18_26 = \"line 26 of a new scenario file\"\n+value_18_27 = \"line 27 of a new scenario file\"\n+value_18_28 = \"line 28 of a new scenario file\"\n+value_18_29 = \"line 29 of a new scenario file\"\n+value_18_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-21.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_21_1 = \"line 1 of a new scenario file\"\n+value_21_2 = \"line 2 of a new scenario file\"\n+value_21_3 = \"line 3 of a new scenario file\"\n+value_21_4 = \"line 4 of a new scenario file\"\n+value_21_5 = \"line 5 of a new scenario file\"\n+value_21_6 = \"line 6 of a new scenario file\"\n+value_21_7 = \"line 7 of a new scenario file\"\n+value_21_8 = \"line 8 of a new scenario file\"\n+value_21_9 = \"line 9 of a new scenario file\"\n+value_21_10 = \"line 10 of a new scenario file\"\n+value_21_11 = \"line 11 of a new scenario file\"\n+value_21_12 = \"line 12 of a new scenario file\"\n+value_21_13 = \"line 13 of a new scenario file\"\n+value_21_14 = \"line 14 of a new scenario file\"\n+value_21_15 = \"line 15 of a new scenario file\"\n+value_21_16 = \"line 16 of a new scenario file\"\n+value_21_17 = \"line 17 of a new scenario file\"\n+value_21_18 = \"line 18 of a new scenario file\"\n+value_21_19 = \"line 19 of a new scenario file\"\n+value_21_20 = \"line 20 of a new scenario file\"\n+value_21_21 = \"line 21 of a new scenario file\"\n+value_21_22 = \"line 22 of a new scenario file\"\n+value_21_23 = \"line 23 of a new scenario file\"\n+value_21_24 = \"line 24 of a new scenario file\"\n+value_21_25 = \"line 25 of a new scenario file\"\n+value_21_26 = \"line 26 of a new scenario file\"\n+value_21_27 = \"line 27 of a new scenario file\"\n+value_21_28 = \"line 28 of a new scenario file\"\n+value_21_29 = \"line 29 of a new scenario file\"\n+value_21_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-24.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_24_1 = \"line 1 of a new scenario file\"\n+value_24_2 = \"line 2 of a new scenario file\"\n+value_24_3 = \"line 3 of a new scenario file\"\n+value_24_4 = \"line 4 of a new scenario file\"\n+value_24_5 = \"line 5 of a new scenario file\"\n+value_24_6 = \"line 6 of a new scenario file\"\n+value_24_7 = \"line 7 of a new scenario file\"\n+value_24_8 = \"line 8 of a new scenario file\"\n+value_24_9 = \"line 9 of a new scenario file\"\n+value_24_10 = \"line 10 of a new scenario file\"\n+value_24_11 = \"line 11 of a new scenario file\"\n+value_24_12 = \"line 12 of a new scenario file\"\n+value_24_13 = \"line 13 of a new scenario file\"\n+value_24_14 = \"line 14 of a new scenario file\"\n+value_24_15 = \"line 15 of a new scenario file\"\n+value_24_16 = \"line 16 of a new scenario file\"\n+value_24_17 = \"line 17 of a new scenario file\"\n+value_24_18 = \"line 18 of a new scenario file\"\n+value_24_19 = \"line 19 of a new scenario file\"\n+value_24_20 = \"line 20 of a new scenario file\"\n+value_24_21 = \"line 21 of a new scenario file\"\n+value_24_22 = \"line 22 of a new scenario file\"\n+value_24_23 = \"line 23 of a new scenario file\"\n+value_24_24 = \"line 24 of a new scenario file\"\n+value_24_25 = \"line 25 of a new scenario file\"\n+value_24_26 = \"line 26 of a new scenario file\"\n+value_24_27 = \"line 27 of a new scenario file\"\n+value_24_28 = \"line 28 of a new scenario file\"\n+value_24_29 = \"line 29 of a new scenario file\"\n+value_24_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-27.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_27_1 = \"line 1 of a new scenario file\"\n+value_27_2 = \"line 2 of a new scenario file\"\n+value_27_3 = \"line 3 of a new scenario file\"\n+value_27_4 = \"line 4 of a new scenario file\"\n+value_27_5 = \"line 5 of a new scenario file\"\n+value_27_6 = \"line 6 of a new scenario file\"\n+value_27_7 = \"line 7 of a new scenario file\"\n+value_27_8 = \"line 8 of a new scenario file\"\n+value_27_9 = \"line 9 of a new scenario file\"\n+value_27_10 = \"line 10 of a new scenario file\"\n+value_27_11 = \"line 11 of a new scenario file\"\n+value_27_12 = \"line 12 of a new scenario file\"\n+value_27_13 = \"line 13 of a new scenario file\"\n+value_27_14 = \"line 14 of a new scenario file\"\n+value_27_15 = \"line 15 of a new scenario file\"\n+value_27_16 = \"line 16 of a new scenario file\"\n+value_27_17 = \"line 17 of a new scenario file\"\n+value_27_18 = \"line 18 of a new scenario file\"\n+value_27_19 = \"line 19 of a new scenario file\"\n+value_27_20 = \"line 20 of a new scenario file\"\n+value_27_21 = \"line 21 of a new scenario file\"\n+value_27_22 = \"line 22 of a new scenario file\"\n+value_27_23 = \"line 23 of a new scenario file\"\n+value_27_24 = \"line 24 of a new scenario file\"\n+value_27_25 = \"line 25 of a new scenario file\"\n+value_27_26 = \"line 26 of a new scenario file\"\n+value_27_27 = \"line 27 of a new scenario file\"\n+value_27_28 = \"line 28 of a new scenario file\"\n+value_27_29 = \"line 29 of a new scenario file\"\n+value_27_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-30.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_30_1 = \"line 1 of a new scenario file\"\n+value_30_2 = \"line 2 of a new scenario file\"\n+value_30_3 = \"line 3 of a new scenario file\"\n+value_30_4 = \"line 4 of a new scenario file\"\n+value_30_5 = \"line 5 of a new scenario file\"\n+value_30_6 = \"line 6 of a new scenario file\"\n+value_30_7 = \"line 7 of a new scenario file\"\n+value_30_8 = \"line 8 of a new scenario file\"\n+value_30_9 = \"line 9 of a new scenario file\"\n+value_30_10 = \"line 10 of a new scenario file\"\n+value_30_11 = \"line 11 of a new scenario file\"\n+value_30_12 = \"line 12 of a new scenario file\"\n+value_30_13 = \"line 13 of a new scenario file\"\n+value_30_14 = \"line 14 of a new scenario file\"\n+value_30_15 = \"line 15 of a new scenario file\"\n+value_30_16 = \"line 16 of a new scenario file\"\n+value_30_17 = \"line 17 of a new scenario file\"\n+value_30_18 = \"line 18 of a new scenario file\"\n+value_30_19 = \"line 19 of a new scenario file\"\n+value_30_20 = \"line 20 of a new scenario file\"\n+value_30_21 = \"line 21 of a new scenario file\"\n+value_30_22 = \"line 22 of a new scenario file\"\n+value_30_23 = \"line 23 of a new scenario file\"\n+value_30_24 = \"line 24 of a new scenario file\"\n+value_30_25 = \"line 25 of a new scenario file\"\n+value_30_26 = \"line 26 of a new scenario file\"\n+value_30_27 = \"line 27 of a new scenario file\"\n+value_30_28 = \"line 28 of a new scenario file\"\n+value_30_29 = \"line 29 of a new scenario file\"\n+value_30_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-33.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_33_1 = \"line 1 of a new scenario file\"\n+value_33_2 = \"line 2 of a new scenario file\"\n+value_33_3 = \"line 3 of a new scenario file\"\n+value_33_4 = \"line 4 of a new scenario file\"\n+value_33_5 = \"line 5 of a new scenario file\"\n+value_33_6 = \"line 6 of a new scenario file\"\n+value_33_7 = \"line 7 of a new scenario file\"\n+value_33_8 = \"line 8 of a new scenario file\"\n+value_33_9 = \"line 9 of a new scenario file\"\n+value_33_10 = \"line 10 of a new scenario file\"\n+value_33_11 = \"line 11 of a new scenario file\"\n+value_33_12 = \"line 12 of a new scenario file\"\n+value_33_13 = \"line 13 of a new scenario file\"\n+value_33_14 = \"line 14 of a new scenario file\"\n+value_33_15 = \"line 15 of a new scenario file\"\n+value_33_16 = \"line 16 of a new scenario file\"\n+value_33_17 = \"line 17 of a new scenario file\"\n+value_33_18 = \"line 18 of a new scenario file\"\n+value_33_19 = \"line 19 of a new scenario file\"\n+value_33_20 = \"line 20 of a new scenario file\"\n+value_33_21 = \"line 21 of a new scenario file\"\n+value_33_22 = \"line 22 of a new scenario file\"\n+value_33_23 = \"line 23 of a new scenario file\"\n+value_33_24 = \"line 24 of a new scenario file\"\n+value_33_25 = \"line 25 of a new scenario file\"\n+value_33_26 = \"line 26 of a new scenario file\"\n+value_33_27 = \"line 27 of a new scenario file\"\n+value_33_28 = \"line 28 of a new scenario file\"\n+value_33_29 = \"line 29 of a new scenario file\"\n+value_33_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-36.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_36_1 = \"line 1 of a new scenario file\"\n+value_36_2 = \"line 2 of a new scenario file\"\n+value_36_3 = \"line 3 of a new scenario file\"\n+value_36_4 = \"line 4 of a new scenario file\"\n+value_36_5 = \"line 5 of a new scenario file\"\n+value_36_6 = \"line 6 of a new scenario file\"\n+value_36_7 = \"line 7 of a new scenario file\"\n+value_36_8 = \"line 8 of a new scenario file\"\n+value_36_9 = \"line 9 of a new scenario file\"\n+value_36_10 = \"line 10 of a new scenario file\"\n+value_36_11 = \"line 11 of a new scenario file\"\n+value_36_12 = \"line 12 of a new scenario file\"\n+value_36_13 = \"line 13 of a new scenario file\"\n+value_36_14 = \"line 14 of a new scenario file\"\n+value_36_15 = \"line 15 of a new scenario file\"\n+value_36_16 = \"line 16 of a new scenario file\"\n+value_36_17 = \"line 17 of a new scenario file\"\n+value_36_18 = \"line 18 of a new scenario file\"\n+value_36_19 = \"line 19 of a new scenario file\"\n+value_36_20 = \"line 20 of a new scenario file\"\n+value_36_21 = \"line 21 of a new scenario file\"\n+value_36_22 = \"line 22 of a new scenario file\"\n+value_36_23 = \"line 23 of a new scenario file\"\n+value_36_24 = \"line 24 of a new scenario file\"\n+value_36_25 = \"line 25 of a new scenario file\"\n+value_36_26 = \"line 26 of a new scenario file\"\n+value_36_27 = \"line 27 of a new scenario file\"\n+value_36_28 = \"line 28 of a new scenario file\"\n+value_36_29 = \"line 29 of a new scenario file\"\n+value_36_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/cases/case-39.toml",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_39_1 = \"line 1 of a new scenario file\"\n+value_39_2 = \"line 2 of a new scenario file\"\n+value_39_3 = \"line 3 of a new scenario file\"\n+value_39_4 = \"line 4 of a new scenario file\"\n+value_39_5 = \"line 5 of a new scenario file\"\n+value_39_6 = \"line 6 of a new scenario file\"\n+value_39_7 = \"line 7 of a new scenario file\"\n+value_39_8 = \"line 8 of a new scenario file\"\n+value_39_9 = \"line 9 of a new scenario file\"\n+value_39_10 = \"line 10 of a new scenario file\"\n+value_39_11 = \"line 11 of a new scenario file\"\n+value_39_12 = \"line 12 of a new scenario file\"\n+value_39_13 = \"line 13 of a new scenario file\"\n+value_39_14 = \"line 14 of a new scenario file\"\n+value_39_15 = \"line 15 of a new scenario file\"\n+value_39_16 = \"line 16 of a new scenario file\"\n+value_39_17 = \"line 17 of a new scenario file\"\n+value_39_18 = \"line 18 of a new scenario file\"\n+value_39_19 = \"line 19 of a new scenario file\"\n+value_39_20 = \"line 20 of a new scenario file\"\n+value_39_21 = \"line 21 of a new scenario file\"\n+value_39_22 = \"line 22 of a new scenario file\"\n+value_39_23 = \"line 23 of a new scenario file\"\n+value_39_24 = \"line 24 of a new scenario file\"\n+value_39_25 = \"line 25 of a new scenario file\"\n+value_39_26 = \"line 26 of a new scenario file\"\n+value_39_27 = \"line 27 of a new scenario file\"\n+value_39_28 = \"line 28 of a new scenario file\"\n+value_39_29 = \"line 29 of a new scenario file\"\n+value_39_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-01.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_01_1 = \"line 1 of a new scenario file\"\n+value_01_2 = \"line 2 of a new scenario file\"\n+value_01_3 = \"line 3 of a new scenario file\"\n+value_01_4 = \"line 4 of a new scenario file\"\n+value_01_5 = \"line 5 of a new scenario file\"\n+value_01_6 = \"line 6 of a new scenario file\"\n+value_01_7 = \"line 7 of a new scenario file\"\n+value_01_8 = \"line 8 of a new scenario file\"\n+value_01_9 = \"line 9 of a new scenario file\"\n+value_01_10 = \"line 10 of a new scenario file\"\n+value_01_11 = \"line 11 of a new scenario file\"\n+value_01_12 = \"line 12 of a new scenario file\"\n+value_01_13 = \"line 13 of a new scenario file\"\n+value_01_14 = \"line 14 of a new scenario file\"\n+value_01_15 = \"line 15 of a new scenario file\"\n+value_01_16 = \"line 16 of a new scenario file\"\n+value_01_17 = \"line 17 of a new scenario file\"\n+value_01_18 = \"line 18 of a new scenario file\"\n+value_01_19 = \"line 19 of a new scenario file\"\n+value_01_20 = \"line 20 of a new scenario file\"\n+value_01_21 = \"line 21 of a new scenario file\"\n+value_01_22 = \"line 22 of a new scenario file\"\n+value_01_23 = \"line 23 of a new scenario file\"\n+value_01_24 = \"line 24 of a new scenario file\"\n+value_01_25 = \"line 25 of a new scenario file\"\n+value_01_26 = \"line 26 of a new scenario file\"\n+value_01_27 = \"line 27 of a new scenario file\"\n+value_01_28 = \"line 28 of a new scenario file\"\n+value_01_29 = \"line 29 of a new scenario file\"\n+value_01_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-04.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_04_1 = \"line 1 of a new scenario file\"\n+value_04_2 = \"line 2 of a new scenario file\"\n+value_04_3 = \"line 3 of a new scenario file\"\n+value_04_4 = \"line 4 of a new scenario file\"\n+value_04_5 = \"line 5 of a new scenario file\"\n+value_04_6 = \"line 6 of a new scenario file\"\n+value_04_7 = \"line 7 of a new scenario file\"\n+value_04_8 = \"line 8 of a new scenario file\"\n+value_04_9 = \"line 9 of a new scenario file\"\n+value_04_10 = \"line 10 of a new scenario file\"\n+value_04_11 = \"line 11 of a new scenario file\"\n+value_04_12 = \"line 12 of a new scenario file\"\n+value_04_13 = \"line 13 of a new scenario file\"\n+value_04_14 = \"line 14 of a new scenario file\"\n+value_04_15 = \"line 15 of a new scenario file\"\n+value_04_16 = \"line 16 of a new scenario file\"\n+value_04_17 = \"line 17 of a new scenario file\"\n+value_04_18 = \"line 18 of a new scenario file\"\n+value_04_19 = \"line 19 of a new scenario file\"\n+value_04_20 = \"line 20 of a new scenario file\"\n+value_04_21 = \"line 21 of a new scenario file\"\n+value_04_22 = \"line 22 of a new scenario file\"\n+value_04_23 = \"line 23 of a new scenario file\"\n+value_04_24 = \"line 24 of a new scenario file\"\n+value_04_25 = \"line 25 of a new scenario file\"\n+value_04_26 = \"line 26 of a new scenario file\"\n+value_04_27 = \"line 27 of a new scenario file\"\n+value_04_28 = \"line 28 of a new scenario file\"\n+value_04_29 = \"line 29 of a new scenario file\"\n+value_04_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-07.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_07_1 = \"line 1 of a new scenario file\"\n+value_07_2 = \"line 2 of a new scenario file\"\n+value_07_3 = \"line 3 of a new scenario file\"\n+value_07_4 = \"line 4 of a new scenario file\"\n+value_07_5 = \"line 5 of a new scenario file\"\n+value_07_6 = \"line 6 of a new scenario file\"\n+value_07_7 = \"line 7 of a new scenario file\"\n+value_07_8 = \"line 8 of a new scenario file\"\n+value_07_9 = \"line 9 of a new scenario file\"\n+value_07_10 = \"line 10 of a new scenario file\"\n+value_07_11 = \"line 11 of a new scenario file\"\n+value_07_12 = \"line 12 of a new scenario file\"\n+value_07_13 = \"line 13 of a new scenario file\"\n+value_07_14 = \"line 14 of a new scenario file\"\n+value_07_15 = \"line 15 of a new scenario file\"\n+value_07_16 = \"line 16 of a new scenario file\"\n+value_07_17 = \"line 17 of a new scenario file\"\n+value_07_18 = \"line 18 of a new scenario file\"\n+value_07_19 = \"line 19 of a new scenario file\"\n+value_07_20 = \"line 20 of a new scenario file\"\n+value_07_21 = \"line 21 of a new scenario file\"\n+value_07_22 = \"line 22 of a new scenario file\"\n+value_07_23 = \"line 23 of a new scenario file\"\n+value_07_24 = \"line 24 of a new scenario file\"\n+value_07_25 = \"line 25 of a new scenario file\"\n+value_07_26 = \"line 26 of a new scenario file\"\n+value_07_27 = \"line 27 of a new scenario file\"\n+value_07_28 = \"line 28 of a new scenario file\"\n+value_07_29 = \"line 29 of a new scenario file\"\n+value_07_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-10.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_10_1 = \"line 1 of a new scenario file\"\n+value_10_2 = \"line 2 of a new scenario file\"\n+value_10_3 = \"line 3 of a new scenario file\"\n+value_10_4 = \"line 4 of a new scenario file\"\n+value_10_5 = \"line 5 of a new scenario file\"\n+value_10_6 = \"line 6 of a new scenario file\"\n+value_10_7 = \"line 7 of a new scenario file\"\n+value_10_8 = \"line 8 of a new scenario file\"\n+value_10_9 = \"line 9 of a new scenario file\"\n+value_10_10 = \"line 10 of a new scenario file\"\n+value_10_11 = \"line 11 of a new scenario file\"\n+value_10_12 = \"line 12 of a new scenario file\"\n+value_10_13 = \"line 13 of a new scenario file\"\n+value_10_14 = \"line 14 of a new scenario file\"\n+value_10_15 = \"line 15 of a new scenario file\"\n+value_10_16 = \"line 16 of a new scenario file\"\n+value_10_17 = \"line 17 of a new scenario file\"\n+value_10_18 = \"line 18 of a new scenario file\"\n+value_10_19 = \"line 19 of a new scenario file\"\n+value_10_20 = \"line 20 of a new scenario file\"\n+value_10_21 = \"line 21 of a new scenario file\"\n+value_10_22 = \"line 22 of a new scenario file\"\n+value_10_23 = \"line 23 of a new scenario file\"\n+value_10_24 = \"line 24 of a new scenario file\"\n+value_10_25 = \"line 25 of a new scenario file\"\n+value_10_26 = \"line 26 of a new scenario file\"\n+value_10_27 = \"line 27 of a new scenario file\"\n+value_10_28 = \"line 28 of a new scenario file\"\n+value_10_29 = \"line 29 of a new scenario file\"\n+value_10_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-13.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_13_1 = \"line 1 of a new scenario file\"\n+value_13_2 = \"line 2 of a new scenario file\"\n+value_13_3 = \"line 3 of a new scenario file\"\n+value_13_4 = \"line 4 of a new scenario file\"\n+value_13_5 = \"line 5 of a new scenario file\"\n+value_13_6 = \"line 6 of a new scenario file\"\n+value_13_7 = \"line 7 of a new scenario file\"\n+value_13_8 = \"line 8 of a new scenario file\"\n+value_13_9 = \"line 9 of a new scenario file\"\n+value_13_10 = \"line 10 of a new scenario file\"\n+value_13_11 = \"line 11 of a new scenario file\"\n+value_13_12 = \"line 12 of a new scenario file\"\n+value_13_13 = \"line 13 of a new scenario file\"\n+value_13_14 = \"line 14 of a new scenario file\"\n+value_13_15 = \"line 15 of a new scenario file\"\n+value_13_16 = \"line 16 of a new scenario file\"\n+value_13_17 = \"line 17 of a new scenario file\"\n+value_13_18 = \"line 18 of a new scenario file\"\n+value_13_19 = \"line 19 of a new scenario file\"\n+value_13_20 = \"line 20 of a new scenario file\"\n+value_13_21 = \"line 21 of a new scenario file\"\n+value_13_22 = \"line 22 of a new scenario file\"\n+value_13_23 = \"line 23 of a new scenario file\"\n+value_13_24 = \"line 24 of a new scenario file\"\n+value_13_25 = \"line 25 of a new scenario file\"\n+value_13_26 = \"line 26 of a new scenario file\"\n+value_13_27 = \"line 27 of a new scenario file\"\n+value_13_28 = \"line 28 of a new scenario file\"\n+value_13_29 = \"line 29 of a new scenario file\"\n+value_13_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-16.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_16_1 = \"line 1 of a new scenario file\"\n+value_16_2 = \"line 2 of a new scenario file\"\n+value_16_3 = \"line 3 of a new scenario file\"\n+value_16_4 = \"line 4 of a new scenario file\"\n+value_16_5 = \"line 5 of a new scenario file\"\n+value_16_6 = \"line 6 of a new scenario file\"\n+value_16_7 = \"line 7 of a new scenario file\"\n+value_16_8 = \"line 8 of a new scenario file\"\n+value_16_9 = \"line 9 of a new scenario file\"\n+value_16_10 = \"line 10 of a new scenario file\"\n+value_16_11 = \"line 11 of a new scenario file\"\n+value_16_12 = \"line 12 of a new scenario file\"\n+value_16_13 = \"line 13 of a new scenario file\"\n+value_16_14 = \"line 14 of a new scenario file\"\n+value_16_15 = \"line 15 of a new scenario file\"\n+value_16_16 = \"line 16 of a new scenario file\"\n+value_16_17 = \"line 17 of a new scenario file\"\n+value_16_18 = \"line 18 of a new scenario file\"\n+value_16_19 = \"line 19 of a new scenario file\"\n+value_16_20 = \"line 20 of a new scenario file\"\n+value_16_21 = \"line 21 of a new scenario file\"\n+value_16_22 = \"line 22 of a new scenario file\"\n+value_16_23 = \"line 23 of a new scenario file\"\n+value_16_24 = \"line 24 of a new scenario file\"\n+value_16_25 = \"line 25 of a new scenario file\"\n+value_16_26 = \"line 26 of a new scenario file\"\n+value_16_27 = \"line 27 of a new scenario file\"\n+value_16_28 = \"line 28 of a new scenario file\"\n+value_16_29 = \"line 29 of a new scenario file\"\n+value_16_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-19.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_19_1 = \"line 1 of a new scenario file\"\n+value_19_2 = \"line 2 of a new scenario file\"\n+value_19_3 = \"line 3 of a new scenario file\"\n+value_19_4 = \"line 4 of a new scenario file\"\n+value_19_5 = \"line 5 of a new scenario file\"\n+value_19_6 = \"line 6 of a new scenario file\"\n+value_19_7 = \"line 7 of a new scenario file\"\n+value_19_8 = \"line 8 of a new scenario file\"\n+value_19_9 = \"line 9 of a new scenario file\"\n+value_19_10 = \"line 10 of a new scenario file\"\n+value_19_11 = \"line 11 of a new scenario file\"\n+value_19_12 = \"line 12 of a new scenario file\"\n+value_19_13 = \"line 13 of a new scenario file\"\n+value_19_14 = \"line 14 of a new scenario file\"\n+value_19_15 = \"line 15 of a new scenario file\"\n+value_19_16 = \"line 16 of a new scenario file\"\n+value_19_17 = \"line 17 of a new scenario file\"\n+value_19_18 = \"line 18 of a new scenario file\"\n+value_19_19 = \"line 19 of a new scenario file\"\n+value_19_20 = \"line 20 of a new scenario file\"\n+value_19_21 = \"line 21 of a new scenario file\"\n+value_19_22 = \"line 22 of a new scenario file\"\n+value_19_23 = \"line 23 of a new scenario file\"\n+value_19_24 = \"line 24 of a new scenario file\"\n+value_19_25 = \"line 25 of a new scenario file\"\n+value_19_26 = \"line 26 of a new scenario file\"\n+value_19_27 = \"line 27 of a new scenario file\"\n+value_19_28 = \"line 28 of a new scenario file\"\n+value_19_29 = \"line 29 of a new scenario file\"\n+value_19_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-22.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_22_1 = \"line 1 of a new scenario file\"\n+value_22_2 = \"line 2 of a new scenario file\"\n+value_22_3 = \"line 3 of a new scenario file\"\n+value_22_4 = \"line 4 of a new scenario file\"\n+value_22_5 = \"line 5 of a new scenario file\"\n+value_22_6 = \"line 6 of a new scenario file\"\n+value_22_7 = \"line 7 of a new scenario file\"\n+value_22_8 = \"line 8 of a new scenario file\"\n+value_22_9 = \"line 9 of a new scenario file\"\n+value_22_10 = \"line 10 of a new scenario file\"\n+value_22_11 = \"line 11 of a new scenario file\"\n+value_22_12 = \"line 12 of a new scenario file\"\n+value_22_13 = \"line 13 of a new scenario file\"\n+value_22_14 = \"line 14 of a new scenario file\"\n+value_22_15 = \"line 15 of a new scenario file\"\n+value_22_16 = \"line 16 of a new scenario file\"\n+value_22_17 = \"line 17 of a new scenario file\"\n+value_22_18 = \"line 18 of a new scenario file\"\n+value_22_19 = \"line 19 of a new scenario file\"\n+value_22_20 = \"line 20 of a new scenario file\"\n+value_22_21 = \"line 21 of a new scenario file\"\n+value_22_22 = \"line 22 of a new scenario file\"\n+value_22_23 = \"line 23 of a new scenario file\"\n+value_22_24 = \"line 24 of a new scenario file\"\n+value_22_25 = \"line 25 of a new scenario file\"\n+value_22_26 = \"line 26 of a new scenario file\"\n+value_22_27 = \"line 27 of a new scenario file\"\n+value_22_28 = \"line 28 of a new scenario file\"\n+value_22_29 = \"line 29 of a new scenario file\"\n+value_22_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-25.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_25_1 = \"line 1 of a new scenario file\"\n+value_25_2 = \"line 2 of a new scenario file\"\n+value_25_3 = \"line 3 of a new scenario file\"\n+value_25_4 = \"line 4 of a new scenario file\"\n+value_25_5 = \"line 5 of a new scenario file\"\n+value_25_6 = \"line 6 of a new scenario file\"\n+value_25_7 = \"line 7 of a new scenario file\"\n+value_25_8 = \"line 8 of a new scenario file\"\n+value_25_9 = \"line 9 of a new scenario file\"\n+value_25_10 = \"line 10 of a new scenario file\"\n+value_25_11 = \"line 11 of a new scenario file\"\n+value_25_12 = \"line 12 of a new scenario file\"\n+value_25_13 = \"line 13 of a new scenario file\"\n+value_25_14 = \"line 14 of a new scenario file\"\n+value_25_15 = \"line 15 of a new scenario file\"\n+value_25_16 = \"line 16 of a new scenario file\"\n+value_25_17 = \"line 17 of a new scenario file\"\n+value_25_18 = \"line 18 of a new scenario file\"\n+value_25_19 = \"line 19 of a new scenario file\"\n+value_25_20 = \"line 20 of a new scenario file\"\n+value_25_21 = \"line 21 of a new scenario file\"\n+value_25_22 = \"line 22 of a new scenario file\"\n+value_25_23 = \"line 23 of a new scenario file\"\n+value_25_24 = \"line 24 of a new scenario file\"\n+value_25_25 = \"line 25 of a new scenario file\"\n+value_25_26 = \"line 26 of a new scenario file\"\n+value_25_27 = \"line 27 of a new scenario file\"\n+value_25_28 = \"line 28 of a new scenario file\"\n+value_25_29 = \"line 29 of a new scenario file\"\n+value_25_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-28.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_28_1 = \"line 1 of a new scenario file\"\n+value_28_2 = \"line 2 of a new scenario file\"\n+value_28_3 = \"line 3 of a new scenario file\"\n+value_28_4 = \"line 4 of a new scenario file\"\n+value_28_5 = \"line 5 of a new scenario file\"\n+value_28_6 = \"line 6 of a new scenario file\"\n+value_28_7 = \"line 7 of a new scenario file\"\n+value_28_8 = \"line 8 of a new scenario file\"\n+value_28_9 = \"line 9 of a new scenario file\"\n+value_28_10 = \"line 10 of a new scenario file\"\n+value_28_11 = \"line 11 of a new scenario file\"\n+value_28_12 = \"line 12 of a new scenario file\"\n+value_28_13 = \"line 13 of a new scenario file\"\n+value_28_14 = \"line 14 of a new scenario file\"\n+value_28_15 = \"line 15 of a new scenario file\"\n+value_28_16 = \"line 16 of a new scenario file\"\n+value_28_17 = \"line 17 of a new scenario file\"\n+value_28_18 = \"line 18 of a new scenario file\"\n+value_28_19 = \"line 19 of a new scenario file\"\n+value_28_20 = \"line 20 of a new scenario file\"\n+value_28_21 = \"line 21 of a new scenario file\"\n+value_28_22 = \"line 22 of a new scenario file\"\n+value_28_23 = \"line 23 of a new scenario file\"\n+value_28_24 = \"line 24 of a new scenario file\"\n+value_28_25 = \"line 25 of a new scenario file\"\n+value_28_26 = \"line 26 of a new scenario file\"\n+value_28_27 = \"line 27 of a new scenario file\"\n+value_28_28 = \"line 28 of a new scenario file\"\n+value_28_29 = \"line 29 of a new scenario file\"\n+value_28_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-31.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_31_1 = \"line 1 of a new scenario file\"\n+value_31_2 = \"line 2 of a new scenario file\"\n+value_31_3 = \"line 3 of a new scenario file\"\n+value_31_4 = \"line 4 of a new scenario file\"\n+value_31_5 = \"line 5 of a new scenario file\"\n+value_31_6 = \"line 6 of a new scenario file\"\n+value_31_7 = \"line 7 of a new scenario file\"\n+value_31_8 = \"line 8 of a new scenario file\"\n+value_31_9 = \"line 9 of a new scenario file\"\n+value_31_10 = \"line 10 of a new scenario file\"\n+value_31_11 = \"line 11 of a new scenario file\"\n+value_31_12 = \"line 12 of a new scenario file\"\n+value_31_13 = \"line 13 of a new scenario file\"\n+value_31_14 = \"line 14 of a new scenario file\"\n+value_31_15 = \"line 15 of a new scenario file\"\n+value_31_16 = \"line 16 of a new scenario file\"\n+value_31_17 = \"line 17 of a new scenario file\"\n+value_31_18 = \"line 18 of a new scenario file\"\n+value_31_19 = \"line 19 of a new scenario file\"\n+value_31_20 = \"line 20 of a new scenario file\"\n+value_31_21 = \"line 21 of a new scenario file\"\n+value_31_22 = \"line 22 of a new scenario file\"\n+value_31_23 = \"line 23 of a new scenario file\"\n+value_31_24 = \"line 24 of a new scenario file\"\n+value_31_25 = \"line 25 of a new scenario file\"\n+value_31_26 = \"line 26 of a new scenario file\"\n+value_31_27 = \"line 27 of a new scenario file\"\n+value_31_28 = \"line 28 of a new scenario file\"\n+value_31_29 = \"line 29 of a new scenario file\"\n+value_31_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-34.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_34_1 = \"line 1 of a new scenario file\"\n+value_34_2 = \"line 2 of a new scenario file\"\n+value_34_3 = \"line 3 of a new scenario file\"\n+value_34_4 = \"line 4 of a new scenario file\"\n+value_34_5 = \"line 5 of a new scenario file\"\n+value_34_6 = \"line 6 of a new scenario file\"\n+value_34_7 = \"line 7 of a new scenario file\"\n+value_34_8 = \"line 8 of a new scenario file\"\n+value_34_9 = \"line 9 of a new scenario file\"\n+value_34_10 = \"line 10 of a new scenario file\"\n+value_34_11 = \"line 11 of a new scenario file\"\n+value_34_12 = \"line 12 of a new scenario file\"\n+value_34_13 = \"line 13 of a new scenario file\"\n+value_34_14 = \"line 14 of a new scenario file\"\n+value_34_15 = \"line 15 of a new scenario file\"\n+value_34_16 = \"line 16 of a new scenario file\"\n+value_34_17 = \"line 17 of a new scenario file\"\n+value_34_18 = \"line 18 of a new scenario file\"\n+value_34_19 = \"line 19 of a new scenario file\"\n+value_34_20 = \"line 20 of a new scenario file\"\n+value_34_21 = \"line 21 of a new scenario file\"\n+value_34_22 = \"line 22 of a new scenario file\"\n+value_34_23 = \"line 23 of a new scenario file\"\n+value_34_24 = \"line 24 of a new scenario file\"\n+value_34_25 = \"line 25 of a new scenario file\"\n+value_34_26 = \"line 26 of a new scenario file\"\n+value_34_27 = \"line 27 of a new scenario file\"\n+value_34_28 = \"line 28 of a new scenario file\"\n+value_34_29 = \"line 29 of a new scenario file\"\n+value_34_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-37.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_37_1 = \"line 1 of a new scenario file\"\n+value_37_2 = \"line 2 of a new scenario file\"\n+value_37_3 = \"line 3 of a new scenario file\"\n+value_37_4 = \"line 4 of a new scenario file\"\n+value_37_5 = \"line 5 of a new scenario file\"\n+value_37_6 = \"line 6 of a new scenario file\"\n+value_37_7 = \"line 7 of a new scenario file\"\n+value_37_8 = \"line 8 of a new scenario file\"\n+value_37_9 = \"line 9 of a new scenario file\"\n+value_37_10 = \"line 10 of a new scenario file\"\n+value_37_11 = \"line 11 of a new scenario file\"\n+value_37_12 = \"line 12 of a new scenario file\"\n+value_37_13 = \"line 13 of a new scenario file\"\n+value_37_14 = \"line 14 of a new scenario file\"\n+value_37_15 = \"line 15 of a new scenario file\"\n+value_37_16 = \"line 16 of a new scenario file\"\n+value_37_17 = \"line 17 of a new scenario file\"\n+value_37_18 = \"line 18 of a new scenario file\"\n+value_37_19 = \"line 19 of a new scenario file\"\n+value_37_20 = \"line 20 of a new scenario file\"\n+value_37_21 = \"line 21 of a new scenario file\"\n+value_37_22 = \"line 22 of a new scenario file\"\n+value_37_23 = \"line 23 of a new scenario file\"\n+value_37_24 = \"line 24 of a new scenario file\"\n+value_37_25 = \"line 25 of a new scenario file\"\n+value_37_26 = \"line 26 of a new scenario file\"\n+value_37_27 = \"line 27 of a new scenario file\"\n+value_37_28 = \"line 28 of a new scenario file\"\n+value_37_29 = \"line 29 of a new scenario file\"\n+value_37_30 = \"line 30 of a new scenario file\"\n"
+      },
+      {
+        "path": "training/scenarios/repos/file-40.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,30 @@\n+value_40_1 = \"line 1 of a new scenario file\"\n+value_40_2 = \"line 2 of a new scenario file\"\n+value_40_3 = \"line 3 of a new scenario file\"\n+value_40_4 = \"line 4 of a new scenario file\"\n+value_40_5 = \"line 5 of a new scenario file\"\n+value_40_6 = \"line 6 of a new scenario file\"\n+value_40_7 = \"line 7 of a new scenario file\"\n+value_40_8 = \"line 8 of a new scenario file\"\n+value_40_9 = \"line 9 of a new scenario file\"\n+value_40_10 = \"line 10 of a new scenario file\"\n+value_40_11 = \"line 11 of a new scenario file\"\n+value_40_12 = \"line 12 of a new scenario file\"\n+value_40_13 = \"line 13 of a new scenario file\"\n+value_40_14 = \"line 14 of a new scenario file\"\n+value_40_15 = \"line 15 of a new scenario file\"\n+value_40_16 = \"line 16 of a new scenario file\"\n+value_40_17 = \"line 17 of a new scenario file\"\n+value_40_18 = \"line 18 of a new scenario file\"\n+value_40_19 = \"line 19 of a new scenario file\"\n+value_40_20 = \"line 20 of a new scenario file\"\n+value_40_21 = \"line 21 of a new scenario file\"\n+value_40_22 = \"line 22 of a new scenario file\"\n+value_40_23 = \"line 23 of a new scenario file\"\n+value_40_24 = \"line 24 of a new scenario file\"\n+value_40_25 = \"line 25 of a new scenario file\"\n+value_40_26 = \"line 26 of a new scenario file\"\n+value_40_27 = \"line 27 of a new scenario file\"\n+value_40_28 = \"line 28 of a new scenario file\"\n+value_40_29 = \"line 29 of a new scenario file\"\n+value_40_30 = \"line 30 of a new scenario file\"\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(training): add scenarios for the 0.6.0 release",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: chore, docs, fix.\n- Scopes used here: llamacpp, training. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(training): v0.2's results, the 0.5B gains and the 1.5B trades\nchore: release 0.6.0\nfix(llamacpp): leave room for prompts whose tokens were underestimated\n",
+          "user": "Files changed:\ntraining/scenario_02.py | +30 -0\ntraining/scenario_05.py | +30 -0\ntraining/scenario_08.py | +30 -0\ntraining/scenario_11.py | +30 -0\ntraining/scenario_14.py | +30 -0\ntraining/scenario_17.py | +30 -0\ntraining/scenario_20.py | +30 -0\ntraining/scenario_23.py | +30 -0\ntraining/scenario_26.py | +30 -0\ntraining/scenario_29.py | +30 -0\ntraining/scenario_32.py | +30 -0\ntraining/scenario_35.py | +30 -0\ntraining/scenario_38.py | +30 -0\ntraining/scenarios/cases/case-03.toml | +30 -0\ntraining/scenarios/cases/case-06.toml | +30 -0\ntraining/scenarios/cases/case-09.toml | +30 -0\ntraining/scenarios/cases/case-12.toml | +30 -0\ntraining/scenarios/cases/case-15.toml | +30 -0\ntraining/scenarios/cases/case-18.toml | +30 -0\ntraining/scenarios/cases/case-21.toml | +30 -0\ntraining/scenarios/cases/case-24.toml | +30 -0\ntraining/scenarios/cases/case-27.toml | +30 -0\ntraining/scenarios/cases/case-30.toml | +30 -0\ntraining/scenarios/cases/case-33.toml | +30 -0\ntraining/scenarios/cases/case-36.toml | +30 -0\n... and 15 more files\n\nDiff:\n--- training/scenario_38.py\n@@ -0,0 +1,30 @@\n[... 30 more lines]\n--- training/scenarios/repos/file-01.py\n[... 31 more lines]\n--- training/scenarios/repos/file-04.py\n[... 31 more lines]\n--- training/scenarios/repos/file-07.py\n[... 31 more lines]\n--- training/scenarios/repos/file-10.py\n[... 31 more lines]\n--- training/scenarios/repos/file-13.py\n[... 31 more lines]\n--- training/scenarios/repos/file-16.py\n[... 31 more lines]\n--- training/scenarios/repos/file-19.py\n[... 31 more lines]\n--- training/scenarios/repos/file-22.py\n[... 31 more lines]\n--- training/scenarios/repos/file-25.py\n[... 31 more lines]\n--- training/scenarios/repos/file-28.py\n[... 31 more lines]\n--- training/scenarios/repos/file-31.py\n[... 31 more lines]\n--- training/scenarios/repos/file-34.py\n[... 31 more lines]\n--- training/scenarios/repos/file-37.py\n[... 31 more lines]\n--- training/scenarios/repos/file-40.py\n[... 31 more lines]\n\n(40 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(training): add scenarios for the 0.6.0 release",
+        "rejected": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+# Double-entry bookkeeping CLI: TypeScript, English, Conventional Commits
+# with scopes.
+convention = "conventional"
+
+[[commit]]
+message = "chore: initial commit"
+paths = ["package.json", "tsconfig.json", ".gitignore", "README.md"]
+
+[[commit]]
+message = "feat(money): add Money type with cents arithmetic"
+paths = ["src/money.ts"]
+
+[[commit]]
+message = "feat(accounts): add account registry"
+paths = ["src/accounts.ts"]
+
+[[commit]]
+message = "feat(transactions): record transfers between accounts"
+paths = ["src/transactions.ts"]
+
+[[commit]]
+message = "test(money): cover parsing and printing"
+paths = ["test/money.test.ts"]
+
+[[commit]]
+message = "feat(report): print balances per account"
+paths = ["src/report.ts"]
+
+[[commit]]
+message = "feat(cli): add balance command"
+paths = ["src/index.ts"]
+
+[[commit]]
+message = "docs: describe the book format"
+paths = ["docs/usage.md"]
+
+[[commit]]
+message = "test(transactions): cover transfers"
+paths = ["test/transactions.test.ts"]
+
+[[commit]]
+message = "chore(deps): add lockfile"
+paths = ["package-lock.json"]
+
+[[commit]]
+message = "fix(transactions): reject transfers to the same account"
+ops = [{ op = "replace", path = "src/transactions.ts", old = """    const from = this.registry.get(transfer.from);""", new = """    if (transfer.from === transfer.to) {
+      throw new Error(`transfer from ${transfer.from} to itself`);
+    }
+    const from = this.registry.get(transfer.from);""" }]
+
+[[commit]]
+message = "refactor(report): sort accounts by name"
+ops = [{ op = "replace", path = "src/report.ts", old = "const accounts = registry.all();", new = "const accounts = registry.all().sort((a, b) => a.name.localeCompare(b.name));" }]

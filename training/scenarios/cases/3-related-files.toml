@@ -1,0 +1,338 @@
+# Level 3: a few related files, one purpose.
+level = 3
+
+[[case]]
+id = "menu-command"
+title = "feature em dois arquivos"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "append", path = "src/cafeteria/cardapio.py", text = """
+
+def formatado(moeda: str) -> str:
+    linhas = []
+    for categoria in ("bebida", "salgado", "doce"):
+        linhas.append(categoria.upper())
+        linhas += [f"  {i.nome:<26} {moeda} {i.preco:>5.2f}" for i in por_categoria(categoria)]
+    return "\\n".join(linhas)
+""" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "    sub.add_parser(\"relatorio\"", new = "    sub.add_parser(\"cardapio\", help=\"mostra o cardápio com os preços\")\n    sub.add_parser(\"relatorio\"" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "    else:\n        print(\"nenhum pedido registrado hoje\")", new = "    elif args.comando == \"cardapio\":\n        print(formatado(config.moeda))\n    else:\n        print(\"nenhum pedido registrado hoje\")" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "from cafeteria.config import Config\n", new = "from cafeteria.cardapio import formatado\nfrom cafeteria.config import Config\n" },
+]
+target = "comando para mostrar o cardápio com os preços"
+expect = ["cardapio", "comando|mostra|lista|exib"]
+tags = ["feature"]
+
+[[case]]
+id = "move-function"
+title = "move uma função para um módulo novo"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = """
+
+def recibo(pedido: Pedido, config: Config) -> str:
+    modelo = (TEMPLATES / "recibo.txt").read_text()
+    linhas = "\\n".join(
+        f"{l.quantidade}x {l.item.nome:<24} {config.moeda} {l.subtotal:>6.2f}" for l in pedido.linhas
+    )
+    return modelo.format(
+        loja=config.nome_loja, mesa=pedido.mesa, linhas=linhas,
+        total=f"{config.moeda} {pedido.total(config):.2f}",
+    )
+""", new = "" },
+  { op = "write", path = "src/cafeteria/recibo.py", text = """from pathlib import Path
+
+from cafeteria.config import Config
+from cafeteria.pedido import Pedido
+
+TEMPLATES = Path(__file__).parent.parent.parent / "templates"
+
+
+def recibo(pedido: Pedido, config: Config) -> str:
+    modelo = (TEMPLATES / "recibo.txt").read_text()
+    linhas = "\\n".join(
+        f"{l.quantidade}x {l.item.nome:<24} {config.moeda} {l.subtotal:>6.2f}" for l in pedido.linhas
+    )
+    return modelo.format(
+        loja=config.nome_loja, mesa=pedido.mesa, linhas=linhas,
+        total=f"{config.moeda} {pedido.total(config):.2f}",
+    )
+""" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "from cafeteria.relatorio import recibo", new = "from cafeteria.recibo import recibo" },
+]
+target = "move o recibo para um módulo próprio"
+expect = ["move|separa|extrai|modulo", "recibo"]
+tags = ["move", "refactor"]
+
+[[case]]
+id = "rename-file"
+title = "rename puro"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "git", args = ["mv", "src/cafeteria/{{old}}.py", "src/cafeteria/{{new}}.py"] },
+  { op = "regex", paths = ["src/cafeteria/*.py"], pattern = "cafeteria\\.{{old}}\\b", repl = "cafeteria.{{new}}", optional = true },
+]
+target = "renomeia {{old}}.py para {{new}}.py"
+expect = ["renome|move", "{{new}}"]
+tags = ["rename"]
+
+  [[case.variants]]
+  name = "relatorio"
+  vars = { old = "relatorio", new = "relatorios" }
+
+  [[case.variants]]
+  name = "estoque"
+  split = "eval"
+  vars = { old = "estoque", new = "armazem" }
+
+[[case]]
+id = "rename-and-edit"
+title = "rename com edição (o git vê apagar + criar)"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "git", args = ["mv", "src/cafeteria/config.py", "src/cafeteria/configuracao.py"] },
+  { op = "write", path = "src/cafeteria/configuracao.py", text = """from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Configuracao:
+    loja: str = "Café da Esquina"
+    moeda: str = "R$"
+    taxa_servico: float = 0.12
+    desconto_maximo: float = 0.30
+    banco: str = "estoque.sqlite"
+""" },
+  { op = "regex", paths = ["src/cafeteria/*.py", "tests/*.py"], pattern = "from cafeteria\\.config import Config", repl = "from cafeteria.configuracao import Configuracao as Config", optional = true },
+]
+target = "renomeia Config para Configuracao, agora imutável"
+expect = ["renome|configuracao"]
+tags = ["rename"]
+
+[[case]]
+id = "rename-and-rewrite"
+title = "rename com reescrita: o git vê apagar + criar"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "git", args = ["rm", "-q", "src/cafeteria/config.py"] },
+  { op = "write", path = "src/cafeteria/ajustes.py", text = """\"\"\"Ajustes da loja, lidos uma vez na inicialização.\"\"\"
+
+from typing import NamedTuple
+
+
+class Ajustes(NamedTuple):
+    nome_loja: str = "Café da Esquina"
+    moeda: str = "R$"
+    taxa_servico: float = 0.12
+    desconto_maximo: float = 0.30
+    arquivo_estoque: str = "estoque.sqlite"
+
+
+PADRAO = Ajustes()
+
+
+def carregar(caminho: str) -> Ajustes:
+    \"\"\"Lê os ajustes de um TOML; o que faltar fica com o valor padrão.\"\"\"
+    import tomllib
+
+    with open(caminho, "rb") as arquivo:
+        dados = tomllib.load(arquivo)
+    desconhecidos = set(dados) - set(Ajustes._fields)
+    if desconhecidos:
+        raise ValueError(f"ajustes desconhecidos: {sorted(desconhecidos)}")
+    return PADRAO._replace(**dados)
+""" },
+  { op = "regex", paths = ["src/cafeteria/*.py", "tests/*.py"], pattern = "from cafeteria\\.config import Config", repl = "from cafeteria.ajustes import Ajustes as Config", optional = true },
+]
+target = "troca config.py por ajustes.py, que também lê os ajustes de um TOML"
+expect = ["ajustes|renome|troca|config"]
+tags = ["rename"]
+
+[[case]]
+id = "binary-and-code"
+title = "binário + código"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "binary", path = "assets/logo.png", size = 3072, seed = 7 },
+  { op = "replace", path = "src/cafeteria/config.py", old = "    arquivo_estoque: str = \"estoque.sqlite\"", new = "    arquivo_estoque: str = \"estoque.sqlite\"\n    logo: str = \"assets/logo.png\"" },
+]
+target = "adiciona o logo da loja"
+expect = ["logo|imagem|marca"]
+tags = ["binary"]
+
+[[case]]
+id = "inline-template"
+title = "apaga um diretório e embute o conteúdo"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "git", args = ["rm", "-q", "-r", "templates"] },
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = "TEMPLATES = Path(__file__).parent.parent.parent / \"templates\"", new = """MODELO_RECIBO = \"\"\"{loja}
+mesa {mesa}
+--------------------------------------
+{linhas}
+--------------------------------------
+total com serviço: {total}\"\"\"""" },
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = "    modelo = (TEMPLATES / \"recibo.txt\").read_text()\n", new = "" },
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = "    return modelo.format(", new = "    return MODELO_RECIBO.format(" },
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = "from pathlib import Path\n\n", new = "" },
+]
+target = "recibo sem arquivo de template"
+expect = ["recibo|template|modelo"]
+tags = ["delete", "refactor"]
+
+[[case]]
+id = "opening-hours"
+title = "módulo novo + uso"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "write", path = "src/cafeteria/horario.py", text = """from datetime import datetime, time
+
+ABRE = time(7, 0)
+FECHA = time(19, 0)
+
+
+def aberto(agora: datetime) -> bool:
+    \"\"\"A loja abre de segunda a sábado, das 7h às 19h.\"\"\"
+    return agora.weekday() < 6 and ABRE <= agora.time() < FECHA
+""" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "    if args.comando == \"pedido\":\n", new = "    if args.comando == \"pedido\":\n        if not aberto(datetime.now()):\n            sys.exit(\"loja fechada\")\n" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "import argparse\n", new = "import argparse\nfrom datetime import datetime\n" },
+  { op = "replace", path = "src/cafeteria/cli.py", old = "from cafeteria.config import Config\n", new = "from cafeteria.config import Config\nfrom cafeteria.horario import aberto\n" },
+]
+target = "recusa pedidos fora do horário de funcionamento"
+expect = ["horario|fechad|aberto|funcionamento"]
+tags = ["feature"]
+
+[[case]]
+id = "rounding-fix"
+title = "correção em dois arquivos"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "replace", path = "src/cafeteria/pedido.py", old = "        return round(bruto * (1 - desconto), 2)", new = "        return float(Decimal(bruto * (1 - desconto)).quantize(Decimal(\"0.01\"), ROUND_HALF_UP))" },
+  { op = "replace", path = "src/cafeteria/pedido.py", old = "from dataclasses import dataclass, field\n", new = "from dataclasses import dataclass, field\nfrom decimal import ROUND_HALF_UP, Decimal\n" },
+  { op = "replace", path = "tests/test_pedido.py", old = "    assert pedido.total(Config()) == round(9 * 1.12 * 0.7, 2)", new = "    assert pedido.total(Config()) == 7.06" },
+]
+target = "arredonda o total do pedido para cima nos meios centavos"
+expect = ["arredond|centavo|round"]
+tags = ["bugfix"]
+
+[[case]]
+id = "swap-dependency"
+title = "troca uma dependência e o uso"
+repo = "cafeteria"
+split = "train"
+ops = [
+  { op = "replace", path = "requirements.txt", old = "tabulate==0.9.0", new = "rich==13.9.4" },
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = "from tabulate import tabulate\n", new = "from rich.console import Console\nfrom rich.table import Table\n" },
+  { op = "replace", path = "src/cafeteria/relatorio.py", old = """    tabela = tabulate(vendidos.most_common(), headers=["item", "qtd"])
+    return f"{tabela}\\n\\ntotal: {config.moeda} {total:.2f}\"""", new = """    tabela = Table("item", "qtd")
+    for nome, quantidade in vendidos.most_common():
+        tabela.add_row(nome, str(quantidade))
+    console = Console(record=True)
+    console.print(tabela)
+    return f"{console.export_text()}\\ntotal: {config.moeda} {total:.2f}\"""" },
+]
+target = "troca tabulate por rich no resumo do dia"
+expect = ["rich", "tabulate|troca|substitu"]
+tags = ["dependencies"]
+
+[[case]]
+id = "code-and-tests"
+title = "código + teste"
+repo = "cafeteria"
+split = "eval"
+ops = [
+  { op = "append", path = "src/cafeteria/pedido.py", text = """
+    def quantidade_itens(self) -> int:
+        return sum(linha.quantidade for linha in self.linhas)
+""" },
+  { op = "append", path = "tests/test_pedido.py", text = """
+
+def test_quantidade_de_itens_soma_as_linhas():
+    pedido = Pedido(mesa=2)
+    pedido.adicionar("cafe", 2)
+    pedido.adicionar("bolo")
+    assert pedido.quantidade_itens() == 3
+""" },
+]
+target = "conta os itens do pedido, com teste"
+expect = ["quantidade|contagem|conta|itens"]
+tags = ["feature", "tests"]
+
+[[case]]
+id = "transfer-command"
+title = "comando novo + docs"
+repo = "ledger"
+split = "train"
+ops = [
+  { op = "replace", path = "src/index.ts", old = """} else {
+  console.error("usage: ledger balance [book.json]");""", new = """} else if (command === "history") {
+  for (const t of load(path).journal.entries) {
+    console.log(`${t.date}  ${t.from} -> ${t.to}  ${t.amount}  ${t.memo}`);
+  }
+} else {
+  console.error("usage: ledger balance|history [book.json]");""" },
+  { op = "append", path = "docs/usage.md", text = """
+List the transfers in order:
+
+```bash
+ledger history book.json
+```
+""" },
+]
+target = "feat(cli): add history command"
+expect = ["^feat\\(cli\\)", "history|transfers"]
+tags = ["feature", "docs"]
+
+[[case]]
+id = "fix-with-test"
+title = "correção + teste"
+repo = "ledger"
+split = "eval"
+ops = [
+  { op = "replace", path = "src/money.ts", old = "const match = /^(-?)(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text.trim());", new = "const match = /^(-?)(\\d+)(?:\\.(\\d{2}))?$/.exec(text.trim());" },
+  { op = "replace", path = "test/money.test.ts", old = "  assert.equal(Money.parse(\"12.5\").cents, 1250);\n", new = "  assert.throws(() => Money.parse(\"12.5\"));\n" },
+]
+target = "fix(money): require two decimals in amounts"
+expect = ["^fix\\(money\\)", "decimal|digit|cents"]
+tags = ["bugfix", "tests"]
+
+[[case]]
+id = "rename-class"
+title = "renomeia uma classe em vários arquivos"
+repo = "ledger"
+split = "train"
+ops = [{ op = "regex", paths = ["src/*.ts", "test/*.ts"], pattern = "\\bJournal\\b", repl = "Ledger", optional = true }]
+target = "refactor(transactions): rename Journal to Ledger"
+expect = ["^refactor", "journal|ledger|rename"]
+tags = ["rename"]
+
+[[case]]
+id = "close-accounts"
+title = "feature em dois arquivos"
+repo = "ledger"
+split = "eval"
+ops = [
+  { op = "replace", path = "src/accounts.ts", old = "  balance: Money;\n}", new = "  balance: Money;\n  closed?: boolean;\n}" },
+  { op = "replace", path = "src/accounts.ts", old = "  all(): Account[] {", new = """  close(name: string): void {
+    const account = this.get(name);
+    if (account.balance.cents !== 0) {
+      throw new Error(`cannot close ${name}: balance is ${account.balance}`);
+    }
+    account.closed = true;
+  }
+
+  all(): Account[] {""" },
+  { op = "replace", path = "src/transactions.ts", old = "    const to = this.registry.get(transfer.to);\n", new = "    const to = this.registry.get(transfer.to);\n    if (from.closed || to.closed) {\n      throw new Error(\"transfers cannot touch a closed account\");\n    }\n" },
+]
+target = "feat(accounts): close accounts with a zero balance"
+expect = ["^feat\\(accounts\\)", "close"]
+tags = ["feature"]

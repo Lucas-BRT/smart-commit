@@ -1,0 +1,157 @@
+# Level 1: one file, one to five lines, with code meaning.
+level = 1
+
+[[case]]
+id = "config-value"
+title = "troca um valor de configuração"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "replace", path = "src/cafeteria/config.py", old = "{{old}}", new = "{{new}}" }]
+target = "{{target}}"
+tags = ["config"]
+
+  [[case.variants]]
+  name = "desconto"
+  vars = { old = "desconto_maximo: float = 0.30", new = "desconto_maximo: float = 0.25", target = "limita o desconto a 25%" }
+  expect = ["desconto", "25"]
+
+  [[case.variants]]
+  name = "taxa"
+  split = "eval"
+  vars = { old = "taxa_servico: float = 0.12", new = "taxa_servico: float = 0.15", target = "aumenta a taxa de serviço para 15%" }
+  expect = ["taxa|servico", "15"]
+
+  [[case.variants]]
+  name = "nome"
+  vars = { old = "Café da Esquina", new = "Café do Largo", target = "muda o nome da loja para Café do Largo" }
+  expect = ["nome|loja", "largo"]
+
+[[case]]
+id = "price"
+title = "reajusta um preço"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "replace", path = "src/cafeteria/cardapio.py", old = "\"Coxinha\", 8.00", new = "\"Coxinha\", 8.50" }]
+target = "reajusta o preço da coxinha para 8,50"
+expect = ["preco|reajust", "coxinha"]
+tags = ["config"]
+
+[[case]]
+id = "negative-discount"
+title = "bugfix de uma linha"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "src/cafeteria/pedido.py", old = "desconto = min(self.desconto, config.desconto_maximo)", new = "desconto = max(0.0, min(self.desconto, config.desconto_maximo))" }]
+target = "impede desconto negativo no total do pedido"
+expect = ["desconto", "negativ"]
+tags = ["bugfix"]
+
+[[case]]
+id = "docstring"
+title = "docstring nova"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "replace", path = "src/cafeteria/pedido.py", old = "    def total(self, config: Config) -> float:\n", new = "    def total(self, config: Config) -> float:\n        \"\"\"Total com taxa de serviço e desconto, arredondado em centavos.\"\"\"\n" }]
+target = "documenta o cálculo do total do pedido"
+expect = ["document|docstring|comenta", "total"]
+tags = ["comments"]
+
+[[case]]
+id = "comment"
+title = "comentário novo"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "src/cafeteria/estoque.py", old = "        self.conexao.execute(\n            \"insert into", new = "        # soma à quantidade se o item já existe (upsert)\n        self.conexao.execute(\n            \"insert into" }]
+target = "comenta o upsert de reposição do estoque"
+expect = ["coment|explica|document", "upsert|repo|estoque"]
+tags = ["comments"]
+
+[[case]]
+id = "unused-import"
+title = "remove import não usado"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "replace", path = "src/cafeteria/cli.py", old = "import sys\n", new = "" }]
+target = "remove import não usado do cli"
+expect = ["import", "remov|tira"]
+tags = ["cleanup"]
+
+[[case]]
+id = "default-argument"
+title = "muda o valor padrão de um argumento"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "src/cafeteria/cli.py", old = "pedido.add_argument(\"--mesa\", type=int, default=1)", new = "pedido.add_argument(\"--mesa\", type=int, default=0)" }]
+target = "pedido sem mesa vai para o balcão (mesa 0)"
+expect = ["mesa", "0|padrao|balcao"]
+tags = ["config"]
+
+[[case]]
+id = "gitignore"
+title = ".gitignore"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "append", path = ".gitignore", text = "*.log\nbackups/\n" }]
+target = "ignora logs e a pasta de backups"
+expect = ["ignor", "log|backup"]
+tags = ["config"]
+
+[[case]]
+id = "dependency-bump"
+title = "atualiza uma dependência"
+repo = "cafeteria"
+split = "eval"
+ops = [{ op = "replace", path = "requirements.txt", old = "tabulate==0.9.0", new = "tabulate==0.9.1" }]
+target = "atualiza tabulate para 0.9.1"
+expect = ["tabulate", "atualiz|0\\.9\\.1"]
+tags = ["dependencies"]
+
+[[case]]
+id = "readme-line"
+title = "uma linha no README"
+repo = "cafeteria"
+split = "train"
+ops = [{ op = "append", path = "README.md", text = "\nPara copiar o banco do estoque, rode `scripts/backup.sh`.\n" }]
+target = "documenta o script de backup no README"
+expect = ["readme|document", "backup"]
+tags = ["docs"]
+
+[[case]]
+id = "reject-empty-name"
+title = "validação nova"
+repo = "ledger"
+split = "train"
+ops = [{ op = "replace", path = "src/accounts.ts", old = "  open(name: string, kind: AccountKind): Account {\n", new = "  open(name: string, kind: AccountKind): Account {\n    if (!name.trim()) {\n      throw new Error(\"account names cannot be empty\");\n    }\n" }]
+target = "fix(accounts): reject empty account names"
+expect = ["^fix\\(accounts\\)|^feat\\(accounts\\)", "empty|blank"]
+tags = ["bugfix"]
+
+[[case]]
+id = "dev-dependency-bump"
+title = "atualiza uma devDependency"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "replace", path = "package.json", old = "\"typescript\": \"5.6.3\"", new = "\"typescript\": \"5.7.2\"" }]
+target = "chore(deps): bump typescript to 5.7.2"
+expect = ["^chore\\(deps\\)|^build", "typescript"]
+tags = ["dependencies"]
+
+[[case]]
+id = "small-method"
+title = "método pequeno novo"
+repo = "ledger"
+split = "train"
+ops = [{ op = "replace", path = "src/money.ts", old = "  isNegative(): boolean {", new = "  isZero(): boolean {\n    return this.cents === 0;\n  }\n\n  isNegative(): boolean {" }]
+target = "feat(money): add isZero"
+expect = ["^feat\\(money\\)", "zero"]
+tags = ["feature"]
+
+[[case]]
+id = "rename-parameter"
+title = "renomeia um parâmetro"
+repo = "ledger"
+split = "eval"
+ops = [{ op = "regex", path = "src/report.ts", pattern = "\\bwidth\\b", repl = "pad" }]
+target = "refactor(report): rename width to pad"
+expect = ["^refactor\\(report\\)", "width|pad|rename"]
+tags = ["rename"]

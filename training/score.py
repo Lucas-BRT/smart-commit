@@ -28,6 +28,10 @@ Per set (conventional, free) and overall:
 - unsupported_real / ungrounded_real: the same for the real subject, the
   level a human reaches with the same diff (often more than the prompt
   shows, since the diff is cut to fit)
+- expected: the subject matches every `expect` pattern of the case (only
+  for sets that list them, as the scenarios of build_scenarios.py do)
+
+Sets whose meta has a `level` (the scenarios) are also reported per level.
 
 Metrics of the conventional set are averaged over that set in "all" too.
 """
@@ -41,6 +45,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from build_inputs import TYPE_ALIASES, conventional_type  # noqa: E402
+from scenarios import expected  # noqa: E402
 
 SCOPE = re.compile(r"^[a-z]+\(([^()]+)\)")
 WORD = re.compile(r"[a-z0-9]+")
@@ -142,6 +147,14 @@ def per_type(pairs: collections.Counter) -> tuple[dict, float]:
     return scores, round(macro, 3)
 
 
+def groups(m: dict) -> list[str]:
+    """The report sections a case counts in."""
+    keys = [m["set"], "all"]
+    if "level" in m:
+        keys.append(f"level {m['level']}")
+    return keys
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("eval_dir", type=Path)
@@ -162,18 +175,22 @@ def main() -> None:
         history = t["inputs"]["subjects"]
         known = evidence(t["inputs"])
         diff = evidence({**t["inputs"], "subjects": []})
+        # Messages from rules (lockfiles, generated files) have no attempt.
+        first = g["attempts"][0]["rejected"] if g["attempts"] else None
         row = {
             "unsupported": unsupported(subject, known),
             "unsupported_real": unsupported(m["target"], known),
             "ungrounded": ungrounded(subject, diff),
             "ungrounded_real": ungrounded(m["target"], diff),
-            "first_try": g["attempts"][0]["rejected"] is None,
+            "first_try": first is None,
             "fallback": g["source"] == "fallback",
             "copied": subject in history,
-            "first_copied": "copied_history" in (g["attempts"][0]["rejected"] or {}),
+            "first_copied": "copied_history" in (first or {}),
             "word_f1": f1(subject, m["target"]),
             "exact": subject == m["target"],
         }
+        if m.get("expect"):
+            row["expected"] = expected(subject, m["expect"])
         if m["set"] == "conventional":
             real_type = TYPE_ALIASES.get(m["type"], m["type"])
             row["type_match"] = conv_type(subject) == real_type
@@ -184,7 +201,7 @@ def main() -> None:
             if fits is not None:
                 row["scope_fits"] = fits
                 row["scope_fits_real"] = scope_fits(m["target"], t["inputs"])
-        for key in (m["set"], "all"):
+        for key in groups(m):
             sums[key]["n"] += 1
             for k, v in row.items():
                 sums[key][k] += float(v)
