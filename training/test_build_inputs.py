@@ -19,7 +19,7 @@ from build_inputs import inputs_of, keep_target, trim_context  # noqa: E402
 from build_inputs import paths_of  # noqa: E402
 from score import area, description, scope_fits, specifics, ungrounded, unsupported  # noqa: E402
 from make_examples import make_examples  # noqa: E402
-from build_inputs import conventional_type  # noqa: E402
+from build_inputs import conventional_type, release_version, version_in_diff  # noqa: E402
 from score import per_type  # noqa: E402
 
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
@@ -187,6 +187,32 @@ def test_type_scores() -> None:
     assert scores["docs"] == {"n": 2, "precision": 0.0, "recall": 0.0, "f1": 0.0}
     assert macro == round((0.857 + 0.667 + 0.0) / 3, 3)
     assert per_type(collections.Counter()) == ({}, 0.0)
+
+
+def test_releases() -> None:
+    assert release_version("chore: release 0.5.0") == "0.5.0"
+    assert release_version("Version bump to v2.3.0-dev") == "2.3.0-dev"
+    assert release_version("feat: support 1.2 files") is None
+    assert release_version("bump version") is None
+    changes = {"files": [{"hunks": '@@ -1 +1 @@\n-version = "0.4.0"\n+version = "0.5.0"\n'},
+                         {"hunks": None}]}
+    assert version_in_diff("0.5.0", changes)
+    assert not version_in_diff("0.4.0", changes)  # removed, not added
+    assert not version_in_diff("5.0", changes)  # part of another version
+    # select.py drops release bumps unless told its source holds them.
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / "src"
+        src.mkdir()
+        meta = [{"repo": "r", "hash": h, "target": t, "type": "chore", "history": 10}
+                for h, t in (("a", "chore: release 0.5.0"), ("b", "chore: release 0.6.0"))]
+        (src / "meta.jsonl").write_text("".join(json.dumps(m) + "\n" for m in meta))
+        (src / "inputs.jsonl").write_text("{}\n{}\n")
+        for flags, kept in (([], 0), (["--releases"], 2)):
+            out = Path(tmp) / f"out{kept}"
+            subprocess.run([sys.executable, "-I", str(Path(__file__).parent / "select.py"),
+                            str(src), str(out), "--conventional", "2", "--free", "0", *flags],
+                           check=True, capture_output=True)
+            assert len((out / "meta.jsonl").read_text().splitlines()) == kept
 
 
 if __name__ == "__main__":

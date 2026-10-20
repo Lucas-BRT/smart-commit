@@ -6,6 +6,10 @@ large repository from dominating.
 
     python -I select.py SRC_DIR OUT_DIR --conventional N --free N [--per-repo K]
                         [--min-history H] [--max-history H] [--max-type-share F]
+                        [--releases]
+
+`--releases` reads a source made by `build_inputs.py --releases`, whose
+targets are the release bumps the target filters would otherwise drop.
 """
 
 import argparse
@@ -37,6 +41,8 @@ def main() -> None:
                              "identifier absent from the diff and the history")
     parser.add_argument("--max-type-share", type=float, default=1.0,
                         help="at most this share of the conventional commits per type")
+    parser.add_argument("--releases", action="store_true",
+                        help="the source is build_inputs.py --releases: keep its release bumps")
     args = parser.parse_args()
 
     meta = [json.loads(line) for line in (args.src / "meta.jsonl").read_text().splitlines()]
@@ -69,7 +75,7 @@ def main() -> None:
         ):
             continue
         # Filters added after the inputs were built apply here too.
-        if not keep_target(m["target"]):
+        if not args.releases and not keep_target(m["target"]):
             dropped += 1
             continue
         if conventional_repo[m["repo"]]:
