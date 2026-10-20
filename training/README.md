@@ -118,3 +118,43 @@ the validation set's `f6350a3c5cb71b58` (b2's).
 `data/releases` (H7): `inputs.jsonl` sha256 starts `cbd4239e8433a438`,
 `meta.jsonl` `c7e2d480aca635b9`; `data/h5` `9827ecc272759ec9` and
 `513484be87384cf5`; `data/h7` `4c6a2cad2087a047` and `a35b23326e894b96`.
+
+`data/val1` (the validation set of b2) is
+`select.py data/test1 data/val1 --conventional 250 --free 250 --max-type-share 0.3 --supported-only`
+(`meta.jsonl` sha256 starts `2fb1dedba6e20939`; `val1-h4` is the same with
+the history paths, as `select.py` writes it today).
+
+## Bundle b3 (v0.2)
+
+About 20k examples with prompts built with `--rules omitted` (H6): 15,600
+from the main selection, nested like the curve, plus `data/h5` (H5) and
+`data/h7` (H7), and the validation set with the same prompts. Built in both
+versions of H8's type cap until H8 decides, each selection in its own
+directory under `data/b3/`, since `make_examples.py` writes there:
+
+```bash
+py() { uv run --locked python -I "$@"; }
+py select.py data/test1 data/b3/val --conventional 250 --free 250 --max-type-share 0.3 --supported-only
+py select.py data/train-all data/b3/main-cap30 --conventional 24000 --free 16000 \
+  --max-type-share 0.3 --per-repo 150 --supported-only
+py select.py data/train-all data/b3/main-nocap --conventional 24000 --free 16000 \
+  --per-repo 150 --supported-only
+py select.py data/train-all data/b3/h5 --conventional 1600 --free 2400 \
+  --min-history 0 --max-history 9 --per-repo 5 --supported-only
+py select.py data/releases data/b3/h7 --conventional 400 --free 200 \
+  --min-history 0 --per-repo 5 --supported-only --releases
+for d in val main-cap30 main-nocap h5 h7; do py make_examples.py data/b3/$d $SC --rules omitted; done
+for cap in cap30 nocap; do
+  py nest.py data/b3/main-$cap/examples.jsonl data/b3/main-$cap/nested 15600
+  cat data/b3/main-$cap/nested-15600.jsonl data/b3/h5/examples.jsonl data/b3/h7/examples.jsonl \
+    > data/b3/examples-$cap.jsonl
+  py kaggle_bundle.py data/kaggle/b3-$cap --val data/b3/val/examples.jsonl \
+    v02-1.5b=1.5b:data/b3/examples-$cap.jsonl v02-0.5b=0.5b:data/b3/examples-$cap.jsonl
+done
+```
+
+20,019 examples, 56% Conventional; `fix` is 29.0% of them with the cap and
+33.1% without. sha256 of the examples: `examples-cap30.jsonl` starts
+`d3a10c49147e4605`, `examples-nocap.jsonl` `23b9effc8b202e6d`, the
+validation set `71fca918a934d0f4`. The order of the concatenation does not
+matter: `train.py` shuffles with a fixed seed.
