@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "tool_version": "0.6.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "docs(training): v0.2's results, the 0.5B gains and the 1.5B trades",
+      "chore: release 0.6.0",
+      "feat(training): score the evaluations"
+    ],
+    "history_files": [
+      [],
+      [],
+      [
+        "training/score.py",
+        "training/test_build_inputs.py"
+      ]
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/score.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_build_inputs.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/score.py",
+        "old_path": null,
+        "lines": [
+          3,
+          1
+        ],
+        "hunks": "@@ -2,4 +2,6 @@ def main():\n     for t in traces:\n+        # Messages from rules (lockfiles, generated files) have no attempt.\n+        first = t[\"attempts\"][0][\"rejected\"] if t[\"attempts\"] else None\n         row = {\n-            \"first_try\": t[\"attempts\"][0][\"rejected\"] is None,\n+            \"first_try\": first is None,\n         }\n"
+      },
+      {
+        "path": "training/test_build_inputs.py",
+        "old_path": null,
+        "lines": [
+          6,
+          0
+        ],
+        "hunks": "@@ -2 +2,7 @@ def test_releases():\n     pass\n+\n+\n+def test_score_reads_rule_messages():\n+    \"\"\"A message from rules (a lockfile) has no attempt; score.py crashed on it.\"\"\"\n+    trace = {\"generation\": {\"source\": \"rules\", \"attempts\": []}}\n+    assert score(trace)[\"first_try\"] == 1.0\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "test(training): score.py crashes when reading rule messages",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: chore, docs, feat.\n- Scopes used here: training. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(training): v0.2's results, the 0.5B gains and the 1.5B trades\nchore: release 0.6.0\nfeat(training): score the evaluations\n",
+          "user": "Files changed:\ntraining/score.py | +3 -1\ntraining/test_build_inputs.py | +6 -0\n\nDiff:\n--- training/score.py\n@@ -2,4 +2,6 @@ def main():\n     for t in traces:\n+        # Messages from rules (lockfiles, generated files) have no attempt.\n+        first = t[\"attempts\"][0][\"rejected\"] if t[\"attempts\"] else None\n         row = {\n-            \"first_try\": t[\"attempts\"][0][\"rejected\"] is None,\n+            \"first_try\": first is None,\n         }\n--- training/test_build_inputs.py\n@@ -2 +2,7 @@ def test_releases():\n     pass\n+\n+\n+def test_score_reads_rule_messages():\n+    \"\"\"A message from rules (a lockfile) has no attempt; score.py crashed on it.\"\"\"\n+    trace = {\"generation\": {\"source\": \"rules\", \"attempts\": []}}\n+    assert score(trace)[\"first_try\"] == 1.0\n"
+        },
+        "raw": "test(training): score.py crashes when reading rule messages",
+        "rejected": null
+      }
+    ]
+  }
+}

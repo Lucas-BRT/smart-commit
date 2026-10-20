@@ -171,6 +171,42 @@ printf 'z\n' > tests/fixtures/make-traces.sh; printf '{}\n' > tests/fixtures/tra
   --mock-response "test(fixtures): trace a config change kept to the listed types" \
   --trace "$OUT/conventional-en-copied-twice.json" >/dev/null 2>&1
 
+# Found in real use, with smart-commit-0.5b-v0.2: a fix in a script with its
+# regression test; the model answered `test` and described the bug instead
+# of the fix.
+fresh fix-as-test
+mkdir training
+printf 'def main():\n    for t in traces:\n        row = {\n            "first_try": t["attempts"][0]["rejected"] is None,\n        }\n' > training/score.py
+printf 'def test_releases():\n    pass\n' > training/test_build_inputs.py; git add .
+commit "feat(training): score the evaluations"
+commit "chore: release 0.6.0"
+commit "docs(training): v0.2's results, the 0.5B gains and the 1.5B trades"
+printf 'def main():\n    for t in traces:\n        # Messages from rules (lockfiles, generated files) have no attempt.\n        first = t["attempts"][0]["rejected"] if t["attempts"] else None\n        row = {\n            "first_try": first is None,\n        }\n' > training/score.py
+printf 'def test_releases():\n    pass\n\n\ndef test_score_reads_rule_messages():\n    """A message from rules (a lockfile) has no attempt; score.py crashed on it."""\n    trace = {"generation": {"source": "rules", "attempts": []}}\n    assert score(trace)["first_try"] == 1.0\n' > training/test_build_inputs.py
+git add .
+"$BIN" --backend mock --mock-response "test(training): score.py crashes when reading rule messages" \
+  --trace "$OUT/conventional-en-fix-as-test.json" >/dev/null
+
+# Found in real use, with smart-commit-0.5b-v0.2: about forty new files share
+# the diff budget, so every section is cut to its header and the prompt
+# shows no code; the model took a version from the history ("0.6.0").
+fresh empty-diff
+commit "fix(llamacpp): leave room for prompts whose tokens were underestimated"
+commit "chore: release 0.6.0"
+commit "docs(training): v0.2's results, the 0.5B gains and the 1.5B trades"
+mkdir -p training/scenarios/cases training/scenarios/repos
+for n in $(seq -w 1 40); do
+    case $((10#$n % 3)) in
+        0) f="training/scenarios/cases/case-$n.toml" ;;
+        1) f="training/scenarios/repos/file-$n.py" ;;
+        *) f="training/scenario_$n.py" ;;
+    esac
+    for i in $(seq 1 30); do printf 'value_%s_%s = "line %s of a new scenario file"\n' "$n" "$i" "$i"; done > "$f"
+done
+git add .
+"$BIN" --backend mock --mock-response "feat(training): add scenarios for the 0.6.0 release" \
+  --trace "$OUT/conventional-en-empty-diff.json" >/dev/null
+
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
 # 75th and 90th percentiles of eval-v1's prompts (the last fills the budget).
