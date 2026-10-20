@@ -303,8 +303,9 @@ What is published is one model per size smart-commit offers, named
    [smart-commit-1.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-1.5b-v0.1)
    and [smart-commit-0.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-0.5b-v0.1),
    experimental models in `src/models.rs`.
-6. The next version, v0.2: H5 (young repositories), H6 (the rules in the
-   weights) and H4b (the scope map) in one bundle on about 20k examples,
-   with H7's cheap data changes (release bumps kept when the diff shows
-   the version) and H8's type cap, tested first on its own. The order and
-   the work outside training are in the [roadmap](roadmap.md).
+6. ~~v0.2: H5, H6 and H7 in one bundle of about 20k examples.~~ Done for
+   the 0.5B: [smart-commit-0.5b-v0.2](https://huggingface.co/LucasBRT/smart-commit-0.5b-v0.2);
+   the 1.5B of the same bundle lost a little on eval-v1 and is not
+   published (HYPOTHESES.md, v0.2). H4b waits for a shorter scope map
+   (H4). The order and the work outside training are in the
+   [roadmap](roadmap.md).

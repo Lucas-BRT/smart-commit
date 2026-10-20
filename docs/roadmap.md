@@ -16,7 +16,8 @@
 - Recommended models downloaded from Hugging Face, pinned and checked
   (`smart-commit model`), or any GGUF file from disk.
 - The first fine-tunes, `smart-commit-1.5b-v0.1` and
-  `smart-commit-0.5b-v0.1`, as experimental models.
+  `smart-commit-0.5b-v0.1`, and `smart-commit-0.5b-v0.2`, trained without
+  the rules in its prompt, as experimental models.
 - Fast load for llama.cpp (`--no-repack --fit off`), turned on per device
   by the benchmark, and `--threads-batch` passed explicitly.
 - Global and per-repository configuration; the setup removes global
@@ -36,7 +37,7 @@ then the largest gains for their cost.
 
 | # | Item | Why |
 |---|---|---|
-| 1 | **Fine-tune v0.2** | The next `smart-commit-<size>-v0.2`: the rules in the weights (training H6, a `PromptOptions` switch that follows the model in `models::REGISTRY`), young repositories (H5: the 0.5B falls back on 9% of them, the 1.5B on 3%) and the scope map (H4b, shown only to the model trained with it), in one bundle of about 20k examples, where the v0.1 learning curve flattens. Without the rules, prompts are 17–21% shorter on eval-v1 and eval-short (`--rules omitted`, already in `prompt` and `eval`); the speed is to be measured with the trained model. See [training](training.md). |
+| 1 | **Fine-tune v0.3** | v0.2 is published for the 0.5B (training, v0.2): the rules in the weights work. Next, on the failure modes users meet: preference training (DPO) against copied subjects, removals described as additions, invented details and vague descriptions, which `score.py` already detects; more capacity (LoRA rank 64, or a full fine-tune of the 0.5B); and why the 1.5B lost on the type with the same data. See [training](training.md). |
 | 2 | **A model server that stays up** (started: `model.keep_loaded`, off by default) | Load is paid at every commit: 0.3–0.6 s on the CPU, about 2.2 s on Vulkan (weights to the GPU, shaders compiled). Keeping `llama-server` running after a message, and stopping it after some idle minutes (say 10), makes every later commit pay only prefill and decoding. It also gives prefix caching for free: llama-server keeps the KV cache of the prompt's unchanged beginning in memory. Costs: 0.5–1.2 GB of RAM or VRAM while it is up, and its lifecycle (restart when the settings or the model change, two commits at once, a stale socket). The commit nudges would need a loaded model at hand too. Check that replies stay identical with the cache on, against the trace fixtures and `eval`, before turning it on: a restored cache can change float results. Next: measure it on both machines, then decide whether it is on by default, then try the prompt cache. |
 | 3 | **A fine-tune as the default** | On eval-v1 the v0.1 fine-tunes pick the real type 64% of the time against 46% for the default `qwen2.5-coder-1.5b`. Making one `validated` and the default (on `vulkan` and `cpu`, which need no OpenVINO export) needs the fixture prompts and the hardware tests; after v0.2's evaluation. |
 | 4 | **Fine-tunes and more models on the OpenVINO devices** | The NPU and the Intel GPU run only `qwen2.5-coder-1.5b`, the one model with a pinned export. Export the fine-tunes' published safetensors, and other [recommended models](models.md), with the pinned pipeline: two identical exports, `MANIFEST.sha256` and the **Model** workflow for each. |

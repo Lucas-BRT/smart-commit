@@ -252,7 +252,8 @@ fn use_refuses_what_is_not_a_model() {
     assert!(
         stderr(&output).contains(
             "llama-3 is neither a recommended model (qwen2.5-coder-1.5b, qwen2.5-coder-0.5b, \
-             qwen2.5-coder-7b, smart-commit-1.5b-v0.1, smart-commit-0.5b-v0.1) nor a file"
+             qwen2.5-coder-7b, smart-commit-1.5b-v0.1, smart-commit-0.5b-v0.1, \
+             smart-commit-0.5b-v0.2) nor a file"
         ),
         "{}",
         stderr(&output)

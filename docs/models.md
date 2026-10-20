@@ -21,12 +21,14 @@ $ smart-commit model list
   qwen2.5-coder-7b        4.7 GB  Apache-2.0  experimental  -
   smart-commit-1.5b-v0.1  986 MB  Apache-2.0  experimental  -
   smart-commit-0.5b-v0.1  397 MB  Apache-2.0  experimental  -
+  smart-commit-0.5b-v0.2  397 MB  Apache-2.0  experimental  -
 
   qwen2.5-coder-1.5b     the default: fast on every device, code-focused
   qwen2.5-coder-0.5b     the smallest: faster, for slow CPUs; weaker messages; llama.cpp devices only (vulkan, cpu)
   qwen2.5-coder-7b       the largest: better messages, but slow to load (8 s on a GPU); llama.cpp devices only (vulkan, cpu)
   smart-commit-1.5b-v0.1 Qwen2.5-Coder-1.5B fine-tuned for smart-commit: the right commit types; llama.cpp devices only (vulkan, cpu)
   smart-commit-0.5b-v0.1 Qwen2.5-Coder-0.5B fine-tuned: as good as the 1.5B on types, faster; llama.cpp devices only (vulkan, cpu)
+  smart-commit-0.5b-v0.2 the 0.5B trained without the rules in its prompt: faster, copies less in young repositories; llama.cpp devices only (vulkan, cpu)
 
 In use: qwen2.5-coder-1.5b (model.name, default).
 Models come from Hugging Face, pinned and checked: their publishers' files,
@@ -50,6 +52,7 @@ The last benchmark measured the previous model: run `smart-commit bench` again.
 | `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` | — | — |
 | `smart-commit-1.5b-v0.1` | 986 MB | experimental | `vulkan`, `cpu` | 3.8 s / 2.3 s | — |
 | `smart-commit-0.5b-v0.1` | 397 MB | experimental | `vulkan`, `cpu` | 1.9 s / 1.2 s | — |
+| `smart-commit-0.5b-v0.2` | 397 MB | experimental | `vulkan`, `cpu` | 1.8 s / 1.2 s | — |
 
 Times are `smart-commit bench` with fast load, on its four prompts sized
 like real ones; a dash is a pair not measured on them yet. The fine-tunes
@@ -79,6 +82,13 @@ model 6.7 s / 8.3 s on the Ryzen.
   repositories (9% against 3%). Their model cards on Hugging Face list
   the evaluation, the training and the limitations. Versions are new ids
   (`-v0.2`), never replaced files.
+- `smart-commit-0.5b-v0.2` was trained on prompts without the fixed rules
+  (training H6): smart-commit recognises its file by the SHA-256 and sends
+  it the shorter prompt, so it is about 15% faster on the CPU than v0.1
+  (`bench`, whose embedded prompts carry the rules, does not show it). On
+  eval-v1 it matches v0.1; in young repositories its first reply copies an
+  earlier subject half as often (7.6% against 13.7%) and it falls back to
+  the file list half as often (4.6% against 8.6%).
 
 ## Where they come from
 
