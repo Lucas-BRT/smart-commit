@@ -266,7 +266,7 @@ example and "follow their style", repeating it is the easy answer.
 - **Expectation.** first reply copied and fallback on eval-short down to
   H1's level for the 0.5B, eval-v1 unchanged.
 
-### H6. The rules can live in the weights instead of the prompt — planned
+### H6. The rules can live in the weights instead of the prompt — switch implemented, training planned
 
 Context distillation: train the model on prompts without the fixed rules
 (reply with the message only, 72 columns, the imperative, the Conventional
@@ -278,19 +278,26 @@ for moves into the weights; the prompt shrinks.
   rules (prompt or prefix tuning) would save the same tokens, but neither
   llama-server nor OpenVINO GenAI accept embeddings in place of text, so it
   needs runtime changes on every backend. Context distillation needs none.
-- **Gain.** The fixed rules are about 200–250 tokens, the median prompt
-  about 400 with the chat template (2000 prompts of train shard 0: p50 406,
-  p90 816 tokens).
-  Prefill scales about linearly with prompt tokens and is about 90% of the
-  time per message on the CPU, so typical prompts would read 40–60% faster.
-  Measure it, do not trust this estimate.
-- **Rust.** A `PromptOptions` switch (e.g. `prompt.rules = full | none`)
-  that a trained model turns on; base models keep the full rules. It must
-  reach traces through `PromptOptions`, like every setting that changes
-  what is generated. Which models need `none` could be recorded in
-  `models::REGISTRY`, so the user does not set it by hand.
+- **Gain, measured.** The estimate was 200–250 tokens of fixed rules and
+  prompts 40–60% faster. Built with `prompt --inputs --rules omitted`, the
+  system message loses ~368 characters (~105 tokens): 690 → 322 on eval-v1,
+  542 → 184 on eval-short. Whole prompts shrink 17% and 21% (1709 → 1417
+  and 1424 → 1118 characters), less than the rules alone, because the
+  budget the rules freed goes to diffs that were cut (1019 → 1095
+  characters on eval-v1). Prefill is about 90% of the time per message on
+  the CPU and scales about linearly with tokens, so expect roughly 15–20%
+  faster messages there, plus more of the diff where it was cut; measure
+  with the trained model.
+- **Rust, done.** `PromptRules::{Full, Omitted}` in `PromptOptions`,
+  recorded in traces when not full. It follows the model file that runs:
+  `Omitted` only when the GGUF is the checked file of a registry model
+  whose `rules` say so (none yet), never a setting. `prompt` and `eval`
+  take `--rules full|omitted` to build training sets and to evaluate a
+  candidate before it is in the registry. Omitted keeps what varies by
+  repository (types, scopes, examples) and what the training data lacks
+  (tickets, Portuguese, gitmoji).
 - **Training.** The same pipeline, with `make_examples.py` building prompts
-  with the switch on. Best trained together with H5 (young repositories) in
+  with `--rules omitted`. Best trained together with H5 (young repositories) in
   one bundle, on about 20k examples, where H3's curve flattens.
 - **Metrics.** eval-v1 and eval-short with the switch on against H2/H1 with
   the full prompt: first_try and fallback must not move (they are what the

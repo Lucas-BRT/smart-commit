@@ -154,6 +154,56 @@ fn prompt_from_inputs_matches_the_prompt_sent() {
 }
 
 #[test]
+fn rules_can_be_omitted_for_training_and_evaluation() {
+    let repo = staged_repo();
+    let (inputs, full) = recorded_inputs(&repo);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n")).unwrap();
+    let path = file.to_str().unwrap();
+
+    let output = smart_commit(
+        &["prompt", "--inputs", path, "--rules", "omitted"],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    let system = prompt["system"].as_str().unwrap();
+    assert!(
+        !system.contains("Rules:") && !system.contains("72 characters"),
+        "{system}"
+    );
+    assert!(system.len() < full["system"].as_str().unwrap().len());
+    let output = smart_commit(&["prompt", "--inputs", path, "--rules", "full"], dir.path());
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    assert_eq!(prompt, full);
+
+    // The rules are recorded, so the trace replays with the same prompt.
+    let output = smart_commit(
+        &[
+            "eval",
+            path,
+            "--rules",
+            "omitted",
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: add the entry point",
+        ],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let line = stdout(&output);
+    let trace: serde_json::Value = serde_json::from_str(line.trim()).unwrap();
+    assert_eq!(trace["options"]["rules"], "omitted");
+    let file = dir.path().join("trace.json");
+    std::fs::write(&file, &line).unwrap();
+    let output = smart_commit(&["replay", file.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(stdout(&output).starts_with("reproduced: 1 attempt(s)"));
+}
+
+#[test]
 fn prompt_from_inputs_reads_stdin_and_global_settings() {
     let repo = staged_repo();
     let (inputs, _) = recorded_inputs(&repo);

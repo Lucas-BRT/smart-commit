@@ -24,6 +24,27 @@ pub struct Prompt {
     pub user: String,
 }
 
+/// How much of the fixed instructions the system message carries.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PromptRules {
+    /// Every rule, for models that were not trained on smart-commit's task.
+    #[default]
+    Full,
+    /// Only what varies by repository (types, scopes, examples) and what
+    /// training does not teach (a ticket, Portuguese, gitmoji), for a model
+    /// trained to follow the rest without being told: a shorter prompt is
+    /// read faster. Never for an untrained model, which would lose the
+    /// format (training H6).
+    Omitted,
+}
+
+impl PromptRules {
+    pub fn is_full(&self) -> bool {
+        *self == Self::Full
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PromptOptions {
     pub max_prompt_tokens: usize,
@@ -37,6 +58,9 @@ pub struct PromptOptions {
     /// Forces a language instead of the detected one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub language: Option<Language>,
+    /// Left out of traces when full, so older traces still read the same.
+    #[serde(default, skip_serializing_if = "PromptRules::is_full")]
+    pub rules: PromptRules,
 }
 
 impl Default for PromptOptions {
@@ -47,6 +71,7 @@ impl Default for PromptOptions {
             default_language: Language::English,
             convention: None,
             language: None,
+            rules: PromptRules::Full,
         }
     }
 }
@@ -108,32 +133,48 @@ pub fn build_with_note(
 fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
     let style = &ctx.style;
     let (convention, language) = effective_style(style, options);
-    let mut text = String::from(
-        "You write git commit messages from a diff. Reply with the commit \
-         message only: no code fences, no quotes, no explanation.\n\nRules:\n",
-    );
+    let full = options.rules.is_full();
+    let mut text = if full {
+        String::from(
+            "You write git commit messages from a diff. Reply with the commit \
+             message only: no code fences, no quotes, no explanation.\n\nRules:\n",
+        )
+    } else {
+        String::new()
+    };
     let mut rule = |line: &str| {
         let _ = writeln!(text, "- {line}");
     };
 
-    rule("Subject line of at most 72 characters, without a trailing period.");
-    rule(match language {
-        Language::Portuguese => "Write in Brazilian Portuguese.",
-        _ => "Write in English, in the imperative mood (\"Add\", not \"Added\").",
-    });
+    if full {
+        rule("Subject line of at most 72 characters, without a trailing period.");
+    }
+    match language {
+        Language::Portuguese => rule("Write in Brazilian Portuguese."),
+        _ if full => rule("Write in English, in the imperative mood (\"Add\", not \"Added\")."),
+        _ => {}
+    }
     match convention {
         Convention::Conventional => {
-            rule("Use Conventional Commits: `type(scope): description`.");
-            if style.types.is_empty() {
-                rule("Types: feat, fix, docs, refactor, test, chore.");
+            rule(if full {
+                "Use Conventional Commits: `type(scope): description`."
             } else {
+                "Use Conventional Commits."
+            });
+            if !style.types.is_empty() {
                 rule(&format!("Types used here: {}.", names(&style.types)));
+            } else if full {
+                rule("Types: feat, fix, docs, refactor, test, chore.");
             }
             if !style.scopes.is_empty() {
-                rule(&format!(
-                    "Scopes used here: {}. Omit the scope if none fits.",
-                    names(&style.scopes)
-                ));
+                rule(&if full {
+                    format!(
+                        "Scopes used here: {}. Omit the scope if none fits.",
+                        names(&style.scopes)
+                    )
+                } else {
+                    format!("Scopes used here: {}.", names(&style.scopes))
+                });
             }
         }
         Convention::Gitmoji => rule(
@@ -155,11 +196,17 @@ fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
             (TicketStyle::None, _) => {}
         }
     }
-    rule("Add a body only if the reason for the change is not obvious.");
+    if full {
+        rule("Add a body only if the reason for the change is not obvious.");
+    }
 
     let mut examples = examples_for(style, convention).peekable();
     if examples.peek().is_some() {
-        text.push_str("\nRecent subjects from this repository, follow their style:\n");
+        text.push_str(if full {
+            "\nRecent subjects from this repository, follow their style:\n"
+        } else {
+            "\nRecent subjects from this repository:\n"
+        });
         for example in examples {
             let _ = writeln!(text, "{example}");
         }
@@ -262,6 +309,71 @@ mod tests {
             "{}",
             prompt.system
         );
+    }
+
+    fn omitted() -> PromptOptions {
+        PromptOptions {
+            rules: PromptRules::Omitted,
+            ..PromptOptions::default()
+        }
+    }
+
+    #[test]
+    fn omitted_rules_keep_only_what_varies_by_repository() {
+        let ctx = context(
+            &[
+                "feat(cli): add context",
+                "fix(git): read branch",
+                "docs: describe the hook",
+            ],
+            None,
+        );
+        let prompt = build(&ctx, &files(), &omitted());
+        insta::assert_snapshot!(format!("{}\n=====\n{}", prompt.system, prompt.user));
+        let full = build(&ctx, &files(), &PromptOptions::default());
+        assert!(prompt.system.len() < full.system.len());
+        // The diff is the same: only the instructions differ.
+        assert!(prompt.user.contains("Diff:\n--- src/git.rs"));
+    }
+
+    #[test]
+    fn omitted_rules_keep_what_training_does_not_teach() {
+        // Tickets, Portuguese and gitmoji are absent from the training data,
+        // so the model still needs to be told.
+        let gitmoji = context(
+            &["✨ ABC-1 add login page", "🐛 ABC-2 fix crash on logout"],
+            Some("feature/ABC-3-signup"),
+        );
+        let prompt = build(&gitmoji, &files(), &omitted());
+        assert!(prompt.system.contains("Start the subject with one gitmoji"));
+        assert!(
+            prompt
+                .system
+                .contains("Start the description with ABC-3, right after the gitmoji.")
+        );
+        let portuguese = context(&["feat(cli): adiciona o comando context"], None);
+        let options = PromptOptions {
+            language: Some(Language::Portuguese),
+            ..omitted()
+        };
+        let prompt = build(&portuguese, &files(), &options);
+        assert!(prompt.system.contains("- Write in Brazilian Portuguese.\n"));
+        // An English, Conventional repository without history needs no list.
+        let prompt = build(&context(&[], None), &files(), &omitted());
+        assert_eq!(prompt.system, "- Use Conventional Commits.\n");
+    }
+
+    #[test]
+    fn full_rules_are_left_out_of_recorded_options() {
+        let full = serde_json::to_value(PromptOptions::default()).unwrap();
+        assert!(full.get("rules").is_none(), "{full}");
+        let value = serde_json::to_value(omitted()).unwrap();
+        assert_eq!(value["rules"], "omitted");
+        let back: PromptOptions = serde_json::from_value(value).unwrap();
+        assert_eq!(back.rules, PromptRules::Omitted);
+        // Options recorded before rules existed read as full.
+        let old: PromptOptions = serde_json::from_value(full).unwrap();
+        assert_eq!(old, PromptOptions::default());
     }
 
     #[test]

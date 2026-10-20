@@ -44,7 +44,8 @@ uv run --locked python -I select.py data/train12 data/h1 --conventional 6000 --f
 # h3a (H3): the same commits without the targets the label filters reject.
 uv run --locked python -I filter_supported.py data/h1 data/h3a
 
-# 3. Prompts built by smart-commit, joined with the targets.
+# 3. Prompts built by smart-commit, joined with the targets (`--rules omitted`
+#    for a model trained without the fixed instructions, H6).
 uv run --locked python -I make_examples.py data/h1 $SC
 
 # 4. Train (writes runs/h1/adapter and runs/h1/run.json).

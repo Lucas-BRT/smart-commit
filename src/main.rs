@@ -21,7 +21,7 @@ use smart_commit::hook;
 use smart_commit::llamacpp::LlamaCppBackend;
 use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::paths;
-use smart_commit::prompt::{self, PromptOptions};
+use smart_commit::prompt::{self, PromptOptions, PromptRules};
 use smart_commit::trace::{Inputs, Trace};
 use smart_commit::tui::review::{self, Review};
 use smart_commit::tui::{self, Screen};
@@ -64,6 +64,8 @@ enum Command {
         /// inputs (`-` for stdin), printing one `{"system", "user"}` per line.
         #[arg(long, value_name = "FILE")]
         inputs: Option<PathBuf>,
+        #[command(flatten)]
+        rules: RulesArgs,
     },
     /// Run a recorded generation again and check it is reproduced exactly.
     Replay {
@@ -83,6 +85,8 @@ enum Command {
         inputs: PathBuf,
         #[command(flatten)]
         backend: BackendArgs,
+        #[command(flatten)]
+        rules: RulesArgs,
     },
     /// Manage the `prepare-commit-msg` git hook.
     #[command(subcommand)]
@@ -187,6 +191,34 @@ struct BackendArgs {
     /// includes the staged diff and recent commit subjects.
     #[arg(long, env = "SMART_COMMIT_TRACE", value_name = "FILE")]
     trace: Option<PathBuf>,
+}
+
+/// For building training sets and evaluating a model before it is
+/// recommended; otherwise the rules follow the model in use.
+#[derive(Debug, Args)]
+struct RulesArgs {
+    /// The instructions in the prompt: all of them, or only what varies by
+    /// repository, for a model trained without them [default: what the
+    /// model in use needs]
+    #[arg(long, value_enum)]
+    rules: Option<RulesArg>,
+}
+
+impl RulesArgs {
+    fn apply(&self, options: &mut PromptOptions) {
+        if let Some(rules) = self.rules {
+            options.rules = match rules {
+                RulesArg::Full => PromptRules::Full,
+                RulesArg::Omitted => PromptRules::Omitted,
+            };
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum RulesArg {
+    Full,
+    Omitted,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -307,15 +339,24 @@ fn main() -> ExitCode {
         Some(Command::Context { path }) => run_context(&path),
         Some(Command::Prompt {
             inputs: Some(inputs),
+            rules,
             ..
-        }) => run_prompt_inputs(&inputs),
-        Some(Command::Prompt { path, inputs: None }) => run_prompt(&path),
+        }) => run_prompt_inputs(&inputs, &rules),
+        Some(Command::Prompt {
+            path,
+            inputs: None,
+            rules,
+        }) => run_prompt(&path, &rules),
         Some(Command::Replay {
             trace,
             with_model,
             model,
         }) => run_replay(&trace, with_model.then_some(&model)),
-        Some(Command::Eval { inputs, backend }) => run_eval(&inputs, &backend),
+        Some(Command::Eval {
+            inputs,
+            backend,
+            rules,
+        }) => run_eval(&inputs, &backend, &rules),
         Some(Command::Hook(HookCommand::Install { path, force })) => run_hook_install(&path, force),
         Some(Command::Hook(HookCommand::Uninstall { path })) => run_hook_uninstall(&path),
         Some(Command::Hook(HookCommand::Run {
@@ -360,12 +401,13 @@ fn run_context(path: &Path) -> Result<(), Box<dyn Error>> {
 }
 
 /// Prints the prompt the model would get for the staged changes.
-fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
+fn run_prompt(path: &Path, rules: &RulesArgs) -> Result<(), Box<dyn Error>> {
     let repo = Repo::discover(path)?;
     let settings = resolve(Some(&repo), Vec::new())?.settings();
     let context = RepoContext::collect_with_history(&repo, settings.history_depth)?;
     let files = staged_files(&repo)?;
-    let options = settings.prompt_options();
+    let mut options = settings.prompt_options();
+    rules.apply(&mut options);
     let prompt = prompt::build(&context, &files, &options);
     let tokens = diff::estimate_tokens(&prompt.system) + diff::estimate_tokens(&prompt.user);
     println!("===== system =====\n{}", prompt.system);
@@ -380,9 +422,10 @@ fn run_prompt(path: &Path) -> Result<(), Box<dyn Error>> {
 /// `prompt --inputs`: the prompts of many recorded inputs, e.g. to build a
 /// training set with the exact prompts smart-commit sends. Only the user's
 /// global settings apply, since there is no repository.
-fn run_prompt_inputs(path: &Path) -> Result<(), Box<dyn Error>> {
+fn run_prompt_inputs(path: &Path, rules: &RulesArgs) -> Result<(), Box<dyn Error>> {
     let inputs = read_inputs(path)?;
-    let options = resolve(None, Vec::new())?.settings().prompt_options();
+    let mut options = resolve(None, Vec::new())?.settings().prompt_options();
+    rules.apply(&mut options);
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
     for case in &inputs {
         let prompt = prompt::build(&case.context(), &case.files, &options);
@@ -417,7 +460,7 @@ fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {
 /// `eval`: the whole pipeline (prompt, model, sanitizer, retry, fallback)
 /// on each recorded input, loading the model once. Each trace replays like
 /// those of `--trace`. Like `prompt --inputs`, only global settings apply.
-fn run_eval(path: &Path, args: &BackendArgs) -> Result<(), Box<dyn Error>> {
+fn run_eval(path: &Path, args: &BackendArgs, rules: &RulesArgs) -> Result<(), Box<dyn Error>> {
     if args.trace.is_some() {
         return Err("eval writes its traces to stdout; --trace does not apply".into());
     }
@@ -425,7 +468,8 @@ fn run_eval(path: &Path, args: &BackendArgs) -> Result<(), Box<dyn Error>> {
     let resolved = resolve(None, args.flags()?)?;
     warn_renamed(&resolved);
     let settings = resolved.settings();
-    let (options, config) = (settings.prompt_options(), settings.generation_config());
+    let (mut options, config) = (settings.prompt_options(), settings.generation_config());
+    rules.apply(&mut options);
     let (backend, running) = start_backend(&resolved, &args.mock_responses)?;
     eprintln!("evaluating {} input(s) with {running}", inputs.len());
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());

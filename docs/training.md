@@ -19,7 +19,7 @@ Two expected gains:
   as the scope, and needs a retry when the reply does not follow the
   convention.
 - **Speed, indirectly.** A model trained on the format does not need the
-  ~250 tokens of rules in the system prompt, and a fine-tuned
+  ~105 tokens of rules in the system prompt (training H6), and a fine-tuned
   Qwen2.5-Coder-0.5B may become usable (untrained, it copies the history
   examples instead of describing the diff; see below).
 
