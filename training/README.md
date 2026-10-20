@@ -41,12 +41,21 @@ uv run --locked python -I build_inputs.py data/test0 $C/commit-chronicle/5fd076e
 uv run --locked python -I select.py data/test0 data/eval-v1 --conventional 250 --free 250
 uv run --locked python -I select.py data/train12 data/h1 --conventional 6000 --free 4000 \
   --max-type-share 0.3 --per-repo 100
+# The learning-curve set of H3 (data/curve; curve-h4 is the same with the
+# history paths), and H8's variant without the type cap:
+uv run --locked python -I select.py data/train-all data/curve --conventional 24000 --free 16000 \
+  --max-type-share 0.3 --per-repo 150 --supported-only
+uv run --locked python -I select.py data/train-all data/h8 --conventional 24000 --free 16000 \
+  --per-repo 150 --supported-only
 # h3a (H3): the same commits without the targets the label filters reject.
 uv run --locked python -I filter_supported.py data/h1 data/h3a
 
 # 3. Prompts built by smart-commit, joined with the targets (`--rules omitted`
 #    for a model trained without the fixed instructions, H6).
 uv run --locked python -I make_examples.py data/h1 $SC
+
+#    Nested subsets for a learning curve (H3) or a smaller run (H8):
+uv run --locked python -I nest.py data/curve/examples.jsonl data/curve/clean 2500 5000 20000 40000
 
 # 4. Train (writes runs/h1/adapter and runs/h1/run.json).
 uv run --locked python -I train.py data/h1/examples.jsonl $M runs/h1 --quant 16bit
@@ -90,3 +99,11 @@ sha256sum data/eval-v1/*.jsonl
 --min-history 1 --max-history 5 --per-repo 5`, from `build_inputs.py` over
 `test-00002`…`test-00005`; `inputs.jsonl` sha256 starts `42d212c0d2687dad`,
 `meta.jsonl` `867c9faf4c5e80bd`.
+
+Bundle `data/kaggle/h8` (H8): `make_examples.py data/h8 $SC`, then
+`nest.py data/h8/examples.jsonl data/h8/nocap 20000`, then
+`kaggle_bundle.py data/kaggle/h8 --val data/kaggle/b2/val.examples.jsonl
+c20k-nocap-0.5b=0.5b:data/h8/nocap-20000.jsonl
+c20k-ctl-0.5b=0.5b:data/curve/clean-20000.jsonl`. The examples' sha256
+start `6da30e215758959e` and `3d69c19fc6bd0577` (the c20k b2 trained on),
+the validation set's `f6350a3c5cb71b58` (b2's).

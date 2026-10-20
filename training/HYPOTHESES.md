@@ -360,6 +360,63 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
   matters for repositories like this one, not for the benchmark: data
   changes only, no goal of its own for v0.2.
 
+### H8. The type cap of the selection costs `fix` — planned
+
+What the literature says about Conventional types:
+
+- Only `feat` and `fix` are defined by the specification; the rest come
+  from the Angular convention (commitlint's `config-conventional`).
+- The types mix two axes: purpose (feat, fix, refactor, perf, style) and
+  the object changed (docs, test, ci, build). When both apply, Zeng et al.
+  (ICSE 2025) give the purpose priority; Li et al. dropped `perf` and
+  `chore`, which annotators could not tell apart.
+- On CommitSuite (EASE 2026: 10 types, 116 commits each, labels checked)
+  the best LLM, DeepSeek-R1, gets 64% right and GPT-4.1 61%; ci, build and
+  chore are confused with each other, perf, style and fix with refactor.
+  AST context did not help the classification. Few-shot prompts help,
+  chain-of-thought does not (3,200 InfluxDB commits, 2605.02033).
+
+What eval-v1 says (250 Conventional commits, the c40k LoRA runs, files
+grouped by path rules: docs, tests, CI, build files, else code):
+
+| Files | n | base 1.5B | v0.1 0.5B | v0.1 1.5B |
+|---|---|---|---|---|
+| code only | 169 | 0.57 | 0.56 | 0.61 |
+| mixed | 41 | 0.34 | 0.49 | 0.56 |
+| docs only | 25 | 0.32 | 1.00 | 1.00 |
+| tests, CI or build only | 15 | 0.13 | 0.47 | 0.67 |
+
+- The object types are learned: docs-only commits are all right. Path
+  rules would add little, and real labels do not follow them (5 of the 9
+  test-only commits are `chore`).
+- The errors are on purpose types: `fix`↔`feat` is 37 of the 0.5B's 104
+  errors (`fix→feat` alone 30) and 25 of the 1.5B's 89; then `fix→chore`
+  (10, 11) and `refactor→feat`.
+- The 0.5B finds 51% of the `fix` commits and 79% of the `feat` ones. The
+  selection caps each type at 30% (`select.py --max-type-share 0.3`). Less
+  than it seemed: without the cap, `fix` is 34.9% of the same selection
+  (a cap of 0.45 does not bind and gives the same commits), and the 41% of
+  eval-v1 is its own: 20% to 70% across its 7 Conventional repositories.
+  The cap moves `fix` by 5 points, not 11.
+- `score.py` now reports each type's precision, recall and F1 and their
+  mean, `type_macro_f1`: base 1.5B 0.172, v0.1 0.5B 0.537, v0.1 1.5B
+  0.548 (type_match 0.480, 0.588, 0.648 on the same traces). Spellings of
+  one type are folded (`tests` is `test`) in selection and scoring; the
+  target keeps the repository's spelling.
+- Not worth it here: dropping subjects with two types (`chore: refactor:
+  …`), 9 of c40k's 40,000 and none of eval-v1.
+
+- **Experiment, bundle `h8`.** The 0.5B on c20k without the cap
+  (`c20k-nocap-0.5b`, 19,403 of its 20,000 commits shared with c20k)
+  against c20k retrained in the same session (`c20k-ctl-0.5b`, the bytes
+  b2 trained on), one per Kaggle T4, ~75 min. The control retrained also
+  measures the training noise: its scores against b2's c20k-0.5b.
+- **Expectation.** A small contrast: `fix` recall up a few points at most,
+  likely within noise (102 `fix` commits in eval-v1, a standard error near
+  0.05). If so, the cap is not what keeps `fix` low, and v0.2 can drop it
+  (the base model's bias it was for is gone after fine-tuning). Report
+  type_match, type_macro_f1, `fix` recall and `fix→feat`.
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own once H1/H2 show the basic fine-tune

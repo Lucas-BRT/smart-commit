@@ -307,5 +307,5 @@ What is published is one model per size smart-commit offers, named
 6. The next version, v0.2: H5 (young repositories), H6 (the rules in the
    weights) and H4b (the scope map) in one bundle on about 20k examples,
    with H7's cheap data changes (release bumps kept when the diff shows
-   the version). The order and the work outside training are in the
-   [roadmap](roadmap.md).
+   the version) and H8's type cap, tested first on its own. The order and
+   the work outside training are in the [roadmap](roadmap.md).
