@@ -170,3 +170,25 @@ printf 'z\n' > tests/fixtures/make-traces.sh; printf '{}\n' > tests/fixtures/tra
   --mock-response "test(fixtures): trace a config change kept to the listed types" \
   --mock-response "test(fixtures): trace a config change kept to the listed types" \
   --trace "$OUT/conventional-en-copied-twice.json" >/dev/null 2>&1
+
+# Prompts the size of real ones, for `smart-commit bench`: a change of one of
+# this repository's files, from a pinned commit, sized like the 25th, 50th,
+# 75th and 90th percentiles of eval-v1's prompts (the last fills the budget).
+# The fixtures above are a few hundred tokens; prefill grows with the
+# prompt, so a benchmark on them alone underestimates it.
+bench_fixture() {  # NAME COMMIT FILE REPLY
+    fresh "bench-$1"
+    mkdir -p "$(dirname "$3")"
+    for s in "feat(cli): add the eval command" "fix(diff): keep renames in the file list" \
+        "docs: describe the hook" "refactor(prompt): share the rules" "test(git): cover empty commits"; do
+        commit "$s"
+    done
+    git -C "$ROOT" show "$2^:$3" > "$3" || { echo "make-traces.sh needs the full history" >&2; exit 1; }
+    git add "$3"; commit "feat: add $3"
+    git -C "$ROOT" show "$2:$3" > "$3"; git add "$3"
+    "$BIN" --backend mock --mock-response "$4" --trace "$OUT/bench-$1.json" >/dev/null
+}
+bench_fixture p25 21d4671 src/message.rs "fix(generate): retry when the reply repeats a history subject"
+bench_fixture p50 ff3e7f3 src/context.rs "feat(context): build the context from recorded data"
+bench_fixture p75 cd1ef5c src/context.rs "feat(context): read the ticket from the branch"
+bench_fixture p90 482ba4d src/style.rs "feat(style): find where each scope's commits went"

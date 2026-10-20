@@ -1,8 +1,10 @@
 //! Measures every device on fixed prompts, so `model.device = "auto"` can
 //! pick the fastest one on this machine.
 //!
-//! The prompts are the ones recorded in `tests/fixtures/traces`, embedded in
-//! the binary, so every machine is measured on the same inputs. Each device
+//! The prompts are recorded in `tests/fixtures/traces/bench-*.json`, embedded
+//! in the binary, so every machine is measured on the same inputs. They are
+//! sized like real prompts (the quartiles and 90th percentile of eval-v1's),
+//! since reading the prompt is most of the time on the CPU. Each device
 //! is loaded once to warm the compilation caches, then loaded again and
 //! timed: a commit pays one load plus one generation. The llama.cpp devices
 //! are measured twice, with and without fast load, and keep the faster.
@@ -25,9 +27,10 @@ pub const FORMAT: u32 = 2;
 pub const FAST_LOAD_MIN_GAIN: f64 = 0.05;
 
 const FIXTURES: &[&str] = &[
-    include_str!("../tests/fixtures/traces/conventional-pt-retry.json"),
-    include_str!("../tests/fixtures/traces/free-en-chatty.json"),
-    include_str!("../tests/fixtures/traces/gitmoji-fallback.json"),
+    include_str!("../tests/fixtures/traces/bench-p25.json"),
+    include_str!("../tests/fixtures/traces/bench-p50.json"),
+    include_str!("../tests/fixtures/traces/bench-p75.json"),
+    include_str!("../tests/fixtures/traces/bench-p90.json"),
 ];
 
 /// Every prompt of the embedded fixtures, in a fixed order.
@@ -383,14 +386,24 @@ mod tests {
     }
 
     #[test]
-    fn embedded_prompts_are_the_fixtures() {
+    fn embedded_prompts_are_sized_like_real_ones() {
         let prompts = prompts();
-        assert_eq!(prompts.len(), 5);
+        assert_eq!(prompts.len(), 4);
         assert!(
             prompts
                 .iter()
                 .all(|p| !p.system.is_empty() && !p.user.is_empty())
         );
+        // From about 300 tokens to the 1024-token budget: the fixtures of
+        // the other tests are under 300, which underestimates prefill.
+        let tokens: Vec<usize> = prompts
+            .iter()
+            .map(|p| {
+                crate::diff::estimate_tokens(&p.system) + crate::diff::estimate_tokens(&p.user)
+            })
+            .collect();
+        assert!(tokens.windows(2).all(|w| w[0] < w[1]), "{tokens:?}");
+        assert!(tokens[0] >= 300 && tokens[3] >= 850, "{tokens:?}");
     }
 
     #[test]
@@ -451,7 +464,8 @@ mod tests {
         );
         assert_eq!(loads, 2, "one warm-up load and one timed load");
         let m = entry.measurement.unwrap();
-        assert_eq!(m.replies, ["feat: a", "feat: b", "c", "d", "e"]);
+        // One reply per embedded prompt.
+        assert_eq!(m.replies, ["feat: a", "feat: b", "c", "d"]);
         assert!((m.per_message_ms - (m.load_ms + m.generate_ms)).abs() < 1e-9);
         assert_eq!(entry.backend.as_deref(), Some("mock"));
     }

@@ -79,11 +79,10 @@ Findings:
   replies** on all 6 prompts; smart-commit now passes it
   ([devices](devices.md#threads-on-the-cpu)). Changing `--threads` (decode)
   changed the replies and made decode slower, so it keeps the default.
-- `smart-commit bench` uses the trace fixtures, whose prompts are ~250
-  tokens, so it underestimates prefill: it reports ~2.6 s per message for
-  `cpu` on this machine, against ~7.9 s with real prompts. A large fixture
-  is needed before `auto` can pick devices well (in the
-  [roadmap](roadmap.md)).
+- `smart-commit bench` used the trace fixtures, whose prompts are ~250
+  tokens, so it underestimated prefill: it reported ~2.6 s per message for
+  `cpu` on this machine, against ~7.9 s with real prompts. It now uses
+  prompts sized like real ones ([devices](devices.md#choosing-a-device)).
 - Prefill scales about linearly with prompt tokens: halving the budget
   halves it, at a cost in quality (with 512 some scopes became file paths,
   like `fix(src/bench.rs)`).

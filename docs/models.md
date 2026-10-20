@@ -45,14 +45,18 @@ The last benchmark measured the previous model: run `smart-commit bench` again.
 
 | Model | Size | Status | Devices | Per message, Ryzen 5 5500 (`cpu` / `vulkan` on an RTX 3050) | Per message, Core Ultra 5 225H (`cpu` / `vulkan` on its Arc iGPU) |
 |---|---|---|---|---|---|
-| `qwen2.5-coder-1.5b` (default) | 1.1 GB | validated | all | 1.9 s / 2.3 s | 1.7 s / 1.5 s |
-| `qwen2.5-coder-0.5b` | 491 MB | experimental | `vulkan`, `cpu` | 1.1 s / 1.3 s | 1.3 s / 0.9 s |
-| `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` | 6.7 s / 8.3 s | — |
-| `smart-commit-1.5b-v0.1` | 986 MB | experimental | `vulkan`, `cpu` | — | 1.7 s / 1.6 s |
-| `smart-commit-0.5b-v0.1` | 397 MB | experimental | `vulkan`, `cpu` | — | 1.3 s / 0.8 s |
+| `qwen2.5-coder-1.5b` (default) | 1.1 GB | validated | all | 4.0 s / 2.4 s | — |
+| `qwen2.5-coder-0.5b` | 491 MB | experimental | `vulkan`, `cpu` | 3.1 s / 1.5 s | — |
+| `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` | — | — |
+| `smart-commit-1.5b-v0.1` | 986 MB | experimental | `vulkan`, `cpu` | 3.8 s / 2.3 s | — |
+| `smart-commit-0.5b-v0.1` | 397 MB | experimental | `vulkan`, `cpu` | 1.9 s / 1.2 s | — |
 
-Times are `smart-commit bench` with fast load, on the fixture prompts; a
-dash is a pair not measured.
+Times are `smart-commit bench` with fast load, on its four prompts sized
+like real ones; a dash is a pair not measured on them yet. The fine-tunes
+are faster than their base models mostly because their replies are
+shorter. Earlier measurements, on prompts of about 250 tokens, gave the
+Core Ultra 5 225H 1.3–1.7 s on `cpu` and 0.8–1.6 s on `vulkan`, and the 7B
+model 6.7 s / 8.3 s on the Ryzen.
 
 - **Validated** models are the ones the prompt was tuned on, checked on the
   fixture prompts and the hardware tests.
