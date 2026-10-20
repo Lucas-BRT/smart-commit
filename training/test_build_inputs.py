@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from build_inputs import inputs_of, keep_target, trim_context  # noqa: E402
 from build_inputs import paths_of  # noqa: E402
 from score import area, description, scope_fits, specifics, ungrounded, unsupported  # noqa: E402
+from make_examples import make_examples  # noqa: E402
 
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
 
@@ -152,6 +153,23 @@ def test_filter_supported() -> None:
         kept = (out / "inputs.jsonl").read_text().splitlines()
         assert kept == [inputs[0], inputs[3]]
         assert len((out / "meta.jsonl").read_text().splitlines()) == 2
+
+
+def test_make_examples_passes_the_rules() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        # A stand-in for smart-commit that answers with its own arguments.
+        fake = d / "smart-commit"
+        fake.write_text('#!/bin/sh\necho "{\\"system\\": \\"$*\\", \\"user\\": \\"u\\"}"\n')
+        fake.chmod(0o755)
+        (d / "inputs.jsonl").write_text("{}\n")
+        meta = {"target": "feat: add x.", "repo": "r", "hash": "h", "set": "conventional"}
+        (d / "meta.jsonl").write_text(json.dumps(meta) + "\n")
+        for rules in ("full", "omitted"):
+            make_examples(d, str(fake), rules)
+            example = json.loads((d / "examples.jsonl").read_text())
+            assert example["system"] == f"prompt --inputs {d / 'inputs.jsonl'} --rules {rules}"
+            assert example["target"] == "feat: add x" and example["user"] == "u"
 
 
 if __name__ == "__main__":
