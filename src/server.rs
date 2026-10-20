@@ -255,6 +255,15 @@ pub fn stop(runtime: &Path) -> usize {
     for dir in &dirs {
         stop_dir(dir);
     }
+    // The locks stay between commits, one per server ever started; with
+    // nothing kept they are leftovers.
+    if let Ok(entries) = std::fs::read_dir(runtime) {
+        for lock in entries.filter_map(Result::ok).map(|e| e.path()) {
+            if lock.extension().is_some_and(|e| e == "lock") {
+                let _ = std::fs::remove_file(lock);
+            }
+        }
+    }
     dirs.len()
 }
 
@@ -483,8 +492,10 @@ mod tests {
         assert_eq!(kept.len(), 1);
         assert_eq!(kept[0].spec, spec);
         assert!(kept[0].idle < Duration::from_secs(60));
+        std::fs::write(runtime.path().join("0123456789abcdef.lock"), "").unwrap();
         assert_eq!(stop(runtime.path()), 1);
         assert!(!dir.exists());
+        assert_eq!(std::fs::read_dir(runtime.path()).unwrap().count(), 0);
         assert!(status(runtime.path()).is_empty());
     }
 }
