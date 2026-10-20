@@ -30,10 +30,13 @@ pub const GIT_ENV: &[(&str, &str)] = &[
 pub const CONFIG_HOME: &str = "/nonexistent/smart-commit-tests/config";
 pub const DATA_HOME: &str = "/nonexistent/smart-commit-tests/data";
 pub const CACHE_HOME: &str = "/nonexistent/smart-commit-tests/cache";
+/// Where models kept loaded would listen: never the user's, whose kept
+/// model a benchmark in a test would stop.
+pub const RUNTIME_DIR: &str = "/nonexistent/smart-commit-tests/run";
 
 /// Applies [`GIT_ENV`], drops every `SMART_COMMIT_*` variable the developer
 /// may have exported (settings and test overrides alike) and points the XDG directories at
-/// [`CONFIG_HOME`], [`DATA_HOME`] and [`CACHE_HOME`], so the command behaves
+/// [`CONFIG_HOME`], [`DATA_HOME`], [`CACHE_HOME`] and [`RUNTIME_DIR`], so the command behaves
 /// the same on every machine.
 pub fn isolate(command: &mut Command) -> &mut Command {
     for (var, _) in std::env::vars_os() {
@@ -45,6 +48,7 @@ pub fn isolate(command: &mut Command) -> &mut Command {
         .env("XDG_CONFIG_HOME", CONFIG_HOME)
         .env("XDG_DATA_HOME", DATA_HOME)
         .env("XDG_CACHE_HOME", CACHE_HOME)
+        .env("XDG_RUNTIME_DIR", RUNTIME_DIR)
         .envs(GIT_ENV.iter().copied())
 }
 

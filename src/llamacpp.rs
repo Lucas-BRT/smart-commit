@@ -6,7 +6,9 @@
 //!
 //! Each generation session starts a private `llama-server`, listening on a
 //! UNIX socket in a fresh temporary directory (nothing is exposed on the
-//! network), and stops it when the backend is dropped. The HTTP client is a
+//! network), and stops it when the backend is dropped; with
+//! `model.keep_loaded`, [`crate::server`] keeps one running between commits
+//! instead. The HTTP client is a
 //! minimal HTTP/1.1 one over that socket, so no network library is needed.
 
 use std::fmt;
@@ -18,6 +20,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};
@@ -30,7 +33,7 @@ pub const LLAMA_CPP_BUILD: &str = "b11381";
 const MAX_SOCKET_PATH: usize = 100;
 
 /// Where llama.cpp runs the model.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LlamaDevice {
     /// Every layer on the CPU.
     Cpu,
@@ -48,7 +51,7 @@ impl fmt::Display for LlamaDevice {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LlamaCppOptions {
     pub server: PathBuf,
     /// A GGUF model; `<model>.sha256` next to it, if present, identifies it.
@@ -92,6 +95,13 @@ impl fmt::Debug for LlamaCppBackend {
 impl LlamaCppBackend {
     /// Starts `llama-server` and waits until the model is loaded.
     pub fn start(options: &LlamaCppOptions) -> Result<Self, BackendError> {
+        Self::start_in(options, None)
+    }
+
+    /// Like [`Self::start`], with the socket and log in `dir` instead of a
+    /// new temporary directory; `dir` is removed when the backend is
+    /// dropped, like the temporary one.
+    pub fn start_in(options: &LlamaCppOptions, dir: Option<&Path>) -> Result<Self, BackendError> {
         let unavailable = BackendError::Unavailable;
         if !options.model.is_file() {
             return Err(unavailable(format!(
@@ -105,8 +115,11 @@ impl LlamaCppBackend {
                 options.server.display()
             )));
         }
-        let dir =
-            private_dir().map_err(|e| unavailable(format!("cannot create a socket dir: {e}")))?;
+        let dir = match dir {
+            Some(dir) => private_dir_at(dir).map(|()| dir.to_owned()),
+            None => private_dir(),
+        }
+        .map_err(|e| unavailable(format!("cannot create a socket dir: {e}")))?;
         let socket = dir.join("server.sock");
         let log_path = dir.join("server.log");
         let log = std::fs::File::create(&log_path)
@@ -148,14 +161,22 @@ impl LlamaCppBackend {
     pub fn start_or_load_normally(
         options: &LlamaCppOptions,
     ) -> Result<(Self, Option<String>), BackendError> {
-        match Self::start(options) {
+        Self::start_or_load_normally_in(options, None)
+    }
+
+    /// Like [`Self::start_or_load_normally`], in `dir` as [`Self::start_in`].
+    pub fn start_or_load_normally_in(
+        options: &LlamaCppOptions,
+        dir: Option<&Path>,
+    ) -> Result<(Self, Option<String>), BackendError> {
+        match Self::start_in(options, dir) {
             Ok(backend) => Ok((backend, None)),
             Err(fast) if options.fast_load => {
                 let normal = LlamaCppOptions {
                     fast_load: false,
                     ..options.clone()
                 };
-                let backend = Self::start(&normal)?;
+                let backend = Self::start_in(&normal, dir)?;
                 let reason = fast.to_string();
                 Ok((
                     backend,
@@ -181,6 +202,14 @@ impl LlamaCppBackend {
             load_ms: 0.0,
             last_metrics: Mutex::new(None),
         }
+    }
+
+    /// Whether the server this backend started is still running; a backend
+    /// that only connected cannot tell, and says yes.
+    pub fn is_running(&self) -> bool {
+        self.server
+            .as_ref()
+            .is_none_or(|server| matches!(server.lock().expect("server lock").try_wait(), Ok(None)))
     }
 
     fn wait_until_ready(&self, timeout: Duration, log: &Path) -> Result<(), BackendError> {
@@ -408,6 +437,19 @@ fn dechunk(mut data: &[u8]) -> Result<Vec<u8>, String> {
     }
 }
 
+/// `dir`, created if needed and readable by this user only.
+fn private_dir_at(dir: &Path) -> std::io::Result<()> {
+    if dir.as_os_str().len() > MAX_SOCKET_PATH - 12 {
+        return Err(std::io::Error::other(format!(
+            "{} is too long for a socket path",
+            dir.display()
+        )));
+    }
+    std::fs::create_dir_all(dir)?;
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))
+}
+
 /// A new directory under the temporary directory, short enough for the
 /// socket path limit.
 fn private_dir() -> std::io::Result<PathBuf> {
@@ -443,7 +485,7 @@ fn log_tail(path: &Path) -> String {
 }
 
 /// Server build, device, model and the model's recorded SHA-256.
-fn describe(options: &LlamaCppOptions) -> String {
+pub fn describe(options: &LlamaCppOptions) -> String {
     let name = |p: &Path| {
         p.file_name().map_or_else(
             || p.to_string_lossy().into_owned(),

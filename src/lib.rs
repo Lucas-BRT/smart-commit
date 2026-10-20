@@ -17,6 +17,7 @@ pub mod message;
 pub mod models;
 pub mod paths;
 pub mod prompt;
+pub mod server;
 pub mod setup;
 pub mod style;
 pub mod trace;

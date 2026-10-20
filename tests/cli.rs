@@ -787,3 +787,27 @@ fn setup_removes_a_setting_this_version_cannot_read() {
         "[model]\ndevice = \"cpu\"\n"
     );
 }
+
+#[test]
+fn server_commands_with_nothing_kept_loaded() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let output = smart_commit(&["server", "status"], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(
+        stdout(&output),
+        "No model is kept loaded (model.keep_loaded).\n"
+    );
+    let output = smart_commit(&["server", "stop"], dir.path());
+    assert_eq!(stdout(&output), "Stopped 0 model(s).\n");
+    // Without a runtime directory nothing can be kept, and that is said.
+    let output = smart_commit_with(
+        &["server", "status"],
+        dir.path(),
+        &[("XDG_RUNTIME_DIR", "")],
+    );
+    assert!(
+        stdout(&output).contains("$XDG_RUNTIME_DIR is not set"),
+        "{}",
+        stdout(&output)
+    );
+}

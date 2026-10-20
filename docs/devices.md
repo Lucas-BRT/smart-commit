@@ -113,6 +113,26 @@ which traces record, ends in `load=fast` when it is on. On the Ryzen 5 5500
 the replies were the same in both modes, on the short prompts the benchmark
 used before.
 
+## Keeping the model loaded
+
+Most of a commit on a GPU is loading the model. `model.keep_loaded`
+([configuration](configuration.md)) keeps it loaded for some idle minutes,
+so only the first commit pays for it. Measured end to end with
+`smart-commit` on one staged file (the release binary, fast load on), on
+the Ryzen 5 5500 with the RTX 3050; the replies were the same either way:
+
+| Model and device | Load every commit | Kept loaded, from the second commit |
+|---|---|---|
+| `qwen2.5-coder-1.5b`, `vulkan` | 2.8 s | 0.20 s |
+| `qwen2.5-coder-1.5b`, `cpu` | 2.6 s | 2.0 s |
+| `smart-commit-0.5b-v0.1`, `vulkan` | 1.4 s | 0.14 s |
+| `smart-commit-0.5b-v0.1`, `cpu` | 1.3 s | 0.8 s |
+| `qwen2.5-coder-7b`, `vulkan` | 7.5 s | 0.57 s |
+
+One model is kept at a time: a commit with another model or device stops
+the one kept, and `smart-commit bench` stops it before measuring, since it
+holds memory the GPU may need (two 7B models do not fit in 8 GB).
+
 ## Threads on the CPU
 
 Reading the prompt (prefill) is most of the time per message on the CPU,

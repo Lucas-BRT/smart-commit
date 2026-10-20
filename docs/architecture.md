@@ -174,7 +174,13 @@ clients often run hooks without the user's `PATH`.
   UNIX socket in a fresh `0700` temporary directory, so nothing is exposed on
   the network. A minimal HTTP/1.1 client talks to it, and requests are greedy
   and seeded, without prompt caching. The server stops when the backend is
-  dropped. On `cpu` it offloads nothing (`--n-gpu-layers 0 --device none`),
+  dropped, unless `model.keep_loaded` asks to keep it: then a detached
+  supervisor (`smart-commit keep-server`, in its own process group) owns it
+  and stops it after that many idle minutes, and commits connect to its
+  socket in `$XDG_RUNTIME_DIR/smart-commit/<key>/`. The key is a hash of the
+  server's options and of the model's and server's identity, so another
+  model or device gets its own server; a lock keeps two commits from
+  starting two. On `cpu` it offloads nothing (`--n-gpu-layers 0 --device none`),
   even when it finds a GPU. With fast load (`--no-repack --fit off`, where
   the benchmark found it faster) a failed start is retried without it.
 

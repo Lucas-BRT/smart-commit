@@ -13,6 +13,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use toml_edit::{DocumentMut, Item, Table};
 
@@ -142,6 +143,15 @@ pub const KEYS: &[Key] = &[
         description: "llama.cpp on the CPU: threads that read the prompt (`--threads-batch`). \
                       0: one per physical core, which llama.cpp's own default can miss on \
                       hybrid CPUs. Replies do not depend on it.",
+    },
+    Key {
+        name: "model.keep_loaded",
+        kind: Kind::Count { min: 0, max: 1440 },
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_KEEP_LOADED"),
+        description: "llama.cpp devices: minutes to keep the model loaded after a message, so \
+                      the next commit skips loading it (most of a commit on a GPU). 0: stop it \
+                      after each command. Replies do not depend on it.",
     },
     Key {
         name: "model.npu_prefill_chunk",
@@ -582,6 +592,7 @@ impl Resolved {
             llama_server: self.text("model.llama_server").map(PathBuf::from),
             vulkan_device: self.count("model.vulkan_device"),
             threads_batch: self.count("model.threads_batch"),
+            keep_loaded: Duration::from_secs(60 * self.count("model.keep_loaded") as u64),
             fast_load: match choice("model.fast_load") {
                 "on" => FastLoad::On,
                 "off" => FastLoad::Off,
@@ -631,6 +642,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("model.vulkan_device", Value::Count(0)),
         ("model.fast_load", text("auto")),
         ("model.threads_batch", Value::Count(0)),
+        ("model.keep_loaded", Value::Count(0)),
         (
             "model.npu_prefill_chunk",
             Value::Count(NpuTuning::default().prefill_chunk),
@@ -708,6 +720,8 @@ pub struct Settings {
     pub vulkan_device: usize,
     /// `model.threads_batch`; 0 for one per physical core.
     pub threads_batch: usize,
+    /// `model.keep_loaded`; zero to stop the server after each command.
+    pub keep_loaded: Duration,
     pub fast_load: FastLoad,
     pub npu: NpuTuning,
     pub cache_dir: Option<PathBuf>,

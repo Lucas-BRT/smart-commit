@@ -18,10 +18,11 @@ use smart_commit::generate::{self, Generation, Source};
 use smart_commit::git::Repo;
 use smart_commit::hardware::{self, Hardware};
 use smart_commit::hook;
-use smart_commit::llamacpp::LlamaCppBackend;
+use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
 use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::paths;
 use smart_commit::prompt::{self, PromptOptions, PromptRules};
+use smart_commit::server;
 use smart_commit::trace::{Inputs, Trace};
 use smart_commit::tui::review::{self, Review};
 use smart_commit::tui::{self, Screen};
@@ -125,6 +126,20 @@ enum Command {
         #[arg(long)]
         no_bench: bool,
     },
+    /// The models kept loaded between commits (`model.keep_loaded`).
+    #[command(subcommand)]
+    Server(ServerCommand),
+    /// Runs a model kept loaded until it is idle; started by smart-commit.
+    #[command(name = "keep-server", hide = true)]
+    KeepServer { dir: PathBuf },
+}
+
+#[derive(Debug, Subcommand)]
+enum ServerCommand {
+    /// List the models kept loaded, and how long each has been idle.
+    Status,
+    /// Stop every model kept loaded.
+    Stop,
 }
 
 #[derive(Debug, Subcommand)]
@@ -381,6 +396,8 @@ fn main() -> ExitCode {
             no_drivers,
             no_bench,
         }) => setup_cmd::run(yes, no_drivers, no_bench),
+        Some(Command::Server(command)) => run_server(command),
+        Some(Command::KeepServer { dir }) => server::serve(&dir).map_err(Into::into),
         None => run_generate(&cli.generate),
     };
     match result {
@@ -390,6 +407,37 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+fn run_server(command: ServerCommand) -> Result<(), Box<dyn Error>> {
+    let Some(runtime) = paths::runtime_dir(env) else {
+        println!("No model is kept loaded: $XDG_RUNTIME_DIR is not set.");
+        return Ok(());
+    };
+    match command {
+        ServerCommand::Status => {
+            let kept = server::status(&runtime);
+            if kept.is_empty() {
+                println!("No model is kept loaded (model.keep_loaded).");
+            }
+            for k in kept {
+                let name = k.spec.options.model.file_name().unwrap_or_default();
+                println!(
+                    "{} on {}: idle {} s, stops after {} s idle",
+                    name.to_string_lossy(),
+                    k.spec.options.device,
+                    k.idle.as_secs(),
+                    k.spec.keep.as_secs()
+                );
+            }
+        }
+        ServerCommand::Stop => println!("Stopped {} model(s).", server::stop(&runtime)),
+    }
+    Ok(())
+}
+
+fn env(name: &str) -> Option<String> {
+    std::env::var(name).ok()
 }
 
 fn run_context(path: &Path) -> Result<(), Box<dyn Error>> {
@@ -709,6 +757,9 @@ fn load_with(
             if retry == Retry::Never {
                 return Ok(Box::new(LlamaCppBackend::start(&options)?));
             }
+            if let Some(backend) = keep_loaded(settings, &options) {
+                return Ok(Box::new(backend));
+            }
             let (backend, note) = LlamaCppBackend::start_or_load_normally(&options)?;
             if let Some(note) = note {
                 eprintln!("note: {note}");
@@ -723,6 +774,26 @@ fn load_with(
         .genai_options(device)
         .map_err(BackendError::Unavailable)?;
     Ok(Box::new(GenaiBackend::load(&options)?))
+}
+
+/// The server kept loaded for `options`, when `model.keep_loaded` asks for
+/// one; on any failure the model is loaded for this command only, with a
+/// note.
+fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCppBackend> {
+    if settings.keep_loaded.is_zero() {
+        return None;
+    }
+    let result = match (paths::runtime_dir(env), std::env::current_exe()) {
+        (Some(runtime), Ok(exe)) => server::connect(&runtime, options, settings.keep_loaded, &exe)
+            .map_err(|e| e.to_string()),
+        (None, _) => Err("$XDG_RUNTIME_DIR is not set".to_owned()),
+        (_, Err(err)) => Err(err.to_string()),
+    };
+    result
+        .map_err(|err| {
+            eprintln!("note: cannot keep the model loaded ({err}); loading it for this commit")
+        })
+        .ok()
 }
 
 /// Devices in the order the last benchmark ranked them, fastest first.
