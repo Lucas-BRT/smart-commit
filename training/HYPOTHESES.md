@@ -492,6 +492,46 @@ the small models worse. Fine-tuning on the task beats four times the
 parameters. Better labels have to come from elsewhere (checked datasets,
 or preference training on the failure modes).
 
+### v0.2 (bundle b3): H5, H6 and H7 together — the 0.5B gains, the 1.5B trades
+
+b3 (`data/kaggle/b3-nocap`): 20,019 examples without the type cap (H8),
+4,000 of young repositories (H5), 419 release bumps (H7), every prompt
+without the fixed rules (H6), the validation set too. Kaggle T4: 71 min
+for the 0.5B (train loss 2.639, validation 2.826), 148 min for the 1.5B
+(2.403, 2.551); losses are not comparable with v0.1's, whose prompts had
+the rules. Merged and re-quantized with `export_gguf.py`; v0.2 scored with
+`--rules omitted`, v0.1 with the full rules, one binary (`94ababd`,
+Vulkan, RTX 3050).
+
+| eval-v1, Conventional | type_match | type_macro_f1 | first_try | fallback | word_f1 | ungrounded |
+|---|---|---|---|---|---|---|
+| v0.1 0.5B | 0.636 | 0.542 | 0.976 | 0.016 | 0.340 | 0.104 |
+| v0.2 0.5B | 0.632 | 0.526 | 0.972 | 0.012 | 0.337 | 0.104 |
+| v0.1 1.5B | 0.656 | 0.545 | 0.944 | 0.012 | 0.367 | 0.084 |
+| v0.2 1.5B | 0.628 | 0.498 | 0.956 | 0.020 | 0.352 | 0.084 |
+
+| eval-short | first_try | first reply copied | fallback | word_f1 | ungrounded |
+|---|---|---|---|---|---|
+| v0.1 0.5B | 0.863 | 0.137 | 0.086 | 0.244 | 0.132 |
+| v0.2 0.5B | 0.924 | 0.076 | 0.046 | 0.233 | 0.102 |
+| v0.1 1.5B | 0.878 | 0.112 | 0.030 | 0.294 | 0.102 |
+| v0.2 1.5B | 0.939 | 0.056 | 0.020 | 0.274 | 0.142 |
+
+CPU, Ryzen 5 5500, the first 50 commits of eval-v1 (`--device cpu`, load
+counted once): 0.5B 1.150 → 0.976 s per message, 1.5B 2.532 → 2.156 s.
+
+- **H5 confirmed:** in young repositories the first reply copies half as
+  often and the format holds better (first_try +0.06 for both); the 0.5B
+  falls back half as often (8.6% → 4.6%).
+- **H6 confirmed, with the measured gain:** without the rules in the
+  prompt both models are about 15% faster on the CPU, and the format did
+  not suffer (first_try and fallback within noise on eval-v1).
+- **The 0.5B keeps its eval-v1 quality;** the 1.5B loses a little on the
+  type (−0.028, about one standard error; type_macro_f1 −0.047) and its
+  descriptions are vaguer in young repositories (ungrounded +0.04).
+- Building b3 found a bug in the prompt budget's token estimate: see
+  `docs/architecture.md`, Fitting the diff.
+
 ### H-split. The model can tell when the staged changes are several commits — planned
 
 To be tried on a branch of its own once H1/H2 show the basic fine-tune
