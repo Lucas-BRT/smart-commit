@@ -7,7 +7,11 @@ by smart-commit, never here.
 
 Deterministic: the same shards give byte-identical outputs.
 
-    python -I build_inputs.py OUT_DIR SHARD.parquet [SHARD.parquet...]
+    python -I build_inputs.py OUT_DIR SHARD.parquet [SHARD.parquet...] [--releases]
+
+`--releases` keeps, instead, only the release bumps the target filters drop
+whose version is on an added line of the diff, where the subject can be
+told from the change (H7).
 """
 
 import argparse
@@ -39,6 +43,16 @@ CONVENTIONAL = re.compile(rf"^(?P<type>{TYPES})(\([^()]+\))?!?: \S")
 # Spellings of one type, folded for selection and scoring; the target keeps
 # the repository's own spelling, which the model should follow.
 TYPE_ALIASES = {"tests": "test"}
+RELEASE = [
+    re.compile(p, re.IGNORECASE)
+    for p in (
+        r"^(chore(\([^)]*\))?: )?(release|bump version|version bump|prepare release)\b",
+        r"^v?\d+(\.\d+)+\S*$",
+        # A description that is only a version: "chore(release): 0.3.8".
+        r"^\S+?(\([^)]*\))?!?:\s*(release\s+|version\s+)?v?\d+(\.\d+)+\S*$",
+        r"^(release|version|bump)\s+v?\d+(\.\d+)+\S*$",
+    )
+]
 DROP = [
     re.compile(p, re.IGNORECASE)
     for p in (
@@ -46,15 +60,15 @@ DROP = [
         r"^revert\b",
         r"^(fixup|squash|amend)!",
         r"\bwip\b",
-        r"^(chore(\([^)]*\))?: )?(release|bump version|version bump|prepare release)\b",
-        r"^v?\d+(\.\d+)+\S*$",
-        # A description that is only a version: "chore(release): 0.3.8".
-        r"^\S+?(\([^)]*\))?!?:\s*(release\s+|version\s+)?v?\d+(\.\d+)+\S*$",
-        r"^(release|version|bump)\s+v?\d+(\.\d+)+\S*$",
+    )
+] + RELEASE + [
+    re.compile(p, re.IGNORECASE)
+    for p in (
         r"^(\W*(#|gh-)\d+\W*)+$",
         r"^(update|fix|close[sd]?|resolve[sd]?)\s+#\d+$",
     )
 ]
+VERSION = re.compile(r"\bv?(\d+(?:\.\d+)+(?:[-+][\w.]+)?)")
 HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$")
 
 
@@ -65,6 +79,25 @@ def subject_of(message: str) -> str:
 def keep_target(subject: str) -> bool:
     return SUBJECT_MIN <= len(subject) <= SUBJECT_MAX and not any(
         p.search(subject) for p in DROP
+    )
+
+
+def release_version(subject: str) -> str | None:
+    """The version a release bump names ("chore: release 1.2.0" -> "1.2.0"),
+    or None for any other subject, or one without a version."""
+    if not any(p.search(subject) for p in RELEASE):
+        return None
+    m = VERSION.search(subject)
+    return m.group(1) if m else None
+
+
+def version_in_diff(version: str, changes: dict) -> bool:
+    """Whether `version` is on an added line of the diff `inputs_of` gave."""
+    pattern = re.compile(rf"(?<![\w.]){re.escape(version)}(?![\w])")
+    return any(
+        line.startswith("+") and pattern.search(line)
+        for f in changes["files"]
+        for line in (f["hunks"] or "").splitlines()
     )
 
 
@@ -214,6 +247,8 @@ def main() -> None:
     parser.add_argument("out", type=Path)
     parser.add_argument("shards", type=Path, nargs="+")
     parser.add_argument("--branch", default=None, help="branch in every input (default null)")
+    parser.add_argument("--releases", action="store_true",
+                        help="keep only the release bumps whose version the diff adds")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
@@ -238,12 +273,20 @@ def main() -> None:
                 for i, row in enumerate(rows):
                     stats["commits"] += 1
                     target = subjects[i]
-                    if not keep_target(target):
+                    if args.releases:
+                        version = release_version(target)
+                        keep = version is not None and SUBJECT_MIN <= len(target) <= SUBJECT_MAX
+                    else:
+                        version, keep = None, keep_target(target)
+                    if not keep:
                         stats["dropped_target"] += 1
                         continue
                     changes = inputs_of(row["mods"])
                     if changes is None:
                         stats["dropped_mods"] += 1
+                        continue
+                    if version is not None and not version_in_diff(version, changes):
+                        stats["dropped_target"] += 1
                         continue
                     first = max(0, i - HISTORY_DEPTH)
                     history = subjects[first:i][::-1]
