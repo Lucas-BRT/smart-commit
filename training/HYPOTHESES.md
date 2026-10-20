@@ -370,7 +370,7 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
   matters for repositories like this one, not for the benchmark: data
   changes only, no goal of its own for v0.2.
 
-### H8. The type cap of the selection costs `fix` — planned
+### H8. The type cap of the selection costs `fix` — false: it moves the `fix`/`feat` boundary
 
 What the literature says about Conventional types:
 
@@ -426,6 +426,28 @@ grouped by path rules: docs, tests, CI, build files, else code):
   0.05). If so, the cap is not what keeps `fix` low, and v0.2 can drop it
   (the base model's bias it was for is gone after fine-tuning). Report
   type_match, type_macro_f1, `fix` recall and `fix→feat`.
+- **Result.** Kaggle T4, 75 min each (train loss 2.632 with the cap,
+  2.647 without; validation 2.842 and 2.839). Merged and re-quantized with
+  `export_gguf.py`, scored with one binary (`a5d1770`, Vulkan, RTX 3050):
+
+  | eval-v1, Conventional | type_match | type_macro_f1 | `fix` recall | `feat` recall | fix→feat | feat→fix | first_try | fallback |
+  |---|---|---|---|---|---|---|---|---|
+  | c20k-0.5b of b2 (cap 0.3) | 0.632 | 0.473 | 0.735 | 0.654 | 17 | 15 | 0.936 | 0.036 |
+  | c20k-ctl-0.5b (the same, retrained) | 0.632 | 0.457 | 0.755 | 0.654 | 15 | 15 | 0.936 | 0.036 |
+  | c20k-nocap-0.5b | 0.628 | 0.490 | 0.775 | 0.558 | 11 | 19 | 0.964 | 0.020 |
+
+  On eval-short the three are within noise (fallback 0.076, 0.086,
+  0.076; word_f1 0.239, 0.236, 0.241).
+- **The training noise is small:** the same data trained twice gives the
+  same type_match and train loss to three decimals, so one run per
+  variant is enough to compare.
+- **The cap trades `fix` for `feat`:** without it `fix` recall gains 2–4
+  points and `feat` loses about 10; the errors change side, type_match
+  does not move. type_macro_f1, first_try and fallback are slightly
+  better without it, within noise. The cap is dropped for v0.2: no cost,
+  one arbitrary knob less, and the natural distribution of the selection.
+  The `fix`/`feat` boundary needs better labels or more context, not
+  another mix.
 
 ### H-split. The model can tell when the staged changes are several commits — planned
 
