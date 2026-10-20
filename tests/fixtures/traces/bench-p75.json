@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "tool_version": "0.5.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "feat: add src/context.rs",
+      "test(git): cover empty commits",
+      "refactor(prompt): share the rules",
+      "docs: describe the hook",
+      "fix(diff): keep renames in the file list",
+      "feat(cli): add the eval command"
+    ],
+    "history_files": [
+      [
+        "src/context.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "src/context.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "src/context.rs",
+        "old_path": null,
+        "lines": [
+          41,
+          6
+        ],
+        "hunks": "@@ -16,2 +16,4 @@ pub struct RepoContext {\n     pub ticket: Option<String>,\n+    /// Subjects the style was learned from, most recent first.\n+    pub subjects: Vec<String>,\n     pub style: Style,\n@@ -22,10 +24,26 @@ impl RepoContext {\n     pub fn collect(repo: &Repo) -> Result<Self, GitError> {\n-        let branch = repo.current_branch()?;\n-        Ok(Self {\n-            root: repo.root().to_path_buf(),\n+        Ok(Self::new(\n+            repo.root().to_path_buf(),\n+            repo.current_branch()?,\n+            repo.recent_subjects(HISTORY_DEPTH)?,\n+            repo.staged_changes()?,\n+        ))\n+    }\n+\n+    /// Derives everything else from what git reports, so a context can be\n+    /// rebuilt exactly from recorded data.\n+    pub fn new(\n+        root: PathBuf,\n+        branch: Option<String>,\n+        subjects: Vec<String>,\n+        staged: Vec<FileChange>,\n+    ) -> Self {\n+        Self {\n+            root,\n             ticket: branch.as_deref().and_then(ticket_from_branch),\n             branch,\n-            style: style::detect(&repo.recent_subjects(HISTORY_DEPTH)?),\n-            staged: repo.staged_changes()?,\n-        })\n+            style: style::detect(&subjects),\n+            subjects,\n+            staged,\n+        }\n     }\n@@ -58,2 +76,19 @@ mod tests {\n \n+    #[test]\n+    fn new_derives_ticket_and_style_from_raw_data() {\n+        let subjects = vec![\n+            \"feat(api): add login\".to_owned(),\n+            \"fix(api): crash\".to_owned(),\n+        ];\n+        let ctx = RepoContext::new(\n+            PathBuf::from(\"/repo\"),\n+            Some(\"feature/ABC-9-login\".into()),\n+            subjects.clone(),\n+            Vec::new(),\n+        );\n+        assert_eq!(ctx.ticket.as_deref(), Some(\"ABC-9\"));\n+        assert_eq!(ctx.style, style::detect(&subjects));\n+        assert_eq!(ctx.subjects, subjects);\n+    }\n+\n     #[test]\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(context): read the ticket from the branch",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, fix, refactor, test.\n- Scopes used here: cli, diff, git, prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: add src/context.rs\ntest(git): cover empty commits\nrefactor(prompt): share the rules\ndocs: describe the hook\nfix(diff): keep renames in the file list\n",
+          "user": "Files changed:\nsrc/context.rs | +41 -6\n\nDiff:\n--- src/context.rs\n@@ -16,2 +16,4 @@ pub struct RepoContext {\n     pub ticket: Option<String>,\n+    /// Subjects the style was learned from, most recent first.\n+    pub subjects: Vec<String>,\n     pub style: Style,\n@@ -22,10 +24,26 @@ impl RepoContext {\n     pub fn collect(repo: &Repo) -> Result<Self, GitError> {\n-        let branch = repo.current_branch()?;\n-        Ok(Self {\n-            root: repo.root().to_path_buf(),\n+        Ok(Self::new(\n+            repo.root().to_path_buf(),\n+            repo.current_branch()?,\n+            repo.recent_subjects(HISTORY_DEPTH)?,\n+            repo.staged_changes()?,\n+        ))\n+    }\n+\n+    /// Derives everything else from what git reports, so a context can be\n+    /// rebuilt exactly from recorded data.\n+    pub fn new(\n+        root: PathBuf,\n+        branch: Option<String>,\n+        subjects: Vec<String>,\n+        staged: Vec<FileChange>,\n+    ) -> Self {\n+        Self {\n+            root,\n             ticket: branch.as_deref().and_then(ticket_from_branch),\n             branch,\n-            style: style::detect(&repo.recent_subjects(HISTORY_DEPTH)?),\n-            staged: repo.staged_changes()?,\n-        })\n+            style: style::detect(&subjects),\n+            subjects,\n+            staged,\n+        }\n     }\n@@ -58,2 +76,19 @@ mod tests {\n \n+    #[test]\n+    fn new_derives_ticket_and_style_from_raw_data() {\n+        let subjects = vec![\n+            \"feat(api): add login\".to_owned(),\n+            \"fix(api): crash\".to_owned(),\n+        ];\n+        let ctx = RepoContext::new(\n+            PathBuf::from(\"/repo\"),\n+            Some(\"feature/ABC-9-login\".into()),\n+            subjects.clone(),\n+            Vec::new(),\n+        );\n+        assert_eq!(ctx.ticket.as_deref(), Some(\"ABC-9\"));\n+        assert_eq!(ctx.style, style::detect(&subjects));\n+        assert_eq!(ctx.subjects, subjects);\n+    }\n+\n     #[test]\n"
+        },
+        "raw": "feat(context): read the ticket from the branch",
+        "rejected": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "tool_version": "0.5.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "feat: add src/message.rs",
+      "test(git): cover empty commits",
+      "refactor(prompt): share the rules",
+      "docs: describe the hook",
+      "fix(diff): keep renames in the file list",
+      "feat(cli): add the eval command"
+    ],
+    "history_files": [
+      [
+        "src/message.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "src/message.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "src/message.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          0
+        ],
+        "hunks": "@@ -43,2 +43,6 @@ pub enum SanitizeError {\n     NotConventional(String),\n+    /// The subject repeats one from the history, as small models do when\n+    /// the history is short or the diff says little.\n+    #[error(\"subject repeats an earlier commit: {0:?}\")]\n+    CopiedHistory(String),\n }\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "fix(generate): retry when the reply repeats a history subject",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, fix, refactor, test.\n- Scopes used here: cli, diff, git, prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: add src/message.rs\ntest(git): cover empty commits\nrefactor(prompt): share the rules\ndocs: describe the hook\nfix(diff): keep renames in the file list\n",
+          "user": "Files changed:\nsrc/message.rs | +4 -0\n\nDiff:\n--- src/message.rs\n@@ -43,2 +43,6 @@ pub enum SanitizeError {\n     NotConventional(String),\n+    /// The subject repeats one from the history, as small models do when\n+    /// the history is short or the diff says little.\n+    #[error(\"subject repeats an earlier commit: {0:?}\")]\n+    CopiedHistory(String),\n }\n"
+        },
+        "raw": "fix(generate): retry when the reply repeats a history subject",
+        "rejected": null
+      }
+    ]
+  }
+}

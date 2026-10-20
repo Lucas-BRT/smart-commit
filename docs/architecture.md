@@ -26,7 +26,7 @@ Everything except the model is deterministic and tested without hardware.
 | `genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
 | `llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
 | `device` | candidate devices and loading the first that works |
-| `bench` | measures every device on the embedded fixture prompts |
+| `bench` | measures every device on four embedded prompts sized like real ones |
 | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |
 | `setup` | the steps the hardware needs, for the setup screen |
 | `models` | the recommended models, pinned on Hugging Face, and installing them |

@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "tool_version": "0.5.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "feat: add src/context.rs",
+      "test(git): cover empty commits",
+      "refactor(prompt): share the rules",
+      "docs: describe the hook",
+      "fix(diff): keep renames in the file list",
+      "feat(cli): add the eval command"
+    ],
+    "history_files": [
+      [
+        "src/context.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "src/context.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "src/context.rs",
+        "old_path": null,
+        "lines": [
+          8,
+          2
+        ],
+        "hunks": "@@ -7,3 +7,3 @@ use crate::style::{self, Style};\n \n-/// How many recent commits the style is learned from.\n+/// How many recent commits the style is learned from, by default.\n pub const HISTORY_DEPTH: usize = 30;\n@@ -24,2 +24,8 @@ impl RepoContext {\n     pub fn collect(repo: &Repo) -> Result<Self, GitError> {\n+        Self::collect_with_history(repo, HISTORY_DEPTH)\n+    }\n+\n+    /// Like [`Self::collect`], learning the style from the last\n+    /// `history_depth` commits.\n+    pub fn collect_with_history(repo: &Repo, history_depth: usize) -> Result<Self, GitError> {\n         Ok(Self::new(\n@@ -27,3 +33,3 @@ impl RepoContext {\n             repo.current_branch()?,\n-            repo.recent_subjects(HISTORY_DEPTH)?,\n+            repo.recent_subjects(history_depth)?,\n             repo.staged_changes()?,\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(context): build the context from recorded data",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, fix, refactor, test.\n- Scopes used here: cli, diff, git, prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: add src/context.rs\ntest(git): cover empty commits\nrefactor(prompt): share the rules\ndocs: describe the hook\nfix(diff): keep renames in the file list\n",
+          "user": "Files changed:\nsrc/context.rs | +8 -2\n\nDiff:\n--- src/context.rs\n@@ -7,3 +7,3 @@ use crate::style::{self, Style};\n \n-/// How many recent commits the style is learned from.\n+/// How many recent commits the style is learned from, by default.\n pub const HISTORY_DEPTH: usize = 30;\n@@ -24,2 +24,8 @@ impl RepoContext {\n     pub fn collect(repo: &Repo) -> Result<Self, GitError> {\n+        Self::collect_with_history(repo, HISTORY_DEPTH)\n+    }\n+\n+    /// Like [`Self::collect`], learning the style from the last\n+    /// `history_depth` commits.\n+    pub fn collect_with_history(repo: &Repo, history_depth: usize) -> Result<Self, GitError> {\n         Ok(Self::new(\n@@ -27,3 +33,3 @@ impl RepoContext {\n             repo.current_branch()?,\n-            repo.recent_subjects(HISTORY_DEPTH)?,\n+            repo.recent_subjects(history_depth)?,\n             repo.staged_changes()?,\n"
+        },
+        "raw": "feat(context): build the context from recorded data",
+        "rejected": null
+      }
+    ]
+  }
+}

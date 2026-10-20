@@ -34,24 +34,24 @@ On a Ryzen 5 5500 with an RTX 3050 (no Intel device, so no OpenVINO):
 
 ```console
 $ smart-commit bench
-Benchmark on AMD Ryzen 5 5500: 5 prompts, after one warm-up load.
+Benchmark on AMD Ryzen 5 5500: 4 prompts, after one warm-up load.
 
   device       per message     load  generate     CPU
   intel-gpu    unavailable: backend unavailable: OpenVINO GenAI not found (...); Intel GPUs need it; `smart-commit setup` installs it on machines with one (other GPUs use the vulkan device)
   npu          unavailable: backend unavailable: OpenVINO GenAI not found (...); the Intel NPU needs it; `smart-commit setup` installs it on machines with one
-  vulkan             2.3 s    2.2 s     0.1 s    0.4x
-  cpu                1.9 s    0.6 s     1.2 s    5.5x  <- selected
+  vulkan             2.4 s    2.1 s     0.3 s    0.4x  <- selected
+  cpu                4.0 s    0.7 s     3.3 s    5.7x
   openvino-cpu unavailable: backend unavailable: OpenVINO GenAI not found (...); only openvino-cpu needs it (the cpu device runs on llama.cpp); setup-npu.sh --openvino-only installs it
 
-fast load turned on for vulkan (--no-repack --fit off): 2.6 s -> 2.3 s per message
-fast load turned on for cpu (--no-repack --fit off): 2.8 s -> 1.9 s per message
+fast load turned on for vulkan (--no-repack --fit off): 2.7 s -> 2.4 s per message
+fast load turned on for cpu (--no-repack --fit off): 5.1 s -> 4.0 s per message
 
-smart-commit will use cpu on this machine (~1.9 s per message): the fastest, model.device = auto.
+smart-commit will use vulkan on this machine (~2.4 s per message): the fastest, model.device = auto.
 To use another device: smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu>, or `auto` for the fastest.
 
-$ smart-commit device use vulkan
-model.device = vulkan  (global /home/me/.config/smart-commit/config.toml)
-~2.3 s per message on this machine, in the last benchmark.
+$ smart-commit device use cpu
+model.device = cpu  (global /home/me/.config/smart-commit/config.toml)
+~4.0 s per message on this machine, in the last benchmark.
 
 $ smart-commit device          # the last benchmark and the current choice
 ```
@@ -60,9 +60,12 @@ $ smart-commit device          # the last benchmark and the current choice
   the last benchmark, fastest first, then in the default order
   **intel-gpu, npu, vulkan, cpu, openvino-cpu**. The first that loads wins, with a note naming
   the ones skipped. When none works, the error lists the reason for each.
-- **`smart-commit bench`** measures the five devices on the five prompts of
-  the trace fixtures, embedded in the binary, so every machine is measured on
-  the same inputs. Each device is loaded once to warm the caches, then loaded
+- **`smart-commit bench`** measures the five devices on four prompts
+  embedded in the binary (`tests/fixtures/traces/bench-*.json`), so every
+  machine is measured on the same inputs. They are sized like real prompts,
+  about 300 to 900 tokens (the quartiles and 90th percentile of eval-v1's),
+  since reading the prompt is most of the time on the CPU: with the ~250-token
+  prompts of earlier versions the CPU looked twice as fast as it is. Each device is loaded once to warm the caches, then loaded
   again and timed. *Per message* is what a commit costs: one load and one
   generation. *CPU* is the mean number of busy cores. The report is saved to
   `$XDG_DATA_HOME/smart-commit/bench.json`, with the CPU model, the kernel,
@@ -107,7 +110,8 @@ each llama.cpp device in both modes, and fast load is used where it saved
 at least 5% per message (more than the noise between runs).
 `model.fast_load = on` or `off` overrides that. The backend's description,
 which traces record, ends in `load=fast` when it is on. On the Ryzen 5 5500
-the replies to the five fixture prompts are the same in both modes.
+the replies were the same in both modes, on the short prompts the benchmark
+used before.
 
 ## Threads on the CPU
 
@@ -247,13 +251,16 @@ Per prompt:
 | npu (tuned) | ~1.07 s | 74 ms |
 
 Ryzen 5 5500 (6 cores), GeForce RTX 3050 8 GB with the proprietary driver
-595.104, 23 GiB RAM, Pop!_OS 24.04, kernel 7.2; `smart-commit bench`, the
-same in two runs (fast load on for both devices):
+595.104, 23 GiB RAM, Pop!_OS 24.04, kernel 7.2; `smart-commit bench` on
+the four prompts sized like real ones (fast load on for both devices):
 
 | Device | Per message | Load | Generate | CPU | Per message without fast load |
 |---|---|---|---|---|---|
-| cpu (llama.cpp) | **1.9 s** | 0.6 s | 1.2 s | 5.5 cores | 2.8 s |
-| vulkan (RTX 3050) | 2.3 s | 2.2 s | 0.1 s | 0.4 cores | 2.6 s |
+| vulkan (RTX 3050) | **2.4 s** | 2.1 s | 0.3 s | 0.4 cores | 2.7 s |
+| cpu (llama.cpp) | 4.0 s | 0.7 s | 3.3 s | 5.7 cores | 5.1 s |
+
+On the ~250-token prompts the benchmark used before, the CPU took 1.9 s and
+was chosen; on prompts the size of real ones Vulkan is the faster.
 
 Most of the Vulkan load left is copying the weights to the GPU (935 MiB in
 1.5 s), which no load mode avoids.
