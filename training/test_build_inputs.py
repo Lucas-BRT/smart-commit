@@ -20,7 +20,7 @@ from build_inputs import paths_of  # noqa: E402
 from score import area, description, scope_fits, specifics, ungrounded, unsupported  # noqa: E402
 from make_examples import make_examples  # noqa: E402
 from build_inputs import conventional_type, release_version, version_in_diff  # noqa: E402
-from score import per_type  # noqa: E402
+from score import mcnemar, paired, per_type  # noqa: E402
 
 GIT_ENV = {**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
 
@@ -230,6 +230,25 @@ def test_score_reads_rule_messages() -> None:
                                  str(d / "traces.jsonl"), "--json"], capture_output=True, text=True)
         assert result.returncode == 0, result.stderr
         assert json.loads(result.stdout)["all"]["first_try"] == 1.0
+
+
+def test_paired_comparison() -> None:
+    assert mcnemar(0, 0) == 1.0
+    assert round(mcnemar(8, 0), 4) == 0.0078  # 2 / 2**8
+    assert mcnemar(4, 1) == mcnemar(1, 4) == 0.375
+    meta = [{"repo": "r", "hash": str(i), "target": "fix(a): b", "type": "fix", "history": 1,
+             "set": "conventional"} for i in range(3)]
+
+    def trace(subject: str) -> dict:
+        return {"inputs": {"branch": None, "subjects": ["x"], "staged": [], "files": []},
+                "generation": {"message": {"subject": subject, "body": None}, "source": "model",
+                               "attempts": [{"rejected": None}]}}
+    base = [trace("feat(a): b"), trace("fix(a): b"), trace("feat(a): c")]
+    other = [trace("fix(a): b"), trace("fix(a): b"), trace("feat(a): c")]
+    report = paired(meta, base, other)
+    assert report["conventional"]["type_match"] == {"gained": 1, "lost": 0, "p": 1.0}
+    assert report["all"]["exact"] == {"gained": 1, "lost": 0, "p": 1.0}
+    assert "word_f1" not in report["all"] and "unsupported_real" not in report["all"]
 
 
 if __name__ == "__main__":

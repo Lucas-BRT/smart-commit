@@ -244,6 +244,11 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
   (specifics found nowhere in the input) and `ungrounded` (a description
   with no word from the diff); `score.py`'s docstring defines them.
 - Always report the base model's scores on the same set and binary.
+- Two versions of a model or a prompt answer the same cases: compare them
+  case by case with `score.py EVAL_DIR NEW.jsonl --against OLD.jsonl`,
+  which counts the cases each gets right that the other does not and gives
+  McNemar's exact p. A change of 1–3 points on eval-v1 is often a handful
+  of cases either way.
 - Not covered yet: gitmoji, Portuguese beyond the scenarios, and an LLM
   judge for faithfulness validated against a sample rated by hand.
 
