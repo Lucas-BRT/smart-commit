@@ -96,13 +96,16 @@ them, and the history examples. The user message has the file list, the diff
 and, when files were cut, a note saying so. A forced convention
 (`style.convention`) drops the examples that contradict it.
 
-The file list is plain (`path | +3 -1`), the format the fine-tunes were
-trained on. `--diff annotated` (`prompt` and `eval` only, recorded in
-traces) adds what the counts do not say: `new`, `deleted`, `renamed` with
+The file list says what the line counts do not (`--diff plain`, in
+`prompt` and `eval` only, gives the bare `path | +3 -1` the v0.2
+fine-tunes were trained on; the format is recorded in traces, and traces
+without it are plain): `new`, `deleted`, `renamed` with
 git's short form `dir/{old => new}/file` and one line for three or more
 files moved between the same directories, `copied from`, `empty`, `no line
-changed (mode)`, `whitespace only` (those files then leave the diff and its
-budget), `comments only` (comments, docstrings, blank lines, by extension),
+changed (mode)`, `whitespace only` with which whitespace (`CRLF to LF`,
+`final newline`, `trailing spaces`, `indentation`, `blank lines`: the
+file leaves the diff and its budget, since the change is invisible there;
+`line breaks`, code reformatted, stays in the diff), `comments only` (comments, docstrings, blank lines, by extension),
 and `maybe renamed from` for a new file sharing 40% of its lines with a
 deleted one, below git's rename threshold.
 
@@ -125,21 +128,36 @@ overflow 72 columns. In order, the sanitizer:
   headings, quotes, backticks and bold around the subject; collapses spaces;
   drops the final period;
 - cuts explanations after the message ("This commit message…");
-- cuts the subject at the last word that fits in 72 columns, and rewraps the
-  body at 72, keeping paragraphs and bullets;
+- fits the subject in 72 columns (`style.subject_max`): a scope that is a file path becomes the
+  file's name (`fix(src/operator/combineLatest.ts)` → `fix(combineLatest)`),
+  then the subject ends where it still reads, at a clause (`, `), a phrase
+  (` to `, ` for `, ` in `, ` with `…) or a list (` and `) that keeps at least
+  half of the limit, else at the last word that fits; rewraps the body at 72,
+  keeping paragraphs and bullets;
 - for Conventional Commits, fixes near misses (`Feat: x`, `feat:x`) and
   rejects anything else.
 
 ## Retry and fallback
 
-A rejected reply (empty, not conventional when it must be, or a subject
-repeated from the history, as small models do when the history is short or
-the diff says little) gets **one retry**, whose prompt ends with why the
-first one was rejected. With greedy
+A rejected reply gets **one retry**, whose prompt ends with why the first
+one was rejected. A reply is rejected when it is empty, not conventional
+when it must be, a subject repeated from the history (as small models do
+when the history is short or the diff says little), or nearly so (every
+word of its description, four or more, is in one history subject and
+covers 60% of it; a reply with words of its own is kept), the same for a
+message the user turned down in the review, or clearly in
+another language than the repository's (all its known words English in a
+Portuguese repository, or the reverse; a mix is kept, as such
+repositories often write; a language that is only the default, with no
+history to tell, is not enforced). With greedy
 decoding, repeating the same prompt would give the same reply. If the retry
-is rejected too, the message is built from the file list alone (for example
+is rejected too, the message is built from the file list (for example
 `chore: update 3 files in src/`, with the files in the body), in the
-repository's language and convention, and a warning says so. Backend errors
+repository's language and convention, and a warning says so. When the last
+reply was rejected for what it said (a copy, another language) rather than
+its form, the fallback keeps its scope, and its type unless the files tell
+one (all docs, tests or config): models often pick the right type even
+when they copy, and the file list's guess for code is `chore`. Backend errors
 are reported, never hidden by the fallback.
 
 ## Lockfiles and generated files only
@@ -160,6 +178,20 @@ Directory guesses such as `build/` or `vendor/` are not enough: they only
 hide the diff from the prompt. A lockfile the list does not know goes to
 the model like any file. Asking for another message in the review asks
 the model.
+
+## Merges, reverts and cherry-picks
+
+A merge, a revert or a cherry-pick in progress leaves git's own message in
+`MERGE_MSG` (`Merge branch 'x'`, `Revert "..."` with the reverted hash,
+the picked commit's message), which `git commit` would use. The diff does
+not show what is going on, so a model describes it as an ordinary change;
+smart-commit takes git's message instead, comments removed, **without
+loading the model**. A merge resolved to what HEAD already has stages
+nothing; that is not "nothing staged" then. `git merge --squash` writes
+`SQUASH_MSG`, a list of the squashed commits rather than a subject: the
+model describes the change. The message is in the trace inputs
+(`prepared`), so `eval` and `replay` reproduce it. Asking for another
+message in the review asks the model.
 
 ## Git hook
 

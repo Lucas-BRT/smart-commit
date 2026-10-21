@@ -10,10 +10,13 @@ use crate::context::RepoContext;
 use crate::diff::{self, FileDiff};
 use crate::message::{self, CommitMessage, SanitizeError};
 use crate::prompt::{self, Prompt, PromptOptions};
-use crate::style::Convention;
+use crate::style::{self, Convention, Language};
 
 /// The first try plus one retry that says what was wrong.
 pub const MAX_ATTEMPTS: usize = 2;
+/// The share of an earlier subject's words a reply must cover, with no
+/// word of its own, to count as a copy of it.
+const NEAR_COPY_SHARE: f64 = 0.6;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Attempt {
@@ -33,6 +36,9 @@ pub enum Source {
     /// Only lockfiles and generated files were staged: built from the file
     /// list without asking the model, whose prompt would not show them.
     Rules,
+    /// Git prepared it for the merge, revert or cherry-pick in progress,
+    /// which the diff does not show: used as is, as `git commit` would.
+    Git,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -64,33 +70,60 @@ pub fn generate_avoiding(
     avoid: &[String],
 ) -> Result<Generation, BackendError> {
     let (convention, language) = prompt::effective_style(&ctx.style, options);
-    // Turned down, the file list's message goes to the model for another.
+    // Turned down, git's or the file list's message goes to the model for
+    // another.
+    if let (true, Some(prepared)) = (avoid.is_empty(), &ctx.prepared) {
+        return Ok(Generation {
+            message: prepared_message(&prepared.message),
+            source: Source::Git,
+            attempts: Vec::new(),
+        });
+    }
     if avoid.is_empty() && by_rules(ctx, files) {
         return Ok(Generation {
-            message: message::fallback(&ctx.staged, convention, language),
+            message: message::fallback_after(
+                &ctx.staged,
+                convention,
+                language,
+                None,
+                options.subject_max,
+            ),
             source: Source::Rules,
             attempts: Vec::new(),
         });
     }
+    let turned_down: Vec<String> = avoid
+        .iter()
+        .map(|m| m.lines().next().unwrap_or_default().to_owned())
+        .collect();
     let avoid = avoid_note(avoid);
     let mut attempts: Vec<Attempt> = Vec::new();
     while attempts.len() < MAX_ATTEMPTS {
         let retry = attempts
             .last()
             .and_then(|a| a.rejected.as_ref())
-            .map(|error| retry_note(error, convention));
+            .map(|error| retry_note(error, convention, language));
         let note = match (&avoid, retry) {
             (Some(avoid), Some(retry)) => Some(format!("{avoid}\n{retry}")),
             (avoid, retry) => retry.or_else(|| avoid.clone()),
         };
         let prompt = prompt::build_with_note(ctx, files, options, note.as_deref());
         let raw = backend.generate(&prompt, config)?;
-        let checked = message::sanitize(&raw, convention).and_then(|message| {
-            match copied_from(&message.subject, &ctx.subjects) {
-                Some(subject) => Err(SanitizeError::CopiedHistory(subject.to_owned())),
-                None => Ok(message),
-            }
-        });
+        let checked =
+            message::sanitize_within(&raw, convention, options.subject_max).and_then(|message| {
+                if let Some(subject) = copied_from(&message.subject, &ctx.subjects) {
+                    return Err(SanitizeError::CopiedHistory(subject.to_owned()));
+                }
+                if let Some(subject) = copied_from(&message.subject, &turned_down) {
+                    return Err(SanitizeError::TurnedDown(subject.to_owned()));
+                }
+                // A default language, with no history to tell, is not enforced.
+                let known = options.language.is_some() || ctx.style.language != Language::Unknown;
+                if known && in_other_language(&message.subject, language, &ctx.subjects) {
+                    return Err(SanitizeError::WrongLanguage(message.subject));
+                }
+                Ok(message)
+            });
         match checked {
             Ok(message) => {
                 attempts.push(Attempt {
@@ -111,11 +144,45 @@ pub fn generate_avoiding(
             }),
         }
     }
+    // The last reply rejected for what it said, not its form, still has a
+    // type worth keeping.
+    let reply = attempts.iter().rev().find_map(|a| match a.rejected {
+        Some(
+            SanitizeError::CopiedHistory(_)
+            | SanitizeError::WrongLanguage(_)
+            | SanitizeError::TurnedDown(_),
+        ) => message::sanitize_within(&a.raw, convention, options.subject_max)
+            .ok()
+            .map(|m| m.subject),
+        _ => None,
+    });
     Ok(Generation {
-        message: message::fallback(&ctx.staged, convention, language),
+        message: message::fallback_after(
+            &ctx.staged,
+            convention,
+            language,
+            reply.as_deref(),
+            options.subject_max,
+        ),
         source: Source::Fallback,
         attempts,
     })
+}
+
+/// Whether the message for `avoid` comes without a model: from git, or
+/// from the file list.
+pub fn needs_model(ctx: &RepoContext, files: &[FileDiff], avoid: &[String]) -> bool {
+    !avoid.is_empty() || (ctx.prepared.is_none() && !by_rules(ctx, files))
+}
+
+/// Git's prepared message as subject and body.
+fn prepared_message(text: &str) -> CommitMessage {
+    let (subject, body) = text.split_once('\n').unwrap_or((text, ""));
+    let body = body.trim();
+    CommitMessage {
+        subject: subject.trim().to_owned(),
+        body: (!body.is_empty()).then(|| body.to_owned()),
+    }
 }
 
 /// Whether the message comes from the file list alone: every staged file
@@ -128,13 +195,41 @@ pub fn by_rules(ctx: &RepoContext, files: &[FileDiff]) -> bool {
 }
 
 /// The history subject `subject` repeats, ignoring case and a final period.
+///
+/// Or nearly: every word of the subject's description, four or more, is in
+/// a history subject's, and covers at least [`NEAR_COPY_SHARE`] of it, as
+/// when the model drops a few words of an earlier subject. A subject that
+/// adds words of its own (a history subject plus "in hooks") is not a copy.
 fn copied_from<'a>(subject: &str, history: &'a [String]) -> Option<&'a str> {
     let normalize = |s: &str| s.trim().trim_end_matches('.').to_lowercase();
-    let subject = normalize(subject);
+    let exact = normalize(subject);
+    if let Some(h) = history.iter().find(|h| normalize(h) == exact) {
+        return Some(h);
+    }
+    let words = style::words(subject);
+    if words.len() < 4 {
+        return None;
+    }
     history
         .iter()
-        .find(|h| normalize(h) == subject)
+        .find(|h| {
+            let theirs = style::words(h);
+            words.iter().all(|w| theirs.contains(w))
+                && words.len() as f64 >= NEAR_COPY_SHARE * theirs.len() as f64
+        })
         .map(String::as_str)
+}
+
+/// Whether `subject` is clearly in another language than `language`, the
+/// repository's: only when its words are all of the other one, and no
+/// history subject is in that one (a repository that sometimes writes it
+/// accepts it).
+fn in_other_language(subject: &str, language: Language, history: &[String]) -> bool {
+    let theirs = style::language_of(subject);
+    matches!(
+        (language, theirs),
+        (Language::Portuguese, Language::English) | (Language::English, Language::Portuguese)
+    ) && !history.iter().any(|h| style::language_of(h) == theirs)
 }
 
 /// Asks for a message other than the subjects of `messages`.
@@ -168,7 +263,7 @@ pub fn avoid_note(messages: &[String]) -> Option<String> {
 }
 
 /// Tells the model why its previous reply was rejected.
-pub fn retry_note(error: &SanitizeError, convention: Convention) -> String {
+pub fn retry_note(error: &SanitizeError, convention: Convention, language: Language) -> String {
     let reason = match error {
         SanitizeError::Empty => "it contained no commit message".to_owned(),
         SanitizeError::NotConventional(subject) => {
@@ -181,6 +276,18 @@ pub fn retry_note(error: &SanitizeError, convention: Convention) -> String {
                 "\"{subject}\" repeats an earlier commit of this repository; \
                  describe what this diff changes instead"
             )
+        }
+        SanitizeError::TurnedDown(subject) => {
+            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
+            format!("\"{subject}\" is a message the user turned down; write a different one")
+        }
+        SanitizeError::WrongLanguage(subject) => {
+            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
+            let language = match language {
+                Language::Portuguese => "Brazilian Portuguese",
+                _ => "English",
+            };
+            format!("\"{subject}\" is not in {language}; write it in {language}")
         }
     };
     let format = match convention {
@@ -311,6 +418,80 @@ mod tests {
                 .iter()
                 .all(|a| matches!(a.rejected, Some(SanitizeError::CopiedHistory(_))))
         );
+        // The copied reply's type and scope stay; the file list says the rest.
+        assert_eq!(generation.message.subject, "fix(git): update src/git.rs");
+    }
+
+    #[test]
+    fn a_fallback_after_a_bad_format_keeps_the_file_lists_type() {
+        let mock = MockBackend::new(["", "<think>hmm"]);
+        let generation = run(CONVENTIONAL, &mock);
+        assert_eq!(generation.source, Source::Fallback);
+        assert_eq!(generation.message.subject, "chore: update src/git.rs");
+    }
+
+    #[test]
+    fn a_near_copy_of_the_history_is_retried() {
+        // Real use (commit scenarios): a directory rename answered with most
+        // of an earlier subject, a few words dropped.
+        let history = [
+            "refatoração e estruturação de cameras, cenas, objetos e afins, falta modelar a cena da fase 1",
+        ];
+        let near = "refatoração e estruturação de objetos, falta modelar a cena da fase 1";
+        assert_eq!(
+            copied_from(near, &history.map(String::from)),
+            Some(history[0])
+        );
+        // Short replies and replies with words of their own are kept.
+        let history = ["fix(git): handle detached HEAD".to_owned()];
+        assert_eq!(
+            copied_from("fix(git): handle detached HEAD in hooks", &history),
+            None
+        );
+        assert_eq!(copied_from("fix(git): handle HEAD", &history), None);
+    }
+
+    #[test]
+    fn a_reply_in_another_language_is_retried() {
+        let history = [
+            "adiciona pedidos",
+            "corrige o total do pedido",
+            "cria o cardápio",
+        ];
+        let mock = MockBackend::new(["add main", "torna o script principal executável"]);
+        let generation = run(&history, &mock);
+        assert_eq!(generation.source, Source::Model);
+        assert_eq!(
+            generation.message.subject,
+            "torna o script principal executável"
+        );
+        assert_eq!(
+            generation.attempts[0].rejected,
+            Some(SanitizeError::WrongLanguage("add main".into()))
+        );
+        assert!(
+            mock.prompts()[1]
+                .user
+                .ends_with("\"add main\" is not in Brazilian Portuguese; write it in Brazilian Portuguese. Reply again with only the commit message.\n"),
+            "{}",
+            mock.prompts()[1].user
+        );
+        // Mixed, as the history itself may be: kept.
+        let mock = MockBackend::new(["fix do teclado"]);
+        assert_eq!(run(&history, &mock).attempts.len(), 1);
+        // A repository that also writes English accepts an English reply
+        // (found on eval-v1).
+        let mixed = [
+            "adiciona pedidos",
+            "corrige o total do pedido",
+            "add the CLI",
+        ];
+        let mock = MockBackend::new(["add smtpSecure and smtpRequireTLS"]);
+        assert_eq!(run(&mixed, &mock).attempts.len(), 1);
+        // Without history the language is only the default (English): a
+        // first commit written in Portuguese is kept.
+        let mock = MockBackend::new(["feat: adiciona o sistema de pedidos"]);
+        assert_eq!(run(&[], &mock).attempts.len(), 1);
     }
 
     #[test]
@@ -360,6 +541,104 @@ mod tests {
         assert_eq!(generation.message.subject, "chore: add Cargo.lock");
         assert!(generation.attempts.is_empty());
         assert!(mock.prompts().is_empty());
+    }
+
+    #[test]
+    fn git_prepared_messages_are_used_as_is() {
+        use crate::git::{Operation, PreparedMessage};
+        let ctx = context(CONVENTIONAL).with_prepared(Some(PreparedMessage {
+            operation: Operation::Revert,
+            message: "Revert \"fix(git): handle detached HEAD\"\n\nThis reverts commit 2e2ce44."
+                .into(),
+        }));
+        let mock = MockBackend::new(["fix(git): read the branch name"]);
+        assert!(!needs_model(&ctx, &files(), &[]));
+        let generation = generate(
+            &ctx,
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Git);
+        assert_eq!(
+            generation.message.subject,
+            "Revert \"fix(git): handle detached HEAD\""
+        );
+        assert_eq!(
+            generation.message.body.as_deref(),
+            Some("This reverts commit 2e2ce44.")
+        );
+        assert!(generation.attempts.is_empty() && mock.prompts().is_empty());
+        // Turned down, it goes to the model for another.
+        let avoid = [generation.message.subject.clone()];
+        assert!(needs_model(&ctx, &files(), &avoid));
+        let generation = generate_avoiding(
+            &ctx,
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Model);
+    }
+
+    #[test]
+    fn a_turned_down_message_is_not_written_again() {
+        // Real use: asking for another message gave the same one back, the
+        // note listing it notwithstanding.
+        let avoid = ["fix(git): read the branch name from git\n\nUses --show-current.".to_owned()];
+        let mock = MockBackend::new([
+            "fix(git): read the branch name",
+            "fix(git): use --show-current for the branch",
+        ]);
+        let generation = generate_avoiding(
+            &context(CONVENTIONAL),
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Model);
+        assert_eq!(
+            generation.message.subject,
+            "fix(git): use --show-current for the branch"
+        );
+        assert_eq!(
+            generation.attempts[0].rejected,
+            Some(SanitizeError::TurnedDown(
+                "fix(git): read the branch name from git".into()
+            ))
+        );
+        let retry = &mock.prompts()[1].user;
+        assert!(
+            retry.contains("The user turned down this message"),
+            "{retry}"
+        );
+        assert!(
+            retry.contains("\"fix(git): read the branch name from git\" is a message the user turned down; write a different one."),
+            "{retry}"
+        );
+
+        // Repeated twice: the fallback, with the reply's type and scope, is
+        // not the message turned down.
+        let mock = MockBackend::new(["fix(git): read the branch name from git"; 2]);
+        let generation = generate_avoiding(
+            &context(CONVENTIONAL),
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Fallback);
+        assert_eq!(generation.message.subject, "fix(git): update src/git.rs");
     }
 
     #[test]
@@ -495,7 +774,7 @@ mod tests {
     #[test]
     fn retry_note_without_a_required_format() {
         assert_eq!(
-            retry_note(&SanitizeError::Empty, Convention::Free),
+            retry_note(&SanitizeError::Empty, Convention::Free, Language::English),
             "Your previous reply was rejected because it contained no commit message. \
              Reply again with only the commit message."
         );

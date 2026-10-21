@@ -59,7 +59,9 @@ uv run --locked python -I select.py data/releases data/h7 --conventional 400 --f
 uv run --locked python -I filter_supported.py data/h1 data/h3a
 
 # 3. Prompts built by smart-commit, joined with the targets (`--rules omitted`
-#    for a model trained without the fixed instructions, H6).
+#    for a model trained without the fixed instructions, H6). The file list
+#    is annotated by default since #10/#11; v0.2 was trained on the plain
+#    one: add `--diff plain` to rebuild its examples.
 uv run --locked python -I make_examples.py data/h1 $SC
 
 #    Nested subsets for a learning curve (H3) or a smaller run (H8):
@@ -152,7 +154,7 @@ py select.py data/train-all data/b3/h5 --conventional 1600 --free 2400 \
   --min-history 0 --max-history 9 --per-repo 5 --supported-only
 py select.py data/releases data/b3/h7 --conventional 400 --free 200 \
   --min-history 0 --per-repo 5 --supported-only --releases
-for d in val main-cap30 main-nocap h5 h7; do py make_examples.py data/b3/$d $SC --rules omitted; done
+for d in val main-cap30 main-nocap h5 h7; do py make_examples.py data/b3/$d $SC --rules omitted --diff plain; done
 for cap in cap30 nocap; do
   py nest.py data/b3/main-$cap/examples.jsonl data/b3/main-$cap/nested 15600
   cat data/b3/main-$cap/nested-15600.jsonl data/b3/h5/examples.jsonl data/b3/h7/examples.jsonl \

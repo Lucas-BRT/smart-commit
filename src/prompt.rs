@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::context::RepoContext;
 use crate::diff::{self, CompactDiff, FileDiff};
+use crate::message;
 use crate::style::{self, Convention, Language, Style, TicketStyle};
 
 /// The NPU pipeline's default `MAX_PROMPT_LEN`.
@@ -49,17 +50,23 @@ impl PromptRules {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DiffFormat {
-    /// `path | +3 -1`, what the fine-tunes were trained on.
-    #[default]
+    /// `path | +3 -1`, what the v0.2 fine-tunes were trained on.
     Plain,
     /// With each file's status, renames as `dir/{old => new}`, and
     /// whitespace-only and comment-only changes named (see `annotate`).
+    #[default]
     Annotated,
 }
 
 impl DiffFormat {
     pub fn is_plain(&self) -> bool {
         *self == Self::Plain
+    }
+
+    /// What a trace without the field used: the plain list, the only one
+    /// before the annotated list existed.
+    fn recorded() -> Self {
+        Self::Plain
     }
 }
 
@@ -79,8 +86,19 @@ pub struct PromptOptions {
     /// Left out of traces when full, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptRules::is_full")]
     pub rules: PromptRules,
-    /// Left out of traces when plain, so older traces still read the same.
-    #[serde(default, skip_serializing_if = "DiffFormat::is_plain")]
+    /// The longest subject, in columns (`style.subject_max`). Left out of
+    /// traces when 72, so older traces, which have none, read the same.
+    #[serde(
+        default = "default_subject_max",
+        skip_serializing_if = "is_default_subject_max"
+    )]
+    pub subject_max: usize,
+    /// Left out of traces when plain, so older traces, which have none,
+    /// still read the same.
+    #[serde(
+        default = "DiffFormat::recorded",
+        skip_serializing_if = "DiffFormat::is_plain"
+    )]
     pub diff: DiffFormat,
 }
 
@@ -93,9 +111,18 @@ impl Default for PromptOptions {
             convention: None,
             language: None,
             rules: PromptRules::Full,
-            diff: DiffFormat::Plain,
+            subject_max: message::SUBJECT_MAX,
+            diff: DiffFormat::Annotated,
         }
     }
+}
+
+fn default_subject_max() -> usize {
+    message::SUBJECT_MAX
+}
+
+fn is_default_subject_max(max: &usize) -> bool {
+    *max == message::SUBJECT_MAX
 }
 
 /// The convention and language the message must follow: forced ones
@@ -172,8 +199,13 @@ fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
         let _ = writeln!(text, "- {line}");
     };
 
-    if full {
-        rule("Subject line of at most 72 characters, without a trailing period.");
+    // A model trained without the rules learned 72 columns from the data:
+    // another limit is told even then.
+    if full || options.subject_max != message::SUBJECT_MAX {
+        rule(&format!(
+            "Subject line of at most {} characters, without a trailing period.",
+            options.subject_max
+        ));
     }
     match language {
         Language::Portuguese => rule("Write in Brazilian Portuguese."),
@@ -347,14 +379,14 @@ mod tests {
             hunks: "@@ -3 +3 @@\n-fn detect(s: &[String]) -> Style {\n+fn detect(s: &[String]) -> Style {   \n"
                 .into(),
         });
-        let options = PromptOptions {
-            diff: DiffFormat::Annotated,
-            ..PromptOptions::default()
-        };
-        let prompt = build(&ctx, &changed, &options);
+        let prompt = build(&ctx, &changed, &PromptOptions::default());
         insta::assert_snapshot!(prompt.user);
         // The plain list of the same change keeps the format trained on.
-        let plain = build(&ctx, &changed, &PromptOptions::default());
+        let options = PromptOptions {
+            diff: DiffFormat::Plain,
+            ..PromptOptions::default()
+        };
+        let plain = build(&ctx, &changed, &options);
         assert!(
             plain
                 .user
@@ -534,6 +566,56 @@ mod tests {
     }
 
     #[test]
+    fn the_subject_limit_is_told() {
+        let ctx = context(
+            &["feat(git): read the branch", "fix(diff): keep renames"],
+            None,
+        );
+        let full = build(&ctx, &files(), &PromptOptions::default());
+        assert!(
+            full.system
+                .contains("Subject line of at most 72 characters")
+        );
+        let wide = PromptOptions {
+            subject_max: 100,
+            ..PromptOptions::default()
+        };
+        assert!(
+            build(&ctx, &files(), &wide)
+                .system
+                .contains("Subject line of at most 100 characters")
+        );
+        // Without the rules, 72 is learnt from the data; another limit is told.
+        let omitted = PromptOptions {
+            rules: PromptRules::Omitted,
+            ..PromptOptions::default()
+        };
+        assert!(
+            !build(&ctx, &files(), &omitted)
+                .system
+                .contains("Subject line")
+        );
+        let omitted_wide = PromptOptions {
+            subject_max: 100,
+            ..omitted
+        };
+        assert!(
+            build(&ctx, &files(), &omitted_wide)
+                .system
+                .contains("at most 100 characters")
+        );
+        // Recorded in traces only when it is not 72.
+        assert!(
+            !serde_json::to_string(&PromptOptions::default())
+                .unwrap()
+                .contains("subject_max")
+        );
+        let json = serde_json::to_string(&wide).unwrap();
+        assert!(json.contains(r#""subject_max":100"#), "{json}");
+        assert_eq!(serde_json::from_str::<PromptOptions>(&json).unwrap(), wide);
+    }
+
+    #[test]
     fn unset_overrides_are_left_out_of_traces() {
         let json = serde_json::to_string(&PromptOptions::default()).unwrap();
         assert!(!json.contains("\"convention\""), "{json}");
@@ -541,7 +623,18 @@ mod tests {
             r#"{"max_prompt_tokens":1024,"default_convention":"conventional","default_language":"english"}"#,
         )
         .unwrap();
-        assert_eq!(old, PromptOptions::default());
+        // A trace from before the annotated list read its prompts plain.
+        assert_eq!(
+            old,
+            PromptOptions {
+                diff: DiffFormat::Plain,
+                ..PromptOptions::default()
+            }
+        );
+        // Today's default is recorded, and read back as it was.
+        assert!(json.contains(r#""diff":"annotated""#), "{json}");
+        let back: PromptOptions = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, PromptOptions::default());
     }
 
     #[test]

@@ -321,12 +321,19 @@ pub fn compact(files: &[FileDiff], budget: usize) -> CompactDiff {
 
 /// Like [`compact`], with the annotated file list of [`annotate`], which
 /// needs each file's status from `staged`; files whose change is only
-/// whitespace keep their line in the list and leave the diff.
+/// whitespace keep their line in the list, saying which, and leave the
+/// diff, unless the change is code reformatted.
 pub fn compact_annotated(files: &[FileDiff], staged: &[FileChange], budget: usize) -> CompactDiff {
     let lines = annotate::stat_lines(files, staged);
     let useful: Vec<bool> = files
         .iter()
-        .map(|f| f.has_useful_hunks() && annotate::change_of(f) != annotate::Change::Whitespace)
+        .map(|f| {
+            f.has_useful_hunks()
+                && match annotate::change_of(f) {
+                    annotate::Change::Whitespace(spacing) => spacing.shows_in_diff(),
+                    _ => true,
+                }
+        })
         .collect();
     compact_with(files, &lines, &useful, budget)
 }
@@ -742,7 +749,7 @@ mod tests {
         let diff = compact_annotated(&files, &staged, 400);
         assert_eq!(
             diff.stat,
-            "src/state.py | whitespace only, +40 -40\nsrc/a.py | +1 -1\n"
+            "src/state.py | whitespace only: trailing spaces, +40 -40\nsrc/a.py | +1 -1\n"
         );
         assert_eq!(diff.patch, "--- src/a.py\n@@ -1 +1 @@\n-x = 1\n+x = 2\n");
         assert_eq!(diff.truncated, 0, "left out on purpose, not cut");

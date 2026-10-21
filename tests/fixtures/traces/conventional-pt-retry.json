@@ -1,11 +1,12 @@
 {
   "format": 1,
-  "tool_version": "0.5.0",
+  "tool_version": "0.6.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
     "default_convention": "conventional",
-    "default_language": "english"
+    "default_language": "english",
+    "diff": "annotated"
   },
   "config": {
     "max_new_tokens": 128
@@ -51,7 +52,7 @@
       {
         "prompt": {
           "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in Brazilian Portuguese.\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix.\n- Scopes used here: diff, git. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs: atualiza a documentação da fase 2\nfix(diff): corrige o parse de renomeações\nfeat(git): coleta o histórico de commits\n",
-          "user": "Files changed:\nretry.rs | +3 -0\n\nDiff:\n--- retry.rs\n@@ -0,0 +1,3 @@\n+pub fn retry() -> usize {\n+    2\n+}\n"
+          "user": "Files changed:\nretry.rs | new, +3 -0\n\nDiff:\n--- retry.rs\n@@ -0,0 +1,3 @@\n+pub fn retry() -> usize {\n+    2\n+}\n"
         },
         "raw": "Aqui está a mensagem:\n\nAdiciona a nova tentativa",
         "rejected": {
@@ -61,7 +62,7 @@
       {
         "prompt": {
           "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in Brazilian Portuguese.\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix.\n- Scopes used here: diff, git. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs: atualiza a documentação da fase 2\nfix(diff): corrige o parse de renomeações\nfeat(git): coleta o histórico de commits\n",
-          "user": "Files changed:\nretry.rs | +3 -0\n\nDiff:\n--- retry.rs\n@@ -0,0 +1,3 @@\n+pub fn retry() -> usize {\n+    2\n+}\n\nYour previous reply was rejected because \"Adiciona a nova tentativa\" does not follow `type(scope): description`. Reply again with only the commit message in the `type(scope): description` format.\n"
+          "user": "Files changed:\nretry.rs | new, +3 -0\n\nDiff:\n--- retry.rs\n@@ -0,0 +1,3 @@\n+pub fn retry() -> usize {\n+    2\n+}\n\nYour previous reply was rejected because \"Adiciona a nova tentativa\" does not follow `type(scope): description`. Reply again with only the commit message in the `type(scope): description` format.\n"
         },
         "raw": "```\nfeat(generate): adiciona a nova tentativa\n```",
         "rejected": null

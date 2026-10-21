@@ -1,11 +1,12 @@
 {
   "format": 1,
-  "tool_version": "0.5.0",
+  "tool_version": "0.6.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
     "default_convention": "conventional",
-    "default_language": "english"
+    "default_language": "english",
+    "diff": "annotated"
   },
   "config": {
     "max_new_tokens": 128
@@ -65,7 +66,7 @@
       {
         "prompt": {
           "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix.\n- Scopes used here: training, agents, model. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfix(training): make h3a reproducible with filter_supported.py\ndocs(training): v0.1 is published and registered, H5 and H6 come next\nfeat(model): add the smart-commit-1.5b-v0.1 and 0.5b-v0.1 fine-tunes\ndocs(agents): version fine-tunes as v0.x while the recipe changes\nfeat(training): keep the merged safetensors with export_gguf --merged\n",
-          "user": "Files changed:\nmise.toml | +2 -0\n\nDiff:\n--- mise.toml\n@@ -0,0 +1,2 @@\n+[tools]\n+rust = \"1.99\"\n"
+          "user": "Files changed:\nmise.toml | new, +2 -0\n\nDiff:\n--- mise.toml\n@@ -0,0 +1,2 @@\n+[tools]\n+rust = \"1.99\"\n"
         },
         "raw": "docs(mise): add rust to tools",
         "rejected": null

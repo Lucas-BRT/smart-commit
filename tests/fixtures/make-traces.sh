@@ -88,7 +88,8 @@ printf '# Training\n\nRun build_inputs.py, then select.py.\n\nThe frozen set nee
   --trace "$OUT/conventional-en-docs-only.json" >/dev/null
 
 # Found in real use: a new section in AGENTS.md; the model answered `fix` and
-# reused most of the last history subject, which the exact-copy guard misses.
+# reused most of the last history subject, which the exact-copy guard missed;
+# the near-copy check rejects it now.
 fresh partial-copy
 printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n' > AGENTS.md; git add .
 commit "docs(agents): add the commit rules"
@@ -98,8 +99,9 @@ printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n\n### Ask smart-co
 "$BIN" --backend mock --mock-response "fix(agents): trace a docs-only change" \
   --trace "$OUT/conventional-en-partial-copy.json" >/dev/null
 
-# Found in real use: a reply one column over the limit; the subject is cut
-# at a word boundary and ends mid-sentence ("... to reflect the").
+# Found in real use: a reply one column over the limit; the subject was cut
+# at a word boundary and ended mid-sentence ("... to reflect the"). It ends
+# before "to reflect" now.
 fresh too-long
 mkdir docs
 printf '# AGENTS.md\n\nModels are never hosted here.\n' > AGENTS.md; printf '# Training\n' > docs/training.md; git add .
@@ -207,6 +209,17 @@ done
 git add .
 "$BIN" --backend mock --mock-response "feat(training): add scenarios for the 0.6.0 release" \
   --trace "$OUT/conventional-en-empty-diff.json" >/dev/null
+
+# Found with the commit scenarios: a merge whose conflict was resolved to
+# HEAD's side stages nothing; smart-commit said "nothing staged" while `git
+# commit` makes the merge. Git's prepared message is used, without a model.
+fresh merge
+printf 'a\n' > f; git add f; commit "feat: add f"
+git checkout -q -b side; printf 'side\n' > f; git commit -q -am "feat: change f on side"
+git checkout -q main; printf 'main\n' > f; git commit -q -am "feat: change f on main"
+git merge -q side >/dev/null 2>&1 || true
+git checkout -q --ours f; git add f
+"$BIN" --backend mock --trace "$OUT/conventional-en-merge.json" >/dev/null
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,

@@ -363,6 +363,42 @@ fn detect_language(subjects: &[&str]) -> Language {
     }
 }
 
+/// Words of [`PORTUGUESE_WORDS`] that English subjects use too ("remove
+/// unused exports", "use X as Y"): harmless summed over a history,
+/// misleading in one subject. "do" stays Portuguese: "fix do teclado" is
+/// how Portuguese repositories write, and "do not ..." mixes with English
+/// words anyway.
+const AMBIGUOUS_ALONE: &[&str] = &["remove", "as", "e", "o", "os"];
+
+/// The language of one subject, from the same words as the history's:
+/// known only when it has words of one language and none of the other, so
+/// a subject mixing them, as many repositories do, is unknown.
+pub fn language_of(subject: &str) -> Language {
+    let (mut pt, mut en) = (0usize, 0usize);
+    for word in words(subject) {
+        if AMBIGUOUS_ALONE.contains(&word.as_str()) {
+            continue;
+        }
+        pt += usize::from(PORTUGUESE_WORDS.contains(&word.as_str()));
+        en += usize::from(ENGLISH_WORDS.contains(&word.as_str()));
+    }
+    match (pt, en) {
+        (0, 0) => Language::Unknown,
+        (_, 0) => Language::Portuguese,
+        (0, _) => Language::English,
+        _ => Language::Unknown,
+    }
+}
+
+/// The lowercase words of a subject's description.
+pub fn words(subject: &str) -> Vec<String> {
+    description_of(subject)
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .map(str::to_lowercase)
+        .collect()
+}
+
 /// The human-written part of a subject, without convention prefixes, so a
 /// conventional `fix:` does not count as English.
 fn description_of(subject: &str) -> &str {
@@ -594,6 +630,30 @@ mod tests {
     fn gitmoji_prefix_is_stripped_for_language() {
         assert_eq!(description_of(":bug: corrige crash"), "corrige crash");
         assert_eq!(description_of("♻️ refatora parser"), "refatora parser");
+    }
+
+    #[test]
+    fn language_of_one_subject() {
+        for (subject, language) in [
+            ("add main", Language::English),
+            ("Add basic 3D shapes", Language::English),
+            ("update requirements", Language::English),
+            ("feat(cli): add the eval command", Language::English),
+            ("adiciona contagem de itens ao pedido", Language::Portuguese),
+            ("fix: corrige o total do pedido", Language::Portuguese),
+            // Mixed, as Portuguese repositories often write: unknown.
+            ("fix do keyboard", Language::Unknown),
+            ("add paletas de cores", Language::Unknown),
+            ("zoom em 0.05 até 10", Language::Portuguese),
+            ("chore: bump typescript", Language::Unknown),
+            // Found on eval-v1: English subjects with words Portuguese has too.
+            ("refactor: remove unused exports", Language::Unknown),
+            ("fix: do not crash on empty input", Language::Unknown),
+            ("feat: use a Set as the cache", Language::English),
+            ("fix do desktop", Language::Unknown),
+        ] {
+            assert_eq!(language_of(subject), language, "{subject}");
+        }
     }
 
     #[test]

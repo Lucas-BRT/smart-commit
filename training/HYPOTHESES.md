@@ -585,6 +585,29 @@ works: it changes the reply format and the Rust side.
   (files in unrelated areas, code with docs and lockfiles), for the hook's
   hint only.
 
+### H11. An annotated file list helps models never trained on it — confirmed for the type
+
+The plain file list (`path | +3 -1`) does not say whether a file is new,
+deleted, renamed, only reformatted or only commented. `--diff annotated`
+says so (src/annotate.rs). eval-v1, Vulkan, greedy, each model with its
+best rules (0.5B v0.2 `--rules omitted`, the others `--rules full`), with
+the near-copy and language retries and the typed fallback of the same
+branch, paired with `score.py --against` against the plain list:
+
+| Model | type_match plain → annotated | Paired | type_macro_f1 |
+|---|---|---|---|
+| smart-commit-0.5b-v0.2 | 0.636 → 0.664 | +7/−0, p = 0.016 | 0.547 → 0.562 |
+| smart-commit-1.5b-v0.2 | 0.664 → 0.668 | +3/−2 | 0.550 → 0.551 |
+| qwen2.5-coder-0.5b | 0.268 → 0.276 | +5/−3 | 0.167 → 0.166 |
+| qwen2.5-coder-1.5b | 0.508 → 0.516 | +4/−2 | 0.228 → 0.235 |
+
+- No model gets worse on the type, unsupported or ungrounded; the 0.5B
+  fine-tune's gain is the only significant one. It is the default since.
+- On the commit scenarios the 1.5B v0.2 goes from 0.51 to 0.60
+  (`expected`), mostly renames and deletions; a whitespace-only file taken
+  out of the diff made it invent until the list said which whitespace.
+- Next: train v0.3 on the annotated list (T1).
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by

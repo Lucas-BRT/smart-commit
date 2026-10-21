@@ -33,12 +33,18 @@ Per set (conventional, free) and overall:
 
 Sets whose meta has a `level` (the scenarios) are also reported per level.
 
+With `--against OTHER.jsonl` (traces of the same cases, e.g. the same model
+with another prompt), score.py compares the two case by case instead: for
+each yes/no metric, how many cases each version gets right that the other
+does not, and the exact p of McNemar's test on that split.
+
 Metrics of the conventional set are averaged over that set in "all" too.
 """
 
 import argparse
 import collections
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -155,59 +161,114 @@ def groups(m: dict) -> list[str]:
     return keys
 
 
+def row_of(m: dict, t: dict) -> dict:
+    """The metrics of one case: `m` its meta line, `t` its trace."""
+    g = t["generation"]
+    subject = g["message"]["subject"]
+    history = t["inputs"]["subjects"]
+    known = evidence(t["inputs"])
+    diff = evidence({**t["inputs"], "subjects": []})
+    # Messages from rules (lockfiles, generated files) have no attempt.
+    first = g["attempts"][0]["rejected"] if g["attempts"] else None
+    row = {
+        "unsupported": unsupported(subject, known),
+        "unsupported_real": unsupported(m["target"], known),
+        "ungrounded": ungrounded(subject, diff),
+        "ungrounded_real": ungrounded(m["target"], diff),
+        "first_try": first is None,
+        "fallback": g["source"] == "fallback",
+        "copied": subject in history,
+        "first_copied": "copied_history" in (first or {}),
+        "word_f1": f1(subject, m["target"]),
+        "exact": subject == m["target"],
+    }
+    if m.get("expect"):
+        row["expected"] = expected(subject, m["expect"])
+    if m["set"] == "conventional":
+        real_type = TYPE_ALIASES.get(m["type"], m["type"])
+        row["type_match"] = conv_type(subject) == real_type
+        scope = SCOPE.match(subject)
+        known = {s.group(1) for h in history if (s := SCOPE.match(h))}
+        row["scope_known"] = scope is None or scope.group(1) in known
+        fits = scope_fits(subject, t["inputs"])
+        if fits is not None:
+            row["scope_fits"] = fits
+            row["scope_fits_real"] = scope_fits(m["target"], t["inputs"])
+    return row
+
+
+def mcnemar(gained: int, lost: int) -> float:
+    """Exact two-sided p of McNemar's test: the chance of a split at least
+    this uneven between cases that got better and worse, were neither
+    version better."""
+    n = gained + lost
+    if n == 0:
+        return 1.0
+    tail = sum(math.comb(n, i) for i in range(min(gained, lost) + 1))
+    return min(1.0, 2 * tail / 2**n)
+
+
+def paired(meta: list[dict], base: list[dict], other: list[dict]) -> dict:
+    """Per section and yes/no metric, the cases `other` turns from false to
+    true (gained) and from true to false (lost) against `base`, with
+    McNemar's p. Averages hide that both versions answer the same cases.
+    For the metrics where true is bad (fallback, copied, first_copied,
+    unsupported, ungrounded), gained means worse."""
+    counts: dict[str, dict[str, list[int]]] = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0]))
+    for m, a, b in zip(meta, base, other):
+        before, after = row_of(m, a), row_of(m, b)
+        for k, v in after.items():
+            if not isinstance(v, bool) or not isinstance(before.get(k), bool) or k.endswith("_real"):
+                continue
+            for key in groups(m):
+                pair = counts[key][k]
+                pair[0] += int(v and not before[k])
+                pair[1] += int(before[k] and not v)
+    return {
+        key: {k: {"gained": g, "lost": l, "p": round(mcnemar(g, l), 3)} for k, (g, l) in sorted(c.items())}
+        for key, c in counts.items()
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("eval_dir", type=Path)
     parser.add_argument("traces", type=Path)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--against", type=Path, metavar="TRACES",
+                        help="compare with these traces of the same cases, case by case")
     args = parser.parse_args()
 
     meta = [json.loads(l) for l in (args.eval_dir / "meta.jsonl").read_text().splitlines()]
     traces = [json.loads(l) for l in args.traces.read_text().splitlines()]
     assert len(meta) == len(traces), (len(meta), len(traces))
+    if args.against:
+        base = [json.loads(l) for l in args.against.read_text().splitlines()]
+        assert len(meta) == len(base), (len(meta), len(base))
+        report = paired(meta, base, traces)
+        if args.json:
+            print(json.dumps(report, indent=2))
+            return
+        for key, metrics in report.items():
+            print(f"[{key}] {args.traces.name} against {args.against.name}")
+            for k, r in metrics.items():
+                if r["gained"] or r["lost"]:
+                    print(f"  {k:<14} +{r['gained']} -{r['lost']}  p={r['p']}")
+        return
 
     sums: dict[str, collections.Counter] = collections.defaultdict(collections.Counter)
     counts: dict[str, collections.Counter] = collections.defaultdict(collections.Counter)
     types: dict[str, collections.Counter] = collections.defaultdict(collections.Counter)
     for m, t in zip(meta, traces):
-        g = t["generation"]
-        subject = g["message"]["subject"]
-        history = t["inputs"]["subjects"]
-        known = evidence(t["inputs"])
-        diff = evidence({**t["inputs"], "subjects": []})
-        # Messages from rules (lockfiles, generated files) have no attempt.
-        first = g["attempts"][0]["rejected"] if g["attempts"] else None
-        row = {
-            "unsupported": unsupported(subject, known),
-            "unsupported_real": unsupported(m["target"], known),
-            "ungrounded": ungrounded(subject, diff),
-            "ungrounded_real": ungrounded(m["target"], diff),
-            "first_try": first is None,
-            "fallback": g["source"] == "fallback",
-            "copied": subject in history,
-            "first_copied": "copied_history" in (first or {}),
-            "word_f1": f1(subject, m["target"]),
-            "exact": subject == m["target"],
-        }
-        if m.get("expect"):
-            row["expected"] = expected(subject, m["expect"])
-        if m["set"] == "conventional":
-            real_type = TYPE_ALIASES.get(m["type"], m["type"])
-            row["type_match"] = conv_type(subject) == real_type
-            scope = SCOPE.match(subject)
-            known = {s.group(1) for h in history if (s := SCOPE.match(h))}
-            row["scope_known"] = scope is None or scope.group(1) in known
-            fits = scope_fits(subject, t["inputs"])
-            if fits is not None:
-                row["scope_fits"] = fits
-                row["scope_fits_real"] = scope_fits(m["target"], t["inputs"])
+        row = row_of(m, t)
         for key in groups(m):
             sums[key]["n"] += 1
             for k, v in row.items():
                 sums[key][k] += float(v)
                 counts[key][k] += 1
             if m["set"] == "conventional":
-                types[key][(real_type, conv_type(subject))] += 1
+                real_type = TYPE_ALIASES.get(m["type"], m["type"])
+                types[key][(real_type, conv_type(t["generation"]["message"]["subject"]))] += 1
 
     report = {}
     for key, c in sums.items():

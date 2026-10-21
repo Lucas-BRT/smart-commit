@@ -194,6 +194,36 @@ fn repository_settings_override_global_ones_inside_it() {
 }
 
 #[test]
+fn the_subject_limit_is_set_globally_or_for_a_repository() {
+    let env = Env::new();
+    let repo = staged_repo();
+    let prompt = |env: &Env| env.ok(&["prompt"], repo.path());
+    assert!(prompt(&env).contains("at most 72 characters"));
+
+    env.ok(&["config", "set", "style.subject_max", "90"], repo.path());
+    assert!(prompt(&env).contains("at most 90 characters"));
+    env.ok(
+        &["config", "set", "--repo", "style.subject_max", "100"],
+        repo.path(),
+    );
+    assert!(prompt(&env).contains("at most 100 characters"));
+    assert!(
+        std::fs::read_to_string(repo.path().join(".smart-commit.toml"))
+            .unwrap()
+            .contains("subject_max = 100")
+    );
+    for bad in ["10", "500", "wide"] {
+        let output = env.run(&["config", "set", "style.subject_max", bad], repo.path());
+        assert!(!output.status.success(), "{bad} was accepted");
+    }
+    env.ok(
+        &["config", "unset", "--repo", "style.subject_max"],
+        repo.path(),
+    );
+    assert!(prompt(&env).contains("at most 90 characters"));
+}
+
+#[test]
 fn machine_settings_cannot_go_in_the_repository() {
     let env = Env::new();
     let repo = TestRepo::new();

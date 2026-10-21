@@ -56,6 +56,7 @@ value, for example when an environment variable is set.
 | `style.default_convention` | `conventional`, `gitmoji`, `free` | `conventional` | | global or repository |
 | `style.default_language` | `english`, `portuguese` | `english` | | global or repository |
 | `style.history_depth` | 1–500 | 30 | | global or repository |
+| `style.subject_max` | 40–200 | 72 | | global or repository |
 
 - `backend = auto` uses whichever backend the device needs: OpenVINO for
   `npu`, `intel-gpu` and `openvino-cpu`, llama.cpp for `vulkan` and `cpu`.
@@ -108,6 +109,13 @@ value, for example when an environment variable is set.
   contradict it are left out of the prompt.
 - `style.default_*` apply when `auto` has nothing to go on: no history, or a
   history whose language cannot be told.
+- `style.subject_max` is the longest subject, in columns. 72 follows git's
+  convention (GitHub cuts the subject about there, `git log --oneline` and
+  patches by e-mail assume short lines); a team whose commitlint allows 100
+  sets it for the repository: `smart-commit config set --repo
+  style.subject_max 100`. The prompt states the limit, also to a model
+  trained without the fixed rules when it is not 72, and a longer reply ends
+  at the last phrase that fits (see [architecture](architecture.md)).
 
 Two more environment variables have no key: `SMART_COMMIT_MOCK_RESPONSE`
 (a reply of the mock backend) and `SMART_COMMIT_TRACE` (record every
