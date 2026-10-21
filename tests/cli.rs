@@ -251,6 +251,42 @@ fn annotated_file_list_for_evaluation() {
 }
 
 #[test]
+fn a_merge_that_stages_nothing_gets_gits_message() {
+    // Found with the commit scenarios: a conflict resolved to HEAD's side
+    // stages nothing, and smart-commit said "nothing staged" while `git
+    // commit` would make the merge.
+    let repo = TestRepo::new();
+    repo.write("f", "a\n");
+    repo.git(&["add", "f"]);
+    repo.commit("feat: first");
+    repo.git(&["checkout", "-q", "-b", "side"]);
+    repo.write("f", "side\n");
+    repo.git(&["commit", "-q", "-am", "feat: side"]);
+    repo.git(&["checkout", "-q", "main"]);
+    repo.write("f", "main\n");
+    repo.git(&["commit", "-q", "-am", "feat: main"]);
+    repo.git_with(&["merge", "-q", "side"], &[]);
+    repo.git(&["checkout", "--ours", "f"]);
+    repo.git(&["add", "f"]);
+
+    let dir = tempfile::TempDir::new().unwrap();
+    let trace = dir.path().join("trace.json");
+    // No mock reply: the model must not be asked.
+    let output = smart_commit(
+        &["--backend", "mock", "--trace", trace.to_str().unwrap()],
+        repo.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(stdout(&output).trim(), "Merge branch 'side'");
+    let recorded: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&trace).unwrap()).unwrap();
+    assert_eq!(recorded["generation"]["source"], "git");
+    assert_eq!(recorded["inputs"]["prepared"]["operation"], "merge");
+    let output = smart_commit(&["replay", trace.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+}
+
+#[test]
 fn prompt_from_inputs_reads_stdin_and_global_settings() {
     let repo = staged_repo();
     let (inputs, _) = recorded_inputs(&repo);

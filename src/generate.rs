@@ -33,6 +33,9 @@ pub enum Source {
     /// Only lockfiles and generated files were staged: built from the file
     /// list without asking the model, whose prompt would not show them.
     Rules,
+    /// Git prepared it for the merge, revert or cherry-pick in progress,
+    /// which the diff does not show: used as is, as `git commit` would.
+    Git,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -64,7 +67,15 @@ pub fn generate_avoiding(
     avoid: &[String],
 ) -> Result<Generation, BackendError> {
     let (convention, language) = prompt::effective_style(&ctx.style, options);
-    // Turned down, the file list's message goes to the model for another.
+    // Turned down, git's or the file list's message goes to the model for
+    // another.
+    if let (true, Some(prepared)) = (avoid.is_empty(), &ctx.prepared) {
+        return Ok(Generation {
+            message: prepared_message(&prepared.message),
+            source: Source::Git,
+            attempts: Vec::new(),
+        });
+    }
     if avoid.is_empty() && by_rules(ctx, files) {
         return Ok(Generation {
             message: message::fallback(&ctx.staged, convention, language),
@@ -116,6 +127,22 @@ pub fn generate_avoiding(
         source: Source::Fallback,
         attempts,
     })
+}
+
+/// Whether the message for `avoid` comes without a model: from git, or
+/// from the file list.
+pub fn needs_model(ctx: &RepoContext, files: &[FileDiff], avoid: &[String]) -> bool {
+    !avoid.is_empty() || (ctx.prepared.is_none() && !by_rules(ctx, files))
+}
+
+/// Git's prepared message as subject and body.
+fn prepared_message(text: &str) -> CommitMessage {
+    let (subject, body) = text.split_once('\n').unwrap_or((text, ""));
+    let body = body.trim();
+    CommitMessage {
+        subject: subject.trim().to_owned(),
+        body: (!body.is_empty()).then(|| body.to_owned()),
+    }
 }
 
 /// Whether the message comes from the file list alone: every staged file
@@ -360,6 +387,49 @@ mod tests {
         assert_eq!(generation.message.subject, "chore: add Cargo.lock");
         assert!(generation.attempts.is_empty());
         assert!(mock.prompts().is_empty());
+    }
+
+    #[test]
+    fn git_prepared_messages_are_used_as_is() {
+        use crate::git::{Operation, PreparedMessage};
+        let ctx = context(CONVENTIONAL).with_prepared(Some(PreparedMessage {
+            operation: Operation::Revert,
+            message: "Revert \"fix(git): handle detached HEAD\"\n\nThis reverts commit 2e2ce44."
+                .into(),
+        }));
+        let mock = MockBackend::new(["fix(git): read the branch name"]);
+        assert!(!needs_model(&ctx, &files(), &[]));
+        let generation = generate(
+            &ctx,
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Git);
+        assert_eq!(
+            generation.message.subject,
+            "Revert \"fix(git): handle detached HEAD\""
+        );
+        assert_eq!(
+            generation.message.body.as_deref(),
+            Some("This reverts commit 2e2ce44.")
+        );
+        assert!(generation.attempts.is_empty() && mock.prompts().is_empty());
+        // Turned down, it goes to the model for another.
+        let avoid = [generation.message.subject.clone()];
+        assert!(needs_model(&ctx, &files(), &avoid));
+        let generation = generate_avoiding(
+            &ctx,
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Model);
     }
 
     #[test]

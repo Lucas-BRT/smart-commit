@@ -161,6 +161,20 @@ hide the diff from the prompt. A lockfile the list does not know goes to
 the model like any file. Asking for another message in the review asks
 the model.
 
+## Merges, reverts and cherry-picks
+
+A merge, a revert or a cherry-pick in progress leaves git's own message in
+`MERGE_MSG` (`Merge branch 'x'`, `Revert "..."` with the reverted hash,
+the picked commit's message), which `git commit` would use. The diff does
+not show what is going on, so a model describes it as an ordinary change;
+smart-commit takes git's message instead, comments removed, **without
+loading the model**. A merge resolved to what HEAD already has stages
+nothing; that is not "nothing staged" then. `git merge --squash` writes
+`SQUASH_MSG`, a list of the squashed commits rather than a subject: the
+model describes the change. The message is in the trace inputs
+(`prepared`), so `eval` and `replay` reproduce it. Asking for another
+message in the review asks the model.
+
 ## Git hook
 
 `smart-commit hook install` writes `prepare-commit-msg`, honouring

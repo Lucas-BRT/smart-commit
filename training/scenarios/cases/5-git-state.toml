@@ -29,7 +29,7 @@ tags = ["git-state"]
 id = "cherry-pick"
 title = "cherry-pick de outra branch"
 repo = "cafeteria"
-split = "train"
+split = "eval"
 stage = "none"
 ops = [
   { op = "git", args = ["checkout", "-q", "-b", "sazonal", "HEAD~2"] },
@@ -38,9 +38,9 @@ ops = [
   { op = "git", args = ["checkout", "-q", "main"] },
   { op = "git", args = ["cherry-pick", "-n", "{{commit:chá gelado no cardápio de verão}}"] },
 ]
-target = "adiciona chá gelado de hibisco ao cardápio"
-expect = ["cha|hibisco", "cardapio|adiciona"]
-tags = ["cherry-pick"]
+target = "chá gelado no cardápio de verão"
+expect = ["cha|hibisco", "cardapio"]
+tags = ["cherry-pick", "git-state"]
 
 [[case]]
 id = "merge-kept-ours"
@@ -48,7 +48,6 @@ title = "merge com conflito resolvido pelo nosso lado"
 repo = "cafeteria"
 split = "eval"
 stage = "none"
-issue = "the resolution equals HEAD, so smart-commit says nothing staged, while git commit works"
 ops = [
   { op = "git", args = ["checkout", "-q", "-b", "desconto"] },
   { op = "replace", path = "src/cafeteria/config.py", old = "desconto_maximo: float = 0.30", new = "desconto_maximo: float = 0.50" },

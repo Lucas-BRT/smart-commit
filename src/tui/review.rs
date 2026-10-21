@@ -134,6 +134,7 @@ impl Review {
             Source::Rules => {
                 "built from the file list: only lockfiles and generated files".to_owned()
             }
+            Source::Git => "prepared by git for the merge, revert or cherry-pick".to_owned(),
         };
         frame.render_widget(
             Paragraph::new(Line::styled(

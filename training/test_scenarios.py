@@ -187,7 +187,8 @@ def check_build(binary: str) -> None:
         cases = {c.id: c for c in load_cases()}
         assert len(inputs) == len(meta) == sum(c.outcome == "message" and not c.issue for c in cases.values())
         for i, m in zip(inputs, meta):
-            assert i["staged"], m["hash"]
+            # A merge resolved to HEAD stages nothing; git prepared its message.
+            assert i["staged"] or i.get("prepared"), m["hash"]
             assert m["target"] == cases[m["hash"]].target
     print("ok build (twice, identical)")
 

@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::git::{FileChange, GitError, Repo};
+use crate::git::{FileChange, GitError, PreparedMessage, Repo};
 use crate::style::{self, Style};
 
 /// How many recent commits the style is learned from, by default.
@@ -23,6 +23,9 @@ pub struct RepoContext {
     pub staged: Vec<FileChange>,
     /// Staged paths `.gitattributes` marks `linguist-generated`.
     pub generated: Vec<String>,
+    /// The message git prepared for a merge, revert or cherry-pick in
+    /// progress.
+    pub prepared: Option<PreparedMessage>,
 }
 
 impl RepoContext {
@@ -44,7 +47,8 @@ impl RepoContext {
             staged,
         )
         .with_history_files(files)
-        .with_generated(generated))
+        .with_generated(generated)
+        .with_prepared(repo.prepared_message()?))
     }
 
     /// Derives everything else from what git reports, so a context can be
@@ -64,6 +68,7 @@ impl RepoContext {
             history_files: Vec::new(),
             staged,
             generated: Vec::new(),
+            prepared: None,
         }
     }
 
@@ -77,6 +82,12 @@ impl RepoContext {
     /// Adds the staged paths marked `linguist-generated`.
     pub fn with_generated(mut self, generated: Vec<String>) -> Self {
         self.generated = generated;
+        self
+    }
+
+    /// Adds the message git prepared for the commit in progress.
+    pub fn with_prepared(mut self, prepared: Option<PreparedMessage>) -> Self {
+        self.prepared = prepared;
         self
     }
 }

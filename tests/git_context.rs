@@ -12,6 +12,71 @@ use tempfile::TempDir;
 mod common;
 use common::TestRepo;
 
+/// A repository with `main` and `side` both changing `f` after `first`.
+fn diverged() -> TestRepo {
+    let repo = TestRepo::new();
+    repo.write("f", "a\n");
+    repo.git(&["add", "f"]);
+    repo.commit("first");
+    repo.git(&["checkout", "-q", "-b", "side"]);
+    repo.write("g", "side\n");
+    repo.git(&["add", "g"]);
+    repo.commit("add g on side");
+    repo.write("f", "side\n");
+    repo.git(&["commit", "-q", "-am", "conflicting f"]);
+    repo.git(&["checkout", "-q", "main"]);
+    repo.write("f", "main\n");
+    repo.git(&["commit", "-q", "-am", "second: change f"]);
+    repo
+}
+
+#[test]
+fn git_prepared_messages_are_read() {
+    use smart_commit::git::Operation;
+    let prepared = |repo: &TestRepo| {
+        repo.repo()
+            .prepared_message()
+            .unwrap()
+            .map(|p| (p.operation, p.message))
+    };
+    let repo = diverged();
+    assert_eq!(prepared(&repo), None);
+
+    // A conflict resolved to what HEAD has: nothing staged, git's message.
+    repo.git_with(&["merge", "-q", "side"], &[]);
+    repo.git(&["checkout", "--ours", "f"]);
+    repo.git(&["add", "f"]);
+    assert_eq!(
+        prepared(&repo),
+        Some((Operation::Merge, "Merge branch 'side'".to_owned()))
+    );
+    assert_eq!(repo.context().prepared.unwrap().operation, Operation::Merge);
+    repo.git(&["merge", "--abort"]);
+
+    repo.git(&["revert", "--no-commit", "HEAD"]);
+    let (operation, message) = prepared(&repo).unwrap();
+    assert_eq!(operation, Operation::Revert);
+    assert!(
+        message.starts_with("Revert \"second: change f\"\n\nThis reverts commit "),
+        "{message}"
+    );
+    repo.git(&["revert", "--abort"]);
+
+    // --no-commit leaves no CHERRY_PICK_HEAD, only the message.
+    repo.git(&["cherry-pick", "-n", "side~1"]);
+    assert_eq!(
+        prepared(&repo),
+        Some((Operation::CherryPick, "add g on side".to_owned()))
+    );
+    // A reset drops the message with the changes: none is left over.
+    repo.git(&["reset", "-q", "--hard"]);
+    assert_eq!(prepared(&repo), None);
+
+    // A squash's message is the list of squashed commits: left to the model.
+    repo.git(&["merge", "-q", "--squash", "side~1"]);
+    assert_eq!(prepared(&repo), None);
+}
+
 #[test]
 fn outside_a_repository_is_an_error() {
     let dir = TempDir::new().unwrap();

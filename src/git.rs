@@ -44,6 +44,23 @@ pub struct FileChange {
     pub old_path: Option<String>,
 }
 
+/// What git is in the middle of when it prepared a commit message.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Operation {
+    Merge,
+    Revert,
+    CherryPick,
+}
+
+/// The message git prepared in `MERGE_MSG` for a merge, revert or
+/// cherry-pick in progress, the one `git commit` would use; comments out.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PreparedMessage {
+    pub operation: Operation,
+    pub message: String,
+}
+
 /// Paths kept per history commit: enough to tell the areas a scope covers.
 pub const HISTORY_FILES: usize = 20;
 
@@ -183,6 +200,39 @@ impl Repo {
         Ok(self.root.join(out.trim_end()))
     }
 
+    /// The message git prepared for the commit in progress, if any: a merge
+    /// (`MERGE_HEAD`), a revert (`REVERT_HEAD`) or a cherry-pick
+    /// (`CHERRY_PICK_HEAD`, or none with `--no-commit`) leave it in
+    /// `MERGE_MSG`. `git merge --squash` writes `SQUASH_MSG` instead, a list
+    /// of the squashed commits rather than a subject: not used.
+    pub fn prepared_message(&self) -> Result<Option<PreparedMessage>, GitError> {
+        let names = ["MERGE_MSG", "REVERT_HEAD", "CHERRY_PICK_HEAD", "MERGE_HEAD"];
+        let mut args = vec!["rev-parse"];
+        for name in names {
+            args.extend(["--git-path", name]);
+        }
+        let out = self.git(&args)?;
+        // Relative paths are relative to where git ran: the root.
+        let paths: Vec<PathBuf> = out.lines().map(|line| self.root.join(line)).collect();
+        let text = match std::fs::read_to_string(&paths[0]) {
+            Ok(text) => text,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(e) => return Err(e.into()),
+        };
+        let message = without_comments(&text, &self.comment_prefix()?);
+        if message.is_empty() {
+            return Ok(None);
+        }
+        let operation = if paths[1].exists() {
+            Operation::Revert
+        } else if paths[3].exists() {
+            Operation::Merge
+        } else {
+            Operation::CherryPick
+        };
+        Ok(Some(PreparedMessage { operation, message }))
+    }
+
     /// The prefix of comment lines in commit messages (`core.commentChar`).
     ///
     /// `auto` makes git pick a character per message; we assume the default
@@ -258,6 +308,26 @@ impl Repo {
     }
 }
 
+/// `text` without its comment lines and trailing whitespace, as `git
+/// commit` cleans a message by default.
+fn without_comments(text: &str, comment: &str) -> String {
+    let lines: Vec<&str> = text
+        .lines()
+        .filter(|line| !line.starts_with(comment))
+        .map(str::trim_end)
+        .collect();
+    let mut message = String::new();
+    for (n, line) in lines.iter().enumerate() {
+        // Runs of blank lines become one, as `git commit` does.
+        if line.is_empty() && (n == 0 || lines[n - 1].is_empty()) {
+            continue;
+        }
+        message.push_str(line);
+        message.push('\n');
+    }
+    message.trim().to_owned()
+}
+
 /// Parses `git diff --name-status -z` output.
 ///
 /// Entries are NUL-separated: `STATUS\0PATH\0`, except renames and copies,
@@ -314,6 +384,19 @@ mod tests {
                 change(ChangeStatus::TypeChanged, "link", None),
             ]
         );
+    }
+
+    #[test]
+    fn prepared_messages_lose_their_comments() {
+        let merge = "Merge branch 'side'\n\n# Conflicts:\n#\tsrc/a.rs\n";
+        assert_eq!(without_comments(merge, "#"), "Merge branch 'side'");
+        let revert = "Revert \"feat: x\"\n\nThis reverts commit 2e2ce44.  \n\n\n";
+        assert_eq!(
+            without_comments(revert, "#"),
+            "Revert \"feat: x\"\n\nThis reverts commit 2e2ce44."
+        );
+        assert_eq!(without_comments("; note\nfix: y\n", ";"), "fix: y");
+        assert_eq!(without_comments("# only a comment\n", "#"), "");
     }
 
     #[test]

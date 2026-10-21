@@ -17,7 +17,7 @@ use crate::backend::{Backend, BackendError, GenerationConfig, MockBackend};
 use crate::context::RepoContext;
 use crate::diff::FileDiff;
 use crate::generate::{self, Generation};
-use crate::git::FileChange;
+use crate::git::{FileChange, PreparedMessage};
 use crate::prompt::PromptOptions;
 
 /// Bumped on incompatible changes to the trace layout.
@@ -51,6 +51,11 @@ pub struct Inputs {
     /// when empty, so older traces read, and replay, the same.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub generated: Vec<String>,
+    /// The message git prepared for a merge, revert or cherry-pick in
+    /// progress. Left out when there is none, so older traces read, and
+    /// replay, the same.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prepared: Option<PreparedMessage>,
 }
 
 impl Inputs {
@@ -64,6 +69,7 @@ impl Inputs {
         )
         .with_history_files(self.history_files.clone())
         .with_generated(self.generated.clone())
+        .with_prepared(self.prepared.clone())
     }
 }
 
@@ -106,6 +112,7 @@ impl Trace {
                 staged: ctx.staged.clone(),
                 files: files.to_vec(),
                 generated: ctx.generated.clone(),
+                prepared: ctx.prepared.clone(),
             },
             generation: generation.clone(),
         }

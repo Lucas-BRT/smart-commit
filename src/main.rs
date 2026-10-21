@@ -481,7 +481,7 @@ fn run_prompt(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dyn Error
     let repo = Repo::discover(path)?;
     let settings = resolve(Some(&repo), Vec::new())?.settings();
     let context = RepoContext::collect_with_history(&repo, settings.history_depth)?;
-    let files = staged_files(&repo)?;
+    let files = staged_files(&repo, &context)?;
     let mut options = settings.prompt_options();
     prompt_args.apply(&mut options);
     let prompt = prompt::build(&context, &files, &options);
@@ -646,7 +646,7 @@ impl Session {
         warn_renamed(&resolved);
         let settings = resolved.settings();
         let context = RepoContext::collect_with_history(repo, settings.history_depth)?;
-        let files = staged_files(repo)?;
+        let files = staged_files(repo, &context)?;
         Ok(Self {
             context,
             files,
@@ -678,12 +678,11 @@ impl Session {
 
     /// A message other than those in `avoid`, writing the trace if asked.
     fn generate(&self, avoid: &[String]) -> Result<Generation, Box<dyn Error>> {
-        let backend: &dyn Backend =
-            if avoid.is_empty() && generate::by_rules(&self.context, &self.files) {
-                &NoModel
-            } else {
-                self.backend()?.0.as_ref()
-            };
+        let backend: &dyn Backend = if generate::needs_model(&self.context, &self.files, avoid) {
+            self.backend()?.0.as_ref()
+        } else {
+            &NoModel
+        };
         let generation = generate::generate_avoiding(
             &self.context,
             &self.files,
@@ -1020,9 +1019,11 @@ fn fill_message_file(message_file: &Path, backend: &BackendArgs) -> Result<(), B
     Ok(())
 }
 
-fn staged_files(repo: &Repo) -> Result<Vec<diff::FileDiff>, Box<dyn Error>> {
+/// The staged diff; none is an error, unless git prepared the message (a
+/// merge resolved to what HEAD already has stages nothing, yet commits).
+fn staged_files(repo: &Repo, context: &RepoContext) -> Result<Vec<diff::FileDiff>, Box<dyn Error>> {
     let files = repo.staged_diff()?;
-    if files.is_empty() {
+    if files.is_empty() && context.prepared.is_none() {
         return Err("nothing staged".into());
     }
     Ok(files)

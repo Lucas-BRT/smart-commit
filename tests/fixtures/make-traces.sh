@@ -208,6 +208,17 @@ git add .
 "$BIN" --backend mock --mock-response "feat(training): add scenarios for the 0.6.0 release" \
   --trace "$OUT/conventional-en-empty-diff.json" >/dev/null
 
+# Found with the commit scenarios: a merge whose conflict was resolved to
+# HEAD's side stages nothing; smart-commit said "nothing staged" while `git
+# commit` makes the merge. Git's prepared message is used, without a model.
+fresh merge
+printf 'a\n' > f; git add f; commit "feat: add f"
+git checkout -q -b side; printf 'side\n' > f; git commit -q -am "feat: change f on side"
+git checkout -q main; printf 'main\n' > f; git commit -q -am "feat: change f on main"
+git merge -q side >/dev/null 2>&1 || true
+git checkout -q --ours f; git add f
+"$BIN" --backend mock --trace "$OUT/conventional-en-merge.json" >/dev/null
+
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
 # 75th and 90th percentiles of eval-v1's prompts (the last fills the budget).

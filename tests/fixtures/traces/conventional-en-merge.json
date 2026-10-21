@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "tool_version": "0.6.0",
+  "backend": "none",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "feat: change f on main",
+      "feat: add f"
+    ],
+    "history_files": [
+      [
+        "f"
+      ],
+      [
+        "f"
+      ]
+    ],
+    "staged": [],
+    "files": [],
+    "prepared": {
+      "operation": "merge",
+      "message": "Merge branch 'side'"
+    }
+  },
+  "generation": {
+    "message": {
+      "subject": "Merge branch 'side'",
+      "body": null
+    },
+    "source": "git",
+    "attempts": []
+  }
+}
