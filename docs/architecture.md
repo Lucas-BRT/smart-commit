@@ -80,9 +80,11 @@ prompt is read a little longer instead of failing.
    fit is summarised as `... and N more files`.
 4. The rest is shared by priority (source, config, tests, docs): each file
    of a tier gets an equal share, smaller files give back what they do not
-   need, and leftovers go to the next tier. A file whose share is under 24
-   tokens is left out rather than cut to a few misleading lines; cut files
-   end with `[... N more lines]`.
+   need, and leftovers go to the next tier. A cut file shows at least its
+   headers and three of its lines (and 24 tokens): when the equal share is
+   less, the first files of the tier get that much while the budget lasts
+   and the others appear in the file list only, so a section is never a
+   bare header. Cut files end with `[... N more lines]`.
 
 ## Prompt
 

@@ -187,9 +187,10 @@ git add .
 "$BIN" --backend mock --mock-response "test(training): score.py crashes when reading rule messages" \
   --trace "$OUT/conventional-en-fix-as-test.json" >/dev/null
 
-# Found in real use, with smart-commit-0.5b-v0.2: about forty new files share
-# the diff budget, so every section is cut to its header and the prompt
-# shows no code; the model took a version from the history ("0.6.0").
+# Found in real use, with smart-commit-0.5b-v0.2: about forty new files shared
+# the diff budget, so every section was cut to its header and the prompt
+# showed no code; the model took a version from the history ("0.6.0"). The
+# prompt now shows the first lines of the files that fit, and only those.
 fresh empty-diff
 commit "fix(llamacpp): leave room for prompts whose tokens were underestimated"
 commit "chore: release 0.6.0"

@@ -16,6 +16,10 @@ pub const CHARS_PER_TOKEN: usize = 3;
 /// Below this, a file's hunks are dropped instead of truncated: a few lines
 /// of a large change mislead more than they help.
 const MIN_FILE_TOKENS: usize = 24;
+/// A cut file shows at least this many lines of its hunks besides the
+/// headers, or it is left out: a header alone tells nothing the file list
+/// does not.
+const MIN_BODY_LINES: usize = 3;
 
 pub fn estimate_tokens(text: &str) -> usize {
     text.chars().count().div_ceil(CHARS_PER_TOKEN)
@@ -67,6 +71,25 @@ impl FileDiff {
     /// Whether the file has hunks that may go into the prompt.
     fn has_useful_hunks(&self) -> bool {
         !self.hunks.is_empty() && !FileKind::of(self).is_noise()
+    }
+
+    /// The least a cut section costs: its headers, [`MIN_BODY_LINES`] lines
+    /// and the marker, as [`fit_file`] counts them; at least
+    /// [`MIN_FILE_TOKENS`], at most the whole section.
+    fn min_tokens(&self) -> usize {
+        let section = self.section();
+        let lines: Vec<&str> = section.lines().collect();
+        let mut cost = 0;
+        let mut body = 0;
+        for (n, line) in lines.iter().enumerate() {
+            if body == MIN_BODY_LINES {
+                cost += estimate_tokens(&format!("[... {} more lines]\n", lines.len() - n));
+                break;
+            }
+            cost += estimate_tokens(line) + 1;
+            body += usize::from(!is_header(line));
+        }
+        cost.max(MIN_FILE_TOKENS).min(estimate_tokens(&section))
     }
 
     /// The file as it appears in the prompt's diff.
@@ -281,7 +304,9 @@ fn classify_path(path: &str) -> FileKind {
 /// The stat is capped at half the budget; files beyond it are summarised in
 /// one line. Hunks are shared by priority tier: each tier splits what is left
 /// evenly, files needing less than their share give the rest back, and
-/// whatever the tier does not use goes to the next one.
+/// whatever the tier does not use goes to the next one. A share too small to
+/// show any of a file's lines is raised to the least that does, while the
+/// budget lasts; the files left without it appear in the stat only.
 ///
 /// The only way to exceed `budget` is a budget too small for the stat's
 /// summary line itself, which is always kept.
@@ -302,11 +327,17 @@ pub fn compact(files: &[FileDiff], budget: usize) -> CompactDiff {
     let mut allotted = vec![0usize; files.len()];
     for tier in order.chunk_by(|a, b| a.0 == b.0) {
         for (left, &(_, need, i)) in (1..=tier.len()).rev().zip(tier) {
-            let grant = need.min(remaining / left);
-            if grant == need || grant >= MIN_FILE_TOKENS {
-                allotted[i] = grant;
-                remaining -= grant;
-            }
+            let least = files[i].min_tokens();
+            let share = need.min(remaining / left);
+            let grant = if share >= least {
+                share
+            } else if remaining >= least {
+                least
+            } else {
+                0
+            };
+            allotted[i] = grant;
+            remaining -= grant;
         }
     }
 
@@ -360,7 +391,13 @@ fn stat_line(file: &FileDiff) -> String {
     }
 }
 
-/// Keeps whole lines of the file's section while they fit in `tokens`.
+/// The file's `--- path` line and hunk headers, as opposed to its lines.
+fn is_header(line: &str) -> bool {
+    line.starts_with("--- ") || line.starts_with("@@")
+}
+
+/// Keeps whole lines of the file's section while they fit in `tokens`;
+/// nothing at all if no line besides the headers fits.
 fn fit_file(file: &FileDiff, tokens: usize) -> (String, bool) {
     let full = file.section();
     if estimate_tokens(&full) <= tokens {
@@ -370,15 +407,20 @@ fn fit_file(file: &FileDiff, tokens: usize) -> (String, bool) {
     let mut kept = String::new();
     // Sum of per-line estimates: an upper bound of the estimate of `kept`.
     let mut used = 0;
+    let mut body = 0;
     for (n, line) in lines.iter().enumerate() {
         let marker = format!("[... {} more lines]\n", lines.len() - n);
         let cost = estimate_tokens(line) + 1;
         if used + cost + estimate_tokens(&marker) > tokens {
+            if body == 0 {
+                return (String::new(), true);
+            }
             kept.push_str(&marker);
             break;
         }
         let _ = writeln!(kept, "{line}");
         used += cost;
+        body += usize::from(!is_header(line));
     }
     (kept, true)
 }
@@ -587,6 +629,63 @@ mod tests {
             let used = estimate_tokens(&diff.stat) + estimate_tokens(&diff.patch);
             assert!(used <= budget, "{used} > {budget}");
         }
+    }
+
+    /// Every section in the patch, as (path, lines besides the headers).
+    fn sections(patch: &str) -> Vec<(String, usize)> {
+        let mut found: Vec<(String, usize)> = Vec::new();
+        for line in patch.lines() {
+            if let Some(path) = line.strip_prefix("--- ") {
+                found.push((path.to_owned(), 0));
+            } else if !line.starts_with("@@") && !line.starts_with("[...") {
+                found.last_mut().expect("a line before any header").1 += 1;
+            }
+        }
+        found
+    }
+
+    #[test]
+    fn many_files_show_lines_or_nothing() {
+        // Found in real use: forty new files shared the budget evenly and
+        // every section was cut to its headers, some to a bare marker.
+        let files: Vec<FileDiff> = (0..40)
+            .map(|n| {
+                let mut text = String::from("@@ -0,0 +1,30 @@\n");
+                for i in 0..30 {
+                    let _ = writeln!(text, "+value_{n}_{i} = \"line {i} of a new scenario file\"");
+                }
+                file(&format!("training/scenario_{n:02}.py"), &text)
+            })
+            .collect();
+        for budget in [300, 600, 900] {
+            let diff = compact(&files, budget);
+            let shown = sections(&diff.patch);
+            assert!(!shown.is_empty(), "budget {budget}: no file shown");
+            for (path, body) in &shown {
+                assert!(
+                    *body >= MIN_BODY_LINES,
+                    "budget {budget}: {path} shows {body} lines"
+                );
+            }
+            assert_eq!(diff.patch.matches("--- ").count(), shown.len());
+            assert!(
+                !diff.patch.starts_with("[..."),
+                "a marker without its header"
+            );
+            assert_eq!(diff.truncated, files.len(), "budget {budget}");
+            let used = estimate_tokens(&diff.stat) + estimate_tokens(&diff.patch);
+            assert!(used <= budget, "{used} > {budget}");
+        }
+    }
+
+    #[test]
+    fn a_cut_without_lines_is_left_out() {
+        let big = file("src/big.rs", &hunk(50));
+        let (text, cut) = fit_file(&big, 12);
+        assert_eq!((text.as_str(), cut), ("", true));
+        let (text, cut) = fit_file(&big, big.min_tokens());
+        assert!(cut);
+        assert_eq!(sections(&text), [("src/big.rs".to_owned(), MIN_BODY_LINES)]);
     }
 
     #[test]
