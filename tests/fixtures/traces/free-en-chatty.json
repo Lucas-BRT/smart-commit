@@ -1,11 +1,12 @@
 {
   "format": 1,
-  "tool_version": "0.5.0",
+  "tool_version": "0.6.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
     "default_convention": "conventional",
-    "default_language": "english"
+    "default_language": "english",
+    "diff": "annotated"
   },
   "config": {
     "max_new_tokens": 128
@@ -49,7 +50,7 @@
       {
         "prompt": {
           "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nFix crash when the diff is empty\nAdd support for renames\n",
-          "user": "Files changed:\nmain.rs | +1 -0\n\nDiff:\n--- main.rs\n@@ -0,0 +1 @@\n+fn main() {}\n"
+          "user": "Files changed:\nmain.rs | new, +1 -0\n\nDiff:\n--- main.rs\n@@ -0,0 +1 @@\n+fn main() {}\n"
         },
         "raw": "<think>The diff adds main.</think>\nSure! Here is a commit message:\n\"Add the main entry point.\"\n\nThis commit message describes the change.",
         "rejected": null

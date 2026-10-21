@@ -1,11 +1,12 @@
 {
   "format": 1,
-  "tool_version": "0.5.0",
+  "tool_version": "0.6.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
     "default_convention": "conventional",
-    "default_language": "english"
+    "default_language": "english",
+    "diff": "annotated"
   },
   "config": {
     "max_new_tokens": 128

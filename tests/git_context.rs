@@ -282,7 +282,7 @@ fn prompt_from_a_real_repository_fits_the_budget() {
     let prompt = prompt::build(&ctx, &files, &options);
 
     assert!(prompt.system.contains("Write in Brazilian Portuguese."));
-    assert!(prompt.user.contains("m0.rs | +80 -0"));
+    assert!(prompt.user.contains("m0.rs | new, +80 -0"));
     let used = diff::estimate_tokens(&prompt.system) + diff::estimate_tokens(&prompt.user);
     assert!(used < options.max_prompt_tokens, "{used}");
 }

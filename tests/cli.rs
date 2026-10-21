@@ -104,7 +104,7 @@ fn prompt_shows_style_and_staged_diff() {
     let out = stdout(&output);
     assert!(out.contains("Write in English"));
     assert!(out.contains("Fix the crash when the diff is empty"));
-    assert!(out.contains("main.rs | +1 -0"));
+    assert!(out.contains("main.rs | new, +1 -0"));
     assert!(out.contains("+fn main() {}"));
     assert!(out.contains("of 1024 tokens ====="));
 }
@@ -204,9 +204,10 @@ fn rules_can_be_omitted_for_training_and_evaluation() {
 }
 
 #[test]
-fn annotated_file_list_for_evaluation() {
+fn plain_file_list_for_evaluation() {
     let repo = staged_repo();
-    let (inputs, plain) = recorded_inputs(&repo);
+    // The prompt sent is annotated, the default.
+    let (inputs, annotated) = recorded_inputs(&repo);
     let dir = tempfile::TempDir::new().unwrap();
     let file = dir.path().join("inputs.jsonl");
     std::fs::write(&file, format!("{inputs}\n")).unwrap();
@@ -218,12 +219,12 @@ fn annotated_file_list_for_evaluation() {
     );
     assert!(output.status.success(), "{}", stderr(&output));
     let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
-    let user = prompt["user"].as_str().unwrap();
-    assert!(user.contains("main.rs | new, +1 -0\n"), "{user}");
-    assert_eq!(prompt["system"], plain["system"]);
+    assert_eq!(prompt, annotated);
     let output = smart_commit(&["prompt", "--inputs", path, "--diff", "plain"], dir.path());
     let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
-    assert_eq!(prompt, plain);
+    let user = prompt["user"].as_str().unwrap();
+    assert!(user.contains("main.rs | +1 -0\n"), "{user}");
+    assert_eq!(prompt["system"], annotated["system"]);
 
     // The format is recorded, so the trace replays with the same prompt.
     let output = smart_commit(
@@ -231,7 +232,7 @@ fn annotated_file_list_for_evaluation() {
             "eval",
             path,
             "--diff",
-            "annotated",
+            "plain",
             "--backend",
             "mock",
             "--mock-response",
@@ -242,7 +243,9 @@ fn annotated_file_list_for_evaluation() {
     assert!(output.status.success(), "{}", stderr(&output));
     let line = stdout(&output);
     let trace: serde_json::Value = serde_json::from_str(line.trim()).unwrap();
-    assert_eq!(trace["options"]["diff"], "annotated");
+    // Plain is left out of the trace, as in traces from before the
+    // annotated list, and read back as plain.
+    assert!(trace["options"]["diff"].is_null(), "{line}");
     let file = dir.path().join("trace.json");
     std::fs::write(&file, &line).unwrap();
     let output = smart_commit(&["replay", file.to_str().unwrap()], dir.path());

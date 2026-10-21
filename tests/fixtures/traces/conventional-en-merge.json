@@ -5,7 +5,8 @@
   "options": {
     "max_prompt_tokens": 1024,
     "default_convention": "conventional",
-    "default_language": "english"
+    "default_language": "english",
+    "diff": "annotated"
   },
   "config": {
     "max_new_tokens": 128

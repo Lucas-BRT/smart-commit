@@ -747,8 +747,9 @@ impl Settings {
                 .gguf
                 .as_deref()
                 .map_or(PromptRules::Full, models::prompt_rules),
-            // Plain until the annotated format is measured on the fine-tunes.
-            diff: DiffFormat::Plain,
+            // Measured on eval-v1 with the v0.2 fine-tunes and the base
+            // models: better types for all four (training H11).
+            diff: DiffFormat::Annotated,
         }
     }
 

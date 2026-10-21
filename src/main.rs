@@ -219,7 +219,7 @@ struct PromptArgs {
     rules: Option<RulesArg>,
     /// The file list: line counts only, or also each file's status,
     /// renames, and whitespace-only and comment-only changes
-    /// [default: plain]
+    /// [default: annotated]
     #[arg(long, value_enum)]
     diff: Option<DiffArg>,
 }

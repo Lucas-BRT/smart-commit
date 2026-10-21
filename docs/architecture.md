@@ -96,9 +96,10 @@ them, and the history examples. The user message has the file list, the diff
 and, when files were cut, a note saying so. A forced convention
 (`style.convention`) drops the examples that contradict it.
 
-The file list is plain (`path | +3 -1`), the format the fine-tunes were
-trained on. `--diff annotated` (`prompt` and `eval` only, recorded in
-traces) adds what the counts do not say: `new`, `deleted`, `renamed` with
+The file list says what the line counts do not (`--diff plain`, in
+`prompt` and `eval` only, gives the bare `path | +3 -1` the v0.2
+fine-tunes were trained on; the format is recorded in traces, and traces
+without it are plain): `new`, `deleted`, `renamed` with
 git's short form `dir/{old => new}/file` and one line for three or more
 files moved between the same directories, `copied from`, `empty`, `no line
 changed (mode)`, `whitespace only` with which whitespace (`CRLF to LF`,

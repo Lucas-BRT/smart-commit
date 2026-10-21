@@ -49,17 +49,23 @@ impl PromptRules {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DiffFormat {
-    /// `path | +3 -1`, what the fine-tunes were trained on.
-    #[default]
+    /// `path | +3 -1`, what the v0.2 fine-tunes were trained on.
     Plain,
     /// With each file's status, renames as `dir/{old => new}`, and
     /// whitespace-only and comment-only changes named (see `annotate`).
+    #[default]
     Annotated,
 }
 
 impl DiffFormat {
     pub fn is_plain(&self) -> bool {
         *self == Self::Plain
+    }
+
+    /// What a trace without the field used: the plain list, the only one
+    /// before the annotated list existed.
+    fn recorded() -> Self {
+        Self::Plain
     }
 }
 
@@ -79,8 +85,12 @@ pub struct PromptOptions {
     /// Left out of traces when full, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptRules::is_full")]
     pub rules: PromptRules,
-    /// Left out of traces when plain, so older traces still read the same.
-    #[serde(default, skip_serializing_if = "DiffFormat::is_plain")]
+    /// Left out of traces when plain, so older traces, which have none,
+    /// still read the same.
+    #[serde(
+        default = "DiffFormat::recorded",
+        skip_serializing_if = "DiffFormat::is_plain"
+    )]
     pub diff: DiffFormat,
 }
 
@@ -93,7 +103,7 @@ impl Default for PromptOptions {
             convention: None,
             language: None,
             rules: PromptRules::Full,
-            diff: DiffFormat::Plain,
+            diff: DiffFormat::Annotated,
         }
     }
 }
@@ -347,14 +357,14 @@ mod tests {
             hunks: "@@ -3 +3 @@\n-fn detect(s: &[String]) -> Style {\n+fn detect(s: &[String]) -> Style {   \n"
                 .into(),
         });
-        let options = PromptOptions {
-            diff: DiffFormat::Annotated,
-            ..PromptOptions::default()
-        };
-        let prompt = build(&ctx, &changed, &options);
+        let prompt = build(&ctx, &changed, &PromptOptions::default());
         insta::assert_snapshot!(prompt.user);
         // The plain list of the same change keeps the format trained on.
-        let plain = build(&ctx, &changed, &PromptOptions::default());
+        let options = PromptOptions {
+            diff: DiffFormat::Plain,
+            ..PromptOptions::default()
+        };
+        let plain = build(&ctx, &changed, &options);
         assert!(
             plain
                 .user
@@ -541,7 +551,18 @@ mod tests {
             r#"{"max_prompt_tokens":1024,"default_convention":"conventional","default_language":"english"}"#,
         )
         .unwrap();
-        assert_eq!(old, PromptOptions::default());
+        // A trace from before the annotated list read its prompts plain.
+        assert_eq!(
+            old,
+            PromptOptions {
+                diff: DiffFormat::Plain,
+                ..PromptOptions::default()
+            }
+        );
+        // Today's default is recorded, and read back as it was.
+        assert!(json.contains(r#""diff":"annotated""#), "{json}");
+        let back: PromptOptions = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, PromptOptions::default());
     }
 
     #[test]
