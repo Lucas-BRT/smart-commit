@@ -226,6 +226,14 @@ pub const KEYS: &[Key] = &[
         env: None,
         description: "How many recent commits the style is learned from.",
     },
+    Key {
+        name: "style.subject_max",
+        kind: Kind::Count { min: 40, max: 200 },
+        scope: Scope::Any,
+        env: None,
+        description: "Longest subject, in columns: the prompt asks for it, and longer replies \
+                      end at the last phrase that fits.",
+    },
 ];
 
 pub fn key(name: &str) -> Result<&'static Key, ConfigError> {
@@ -610,6 +618,7 @@ impl Resolved {
             default_convention: convention(choice("style.default_convention")).expect("not auto"),
             default_language: language(choice("style.default_language")).expect("not auto"),
             history_depth: self.count("style.history_depth"),
+            subject_max: self.count("style.subject_max"),
         }
     }
 }
@@ -663,6 +672,10 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         (
             "style.history_depth",
             Value::Count(crate::context::HISTORY_DEPTH),
+        ),
+        (
+            "style.subject_max",
+            Value::Count(crate::message::SUBJECT_MAX),
         ),
     ];
     if let Some(dir) = path(paths::default_cache_dir(env)) {
@@ -732,6 +745,7 @@ pub struct Settings {
     pub default_convention: Convention,
     pub default_language: Language,
     pub history_depth: usize,
+    pub subject_max: usize,
 }
 
 impl Settings {
@@ -747,6 +761,7 @@ impl Settings {
                 .gguf
                 .as_deref()
                 .map_or(PromptRules::Full, models::prompt_rules),
+            subject_max: self.subject_max,
             // Measured on eval-v1 with the v0.2 fine-tunes and the base
             // models: better types for all four (training H11).
             diff: DiffFormat::Annotated,

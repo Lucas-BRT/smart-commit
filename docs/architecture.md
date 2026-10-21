@@ -128,7 +128,7 @@ overflow 72 columns. In order, the sanitizer:
   headings, quotes, backticks and bold around the subject; collapses spaces;
   drops the final period;
 - cuts explanations after the message ("This commit message…");
-- fits the subject in 72 columns: a scope that is a file path becomes the
+- fits the subject in 72 columns (`style.subject_max`): a scope that is a file path becomes the
   file's name (`fix(src/operator/combineLatest.ts)` → `fix(combineLatest)`),
   then the subject ends where it still reads, at a clause (`, `), a phrase
   (` to `, ` for `, ` in `, ` with `…) or a list (` and `) that keeps at least

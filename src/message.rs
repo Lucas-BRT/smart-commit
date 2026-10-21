@@ -95,6 +95,15 @@ const EXPLANATIONS: &[&str] = &[
 ];
 
 pub fn sanitize(raw: &str, convention: Convention) -> Result<CommitMessage, SanitizeError> {
+    sanitize_within(raw, convention, SUBJECT_MAX)
+}
+
+/// Like [`sanitize`], fitting the subject in `subject_max` columns.
+pub fn sanitize_within(
+    raw: &str,
+    convention: Convention,
+    subject_max: usize,
+) -> Result<CommitMessage, SanitizeError> {
     let text = strip_thinking(raw);
     let text = unfence(&text);
 
@@ -114,7 +123,7 @@ pub fn sanitize(raw: &str, convention: Convention) -> Result<CommitMessage, Sani
     let body_lines: Vec<&str> = lines.take_while(|l| !is_explanation(l)).collect();
     let body = wrap_body(&body_lines);
     Ok(CommitMessage {
-        subject: truncate_subject(&subject),
+        subject: truncate_subject(&subject, subject_max),
         body: (!body.is_empty()).then_some(body),
     })
 }
@@ -283,28 +292,28 @@ const BOUNDARIES: &[&[&str]] = &[
     &[" and "],
 ];
 
-/// Fits a subject in [`SUBJECT_MAX`] columns, without an ellipsis (git
+/// Fits a subject in `max` columns, without an ellipsis (git
 /// tooling shows the subject as is): first a scope that is a file path
 /// becomes the file's name (`fix(src/operator/combineLatest.ts)` →
 /// `fix(combineLatest)`), then the subject ends at the last boundary of
 /// [`BOUNDARIES`] that keeps at least half of the limit, else at the last
 /// word that fits.
-fn truncate_subject(subject: &str) -> String {
-    if subject.chars().count() <= SUBJECT_MAX {
+fn truncate_subject(subject: &str, max: usize) -> String {
+    if subject.chars().count() <= max {
         return subject.to_owned();
     }
     let subject = shorten_path_scope(subject);
-    if subject.chars().count() <= SUBJECT_MAX {
+    if subject.chars().count() <= max {
         return subject;
     }
     // Byte offset of the first character past the limit.
     let limit = subject
         .char_indices()
-        .nth(SUBJECT_MAX)
+        .nth(max)
         .map_or(subject.len(), |(i, _)| i);
     let shortest = subject
         .char_indices()
-        .nth(SUBJECT_MAX / 2)
+        .nth(max / 2)
         .map_or(subject.len(), |(i, _)| i);
     for group in BOUNDARIES {
         let end = group
@@ -316,7 +325,7 @@ fn truncate_subject(subject: &str) -> String {
             return subject[..end].trim_end_matches(TRAILING).to_owned();
         }
     }
-    let cut: String = subject.chars().take(SUBJECT_MAX + 1).collect();
+    let cut: String = subject.chars().take(max + 1).collect();
     let cut = match cut.rfind(' ') {
         Some(space) if space > 0 => &cut[..space],
         _ => &cut[..limit.min(cut.len())],
@@ -449,7 +458,7 @@ pub fn fallback(
     convention: Convention,
     language: Language,
 ) -> CommitMessage {
-    fallback_after(changes, convention, language, None)
+    fallback_after(changes, convention, language, None, SUBJECT_MAX)
 }
 
 /// Like [`fallback`], keeping the scope of `reply`, the model's last
@@ -463,6 +472,7 @@ pub fn fallback_after(
     convention: Convention,
     language: Language,
     reply: Option<&str>,
+    subject_max: usize,
 ) -> CommitMessage {
     let pt = language == Language::Portuguese;
     let description = describe_changes(changes, pt);
@@ -486,7 +496,7 @@ pub fn fallback_after(
         (Convention::Free, _) => capitalize(&description),
     };
     CommitMessage {
-        subject: truncate_subject(&subject),
+        subject: truncate_subject(&subject, subject_max),
         body: (changes.len() > 1).then(|| list_files(changes, pt)),
     }
 }
@@ -705,6 +715,36 @@ mod tests {
     }
 
     #[test]
+    fn the_limit_is_the_configured_one() {
+        let raw =
+            "fix(kubernetes): update manifest and pod handlers to handle job and pod conditions";
+        // 82 columns fit in 100; in 60 the subject ends at "to handle".
+        let wide = sanitize_within(raw, Convention::Conventional, 100).unwrap();
+        assert_eq!(wide.subject, raw);
+        let narrow = sanitize_within(raw, Convention::Conventional, 60).unwrap();
+        assert_eq!(
+            narrow.subject,
+            "fix(kubernetes): update manifest and pod handlers"
+        );
+        let changes = [change(
+            ChangeStatus::Modified,
+            "src/a/very/long/path/to/some/module/file.rs",
+        )];
+        let fallback = fallback_after(
+            &changes,
+            Convention::Conventional,
+            Language::English,
+            None,
+            40,
+        );
+        assert!(
+            fallback.subject.chars().count() <= 40,
+            "{}",
+            fallback.subject
+        );
+    }
+
+    #[test]
     fn long_subjects_end_where_they_still_read() {
         // Replies of qwen2.5-coder-1.5b on eval-v1, over the limit.
         for (raw, subject) in [
@@ -780,7 +820,14 @@ mod tests {
         let code = [change(ChangeStatus::Modified, "src/git.rs")];
         let docs = [change(ChangeStatus::Modified, "AGENTS.md")];
         let after = |changes: &[FileChange], reply| {
-            fallback_after(changes, Convention::Conventional, Language::English, reply).subject
+            fallback_after(
+                changes,
+                Convention::Conventional,
+                Language::English,
+                reply,
+                SUBJECT_MAX,
+            )
+            .subject
         };
         // Code: the reply's type and scope beat the file list's `chore`.
         assert_eq!(
@@ -806,7 +853,8 @@ mod tests {
                 &code,
                 Convention::Free,
                 Language::English,
-                Some("fix(git): x")
+                Some("fix(git): x"),
+                SUBJECT_MAX,
             )
             .subject,
             "Update src/git.rs"

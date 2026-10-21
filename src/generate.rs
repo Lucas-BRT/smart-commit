@@ -81,7 +81,13 @@ pub fn generate_avoiding(
     }
     if avoid.is_empty() && by_rules(ctx, files) {
         return Ok(Generation {
-            message: message::fallback(&ctx.staged, convention, language),
+            message: message::fallback_after(
+                &ctx.staged,
+                convention,
+                language,
+                None,
+                options.subject_max,
+            ),
             source: Source::Rules,
             attempts: Vec::new(),
         });
@@ -103,20 +109,21 @@ pub fn generate_avoiding(
         };
         let prompt = prompt::build_with_note(ctx, files, options, note.as_deref());
         let raw = backend.generate(&prompt, config)?;
-        let checked = message::sanitize(&raw, convention).and_then(|message| {
-            if let Some(subject) = copied_from(&message.subject, &ctx.subjects) {
-                return Err(SanitizeError::CopiedHistory(subject.to_owned()));
-            }
-            if let Some(subject) = copied_from(&message.subject, &turned_down) {
-                return Err(SanitizeError::TurnedDown(subject.to_owned()));
-            }
-            // A default language, with no history to tell, is not enforced.
-            let known = options.language.is_some() || ctx.style.language != Language::Unknown;
-            if known && in_other_language(&message.subject, language, &ctx.subjects) {
-                return Err(SanitizeError::WrongLanguage(message.subject));
-            }
-            Ok(message)
-        });
+        let checked =
+            message::sanitize_within(&raw, convention, options.subject_max).and_then(|message| {
+                if let Some(subject) = copied_from(&message.subject, &ctx.subjects) {
+                    return Err(SanitizeError::CopiedHistory(subject.to_owned()));
+                }
+                if let Some(subject) = copied_from(&message.subject, &turned_down) {
+                    return Err(SanitizeError::TurnedDown(subject.to_owned()));
+                }
+                // A default language, with no history to tell, is not enforced.
+                let known = options.language.is_some() || ctx.style.language != Language::Unknown;
+                if known && in_other_language(&message.subject, language, &ctx.subjects) {
+                    return Err(SanitizeError::WrongLanguage(message.subject));
+                }
+                Ok(message)
+            });
         match checked {
             Ok(message) => {
                 attempts.push(Attempt {
@@ -144,13 +151,19 @@ pub fn generate_avoiding(
             SanitizeError::CopiedHistory(_)
             | SanitizeError::WrongLanguage(_)
             | SanitizeError::TurnedDown(_),
-        ) => message::sanitize(&a.raw, convention)
+        ) => message::sanitize_within(&a.raw, convention, options.subject_max)
             .ok()
             .map(|m| m.subject),
         _ => None,
     });
     Ok(Generation {
-        message: message::fallback_after(&ctx.staged, convention, language, reply.as_deref()),
+        message: message::fallback_after(
+            &ctx.staged,
+            convention,
+            language,
+            reply.as_deref(),
+            options.subject_max,
+        ),
         source: Source::Fallback,
         attempts,
     })
