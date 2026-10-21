@@ -1,5 +1,5 @@
 //! `smart-commit model`: list the recommended models and switch between
-//! them, or to a model file on disk.
+//! them, or to a model file on disk, remembered for next time.
 
 use std::error::Error;
 use std::io::{IsTerminal, Write};
@@ -9,14 +9,15 @@ use std::time::Duration;
 
 use clap::Subcommand;
 use smart_commit::config::{self, Origin, Resolved};
-use smart_commit::models::{self, Model};
+use smart_commit::models::{self, Local, Model};
 use smart_commit::paths;
-use smart_commit::tui::models::{Action, Entry, Picker};
+use smart_commit::tui::models::{Action, Entry, LocalEntry, Picker};
 use smart_commit::tui::{self, Screen};
 
 #[derive(Debug, Subcommand)]
 pub enum ModelCommand {
-    /// The recommended models, which are installed and which is in use.
+    /// The recommended models and the models from disk used before, which
+    /// are installed and which is in use.
     List,
     /// Download a recommended model from Hugging Face and use it, or use a
     /// GGUF file (or an OpenVINO model directory) from disk.
@@ -45,8 +46,16 @@ fn list() -> Result<(), Box<dyn Error>> {
     let resolved = crate::resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let models_dir = paths::default_models_dir(env);
+    let local = local_entries(&resolved);
+    let width = local
+        .iter()
+        .map(|l| l.local.name().chars().count())
+        .fold(22, usize::max);
+    let file_in_use = local
+        .iter()
+        .any(|l| l.in_use && l.local.key() == "model.gguf");
     println!(
-        "  {:<22} {:>7}  {:<11} {:<13} installed",
+        "  {:<width$} {:>7}  {:<11} {:<13} installed",
         "model", "size", "licence", "status"
     );
     for model in models::REGISTRY {
@@ -54,13 +63,13 @@ fn list() -> Result<(), Box<dyn Error>> {
             .as_deref()
             .map(|dir| installed(model, dir))
             .unwrap_or_default();
-        let mark = if model.id == settings.model.id {
+        let mark = if model.id == settings.model.id && !file_in_use {
             "  <- in use"
         } else {
             ""
         };
         println!(
-            "  {:<22} {:>7}  {:<11} {:<13} {}{mark}",
+            "  {:<width$} {:>7}  {:<11} {:<13} {}{mark}",
             model.id,
             models::size(model.gguf.size),
             model.license,
@@ -72,6 +81,21 @@ fn list() -> Result<(), Box<dyn Error>> {
             }
         );
     }
+    for l in &local {
+        println!(
+            "  {:<width$} {:>7}  {:<11} {:<13} {}{}",
+            l.local.name(),
+            l.local.size().map_or("-".to_owned(), models::size),
+            "-",
+            "unverified",
+            if l.local.key() == "model.dir" {
+                "openvino"
+            } else {
+                "gguf"
+            },
+            if l.in_use { "  <- in use" } else { "" }
+        );
+    }
     println!();
     for model in models::REGISTRY {
         let openvino = if model.openvino.is_some() {
@@ -79,7 +103,15 @@ fn list() -> Result<(), Box<dyn Error>> {
         } else {
             "; llama.cpp devices only (vulkan, cpu)"
         };
-        println!("  {:<22} {}{openvino}", model.id, model.summary);
+        println!("  {:<width$} {}{openvino}", model.id, model.summary);
+    }
+    for l in &local {
+        println!(
+            "  {:<width$} from disk, {}; {}",
+            l.local.name(),
+            l.local.path.display(),
+            l.local.devices()
+        );
     }
     println!();
     let origin = resolved
@@ -97,9 +129,42 @@ fn list() -> Result<(), Box<dyn Error>> {
     println!(
         "Models come from Hugging Face, pinned and checked: their publishers' files,\n\
          or smart-commit's own fine-tunes (smart-commit-*).\n\
-         To change: smart-commit model use <id>, or a GGUF file: smart-commit model use FILE"
+         To change: smart-commit model use <id>, or a GGUF file: smart-commit model use FILE\n\
+         (remembered, and listed here while it exists)"
     );
     Ok(())
+}
+
+/// `$XDG_DATA_HOME/smart-commit/local-models`.
+fn local_file() -> Result<PathBuf, Box<dyn Error>> {
+    Ok(paths::default_local_models_file(env).ok_or("HOME is not set")?)
+}
+
+/// The models from disk used before, and those model.gguf and model.dir
+/// point at if not recorded (set with `config set`, or before smart-commit
+/// recorded them), each saying whether it is in use.
+fn local_entries(resolved: &Resolved) -> Vec<LocalEntry> {
+    let in_use: Vec<PathBuf> = ["model.gguf", "model.dir"]
+        .iter()
+        .filter_map(|key| resolved.get(key))
+        .filter(|(_, origin)| *origin != Origin::Default)
+        .map(|(value, _)| PathBuf::from(value.to_string()))
+        .collect();
+    let mut local = local_file()
+        .map(|file| models::local_models(&file))
+        .unwrap_or_default();
+    for path in in_use.iter().rev() {
+        if path.exists() && !local.iter().any(|l| &l.path == path) {
+            local.insert(0, Local { path: path.clone() });
+        }
+    }
+    local
+        .into_iter()
+        .map(|local| LocalEntry {
+            in_use: in_use.contains(&local.path),
+            local,
+        })
+        .collect()
 }
 
 /// What of `model` is in `dir`: its GGUF, its OpenVINO export.
@@ -218,7 +283,8 @@ fn picker(dir: &Path) -> Result<Picker, Box<dyn Error>> {
             .filter(|(_, origin)| *origin != Origin::Default)
             .map(|(value, _)| format!("{key} = {value} replaces the model on its devices"))
     });
-    Ok(Picker::new(entries, settings.model.id, custom, env("HOME")))
+    Ok(Picker::new(entries, settings.model.id, custom, env("HOME"))
+        .with_local(local_entries(&resolved)))
 }
 
 /// A download running in its own thread, so the screen keeps drawing.
@@ -346,6 +412,12 @@ fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
         ),
     ];
     lines.extend(stopped);
+    // Remembering is a convenience: the model is in use either way.
+    if let Err(err) = local_file().and_then(|file| Ok(models::remember_local(&file, path)?)) {
+        lines.push(format!(
+            "note: cannot remember {text} for `smart-commit model`: {err}"
+        ));
+    }
     Ok(lines)
 }
 

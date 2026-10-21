@@ -171,9 +171,9 @@ smart-commit server stop       # free its memory now
 
 ```bash
 smart-commit model                       # choose a model (a picker in a terminal)
-smart-commit model list                  # the recommended models, and which is in use
+smart-commit model list                  # the recommended models and those from disk, and which is in use
 smart-commit model use qwen2.5-coder-7b  # download it from Hugging Face and use it
-smart-commit model use ~/models/my.gguf  # use a GGUF file from disk, unverified
+smart-commit model use ~/models/my.gguf  # use a GGUF file from disk, unverified (remembered)
 ```
 
 Recommended models are downloaded from Hugging Face (their publishers'

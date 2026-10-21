@@ -345,6 +345,89 @@ pub fn check_gguf(path: &Path) -> Result<(), ModelError> {
     }
 }
 
+/// How many models from disk [`remember_local`] keeps.
+pub const LOCAL_LIMIT: usize = 10;
+
+/// A model from disk, used before: a GGUF file (`model.gguf`) or an
+/// OpenVINO model directory (`model.dir`), unverified.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Local {
+    pub path: PathBuf,
+}
+
+impl Local {
+    /// The setting it is used through.
+    pub fn key(&self) -> &'static str {
+        if self.path.is_dir() {
+            "model.dir"
+        } else {
+            "model.gguf"
+        }
+    }
+
+    /// Its name in lists: the file name without `.gguf`, or the directory's.
+    pub fn name(&self) -> String {
+        let name = self
+            .path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| self.path.display().to_string());
+        match name.strip_suffix(".gguf") {
+            Some(stem) if !self.path.is_dir() => stem.to_owned(),
+            _ => name,
+        }
+    }
+
+    /// The file's size; none for a directory.
+    pub fn size(&self) -> Option<u64> {
+        std::fs::metadata(&self.path)
+            .ok()
+            .filter(|m| m.is_file())
+            .map(|m| m.len())
+    }
+
+    /// The devices that run it.
+    pub fn devices(&self) -> &'static str {
+        if self.path.is_dir() {
+            "npu, intel-gpu and openvino-cpu"
+        } else {
+            "vulkan and cpu"
+        }
+    }
+}
+
+/// The models from disk recorded in `file` (one path per line, most recent
+/// first) that still exist; none if it cannot be read.
+pub fn local_models(file: &Path) -> Vec<Local> {
+    let text = std::fs::read_to_string(file).unwrap_or_default();
+    let mut paths: Vec<PathBuf> = Vec::new();
+    for line in text.lines().filter(|l| !l.is_empty()) {
+        let path = PathBuf::from(line);
+        if path.exists() && !paths.contains(&path) {
+            paths.push(path);
+        }
+    }
+    paths.into_iter().map(|path| Local { path }).collect()
+}
+
+/// Records `path` first in `file`, without the paths that no longer exist,
+/// and keeps the [`LOCAL_LIMIT`] most recent.
+pub fn remember_local(file: &Path, path: &Path) -> std::io::Result<()> {
+    let mut paths = vec![path.to_path_buf()];
+    paths.extend(
+        local_models(file)
+            .into_iter()
+            .map(|local| local.path)
+            .filter(|p| p != path),
+    );
+    paths.truncate(LOCAL_LIMIT);
+    if let Some(dir) = file.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let text: String = paths.iter().map(|p| format!("{}\n", p.display())).collect();
+    std::fs::write(file, text)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -493,6 +576,73 @@ mod tests {
             check_gguf(&dir.path().join("none")),
             Err(ModelError::Io(_))
         ));
+    }
+
+    #[test]
+    fn local_models_are_remembered_most_recent_first() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let store = dir.path().join("state/local-models");
+        assert_eq!(local_models(&store), Vec::new(), "nothing recorded yet");
+
+        let a = dir.path().join("a-q4_k_m.gguf");
+        let b = dir.path().join("b.gguf");
+        let ov = dir.path().join("ov");
+        std::fs::write(&a, "GGUF").unwrap();
+        std::fs::write(&b, "GGUF").unwrap();
+        std::fs::create_dir(&ov).unwrap();
+        remember_local(&store, &a).unwrap();
+        remember_local(&store, &b).unwrap();
+        remember_local(&store, &ov).unwrap();
+        remember_local(&store, &a).unwrap();
+        let paths: Vec<PathBuf> = local_models(&store).into_iter().map(|l| l.path).collect();
+        assert_eq!(paths, [a.clone(), ov.clone(), b.clone()], "no duplicates");
+
+        // A path that no longer exists is not listed, and dropped on the
+        // next write.
+        std::fs::remove_file(&b).unwrap();
+        assert_eq!(local_models(&store).len(), 2);
+        remember_local(&store, &ov).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&store).unwrap(),
+            format!("{}\n{}\n", ov.display(), a.display())
+        );
+    }
+
+    #[test]
+    fn local_models_keep_the_most_recent_ones() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let store = dir.path().join("local-models");
+        for i in 0..LOCAL_LIMIT + 2 {
+            let file = dir.path().join(format!("m{i}.gguf"));
+            std::fs::write(&file, "GGUF").unwrap();
+            remember_local(&store, &file).unwrap();
+        }
+        let local = local_models(&store);
+        assert_eq!(local.len(), LOCAL_LIMIT);
+        assert_eq!(local[0].name(), format!("m{}", LOCAL_LIMIT + 1));
+        assert_eq!(local[LOCAL_LIMIT - 1].name(), "m2");
+    }
+
+    #[test]
+    fn local_models_say_what_they_are() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let file = Local {
+            path: dir.path().join("smart-commit-0.5b-v0.2-q4_k_m.gguf"),
+        };
+        std::fs::write(&file.path, "GGUF1234").unwrap();
+        assert_eq!(file.name(), "smart-commit-0.5b-v0.2-q4_k_m");
+        assert_eq!(file.key(), "model.gguf");
+        assert_eq!(file.size(), Some(8));
+        assert_eq!(file.devices(), "vulkan and cpu");
+
+        let ov = Local {
+            path: dir.path().join("model.gguf"),
+        };
+        std::fs::create_dir(&ov.path).unwrap();
+        assert_eq!(ov.name(), "model.gguf", "a directory keeps its name");
+        assert_eq!(ov.key(), "model.dir");
+        assert_eq!(ov.size(), None);
+        assert_eq!(ov.devices(), "npu, intel-gpu and openvino-cpu");
     }
 
     /// A registry entry for a file served from `dir` through `file://`.

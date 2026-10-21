@@ -224,6 +224,93 @@ fn use_takes_a_gguf_file_and_back() {
 }
 
 #[test]
+fn a_gguf_file_stays_listed_after_switching_away() {
+    let home = Home::new();
+    let file = home.data.path().join("smart-commit-0.5b-v0.2-q4_k_m.gguf");
+    fs::write(&file, b"GGUF\x03\x00\x00\x00").unwrap();
+    let output = home.run(&["model", "use", file.to_str().unwrap()]);
+    assert!(output.status.success(), "{}", stderr(&output));
+    let list = stdout(&home.run(&["model"]));
+    assert!(
+        list.contains(
+            "  smart-commit-0.5b-v0.2-q4_k_m    0 MB  -           unverified    gguf  <- in use\n"
+        ),
+        "{list}"
+    );
+    assert!(
+        list.contains("  qwen2.5-coder-1.5b             1.1 GB  Apache-2.0  validated     -\n"),
+        "the file replaces model.name on vulkan and cpu: {list}"
+    );
+    assert!(
+        list.contains(&format!(
+            "  smart-commit-0.5b-v0.2-q4_k_m from disk, {}; vulkan and cpu",
+            file.display()
+        )),
+        "{list}"
+    );
+
+    home.install(model("qwen2.5-coder-0.5b"));
+    home.run(&["model", "use", "qwen2.5-coder-0.5b"]);
+    let list = stdout(&home.run(&["model"]));
+    assert!(
+        list.contains("  smart-commit-0.5b-v0.2-q4_k_m    0 MB  -           unverified    gguf\n"),
+        "still listed, no longer in use: {list}"
+    );
+    assert!(list.contains("experimental  gguf  <- in use"), "{list}");
+
+    // Gone from disk, gone from the list.
+    fs::remove_file(&file).unwrap();
+    let list = stdout(&home.run(&["model"]));
+    assert!(!list.contains("smart-commit-0.5b-v0.2"), "{list}");
+    assert!(list.contains("  qwen2.5-coder-0.5b      491 MB"), "{list}");
+}
+
+#[test]
+fn models_from_disk_are_listed_most_recent_first_and_once() {
+    let home = Home::new();
+    let a = home.data.path().join("a.gguf");
+    let b = home.data.path().join("b.gguf");
+    fs::write(&a, b"GGUF").unwrap();
+    fs::write(&b, b"GGUF").unwrap();
+    for file in [&a, &b, &a] {
+        let output = home.run(&["model", "use", file.to_str().unwrap()]);
+        assert!(output.status.success(), "{}", stderr(&output));
+    }
+    let list = stdout(&home.run(&["model", "list"]));
+    let rows: Vec<&str> = list.lines().filter(|l| l.contains("unverified")).collect();
+    assert_eq!(rows.len(), 2, "{list}");
+    assert!(
+        rows[0].starts_with("  a ") && rows[0].ends_with("<- in use"),
+        "{list}"
+    );
+    assert!(
+        rows[1].starts_with("  b ") && rows[1].ends_with("gguf"),
+        "{list}"
+    );
+
+    // A refused file is not remembered.
+    let zip = home.data.path().join("model.zip");
+    fs::write(&zip, b"PK\x03\x04").unwrap();
+    home.run(&["model", "use", zip.to_str().unwrap()]);
+    assert!(!stdout(&home.run(&["model"])).contains("model.zip"));
+}
+
+#[test]
+fn a_file_set_by_hand_is_listed_in_use() {
+    let home = Home::new();
+    let file = home.data.path().join("by-hand.gguf");
+    fs::write(&file, b"GGUF").unwrap();
+    let output = home.run(&["config", "set", "model.gguf", file.to_str().unwrap()]);
+    assert!(output.status.success(), "{}", stderr(&output));
+    let list = stdout(&home.run(&["model"]));
+    assert!(
+        list.lines()
+            .any(|l| l.starts_with("  by-hand ") && l.ends_with("gguf  <- in use")),
+        "{list}"
+    );
+}
+
+#[test]
 fn use_takes_an_openvino_directory() {
     let home = Home::new();
     let dir = home.data.path().join("my-ov-model");
@@ -241,6 +328,16 @@ fn use_takes_an_openvino_directory() {
     assert!(
         out.contains("npu, intel-gpu and openvino-cpu now run this file"),
         "{out}"
+    );
+    let list = stdout(&home.run(&["model"]));
+    assert!(
+        list.lines()
+            .any(|l| l.starts_with("  my-ov-model ") && l.ends_with("openvino  <- in use")),
+        "{list}"
+    );
+    assert!(
+        list.contains("validated     -  <- in use"),
+        "model.name still runs on vulkan and cpu: {list}"
     );
 }
 

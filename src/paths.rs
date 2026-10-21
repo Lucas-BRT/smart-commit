@@ -57,6 +57,12 @@ pub fn default_bench_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBu
     Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("smart-commit/bench.json"))
 }
 
+/// `$XDG_DATA_HOME/smart-commit/local-models`, the models from disk used
+/// before, one path per line.
+pub fn default_local_models_file(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("smart-commit/local-models"))
+}
+
 /// `$XDG_CACHE_HOME/smart-commit/openvino`, where compiled NPU blobs go.
 pub fn default_cache_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("smart-commit/openvino"))
@@ -133,6 +139,10 @@ mod tests {
         assert_eq!(
             default_bench_file(env(&vars)).unwrap(),
             PathBuf::from("/home/me/.local/share/smart-commit/bench.json")
+        );
+        assert_eq!(
+            default_local_models_file(env(&vars)).unwrap(),
+            PathBuf::from("/home/me/.local/share/smart-commit/local-models")
         );
         assert_eq!(
             default_llama_server(env(&vars)).unwrap(),
