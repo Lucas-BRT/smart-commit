@@ -45,6 +45,24 @@ impl PromptRules {
     }
 }
 
+/// How the file list describes each file.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DiffFormat {
+    /// `path | +3 -1`, what the fine-tunes were trained on.
+    #[default]
+    Plain,
+    /// With each file's status, renames as `dir/{old => new}`, and
+    /// whitespace-only and comment-only changes named (see `annotate`).
+    Annotated,
+}
+
+impl DiffFormat {
+    pub fn is_plain(&self) -> bool {
+        *self == Self::Plain
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PromptOptions {
     pub max_prompt_tokens: usize,
@@ -61,6 +79,9 @@ pub struct PromptOptions {
     /// Left out of traces when full, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptRules::is_full")]
     pub rules: PromptRules,
+    /// Left out of traces when plain, so older traces still read the same.
+    #[serde(default, skip_serializing_if = "DiffFormat::is_plain")]
+    pub diff: DiffFormat,
 }
 
 impl Default for PromptOptions {
@@ -72,6 +93,7 @@ impl Default for PromptOptions {
             convention: None,
             language: None,
             rules: PromptRules::Full,
+            diff: DiffFormat::Plain,
         }
     }
 }
@@ -126,7 +148,11 @@ pub fn build_with_note(
         + diff::estimate_tokens(&user_message(&empty, note))
         + TEMPLATE_OVERHEAD_TOKENS;
     let budget = options.max_prompt_tokens.saturating_sub(fixed);
-    let user = user_message(&diff::compact(files, budget), note);
+    let compacted = match options.diff {
+        DiffFormat::Plain => diff::compact(files, budget),
+        DiffFormat::Annotated => diff::compact_annotated(files, &ctx.staged, budget),
+    };
+    let user = user_message(&compacted, note);
     Prompt { system, user }
 }
 
@@ -275,6 +301,66 @@ mod tests {
                 hunks: "@@ -1 +1 @@\n-x\n+y\n".into(),
             },
         ]
+    }
+
+    #[test]
+    fn annotated_file_list() {
+        use crate::git::{ChangeStatus, FileChange};
+        let staged = vec![
+            FileChange {
+                status: ChangeStatus::Modified,
+                path: "src/git.rs".into(),
+                old_path: None,
+            },
+            FileChange {
+                status: ChangeStatus::Renamed,
+                path: "src/vcs/repo.rs".into(),
+                old_path: Some("src/repo.rs".into()),
+            },
+            FileChange {
+                status: ChangeStatus::Modified,
+                path: "src/style.rs".into(),
+                old_path: None,
+            },
+        ];
+        let ctx = RepoContext::new(
+            PathBuf::from("/repo"),
+            Some("main".into()),
+            vec![
+                "feat(git): read the branch".into(),
+                "fix(diff): keep renames".into(),
+            ],
+            staged,
+        );
+        let mut changed = files();
+        changed.truncate(1);
+        changed.push(FileDiff {
+            path: "src/vcs/repo.rs".into(),
+            old_path: Some("src/repo.rs".into()),
+            lines: Some((0, 0)),
+            hunks: String::new(),
+        });
+        changed.push(FileDiff {
+            path: "src/style.rs".into(),
+            old_path: None,
+            lines: Some((1, 1)),
+            hunks: "@@ -3 +3 @@\n-fn detect(s: &[String]) -> Style {\n+fn detect(s: &[String]) -> Style {   \n"
+                .into(),
+        });
+        let options = PromptOptions {
+            diff: DiffFormat::Annotated,
+            ..PromptOptions::default()
+        };
+        let prompt = build(&ctx, &changed, &options);
+        insta::assert_snapshot!(prompt.user);
+        // The plain list of the same change keeps the format trained on.
+        let plain = build(&ctx, &changed, &PromptOptions::default());
+        assert!(
+            plain
+                .user
+                .contains("src/repo.rs => src/vcs/repo.rs | +0 -0\n")
+        );
+        assert!(plain.user.contains("--- src/style.rs"));
     }
 
     #[test]

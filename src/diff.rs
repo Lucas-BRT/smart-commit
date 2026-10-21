@@ -8,6 +8,9 @@ use std::fmt::Write as _;
 
 use serde::{Deserialize, Serialize};
 
+use crate::annotate;
+use crate::git::FileChange;
+
 /// Rough characters per token for code and pt/en prose with Qwen-style
 /// tokenizers. Deliberately pessimistic: overflowing the NPU's fixed prompt
 /// length fails the generation, while underfilling only loses some context.
@@ -311,7 +314,31 @@ fn classify_path(path: &str) -> FileKind {
 /// The only way to exceed `budget` is a budget too small for the stat's
 /// summary line itself, which is always kept.
 pub fn compact(files: &[FileDiff], budget: usize) -> CompactDiff {
-    let stat = render_stat(files, budget / 2);
+    let lines: Vec<String> = files.iter().map(stat_line).collect();
+    let useful: Vec<bool> = files.iter().map(FileDiff::has_useful_hunks).collect();
+    compact_with(files, &lines, &useful, budget)
+}
+
+/// Like [`compact`], with the annotated file list of [`annotate`], which
+/// needs each file's status from `staged`; files whose change is only
+/// whitespace keep their line in the list and leave the diff.
+pub fn compact_annotated(files: &[FileDiff], staged: &[FileChange], budget: usize) -> CompactDiff {
+    let lines = annotate::stat_lines(files, staged);
+    let useful: Vec<bool> = files
+        .iter()
+        .map(|f| f.has_useful_hunks() && annotate::change_of(f) != annotate::Change::Whitespace)
+        .collect();
+    compact_with(files, &lines, &useful, budget)
+}
+
+/// [`compact`] with the stat's `lines` and which files' hunks are `useful`.
+fn compact_with(
+    files: &[FileDiff],
+    lines: &[String],
+    useful: &[bool],
+    budget: usize,
+) -> CompactDiff {
+    let stat = render_lines(lines, budget / 2);
     let mut remaining = budget.saturating_sub(estimate_tokens(&stat));
 
     // (kind, tokens needed, index): sorting puts each tier's smallest
@@ -319,7 +346,7 @@ pub fn compact(files: &[FileDiff], budget: usize) -> CompactDiff {
     let mut order: Vec<(FileKind, usize, usize)> = files
         .iter()
         .enumerate()
-        .filter(|(_, f)| f.has_useful_hunks())
+        .filter(|&(i, _)| useful[i])
         .map(|(i, f)| (FileKind::of(f), estimate_tokens(&f.section()), i))
         .collect();
     order.sort();
@@ -343,9 +370,9 @@ pub fn compact(files: &[FileDiff], budget: usize) -> CompactDiff {
 
     let mut patch = String::new();
     let mut truncated = 0;
-    for (file, &tokens) in files.iter().zip(&allotted) {
+    for (i, (file, &tokens)) in files.iter().zip(&allotted).enumerate() {
         if tokens == 0 {
-            truncated += usize::from(file.has_useful_hunks());
+            truncated += usize::from(useful[i]);
             continue;
         }
         let (text, cut) = fit_file(file, tokens);
@@ -359,8 +386,13 @@ pub fn compact(files: &[FileDiff], budget: usize) -> CompactDiff {
     }
 }
 
+#[cfg(test)]
 fn render_stat(files: &[FileDiff], budget: usize) -> String {
     let lines: Vec<String> = files.iter().map(stat_line).collect();
+    render_lines(&lines, budget)
+}
+
+fn render_lines(lines: &[String], budget: usize) -> String {
     let total: usize = lines.iter().map(|l| estimate_tokens(l)).sum();
     if total <= budget {
         return lines.concat();
@@ -686,6 +718,36 @@ mod tests {
         let (text, cut) = fit_file(&big, big.min_tokens());
         assert!(cut);
         assert_eq!(sections(&text), [("src/big.rs".to_owned(), MIN_BODY_LINES)]);
+    }
+
+    #[test]
+    fn annotated_diff_leaves_whitespace_out() {
+        use crate::git::{ChangeStatus, FileChange};
+        let mut spaced = String::from("@@ -1,40 +1,40 @@\n");
+        for n in 0..40 {
+            let _ = writeln!(spaced, "-line_{n} = {n}\n+line_{n} = {n}   ");
+        }
+        let files = [
+            file("src/state.py", &spaced),
+            file("src/a.py", "@@ -1 +1 @@\n-x = 1\n+x = 2\n"),
+        ];
+        let staged: Vec<FileChange> = files
+            .iter()
+            .map(|f| FileChange {
+                status: ChangeStatus::Modified,
+                path: f.path.clone(),
+                old_path: None,
+            })
+            .collect();
+        let diff = compact_annotated(&files, &staged, 400);
+        assert_eq!(
+            diff.stat,
+            "src/state.py | whitespace only, +40 -40\nsrc/a.py | +1 -1\n"
+        );
+        assert_eq!(diff.patch, "--- src/a.py\n@@ -1 +1 @@\n-x = 1\n+x = 2\n");
+        assert_eq!(diff.truncated, 0, "left out on purpose, not cut");
+        // The plain diff spends the budget on it.
+        assert!(compact(&files, 400).patch.contains("--- src/state.py"));
     }
 
     #[test]

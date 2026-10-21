@@ -19,6 +19,7 @@ Everything except the model is deterministic and tested without hardware.
 | `style` | infers convention, language, types, scopes, ticket style and examples from commit subjects |
 | `context` | `RepoContext`: branch, ticket, subjects, style and staged files, rebuildable from recorded data |
 | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |
+| `annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
 | `prompt` | builds the system and user messages within `max_prompt_tokens` |
 | `message` | sanitizes the model's output; builds the fallback message |
 | `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |
@@ -94,6 +95,16 @@ convention with its types and scopes, the ticket when the repository cites
 them, and the history examples. The user message has the file list, the diff
 and, when files were cut, a note saying so. A forced convention
 (`style.convention`) drops the examples that contradict it.
+
+The file list is plain (`path | +3 -1`), the format the fine-tunes were
+trained on. `--diff annotated` (`prompt` and `eval` only, recorded in
+traces) adds what the counts do not say: `new`, `deleted`, `renamed` with
+git's short form `dir/{old => new}/file` and one line for three or more
+files moved between the same directories, `copied from`, `empty`, `no line
+changed (mode)`, `whitespace only` (those files then leave the diff and its
+budget), `comments only` (comments, docstrings, blank lines, by extension),
+and `maybe renamed from` for a new file sharing 40% of its lines with a
+deleted one, below git's rename threshold.
 
 A model trained to follow the fixed instructions without being told
 (training H6) gets a shorter system message, `PromptRules::Omitted`: only

@@ -125,7 +125,9 @@ and takes the generation options (`--device`, `--backend`...); the model file
 comes from the settings, e.g. `SMART_COMMIT_GGUF`. `prompt` and `eval` take
 `--rules omitted` to leave out the fixed instructions, for a model trained
 without them; otherwise the model in use decides (see
-[architecture](architecture.md#prompt)).
+[architecture](architecture.md#prompt)). They also take `--diff annotated`,
+a file list that names each file's status, renames, and whitespace-only and
+comment-only changes, to measure it before it becomes the default.
 
 ## Devices
 

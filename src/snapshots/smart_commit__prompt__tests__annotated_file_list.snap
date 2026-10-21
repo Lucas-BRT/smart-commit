@@ -1,0 +1,15 @@
+---
+source: src/prompt.rs
+expression: prompt.user
+---
+Files changed:
+src/git.rs | +2 -1
+src/{repo.rs => vcs/repo.rs} | renamed, unchanged, +0 -0
+src/style.rs | whitespace only, +1 -1
+
+Diff:
+--- src/git.rs
+@@ -80,3 +80,4 @@
+-        let out = self.git(&["branch"])?;
++        let out = self.git(&["branch", "--show-current"])?;
++        let name = out.trim();
