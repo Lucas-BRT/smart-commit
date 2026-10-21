@@ -55,7 +55,7 @@ GitHub's releases, checked against their `SHA256SUMS`. The models, the
 settings and the benchmark stay; models kept loaded are stopped first, and
 when llama.cpp is installed it follows the build the new release pins (no
 `sudo`). It runs the `install.sh` that came with the release, so it works
-for installs made by `install.sh`; a release from before 0.8.0 updates once
+for installs made by `install.sh` from 0.7.0 on; 0.6.0 and older update once
 with `install.sh` itself, and a build from source with git and cargo.
 `smart-commit setup` can run again at any time, for example after adding a
 GPU; `~/.local/share/smart-commit/scripts/hardware.sh` only prints the
