@@ -8,8 +8,9 @@ project's account, [LucasBRT](https://huggingface.co/LucasBRT). Any other
 GGUF model can be used from disk.
 
 In a terminal, `smart-commit model` opens a picker: the models with what is
-installed and in use, the chosen one's source and pinned commit, a
-progress bar while it downloads, and a path prompt for a model on disk.
+installed and in use, the models from disk used before, the chosen one's
+source and pinned commit, a progress bar while it downloads, and a path
+prompt for a model on disk.
 `smart-commit model list` prints the same list as text, which is also what
 `smart-commit model` prints outside a terminal:
 
@@ -32,6 +33,7 @@ In use: qwen2.5-coder-1.5b (model.name, default).
 Models come from Hugging Face, pinned and checked: their publishers' files,
 or smart-commit's own fine-tunes (smart-commit-*).
 To change: smart-commit model use <id>, or a GGUF file: smart-commit model use FILE
+(remembered, and listed here while it exists)
 
 $ smart-commit model use qwen2.5-coder-0.5b
 downloading Qwen2.5-Coder-0.5B-Instruct (491 MB, Apache-2.0) from https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF
@@ -106,6 +108,24 @@ files and cannot check them: traces name them `sha256=unverified`, and the
 prompt was tuned for Qwen2.5-Coder, so other models may need more retries.
 A GGUF file must carry its chat template, as files converted by llama.cpp
 do.
+
+Each file or directory used this way is remembered in
+`$XDG_DATA_HOME/smart-commit/local-models` (one path per line, the 10 most
+recent), so switching to a recommended model and back takes one choice in
+the picker, or the same `model use` again. They are listed after the
+recommended models, as `unverified`, for as long as the path exists; one
+that `model.gguf` or `model.dir` points at is listed too, even if set by
+hand. A GGUF file in use takes the `<- in use` mark from `model.name`,
+which it replaces on vulkan and cpu; an OpenVINO directory replaces it only
+on its own devices, so both are marked:
+
+```console
+$ smart-commit model list
+  model                            size  licence     status        installed
+  qwen2.5-coder-1.5b             1.1 GB  Apache-2.0  validated     gguf, openvino
+  ...
+  smart-commit-0.5b-v0.2-q4_k_m  397 MB  -           unverified    gguf  <- in use
+```
 
 ## The OpenVINO devices
 

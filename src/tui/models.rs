@@ -1,6 +1,6 @@
 //! `smart-commit model` in a terminal: the recommended models with what is
-//! installed and in use, the chosen one's details, its download's progress,
-//! and a path prompt for a model on disk.
+//! installed and in use, the models from disk used before, the chosen one's
+//! details, its download's progress, and a path prompt for a model on disk.
 
 use std::path::PathBuf;
 
@@ -11,7 +11,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Cell, Gauge, Paragraph, Row, Table, TableState, Wrap};
 
 use super::{hints, is_interrupt, theme};
-use crate::models::{self, Model};
+use crate::models::{self, Local, Model};
 
 /// What the user chose.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,6 +34,14 @@ pub struct Entry {
     pub openvino: bool,
 }
 
+/// A row for a model from disk used before.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalEntry {
+    pub local: Local,
+    /// model.gguf or model.dir points at it.
+    pub in_use: bool,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 enum Mode {
     Browsing,
@@ -47,6 +55,7 @@ enum Mode {
 
 pub struct Picker {
     entries: Vec<Entry>,
+    local: Vec<LocalEntry>,
     in_use: &'static str,
     /// model.gguf or model.dir pointing elsewhere, shown as a note.
     custom: Option<String>,
@@ -69,6 +78,7 @@ impl Picker {
             .unwrap_or(0);
         Self {
             entries,
+            local: Vec::new(),
             in_use,
             custom,
             selected,
@@ -78,9 +88,29 @@ impl Picker {
         }
     }
 
+    /// Adds the models from disk used before, after the recommended ones;
+    /// the one in use is selected.
+    pub fn with_local(mut self, local: Vec<LocalEntry>) -> Self {
+        if let Some(i) = local.iter().position(|l| l.in_use) {
+            self.selected = self.entries.len() + i;
+        }
+        self.local = local;
+        self
+    }
+
+    /// Whether `model.name` runs on vulkan and cpu, with no GGUF file from
+    /// disk in its place.
+    fn registry_in_use(&self, model: &Model) -> bool {
+        model.id == self.in_use
+            && !self
+                .local
+                .iter()
+                .any(|l| l.in_use && l.local.key() == "model.gguf")
+    }
+
     /// The row after the models: a model from disk.
     fn file_row(&self) -> usize {
-        self.entries.len()
+        self.entries.len() + self.local.len()
     }
 
     pub fn downloading(&self) -> bool {
@@ -151,6 +181,12 @@ impl Picker {
                     self.mode = Mode::Path(String::new());
                     Action::None
                 }
+                KeyCode::Enter if self.selected >= self.entries.len() => Action::UseFile(
+                    self.local[self.selected - self.entries.len()]
+                        .local
+                        .path
+                        .clone(),
+                ),
                 KeyCode::Enter => {
                     let entry = &self.entries[self.selected];
                     if entry.gguf {
@@ -172,7 +208,7 @@ impl Picker {
     pub fn render(&self, frame: &mut Frame) {
         let [title, list, details, status, keys] = Layout::vertical([
             Constraint::Length(1),
-            Constraint::Length(self.entries.len() as u16 + 4),
+            Constraint::Length((self.entries.len() + self.local.len()) as u16 + 4),
             Constraint::Min(6),
             Constraint::Length(1),
             Constraint::Length(1),
@@ -197,7 +233,7 @@ impl Picker {
                     (false, true) => "openvino",
                     (false, false) => "-",
                 };
-                let mark = if e.model.id == self.in_use {
+                let mark = if self.registry_in_use(e.model) {
                     Span::styled("<- in use", theme::title())
                 } else {
                     Span::raw("")
@@ -211,13 +247,39 @@ impl Picker {
                 ])
             })
             .collect();
+        rows.extend(self.local.iter().map(|l| {
+            let mark = if l.in_use {
+                Span::styled("<- in use", theme::title())
+            } else {
+                Span::raw("")
+            };
+            Row::new(vec![
+                Cell::from(l.local.name()),
+                Cell::from(l.local.size().map_or("-".to_owned(), models::size)),
+                Cell::from("unverified"),
+                Cell::from(if l.local.key() == "model.dir" {
+                    "openvino"
+                } else {
+                    "gguf"
+                }),
+                Cell::from(mark),
+            ])
+        }));
         rows.push(Row::new(vec![Cell::from("a model from disk")]));
+        // Room for the names of files from disk, within 80 columns.
+        let name_width = self
+            .local
+            .iter()
+            .map(|l| l.local.name().chars().count())
+            .max()
+            .unwrap_or(0)
+            .clamp(22, 30) as u16;
         let table = Table::new(
             rows,
             [
                 // Every model is Apache-2.0 (models::tests): the licence is
                 // in the details, the room goes to the ids.
-                Constraint::Length(22),
+                Constraint::Length(name_width),
                 Constraint::Length(7),
                 Constraint::Length(12),
                 Constraint::Length(14),
@@ -303,6 +365,26 @@ impl Picker {
     }
 
     fn details(&self) -> Paragraph<'static> {
+        if let Some(l) = self
+            .selected
+            .checked_sub(self.entries.len())
+            .and_then(|i| self.local.get(i))
+        {
+            return Paragraph::new(vec![
+                Line::styled("A model from disk, used before", theme::title()),
+                Line::from(vec![
+                    Span::styled(format!("{:<9}", "path"), theme::dim()),
+                    Span::raw(l.local.path.display().to_string()),
+                ]),
+                Line::from(vec![
+                    Span::styled(format!("{:<9}", "devices"), theme::dim()),
+                    Span::raw(format!("{} ({})", l.local.devices(), l.local.key())),
+                ]),
+                Line::raw("smart-commit did not choose it and cannot check it."),
+            ])
+            .wrap(Wrap { trim: false })
+            .block(Block::bordered().title(format!(" {} ", l.local.name())));
+        }
         let Some(entry) = self.entries.get(self.selected) else {
             return Paragraph::new(vec![
                 Line::raw("Use a GGUF file, or an OpenVINO model directory, from this machine."),
@@ -431,6 +513,61 @@ mod tests {
         );
         assert!(screen.contains("commit 829633003d09"), "{screen}");
         assert!(screen.contains("licence  Apache-2.0"), "{screen}");
+    }
+
+    #[test]
+    fn models_from_disk_used_before_are_listed_and_chosen_again() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let used = dir.path().join("smart-commit-0.5b-v0.2-q4_k_m.gguf");
+        let other = dir.path().join("other.gguf");
+        std::fs::write(&used, "GGUF").unwrap();
+        std::fs::write(&other, "GGUF").unwrap();
+        let mut picker = picker().with_local(vec![
+            LocalEntry {
+                local: Local {
+                    path: other.clone(),
+                },
+                in_use: false,
+            },
+            LocalEntry {
+                local: Local { path: used.clone() },
+                in_use: true,
+            },
+        ]);
+        let screen = draw(90, 24, |f| picker.render(f));
+        assert!(
+            screen.contains("> smart-commit-0.5b-v0.2-q4_k_m 0 MB    unverified   gguf"),
+            "the one in use is selected: {screen}"
+        );
+        assert!(screen.contains("  other   "), "{screen}");
+        // The file replaces model.name on vulkan and cpu.
+        assert_eq!(screen.matches("<- in use").count(), 1, "{screen}");
+        assert!(
+            screen.contains("A model from disk, used before"),
+            "{screen}"
+        );
+        assert!(screen.contains("vulkan and cpu (model.gguf)"), "{screen}");
+        assert_eq!(picker.on_key(key(KeyCode::Enter)), Action::UseFile(used));
+
+        picker.on_key(key(KeyCode::Up));
+        assert_eq!(picker.on_key(key(KeyCode::Enter)), Action::UseFile(other));
+        picker.on_key(key(KeyCode::Down));
+        picker.on_key(key(KeyCode::Down));
+        assert!(draw(90, 24, |f| picker.render(f)).contains("> a model from disk"));
+    }
+
+    #[test]
+    fn a_model_in_use_from_disk_elsewhere_keeps_the_registry_mark() {
+        // An OpenVINO directory replaces the model only on its devices.
+        let dir = tempfile::TempDir::new().unwrap();
+        let picker = picker().with_local(vec![LocalEntry {
+            local: Local {
+                path: dir.path().to_path_buf(),
+            },
+            in_use: true,
+        }]);
+        let screen = draw(90, 24, |f| picker.render(f));
+        assert_eq!(screen.matches("<- in use").count(), 2, "{screen}");
     }
 
     #[test]
