@@ -26,6 +26,19 @@ pinned and how each guarantee is checked.
   twice and prints the hash (`tests/scripts/test-install.sh`).
 - `SMART_COMMIT_PACKAGE_HOST=1` builds on the host, without Docker, at the
   cost of cross-machine reproducibility.
+- **CI pins what it runs on and with.** Every job names its runner image
+  (`ubuntu-24.04`; the release `ubuntu-22.04`, for the oldest supported
+  glibc), never `ubuntu-latest`. Actions are pinned by commit, with the
+  release in a comment (`actions/checkout@<sha> # v4.4.0`): a tag can be
+  moved to other code, a commit cannot. shellcheck is downloaded by version
+  and SHA-256 (0.11.0), as the runner's own changes with its image and a
+  newer one brings new warnings. Moving any of them to a newer release is a
+  commit of its own, like a dependency update.
+- What CI still takes from the runner image: `rustup` (it only installs the
+  toolchain `rust-toolchain.toml` pins), Docker (it builds the pinned
+  container above) and `gh` (it publishes the release). The build
+  container's `ca-certificates` come from Ubuntu's live archive, since the
+  snapshot service needs HTTPS; they never reach the binary.
 
 ## The model
 

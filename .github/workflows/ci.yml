@@ -10,16 +10,28 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       # Installs the toolchain pinned in rust-toolchain.toml.
       - run: rustup toolchain install
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo fmt --check
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked
-      - run: shellcheck install.sh scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh
+      # The runner's shellcheck changes with its image, and a newer one
+      # brings new warnings: pinned like every other download.
+      - name: Install shellcheck
+        env:
+          SHELLCHECK_VERSION: "0.11.0"
+          SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/shellcheck.tar.xz" \
+            "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK_VERSION/shellcheck-v$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
+          echo "$SHELLCHECK_SHA256  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum --check --quiet -
+          tar -xJf "$RUNNER_TEMP/shellcheck.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/shellcheck-v$SHELLCHECK_VERSION" >>"$GITHUB_PATH"
+      - run: shellcheck --version && shellcheck install.sh scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh
       - run: tests/scripts/test-setup-gpu.sh
       - run: tests/scripts/test-export-model.sh
       - run: tests/scripts/test-setup.sh
@@ -32,7 +44,7 @@ jobs:
   # and installs the result; the printed hash is the one any machine gets
   # for this commit.
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: tests/scripts/test-install.sh
