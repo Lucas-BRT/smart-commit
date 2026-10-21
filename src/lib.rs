@@ -1,6 +1,7 @@
 //! Generate commit messages in the style of the current repository using a
 //! small LLM running locally on an Intel NPU.
 
+pub mod annotate;
 pub mod backend;
 pub mod bench;
 pub mod config;

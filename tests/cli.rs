@@ -204,6 +204,53 @@ fn rules_can_be_omitted_for_training_and_evaluation() {
 }
 
 #[test]
+fn annotated_file_list_for_evaluation() {
+    let repo = staged_repo();
+    let (inputs, plain) = recorded_inputs(&repo);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n")).unwrap();
+    let path = file.to_str().unwrap();
+
+    let output = smart_commit(
+        &["prompt", "--inputs", path, "--diff", "annotated"],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    let user = prompt["user"].as_str().unwrap();
+    assert!(user.contains("main.rs | new, +1 -0\n"), "{user}");
+    assert_eq!(prompt["system"], plain["system"]);
+    let output = smart_commit(&["prompt", "--inputs", path, "--diff", "plain"], dir.path());
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    assert_eq!(prompt, plain);
+
+    // The format is recorded, so the trace replays with the same prompt.
+    let output = smart_commit(
+        &[
+            "eval",
+            path,
+            "--diff",
+            "annotated",
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: add the entry point",
+        ],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let line = stdout(&output);
+    let trace: serde_json::Value = serde_json::from_str(line.trim()).unwrap();
+    assert_eq!(trace["options"]["diff"], "annotated");
+    let file = dir.path().join("trace.json");
+    std::fs::write(&file, &line).unwrap();
+    let output = smart_commit(&["replay", file.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(stdout(&output).starts_with("reproduced: 1 attempt(s)"));
+}
+
+#[test]
 fn prompt_from_inputs_reads_stdin_and_global_settings() {
     let repo = staged_repo();
     let (inputs, _) = recorded_inputs(&repo);

@@ -19,6 +19,7 @@ Everything except the model is deterministic and tested without hardware.
 | `style` | infers convention, language, types, scopes, ticket style and examples from commit subjects |
 | `context` | `RepoContext`: branch, ticket, subjects, style and staged files, rebuildable from recorded data |
 | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |
+| `annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
 | `prompt` | builds the system and user messages within `max_prompt_tokens` |
 | `message` | sanitizes the model's output; builds the fallback message |
 | `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |
@@ -80,9 +81,11 @@ prompt is read a little longer instead of failing.
    fit is summarised as `... and N more files`.
 4. The rest is shared by priority (source, config, tests, docs): each file
    of a tier gets an equal share, smaller files give back what they do not
-   need, and leftovers go to the next tier. A file whose share is under 24
-   tokens is left out rather than cut to a few misleading lines; cut files
-   end with `[... N more lines]`.
+   need, and leftovers go to the next tier. A cut file shows at least its
+   headers and three of its lines (and 24 tokens): when the equal share is
+   less, the first files of the tier get that much while the budget lasts
+   and the others appear in the file list only, so a section is never a
+   bare header. Cut files end with `[... N more lines]`.
 
 ## Prompt
 
@@ -92,6 +95,16 @@ convention with its types and scopes, the ticket when the repository cites
 them, and the history examples. The user message has the file list, the diff
 and, when files were cut, a note saying so. A forced convention
 (`style.convention`) drops the examples that contradict it.
+
+The file list is plain (`path | +3 -1`), the format the fine-tunes were
+trained on. `--diff annotated` (`prompt` and `eval` only, recorded in
+traces) adds what the counts do not say: `new`, `deleted`, `renamed` with
+git's short form `dir/{old => new}/file` and one line for three or more
+files moved between the same directories, `copied from`, `empty`, `no line
+changed (mode)`, `whitespace only` (those files then leave the diff and its
+budget), `comments only` (comments, docstrings, blank lines, by extension),
+and `maybe renamed from` for a new file sharing 40% of its lines with a
+deleted one, below git's rename threshold.
 
 A model trained to follow the fixed instructions without being told
 (training H6) gets a shorter system message, `PromptRules::Omitted`: only

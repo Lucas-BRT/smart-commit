@@ -23,7 +23,7 @@ use crate::genai::{Device, GenaiOptions, NpuTuning};
 use crate::llamacpp::{LlamaCppOptions, LlamaDevice};
 use crate::models::{self, Model};
 use crate::paths;
-use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, PromptOptions, PromptRules};
+use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptOptions, PromptRules};
 use crate::style::{Convention, Language};
 
 /// The per-repository file, at the root of the work tree.
@@ -747,6 +747,8 @@ impl Settings {
                 .gguf
                 .as_deref()
                 .map_or(PromptRules::Full, models::prompt_rules),
+            // Plain until the annotated format is measured on the fine-tunes.
+            diff: DiffFormat::Plain,
         }
     }
 
