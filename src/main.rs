@@ -29,6 +29,7 @@ use smart_commit::tui::{self, Screen};
 
 mod bench_cmd;
 mod config_cmd;
+mod install_cmd;
 mod model_cmd;
 mod setup_cmd;
 
@@ -129,6 +130,20 @@ enum Command {
     /// The models kept loaded between commits (`model.keep_loaded`).
     #[command(subcommand)]
     Server(ServerCommand),
+    /// Install the latest release, if it is newer than this one (checked
+    /// against its SHA256SUMS; models, settings and the benchmark are kept).
+    Update,
+    /// Remove smart-commit from this machine: the binary, the models,
+    /// llama.cpp, the benchmark, the caches and the configuration.
+    Uninstall {
+        /// Remove without asking.
+        #[arg(long)]
+        yes: bool,
+        /// Also remove OpenVINO, if smart-commit's setup installed it (uses
+        /// sudo). Driver packages are kept.
+        #[arg(long)]
+        system: bool,
+    },
     /// Runs a model kept loaded until it is idle; started by smart-commit.
     #[command(name = "keep-server", hide = true)]
     KeepServer { dir: PathBuf },
@@ -414,6 +429,8 @@ fn main() -> ExitCode {
             no_bench,
         }) => setup_cmd::run(yes, no_drivers, no_bench),
         Some(Command::Server(command)) => run_server(command),
+        Some(Command::Update) => install_cmd::update(),
+        Some(Command::Uninstall { yes, system }) => install_cmd::uninstall(yes, system),
         Some(Command::KeepServer { dir }) => server::serve(&dir).map_err(Into::into),
         None => run_generate(&cli.generate),
     };

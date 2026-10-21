@@ -61,6 +61,10 @@ Requirements: Linux on x86_64. Drivers are installed with `apt`
 lists the packages to install. See the [usage guide](docs/usage.md) for the
 installer's options and for building from source.
 
+`smart-commit update` installs a newer release, keeping the models and the
+settings; `smart-commit uninstall` removes smart-commit and everything it
+downloaded, after listing it.
+
 ## Usage
 
 | Command | Does |
