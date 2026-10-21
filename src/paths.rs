@@ -6,6 +6,22 @@
 
 use std::path::PathBuf;
 
+/// `$XDG_DATA_HOME/smart-commit`: the models, llama.cpp and the benchmark
+/// (and, with install.sh's default prefix, the release's own files).
+pub fn data_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("smart-commit"))
+}
+
+/// `$XDG_CACHE_HOME/smart-commit`, every cache of smart-commit.
+pub fn cache_root(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_CACHE_HOME", ".cache")?.join("smart-commit"))
+}
+
+/// `$XDG_CONFIG_HOME/smart-commit`, the global configuration's directory.
+pub fn config_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
+    Some(xdg(&env, "XDG_CONFIG_HOME", ".config")?.join("smart-commit"))
+}
+
 /// `$XDG_DATA_HOME/smart-commit/models`, where models are installed.
 pub fn default_models_dir(env: impl Fn(&str) -> Option<String>) -> Option<PathBuf> {
     Some(xdg(&env, "XDG_DATA_HOME", ".local/share")?.join("smart-commit/models"))

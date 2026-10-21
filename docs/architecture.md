@@ -38,7 +38,9 @@ Everything except the model is deterministic and tested without hardware.
 | `paths` | XDG locations of config, models, caches and the benchmark |
 
 The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`, `model_cmd.rs`,
-`setup_cmd.rs`) only parses arguments and wires these together.
+`setup_cmd.rs`, `install_cmd.rs`) only parses arguments and wires these
+together; `update` and `uninstall` run the `install.sh` the release
+installed in `share/smart-commit/scripts`.
 
 ## Repository style
 

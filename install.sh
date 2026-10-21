@@ -8,10 +8,15 @@
 #   --version X.Y.Z  install that release instead of the latest
 #   --prefix DIR     install in DIR/bin and DIR/share (default: ~/.local)
 #   --no-setup       only install; run `smart-commit setup` later
+#   --update         install the release only if it is not the version
+#                    installed, without the setup; llama.cpp, if installed,
+#                    follows the build the new release pins (no sudo).
+#                    `smart-commit update` runs this
 #   --yes            answer yes to the setup's questions
 #   --uninstall      remove smart-commit (models, caches and config are kept)
 #   --purge          --uninstall, and also the models, llama.cpp, the
 #                    benchmark, the caches and the configuration
+#                    (`smart-commit uninstall` runs this)
 #   --system         --uninstall, and also OpenVINO, if smart-commit's setup
 #                    installed it (/opt/intel, /etc/ld.so.conf.d; uses sudo,
 #                    asks first unless --yes). Driver packages are kept.
@@ -27,6 +32,7 @@ ASSET=smart-commit-x86_64-unknown-linux-gnu.tar.gz
 PREFIX=$HOME/.local
 VERSION=latest
 SETUP=1
+UPDATE=0
 UNINSTALL=0
 PURGE=0
 SYSTEM=0
@@ -45,6 +51,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         --no-setup) SETUP=0 ;;
+        --update) UPDATE=1 SETUP=0 ;;
         --yes)
             setup_args+=(--yes)
             ASSUME_YES=1
@@ -180,6 +187,12 @@ curl -fsL --retry 3 -o "$work/SHA256SUMS" "$url/SHA256SUMS"
 
 tar -xzf "$work/$ASSET" -C "$work"
 src=$work/smart-commit-x86_64-unknown-linux-gnu
+new=$(cat "$src/share/smart-commit/VERSION")
+old=$(cat "$PREFIX/share/smart-commit/VERSION" 2>/dev/null || true)
+if [ "$UPDATE" = 1 ] && [ "$new" = "$old" ]; then
+    say "smart-commit $old is already the latest release"
+    exit 0
+fi
 remove_release
 mkdir -p "$PREFIX/bin" "$PREFIX/share/smart-commit" "$PREFIX/share/doc"
 install -m 755 "$src/bin/smart-commit" "$PREFIX/bin/smart-commit"
@@ -188,6 +201,14 @@ for entry in "${RELEASE_FILES[@]}"; do
 done
 cp -R "$src/share/doc/smart-commit" "$PREFIX/share/doc/smart-commit"
 say "installed $("$PREFIX/bin/smart-commit" --version) in $PREFIX"
+if [ "$UPDATE" = 1 ]; then
+    [ -n "$old" ] && say "updated from $old"
+    # The new binary looks for the llama.cpp build its release pins; the
+    # script is a no-op when that build is already there.
+    if [ -d "${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit/llama.cpp" ]; then
+        "$PREFIX/share/smart-commit/scripts/setup-llamacpp.sh" --server-only
+    fi
+fi
 
 case ":$PATH:" in
     *":$PREFIX/bin:"*) ;;
@@ -202,6 +223,6 @@ if [ "$SETUP" = 1 ]; then
     else
         "$PREFIX/share/smart-commit/scripts/setup.sh" "${setup_args[@]}"
     fi
-else
+elif [ "$UPDATE" = 0 ]; then
     echo "Run \`smart-commit setup\` to set up the devices and models."
 fi

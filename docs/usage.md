@@ -34,6 +34,7 @@ Installer options (after `bash -s --` when piping):
 | `--version 0.3.0` | install that release instead of the latest |
 | `--prefix DIR` | install in `DIR/bin` and `DIR/share` |
 | `--no-setup` | only install; run `smart-commit setup` later |
+| `--update` | install only if the release is not the version installed, without the setup; llama.cpp follows the new release's build (what `smart-commit update` runs) |
 | `--yes` | answer yes to the setup's questions |
 | `--uninstall` | remove smart-commit (models, caches and config are kept) |
 | `--purge` | `--uninstall`, plus the models, llama.cpp, the benchmark, the caches and the config |
@@ -42,6 +43,20 @@ Installer options (after `bash -s --` when piping):
 The installer warns if `~/.local/bin` is not on your `PATH`. Running it
 again upgrades in place: it only replaces the binary, the scripts and the
 docs, so the models, llama.cpp and the benchmark stay.
+
+## Update
+
+```bash
+smart-commit update
+```
+
+installs the latest release if it is newer than the one running, from
+GitHub's releases, checked against their `SHA256SUMS`. The models, the
+settings and the benchmark stay; models kept loaded are stopped first, and
+when llama.cpp is installed it follows the build the new release pins (no
+`sudo`). It runs the `install.sh` that came with the release, so it works
+for installs made by `install.sh`; a release from before 0.8.0 updates once
+with `install.sh` itself, and a build from source with git and cargo.
 `smart-commit setup` can run again at any time, for example after adding a
 GPU; `~/.local/share/smart-commit/scripts/hardware.sh` only prints the
 hardware list. `--no-drivers` skips everything that needs `sudo`, and `--no-bench`
@@ -209,6 +224,18 @@ it, the case can become a test fixture.
 | the hook does nothing | it only acts on `git commit` without `-m`; `smart-commit hook install` reinstalls it |
 
 ## Uninstall
+
+```bash
+smart-commit uninstall            # the binary, the models, llama.cpp, the benchmark, the caches and the config
+smart-commit uninstall --system   # and the OpenVINO the setup installed (asks before using sudo)
+```
+
+lists what it removes, with the size of the models, and asks (`--yes` skips
+the question; without a terminal it is required). Model files the settings
+point to outside `~/.local/share/smart-commit` (`model.gguf`, `model.dir`)
+were not downloaded by smart-commit: they are named and kept. It runs
+`install.sh --purge` (with `--system`), the installer that came with the
+release; `install.sh` keeps finer options:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash -s -- --uninstall
