@@ -101,8 +101,10 @@ trained on. `--diff annotated` (`prompt` and `eval` only, recorded in
 traces) adds what the counts do not say: `new`, `deleted`, `renamed` with
 git's short form `dir/{old => new}/file` and one line for three or more
 files moved between the same directories, `copied from`, `empty`, `no line
-changed (mode)`, `whitespace only` (those files then leave the diff and its
-budget), `comments only` (comments, docstrings, blank lines, by extension),
+changed (mode)`, `whitespace only` with which whitespace (`CRLF to LF`,
+`final newline`, `trailing spaces`, `indentation`, `blank lines`: the
+file leaves the diff and its budget, since the change is invisible there;
+`line breaks`, code reformatted, stays in the diff), `comments only` (comments, docstrings, blank lines, by extension),
 and `maybe renamed from` for a new file sharing 40% of its lines with a
 deleted one, below git's rename threshold.
 

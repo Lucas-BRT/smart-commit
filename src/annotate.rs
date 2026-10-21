@@ -23,13 +23,78 @@ const LIKELY_RENAME: f64 = 0.4;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Change {
     Content,
-    /// The same text once whitespace is ignored (indentation, trailing
-    /// spaces, line endings, the final newline).
-    Whitespace,
+    /// The same text once whitespace is ignored.
+    Whitespace(Spacing),
     /// Only comments, docstrings or blank lines.
     Comments,
     /// No line at all: a mode or type change, an empty file, a pure rename.
     NoLines,
+}
+
+/// Which whitespace a whitespace-only change touches.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Spacing {
+    /// `\r\n` became `\n` (`to_lf`) or the reverse.
+    LineEndings {
+        to_lf: bool,
+    },
+    FinalNewline,
+    TrailingSpaces,
+    Indentation,
+    BlankLines,
+    /// Lines split or joined: code reformatted.
+    LineBreaks,
+}
+
+impl Spacing {
+    fn describe(self) -> &'static str {
+        match self {
+            Self::LineEndings { to_lf: true } => "CRLF to LF",
+            Self::LineEndings { to_lf: false } => "LF to CRLF",
+            Self::FinalNewline => "final newline",
+            Self::TrailingSpaces => "trailing spaces",
+            Self::Indentation => "indentation",
+            Self::BlankLines => "blank lines",
+            Self::LineBreaks => "line breaks",
+        }
+    }
+
+    /// Whether the lines tell more than the description: only for code
+    /// reformatted, where they show which code it is. The other changes
+    /// are invisible in a diff.
+    pub fn shows_in_diff(self) -> bool {
+        self == Self::LineBreaks
+    }
+}
+
+/// Which whitespace changed between `removed` and `added`, lines whose
+/// text is the same once whitespace is ignored.
+fn spacing_of(hunks: &str, removed: &[&str], added: &[&str]) -> Spacing {
+    let pairwise = |same: fn(&str, &str) -> bool| {
+        removed.len() == added.len() && removed.iter().zip(added).all(|(r, a)| same(r, a))
+    };
+    let cr = |lines: &[&str]| lines.iter().filter(|l| l.ends_with('\r')).count();
+    let (cr_removed, cr_added) = (cr(removed), cr(added));
+    if cr_removed != cr_added
+        && pairwise(|r, a| r.strip_suffix('\r').unwrap_or(r) == a.strip_suffix('\r').unwrap_or(a))
+    {
+        return Spacing::LineEndings {
+            to_lf: cr_removed > cr_added,
+        };
+    }
+    if hunks.contains("\n\\ No newline at end of file") && pairwise(|r, a| r == a) {
+        return Spacing::FinalNewline;
+    }
+    if pairwise(|r, a| r.trim_end() == a.trim_end()) {
+        return Spacing::TrailingSpaces;
+    }
+    if pairwise(|r, a| r.trim_start() == a.trim_start()) {
+        return Spacing::Indentation;
+    }
+    if removed.iter().chain(added).all(|l| l.trim().is_empty()) {
+        return Spacing::BlankLines;
+    }
+    Spacing::LineBreaks
 }
 
 /// Classifies `file` from its hunks; binary files are content.
@@ -49,7 +114,7 @@ pub fn change_of(file: &FileDiff) -> Change {
             .collect()
     };
     if squeeze(&removed) == squeeze(&added) {
-        return Change::Whitespace;
+        return Change::Whitespace(spacing_of(&file.hunks, &removed, &added));
     }
     let Some(syntax) = CommentSyntax::of(&file.path) else {
         return Change::Content;
@@ -61,11 +126,13 @@ pub fn change_of(file: &FileDiff) -> Change {
     }
 }
 
-/// The removed and added lines of `hunks`, without their `-`/`+`.
+/// The removed and added lines of `hunks`, without their `-`/`+`. Split
+/// on `\n` alone: `str::lines` would drop the `\r` of CRLF lines, and with
+/// it the difference of a line-ending change.
 fn changed_lines(hunks: &str) -> (Vec<&str>, Vec<&str>) {
     let mut removed = Vec::new();
     let mut added = Vec::new();
-    for line in hunks.lines() {
+    for line in hunks.split('\n') {
         if let Some(text) = line.strip_prefix('-') {
             removed.push(text);
         } else if let Some(text) = line.strip_prefix('+') {
@@ -306,7 +373,9 @@ pub fn stat_lines(files: &[FileDiff], staged: &[FileChange]) -> Vec<String> {
             _ => file.path.clone(),
         };
         match change {
-            Change::Whitespace => words.push("whitespace only".to_owned()),
+            Change::Whitespace(spacing) => {
+                words.push(format!("whitespace only: {}", spacing.describe()));
+            }
             Change::Comments => words.push("comments only".to_owned()),
             Change::NoLines if file.old_path.is_some() => words.push("unchanged".to_owned()),
             Change::NoLines if words.first().is_some_and(|w| w == "new") => {
@@ -346,18 +415,41 @@ mod tests {
 
     #[test]
     fn whitespace_changes() {
-        for hunks in [
-            "@@ -1,2 +1,2 @@\n-x = 1\n-y = 2\n+x = 1   \n+y = 2  \n",
-            "@@ -1 +1 @@\n-x = 1\r\n+x = 1\n",
-            "@@ -1 +1 @@\n-tabulate==0.9.0\n\\ No newline at end of file\n+tabulate==0.9.0\n",
-            "@@ -1 +1,3 @@\n-f(a, b)\n+f(\n+    a, b\n+)\n",
+        for (hunks, spacing) in [
+            (
+                "@@ -1,2 +1,2 @@\n-x = 1\n-y = 2\n+x = 1   \n+y = 2  \n",
+                Spacing::TrailingSpaces,
+            ),
+            (
+                "@@ -1,2 +1,2 @@\n-x = 1\r\n-y = 2\r\n+x = 1\n+y = 2\n",
+                Spacing::LineEndings { to_lf: true },
+            ),
+            (
+                "@@ -1 +1 @@\n-x = 1\n+x = 1\r\n",
+                Spacing::LineEndings { to_lf: false },
+            ),
+            (
+                "@@ -1 +1 @@\n-tabulate==0.9.0\n\\ No newline at end of file\n+tabulate==0.9.0\n",
+                Spacing::FinalNewline,
+            ),
+            (
+                "@@ -1,2 +1,2 @@\n-if x:\n-  go()\n+if x:\n+    go()\n",
+                Spacing::Indentation,
+            ),
+            ("@@ -1,2 +1,4 @@\n a\n+\n+\n b\n", Spacing::BlankLines),
+            (
+                "@@ -1 +1,3 @@\n-f(a, b)\n+f(\n+    a, b\n+)\n",
+                Spacing::LineBreaks,
+            ),
         ] {
             assert_eq!(
                 change_of(&file("a.py", hunks)),
-                Change::Whitespace,
+                Change::Whitespace(spacing),
                 "{hunks}"
             );
         }
+        assert!(Spacing::LineBreaks.shows_in_diff());
+        assert!(!Spacing::TrailingSpaces.shows_in_diff());
         assert_eq!(
             change_of(&file("a.py", "@@ -1 +1 @@\n-x = 1\n+x = 2\n")),
             Change::Content
@@ -464,7 +556,7 @@ mod tests {
              src/py.typed | new, empty, +0 -0\n\
              scripts/run.sh | no line changed (mode), +0 -0\n\
              src/{controls.py => input.py} | renamed, unchanged, +0 -0\n\
-             src/state.py | whitespace only, +1 -1\n\
+             src/state.py | whitespace only: trailing spaces, +1 -1\n\
              src/game.py | comments only, +1 -0\n\
              src/cli.py | +1 -1\n"
         );
