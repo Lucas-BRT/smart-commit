@@ -34,6 +34,7 @@ Installer options (after `bash -s --` when piping):
 | `--version 0.3.0` | install that release instead of the latest |
 | `--prefix DIR` | install in `DIR/bin` and `DIR/share` |
 | `--no-setup` | only install; run `smart-commit setup` later |
+| `--update` | install only if the release is not the version installed, without the setup; llama.cpp follows the new release's build (what `smart-commit update` runs) |
 | `--yes` | answer yes to the setup's questions |
 | `--uninstall` | remove smart-commit (models, caches and config are kept) |
 | `--purge` | `--uninstall`, plus the models, llama.cpp, the benchmark, the caches and the config |

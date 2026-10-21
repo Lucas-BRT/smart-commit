@@ -22,6 +22,10 @@ release() {
     printf '#!/bin/sh\necho "smart-commit %s"\n' "$1" >"$stage/bin/smart-commit"
     chmod +x "$stage/bin/smart-commit"
     echo "# setup $1" >"$stage/share/smart-commit/scripts/setup.sh"
+    # Records how --update calls it.
+    printf '#!/bin/sh\necho "%s $*" >>"%s/llamacpp-calls"\n' "$1" "$work" \
+        >"$stage/share/smart-commit/scripts/setup-llamacpp.sh"
+    chmod +x "$stage/share/smart-commit/scripts/setup-llamacpp.sh"
     echo "$1" >"$stage/share/smart-commit/VERSION"
     echo licence >"$stage/share/doc/smart-commit/LICENSE"
     mkdir -p "$work/releases/latest/download"
@@ -70,6 +74,7 @@ release_gone() {
         [ ! -e "$prefix/share/doc/smart-commit" ]
 }
 absent() { [ ! -e "$1" ]; }
+not() { ! "$@"; }
 
 data_kept() {
     [ -f "$data/models/m/model.bin" ] && [ -f "$data/llama.cpp/llama-b11381/llama-server" ] &&
@@ -85,6 +90,26 @@ release 1.1.0
 run --no-setup
 check "upgrades" upgraded 1.1.0
 check "an upgrade keeps the models, llama.cpp and the benchmark" data_kept
+
+# --update: only a different version is installed, without the setup, and
+# llama.cpp follows the build of the new release.
+llamacpp_calls() { [ "$(cat "$work/llamacpp-calls" 2>/dev/null)" = "$1" ]; }
+run --update
+check "--update keeps the same version" grep -qF "smart-commit 1.1.0 is already the latest release" "$work/out"
+check "--update of the same version runs nothing" llamacpp_calls ""
+release 1.2.0
+run --update
+check "--update installs a new version" upgraded 1.2.0
+check "--update says from what" grep -qF "updated from 1.1.0" "$work/out"
+check "--update keeps the models, llama.cpp and the benchmark" data_kept
+check "--update brings llama.cpp to the new release's build" llamacpp_calls "1.2.0 --server-only"
+check "--update does not point to the setup" not grep -qF "smart-commit setup" "$work/out"
+rm -f "$work/llamacpp-calls"
+mv "$data/llama.cpp" "$work/llama.cpp.aside"
+release 1.3.0
+run --update
+check "--update without llama.cpp installs none" llamacpp_calls ""
+mv "$work/llama.cpp.aside" "$data/llama.cpp"
 
 run --uninstall
 check "uninstall removes the binary, scripts and docs" release_gone

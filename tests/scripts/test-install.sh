@@ -32,7 +32,8 @@ install --no-setup
 "$work/prefix/bin/smart-commit" --version | grep -qx "smart-commit $VERSION"
 for file in share/smart-commit/scripts/setup.sh share/smart-commit/scripts/setup-gpu.sh \
     share/smart-commit/scripts/hardware.sh share/smart-commit/scripts/setup-llamacpp.sh \
-    share/smart-commit/scripts/export-model.sh share/smart-commit/scripts/export/MANIFEST.sha256 \
+    share/smart-commit/scripts/export-model.sh share/smart-commit/scripts/install.sh \
+    share/smart-commit/scripts/export/MANIFEST.sha256 \
     share/smart-commit/scripts/export/requirements.lock share/smart-commit/scripts/export/normalize_ir.py \
     share/doc/smart-commit/LICENSE share/doc/smart-commit/usage.md; do
     test -f "$work/prefix/$file"

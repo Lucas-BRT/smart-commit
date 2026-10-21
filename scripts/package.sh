@@ -58,6 +58,8 @@ for script in setup.sh hardware.sh setup-llamacpp.sh setup-npu.sh setup-gpu.sh c
     export-model.sh; do
     install -m 755 "scripts/$script" "$stage/share/smart-commit/scripts/"
 done
+# `smart-commit update` and `uninstall` run the installer they came with.
+install -m 755 install.sh "$stage/share/smart-commit/scripts/"
 install -m 644 scripts/export/requirements.in scripts/export/requirements.lock \
     scripts/export/MANIFEST.sha256 scripts/export/normalize_ir.py "$stage/share/smart-commit/scripts/export/"
 install -m 644 LICENSE README.md docs/usage.md "$stage/share/doc/smart-commit/"
