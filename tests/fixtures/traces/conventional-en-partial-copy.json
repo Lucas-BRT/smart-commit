@@ -45,7 +45,7 @@
   },
   "generation": {
     "message": {
-      "subject": "docs: update AGENTS.md",
+      "subject": "docs(agents): update AGENTS.md",
       "body": null
     },
     "source": "fallback",

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "tool_version": "0.5.0",
+  "tool_version": "0.6.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
@@ -60,7 +60,7 @@
   },
   "generation": {
     "message": {
-      "subject": "test: update 2 files in tests/fixtures/",
+      "subject": "test(fixtures): update 2 files in tests/fixtures/",
       "body": "- tests/fixtures/make-traces.sh\n- tests/fixtures/traces/file-scope.json"
     },
     "source": "fallback",

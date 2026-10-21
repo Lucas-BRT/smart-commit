@@ -145,9 +145,13 @@ Portuguese repository, or the reverse; a mix is kept, as such
 repositories often write; a language that is only the default, with no
 history to tell, is not enforced). With greedy
 decoding, repeating the same prompt would give the same reply. If the retry
-is rejected too, the message is built from the file list alone (for example
+is rejected too, the message is built from the file list (for example
 `chore: update 3 files in src/`, with the files in the body), in the
-repository's language and convention, and a warning says so. Backend errors
+repository's language and convention, and a warning says so. When the last
+reply was rejected for what it said (a copy, another language) rather than
+its form, the fallback keeps its scope, and its type unless the files tell
+one (all docs, tests or config): models often pick the right type even
+when they copy, and the file list's guess for code is `chore`. Backend errors
 are reported, never hidden by the fallback.
 
 ## Lockfiles and generated files only

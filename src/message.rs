@@ -372,15 +372,41 @@ pub fn fallback(
     convention: Convention,
     language: Language,
 ) -> CommitMessage {
+    fallback_after(changes, convention, language, None)
+}
+
+/// Like [`fallback`], keeping the scope of `reply`, the model's last
+/// subject, when it was rejected for what it said (a copy of the history,
+/// another language) rather than its form, and its type when the files do
+/// not tell one: the model often picks the right type even when it copies,
+/// and the file list's guess for code (`chore`) is worse. Files that are
+/// all docs, tests or config keep their type (`docs`, `test`, `chore`).
+pub fn fallback_after(
+    changes: &[FileChange],
+    convention: Convention,
+    language: Language,
+    reply: Option<&str>,
+) -> CommitMessage {
     let pt = language == Language::Portuguese;
     let description = describe_changes(changes, pt);
     let category = Category::of(changes);
-    let subject = match convention {
-        Convention::Conventional | Convention::Unknown => {
+    let borrowed = reply.and_then(style::parse_conventional);
+    let subject = match (convention, borrowed) {
+        (Convention::Conventional | Convention::Unknown, Some(header)) => {
+            let kind = match category {
+                Category::Mixed => header.kind,
+                known => known.conventional_type(),
+            };
+            match header.scope {
+                Some(scope) => format!("{kind}({scope}): {description}"),
+                None => format!("{kind}: {description}"),
+            }
+        }
+        (Convention::Conventional | Convention::Unknown, None) => {
             format!("{}: {description}", category.conventional_type())
         }
-        Convention::Gitmoji => format!("{} {description}", category.gitmoji()),
-        Convention::Free => capitalize(&description),
+        (Convention::Gitmoji, _) => format!("{} {description}", category.gitmoji()),
+        (Convention::Free, _) => capitalize(&description),
     };
     CommitMessage {
         subject: truncate_subject(&subject),
@@ -623,6 +649,44 @@ mod tests {
             path: path.to_owned(),
             old_path: None,
         }
+    }
+
+    #[test]
+    fn fallback_after_a_rejected_reply() {
+        let code = [change(ChangeStatus::Modified, "src/git.rs")];
+        let docs = [change(ChangeStatus::Modified, "AGENTS.md")];
+        let after = |changes: &[FileChange], reply| {
+            fallback_after(changes, Convention::Conventional, Language::English, reply).subject
+        };
+        // Code: the reply's type and scope beat the file list's `chore`.
+        assert_eq!(
+            after(&code, Some("fix(git): handle detached HEAD")),
+            "fix(git): update src/git.rs"
+        );
+        assert_eq!(after(&code, Some("feat: add x")), "feat: update src/git.rs");
+        // Docs only: the files tell the type; the scope is still kept
+        // (fixture conventional-en-partial-copy).
+        assert_eq!(
+            after(&docs, Some("fix(agents): trace a docs-only change")),
+            "docs(agents): update AGENTS.md"
+        );
+        // No reply, or one without a header: as before.
+        assert_eq!(after(&code, None), "chore: update src/git.rs");
+        assert_eq!(
+            after(&code, Some("Handle detached HEAD")),
+            "chore: update src/git.rs"
+        );
+        // Free style has no type to keep.
+        assert_eq!(
+            fallback_after(
+                &code,
+                Convention::Free,
+                Language::English,
+                Some("fix(git): x")
+            )
+            .subject,
+            "Update src/git.rs"
+        );
     }
 
     #[test]

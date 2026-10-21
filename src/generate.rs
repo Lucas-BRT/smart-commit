@@ -130,8 +130,18 @@ pub fn generate_avoiding(
             }),
         }
     }
+    // The last reply rejected for what it said, not its form, still has a
+    // type worth keeping.
+    let reply = attempts.iter().rev().find_map(|a| match a.rejected {
+        Some(SanitizeError::CopiedHistory(_) | SanitizeError::WrongLanguage(_)) => {
+            message::sanitize(&a.raw, convention)
+                .ok()
+                .map(|m| m.subject)
+        }
+        _ => None,
+    });
     Ok(Generation {
-        message: message::fallback(&ctx.staged, convention, language),
+        message: message::fallback_after(&ctx.staged, convention, language, reply.as_deref()),
         source: Source::Fallback,
         attempts,
     })
@@ -382,6 +392,16 @@ mod tests {
                 .iter()
                 .all(|a| matches!(a.rejected, Some(SanitizeError::CopiedHistory(_))))
         );
+        // The copied reply's type and scope stay; the file list says the rest.
+        assert_eq!(generation.message.subject, "fix(git): update src/git.rs");
+    }
+
+    #[test]
+    fn a_fallback_after_a_bad_format_keeps_the_file_lists_type() {
+        let mock = MockBackend::new(["", "<think>hmm"]);
+        let generation = run(CONVENTIONAL, &mock);
+        assert_eq!(generation.source, Source::Fallback);
+        assert_eq!(generation.message.subject, "chore: update src/git.rs");
     }
 
     #[test]
