@@ -57,7 +57,7 @@
   },
   "generation": {
     "message": {
-      "subject": "fix(agents): update AGENTS.md and docs/training.md to reflect the",
+      "subject": "fix(agents): update AGENTS.md and docs/training.md",
       "body": null
     },
     "source": "model",

@@ -128,8 +128,12 @@ overflow 72 columns. In order, the sanitizer:
   headings, quotes, backticks and bold around the subject; collapses spaces;
   drops the final period;
 - cuts explanations after the message ("This commit message…");
-- cuts the subject at the last word that fits in 72 columns, and rewraps the
-  body at 72, keeping paragraphs and bullets;
+- fits the subject in 72 columns: a scope that is a file path becomes the
+  file's name (`fix(src/operator/combineLatest.ts)` → `fix(combineLatest)`),
+  then the subject ends where it still reads, at a clause (`, `), a phrase
+  (` to `, ` for `, ` in `, ` with `…) or a list (` and `) that keeps at least
+  half of the limit, else at the last word that fits; rewraps the body at 72,
+  keeping paragraphs and bullets;
 - for Conventional Commits, fixes near misses (`Feat: x`, `feat:x`) and
   rejects anything else.
 

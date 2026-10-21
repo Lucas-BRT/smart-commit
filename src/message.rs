@@ -258,23 +258,95 @@ fn fix_conventional(subject: &str) -> Result<String, SanitizeError> {
     }
 }
 
-/// Cuts at the last word boundary that fits, without an ellipsis: git
-/// tooling shows the subject as is.
+/// Where a long subject can end and still read as a whole, by preference:
+/// a clause, then a phrase a preposition opens, then a list.
+const BOUNDARIES: &[&[&str]] = &[
+    &[", ", "; ", " ("],
+    &[
+        " to ",
+        " for ",
+        " in ",
+        " on ",
+        " with ",
+        " when ",
+        " by ",
+        " from ",
+        " so ",
+        " after ",
+        " before ",
+        " because ",
+        " without ",
+        " via ",
+        " using ",
+        " instead of ",
+    ],
+    &[" and "],
+];
+
+/// Fits a subject in [`SUBJECT_MAX`] columns, without an ellipsis (git
+/// tooling shows the subject as is): first a scope that is a file path
+/// becomes the file's name (`fix(src/operator/combineLatest.ts)` →
+/// `fix(combineLatest)`), then the subject ends at the last boundary of
+/// [`BOUNDARIES`] that keeps at least half of the limit, else at the last
+/// word that fits.
 fn truncate_subject(subject: &str) -> String {
     if subject.chars().count() <= SUBJECT_MAX {
         return subject.to_owned();
     }
+    let subject = shorten_path_scope(subject);
+    if subject.chars().count() <= SUBJECT_MAX {
+        return subject;
+    }
+    // Byte offset of the first character past the limit.
+    let limit = subject
+        .char_indices()
+        .nth(SUBJECT_MAX)
+        .map_or(subject.len(), |(i, _)| i);
+    let shortest = subject
+        .char_indices()
+        .nth(SUBJECT_MAX / 2)
+        .map_or(subject.len(), |(i, _)| i);
+    for group in BOUNDARIES {
+        let end = group
+            .iter()
+            .filter_map(|b| subject[..limit].rfind(b))
+            .filter(|&at| at >= shortest)
+            .max();
+        if let Some(end) = end {
+            return subject[..end].trim_end_matches(TRAILING).to_owned();
+        }
+    }
     let cut: String = subject.chars().take(SUBJECT_MAX + 1).collect();
     let cut = match cut.rfind(' ') {
         Some(space) if space > 0 => &cut[..space],
-        _ => {
-            &cut[..cut
-                .char_indices()
-                .nth(SUBJECT_MAX)
-                .map_or(cut.len(), |(i, _)| i)]
-        }
+        _ => &cut[..limit.min(cut.len())],
     };
-    cut.trim_end_matches([' ', ',', ';', ':', '-']).to_owned()
+    cut.trim_end_matches(TRAILING).to_owned()
+}
+
+/// What a cut subject should not end with.
+const TRAILING: [char; 5] = [' ', ',', ';', ':', '-'];
+
+/// `type(path/to/file.ext): ...` as `type(file): ...`; models put the path
+/// of the file they read in the scope, which repositories do not. A scope
+/// without an extension (`provider/kubernetes`) is a real one: kept.
+fn shorten_path_scope(subject: &str) -> String {
+    let Some(header) = style::parse_conventional(subject) else {
+        return subject.to_owned();
+    };
+    let Some(scope) = header.scope else {
+        return subject.to_owned();
+    };
+    let first = scope.split(',').next().unwrap_or(scope).trim();
+    let name = first.rsplit('/').next().unwrap_or(first);
+    let Some((stem, extension)) = name.rsplit_once('.') else {
+        return subject.to_owned();
+    };
+    if stem.is_empty() || extension.is_empty() || !extension.chars().all(char::is_alphanumeric) {
+        return subject.to_owned();
+    }
+    let bang = if header.breaking { "!" } else { "" };
+    format!("{}({stem}){bang}: {}", header.kind, header.description)
 }
 
 /// Re-wraps paragraphs and `- ` bullets at [`BODY_WIDTH`].
@@ -619,9 +691,10 @@ mod tests {
         let raw =
             "feat(parser): support renames, copies and type changes in the staged diff output";
         let subject = conventional(raw).unwrap();
+        // At the phrase "in ...", not mid-phrase ("... in the staged").
         assert_eq!(
             subject,
-            "feat(parser): support renames, copies and type changes in the staged"
+            "feat(parser): support renames, copies and type changes"
         );
         assert!(subject.chars().count() <= SUBJECT_MAX);
 
@@ -629,6 +702,52 @@ mod tests {
         assert_eq!(clean(&unbroken).chars().count(), SUBJECT_MAX);
         let accented = format!("Atualiza {}", "ç".repeat(100));
         assert_eq!(clean(&accented), "Atualiza");
+    }
+
+    #[test]
+    fn long_subjects_end_where_they_still_read() {
+        // Replies of qwen2.5-coder-1.5b on eval-v1, over the limit.
+        for (raw, subject) in [
+            (
+                "fix(kubernetes): update manifest and pod handlers to handle job and pod conditions",
+                "fix(kubernetes): update manifest and pod handlers",
+            ),
+            (
+                "fix(clouddriver-core): update RetrofitConfig to support capacity provider strategies",
+                "fix(clouddriver-core): update RetrofitConfig",
+            ),
+            (
+                "fix(src/operator/combineLatest.ts): update slice method to avoid unnecessary copying",
+                "fix(combineLatest): update slice method to avoid unnecessary copying",
+            ),
+            (
+                "fix(doc/lettable-operators.md): update doc on building with the rxjs/operators import location",
+                "fix(lettable-operators): update doc on building",
+            ),
+            (
+                "fix(provider/kubernetes): Update cluster provider logic to handle missing providers",
+                "fix(provider/kubernetes): Update cluster provider logic",
+            ),
+            (
+                "refactor(src/internal/Subscriber.ts, src/internal/scheduler/AnimationFrameAction.ts): use the new names",
+                "refactor(Subscriber): use the new names",
+            ),
+        ] {
+            assert_eq!(conventional(raw).unwrap(), subject, "{raw}");
+        }
+        // A path scope is kept when the subject fits: only length shortens it.
+        assert_eq!(
+            conventional("fix(src/lib.rs): handle empty input").unwrap(),
+            "fix(src/lib.rs): handle empty input"
+        );
+        // A boundary that would keep too little falls back to the last word.
+        let raw = "fix: crash, the parser reads the whole staged diff output twice over every time";
+        let subject = conventional(raw).unwrap();
+        assert!(
+            subject.starts_with("fix: crash, the parser reads"),
+            "{subject}"
+        );
+        assert!(subject.chars().count() <= SUBJECT_MAX);
     }
 
     #[test]

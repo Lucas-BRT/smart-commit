@@ -99,8 +99,9 @@ printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n\n### Ask smart-co
 "$BIN" --backend mock --mock-response "fix(agents): trace a docs-only change" \
   --trace "$OUT/conventional-en-partial-copy.json" >/dev/null
 
-# Found in real use: a reply one column over the limit; the subject is cut
-# at a word boundary and ends mid-sentence ("... to reflect the").
+# Found in real use: a reply one column over the limit; the subject was cut
+# at a word boundary and ended mid-sentence ("... to reflect the"). It ends
+# before "to reflect" now.
 fresh too-long
 mkdir docs
 printf '# AGENTS.md\n\nModels are never hosted here.\n' > AGENTS.md; printf '# Training\n' > docs/training.md; git add .
