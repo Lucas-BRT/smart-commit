@@ -88,7 +88,8 @@ printf '# Training\n\nRun build_inputs.py, then select.py.\n\nThe frozen set nee
   --trace "$OUT/conventional-en-docs-only.json" >/dev/null
 
 # Found in real use: a new section in AGENTS.md; the model answered `fix` and
-# reused most of the last history subject, which the exact-copy guard misses.
+# reused most of the last history subject, which the exact-copy guard missed;
+# the near-copy check rejects it now.
 fresh partial-copy
 printf '# AGENTS.md\n\n## Commits\n\nOne purpose per commit.\n' > AGENTS.md; git add .
 commit "docs(agents): add the commit rules"

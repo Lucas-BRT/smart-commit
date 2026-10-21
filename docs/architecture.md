@@ -134,10 +134,16 @@ overflow 72 columns. In order, the sanitizer:
 
 ## Retry and fallback
 
-A rejected reply (empty, not conventional when it must be, or a subject
-repeated from the history, as small models do when the history is short or
-the diff says little) gets **one retry**, whose prompt ends with why the
-first one was rejected. With greedy
+A rejected reply gets **one retry**, whose prompt ends with why the first
+one was rejected. A reply is rejected when it is empty, not conventional
+when it must be, a subject repeated from the history (as small models do
+when the history is short or the diff says little), or nearly so (every
+word of its description, four or more, is in one history subject and
+covers 60% of it; a reply with words of its own is kept), or clearly in
+another language than the repository's (all its known words English in a
+Portuguese repository, or the reverse; a mix is kept, as such
+repositories often write; a language that is only the default, with no
+history to tell, is not enforced). With greedy
 decoding, repeating the same prompt would give the same reply. If the retry
 is rejected too, the message is built from the file list alone (for example
 `chore: update 3 files in src/`, with the files in the body), in the
