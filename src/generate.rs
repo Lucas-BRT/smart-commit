@@ -105,7 +105,7 @@ pub fn generate_avoiding(
             }
             // A default language, with no history to tell, is not enforced.
             let known = options.language.is_some() || ctx.style.language != Language::Unknown;
-            if known && in_other_language(&message.subject, language) {
+            if known && in_other_language(&message.subject, language, &ctx.subjects) {
                 return Err(SanitizeError::WrongLanguage(message.subject));
             }
             Ok(message)
@@ -189,12 +189,15 @@ fn copied_from<'a>(subject: &str, history: &'a [String]) -> Option<&'a str> {
 }
 
 /// Whether `subject` is clearly in another language than `language`, the
-/// repository's: only when its words are all of the other one.
-fn in_other_language(subject: &str, language: Language) -> bool {
+/// repository's: only when its words are all of the other one, and no
+/// history subject is in that one (a repository that sometimes writes it
+/// accepts it).
+fn in_other_language(subject: &str, language: Language, history: &[String]) -> bool {
+    let theirs = style::language_of(subject);
     matches!(
-        (language, style::language_of(subject)),
+        (language, theirs),
         (Language::Portuguese, Language::English) | (Language::English, Language::Portuguese)
-    )
+    ) && !history.iter().any(|h| style::language_of(h) == theirs)
 }
 
 /// Asks for a message other than the subjects of `messages`.
@@ -430,6 +433,15 @@ mod tests {
         // Mixed, as the history itself may be: kept.
         let mock = MockBackend::new(["fix do teclado"]);
         assert_eq!(run(&history, &mock).attempts.len(), 1);
+        // A repository that also writes English accepts an English reply
+        // (found on eval-v1).
+        let mixed = [
+            "adiciona pedidos",
+            "corrige o total do pedido",
+            "add the CLI",
+        ];
+        let mock = MockBackend::new(["add smtpSecure and smtpRequireTLS"]);
+        assert_eq!(run(&mixed, &mock).attempts.len(), 1);
         // Without history the language is only the default (English): a
         // first commit written in Portuguese is kept.
         let mock = MockBackend::new(["feat: adiciona o sistema de pedidos"]);
