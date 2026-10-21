@@ -83,7 +83,9 @@ wrote it, how long it took and the staged files:
 
 **Another message** asks the model again with the messages turned down
 in the prompt: decoding is greedy, so only a different prompt gives a
-different message, and the same choices always give the same messages.
+different message, and the same choices always give the same messages. A
+reply that repeats one of them, or nearly (the same subject with a few
+words dropped), is rejected and asked again, as a copy of the history is.
 The model stays loaded, so each new message costs only the generation.
 Outside a terminal (scripts, pipes), `--commit` opens the editor with the
 message, as before.

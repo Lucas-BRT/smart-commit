@@ -86,6 +86,10 @@ pub fn generate_avoiding(
             attempts: Vec::new(),
         });
     }
+    let turned_down: Vec<String> = avoid
+        .iter()
+        .map(|m| m.lines().next().unwrap_or_default().to_owned())
+        .collect();
     let avoid = avoid_note(avoid);
     let mut attempts: Vec<Attempt> = Vec::new();
     while attempts.len() < MAX_ATTEMPTS {
@@ -102,6 +106,9 @@ pub fn generate_avoiding(
         let checked = message::sanitize(&raw, convention).and_then(|message| {
             if let Some(subject) = copied_from(&message.subject, &ctx.subjects) {
                 return Err(SanitizeError::CopiedHistory(subject.to_owned()));
+            }
+            if let Some(subject) = copied_from(&message.subject, &turned_down) {
+                return Err(SanitizeError::TurnedDown(subject.to_owned()));
             }
             // A default language, with no history to tell, is not enforced.
             let known = options.language.is_some() || ctx.style.language != Language::Unknown;
@@ -133,11 +140,13 @@ pub fn generate_avoiding(
     // The last reply rejected for what it said, not its form, still has a
     // type worth keeping.
     let reply = attempts.iter().rev().find_map(|a| match a.rejected {
-        Some(SanitizeError::CopiedHistory(_) | SanitizeError::WrongLanguage(_)) => {
-            message::sanitize(&a.raw, convention)
-                .ok()
-                .map(|m| m.subject)
-        }
+        Some(
+            SanitizeError::CopiedHistory(_)
+            | SanitizeError::WrongLanguage(_)
+            | SanitizeError::TurnedDown(_),
+        ) => message::sanitize(&a.raw, convention)
+            .ok()
+            .map(|m| m.subject),
         _ => None,
     });
     Ok(Generation {
@@ -254,6 +263,10 @@ pub fn retry_note(error: &SanitizeError, convention: Convention, language: Langu
                 "\"{subject}\" repeats an earlier commit of this repository; \
                  describe what this diff changes instead"
             )
+        }
+        SanitizeError::TurnedDown(subject) => {
+            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
+            format!("\"{subject}\" is a message the user turned down; write a different one")
         }
         SanitizeError::WrongLanguage(subject) => {
             let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
@@ -558,6 +571,61 @@ mod tests {
         )
         .unwrap();
         assert_eq!(generation.source, Source::Model);
+    }
+
+    #[test]
+    fn a_turned_down_message_is_not_written_again() {
+        // Real use: asking for another message gave the same one back, the
+        // note listing it notwithstanding.
+        let avoid = ["fix(git): read the branch name from git\n\nUses --show-current.".to_owned()];
+        let mock = MockBackend::new([
+            "fix(git): read the branch name",
+            "fix(git): use --show-current for the branch",
+        ]);
+        let generation = generate_avoiding(
+            &context(CONVENTIONAL),
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Model);
+        assert_eq!(
+            generation.message.subject,
+            "fix(git): use --show-current for the branch"
+        );
+        assert_eq!(
+            generation.attempts[0].rejected,
+            Some(SanitizeError::TurnedDown(
+                "fix(git): read the branch name from git".into()
+            ))
+        );
+        let retry = &mock.prompts()[1].user;
+        assert!(
+            retry.contains("The user turned down this message"),
+            "{retry}"
+        );
+        assert!(
+            retry.contains("\"fix(git): read the branch name from git\" is a message the user turned down; write a different one."),
+            "{retry}"
+        );
+
+        // Repeated twice: the fallback, with the reply's type and scope, is
+        // not the message turned down.
+        let mock = MockBackend::new(["fix(git): read the branch name from git"; 2]);
+        let generation = generate_avoiding(
+            &context(CONVENTIONAL),
+            &files(),
+            &mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &avoid,
+        )
+        .unwrap();
+        assert_eq!(generation.source, Source::Fallback);
+        assert_eq!(generation.message.subject, "fix(git): update src/git.rs");
     }
 
     #[test]

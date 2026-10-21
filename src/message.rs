@@ -49,6 +49,11 @@ pub enum SanitizeError {
     /// as small models trained on English write in Portuguese ones.
     #[error("subject is in another language than the repository's: {0:?}")]
     WrongLanguage(String),
+    /// The subject repeats, or nearly, a message the user asked to replace:
+    /// with greedy decoding the note asking for another is not always
+    /// enough.
+    #[error("subject repeats a message the user turned down: {0:?}")]
+    TurnedDown(String),
 }
 
 /// Labels the model puts before the message, compared lowercase.
