@@ -154,7 +154,7 @@ mkdir -p src/prompt
 git mv src/prompt.rs src/prompt/mod.rs
 printf 'pub struct PromptOptions {\n    pub max_prompt_tokens: usize,\n}\n' > src/prompt/types.rs
 git add .
-"$BIN" --backend mock --mock-response "feat(prompt): refactor prompt module" \
+"$BIN" --backend mock --mock-response "refactor(prompt): move the prompt into its own module" \
   --trace "$OUT/conventional-en-refactor-as-feat.json" >/dev/null
 
 # Found in real use, with smart-commit-0.5b-v0.1: a release's version bump;

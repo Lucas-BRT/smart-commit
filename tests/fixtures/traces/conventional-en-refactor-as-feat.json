@@ -64,17 +64,17 @@
   },
   "generation": {
     "message": {
-      "subject": "feat(prompt): refactor prompt module",
+      "subject": "refactor(prompt): move the prompt into its own module",
       "body": null
     },
     "source": "model",
     "attempts": [
       {
         "prompt": {
-          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix.\n- Scopes used here: prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(prompt): describe the rules\nfix(prompt): keep the subject limit\nfeat(prompt): build the system message\n",
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix, refactor.\n- Scopes used here: prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(prompt): describe the rules\nfix(prompt): keep the subject limit\nfeat(prompt): build the system message\n",
           "user": "Files changed:\nsrc/{prompt.rs => prompt/mod.rs} | renamed, unchanged, +0 -0\nsrc/prompt/types.rs | new, +3 -0\n\nDiff:\n--- src/prompt/types.rs\n@@ -0,0 +1,3 @@\n+pub struct PromptOptions {\n+    pub max_prompt_tokens: usize,\n+}\n"
         },
-        "raw": "feat(prompt): refactor prompt module",
+        "raw": "refactor(prompt): move the prompt into its own module",
         "rejected": null
       }
     ]
