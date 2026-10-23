@@ -142,6 +142,21 @@ printf '[tools]\nrust = "1.99"\n' > mise.toml; git add mise.toml
 "$BIN" --backend mock --mock-response "docs(mise): add rust to tools" \
   --trace "$OUT/conventional-en-file-scope.json" >/dev/null
 
+# Found in real use: a pure move in a repository whose history never used
+# `refactor`; the model kept to the listed types and answered `feat`.
+fresh refactor-as-feat
+mkdir -p src
+printf 'pub fn build() -> String {\n    "rules".to_owned()\n}\n' > src/prompt.rs
+git add .; commit "feat(prompt): build the system message"
+printf 'x\n' > src/prompt.rs; git add .; commit "fix(prompt): keep the subject limit"
+printf 'y\n' > src/prompt.rs; git add .; commit "docs(prompt): describe the rules"
+mkdir -p src/prompt
+git mv src/prompt.rs src/prompt/mod.rs
+printf 'pub struct PromptOptions {\n    pub max_prompt_tokens: usize,\n}\n' > src/prompt/types.rs
+git add .
+"$BIN" --backend mock --mock-response "feat(prompt): refactor prompt module" \
+  --trace "$OUT/conventional-en-refactor-as-feat.json" >/dev/null
+
 # Found in real use, with smart-commit-0.5b-v0.1: a release's version bump;
 # the model answered `feat` and took a model name from the last subject for
 # the version.

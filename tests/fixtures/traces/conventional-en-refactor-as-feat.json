@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "docs(prompt): describe the rules",
+      "fix(prompt): keep the subject limit",
+      "feat(prompt): build the system message"
+    ],
+    "history_files": [
+      [
+        "src/prompt.rs"
+      ],
+      [
+        "src/prompt.rs"
+      ],
+      [
+        "src/prompt.rs"
+      ]
+    ],
+    "staged": [
+      {
+        "status": "renamed",
+        "path": "src/prompt/mod.rs",
+        "old_path": "src/prompt.rs"
+      },
+      {
+        "status": "added",
+        "path": "src/prompt/types.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "src/prompt/mod.rs",
+        "old_path": "src/prompt.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/prompt/types.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,3 @@\n+pub struct PromptOptions {\n+    pub max_prompt_tokens: usize,\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(prompt): refactor prompt module",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, fix.\n- Scopes used here: prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(prompt): describe the rules\nfix(prompt): keep the subject limit\nfeat(prompt): build the system message\n",
+          "user": "Files changed:\nsrc/{prompt.rs => prompt/mod.rs} | renamed, unchanged, +0 -0\nsrc/prompt/types.rs | new, +3 -0\n\nDiff:\n--- src/prompt/types.rs\n@@ -0,0 +1,3 @@\n+pub struct PromptOptions {\n+    pub max_prompt_tokens: usize,\n+}\n"
+        },
+        "raw": "feat(prompt): refactor prompt module",
+        "rejected": null
+      }
+    ]
+  }
+}
