@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "tool_version": "0.6.0",
+  "tool_version": "0.7.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
@@ -64,7 +64,7 @@
     "attempts": [
       {
         "prompt": {
-          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs: add AGENTS.md and the training page\n",
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, refactor.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs: add AGENTS.md and the training page\n",
           "user": "Files changed:\nAGENTS.md | +2 -0\ndocs/training.md | +2 -0\n\nDiff:\n--- AGENTS.md\n@@ -1 +1,3 @@\n # AGENTS.md\n+\n+Fine-tunes are published on Hugging Face.\n--- docs/training.md\n@@ -1 +1,3 @@\n # Training\n+\n+Publish smart-commit-1.5b-v1.\n"
         },
         "raw": "fix(AGENTS.md): update AGENTS.md with the latest changes\nfix(docs/training.md): update docs/training.md with the latest changes",

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "tool_version": "0.6.0",
+  "tool_version": "0.7.0",
   "backend": "mock",
   "options": {
     "max_prompt_tokens": 1024,
@@ -63,7 +63,7 @@
     "attempts": [
       {
         "prompt": {
-          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: Add a simple hello world program\n",
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, refactor.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: Add a simple hello world program\n",
           "user": "Files changed:\nCargo.lock | new, +2 -0\nsrc/main.rs | +1 -0\n\nDiff:\n--- src/main.rs\n@@ -1,2 +1,3 @@\n fn main() {\n+    println!(\"{}\", format!(\"1 + 1 = {}\", 2));\n     println!(\"Hello, world!\");\n"
         },
         "raw": "feat: Add a simple hello world program",
@@ -73,7 +73,7 @@
       },
       {
         "prompt": {
-          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: Add a simple hello world program\n",
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, refactor.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat: Add a simple hello world program\n",
           "user": "Files changed:\nCargo.lock | new, +2 -0\nsrc/main.rs | +1 -0\n\nDiff:\n--- src/main.rs\n@@ -1,2 +1,3 @@\n fn main() {\n+    println!(\"{}\", format!(\"1 + 1 = {}\", 2));\n     println!(\"Hello, world!\");\n\nYour previous reply was rejected because \"feat: Add a simple hello world program\" repeats an earlier commit of this repository; describe what this diff changes instead. Reply again with only the commit message in the `type(scope): description` format.\n"
         },
         "raw": "feat: print the sum of 1 + 1",
