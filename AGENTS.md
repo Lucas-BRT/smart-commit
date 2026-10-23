@@ -35,7 +35,7 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 | Kind | Where |
 |---|---|
 | Unit | `#[cfg(test)] mod tests` in the module, under `src/` |
-| Prompt snapshots | `insta::assert_snapshot!`, files in `src/snapshots/`; update with `INSTA_UPDATE=always cargo test` and review the diff |
+| Prompt snapshots | `insta::assert_snapshot!`, files in the `snapshots/` directory beside the module (`src/prompt/snapshots/`); update with `INSTA_UPDATE=always cargo test` and review the diff |
 | Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |
 | CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
 | Trace fixtures | `tests/replay_fixtures.rs` |
