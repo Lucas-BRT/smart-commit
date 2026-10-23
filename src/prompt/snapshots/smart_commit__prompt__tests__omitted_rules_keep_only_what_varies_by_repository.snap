@@ -1,9 +1,9 @@
 ---
-source: src/prompt.rs
+source: src/prompt/tests.rs
 expression: "format!(\"{}\\n=====\\n{}\", prompt.system, prompt.user)"
 ---
 - Use Conventional Commits.
-- Types used here: docs, feat, fix.
+- Types used here: docs, feat, fix, refactor.
 - Scopes used here: cli, git.
 
 Recent subjects from this repository:

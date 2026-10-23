@@ -57,7 +57,19 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri
                 "Use Conventional Commits."
             });
             if !style.types.is_empty() {
-                rule(&format!("Types used here: {}.", names(&style.types)));
+                let mut types: Vec<String> = style
+                    .types
+                    .iter()
+                    .take(MAX_LISTED)
+                    .map(|(name, _)| name.clone())
+                    .collect();
+                if !types.iter().any(|t| t == "refactor") {
+                    types.push("refactor".to_string());
+                }
+                if types.len() > MAX_LISTED {
+                    types.truncate(MAX_LISTED);
+                }
+                rule(&format!("Types used here: {}.", types.join(", ")));
             } else if full {
                 rule("Types: feat, fix, docs, refactor, test, chore.");
             }

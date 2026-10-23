@@ -1,5 +1,5 @@
 ---
-source: src/prompt.rs
+source: src/prompt/tests.rs
 expression: "format!(\"{}\\n=====\\n{}\", prompt.system, prompt.user)"
 ---
 You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.
@@ -8,7 +8,7 @@ Rules:
 - Subject line of at most 72 characters, without a trailing period.
 - Write in Brazilian Portuguese.
 - Use Conventional Commits: `type(scope): description`.
-- Types used here: docs, feat, fix.
+- Types used here: docs, feat, fix, refactor.
 - Scopes used here: cli, git. Omit the scope if none fits.
 - Add a body only if the reason for the change is not obvious.
 
