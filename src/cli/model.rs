@@ -1,7 +1,6 @@
 //! `smart-commit model`: list the recommended models and switch between
 //! them, or to a model file on disk.
 
-use std::error::Error;
 use std::io::{IsTerminal, Write};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
@@ -13,9 +12,12 @@ use smart_commit::models::{self, Model};
 use smart_commit::paths;
 use smart_commit::tui::models::{Action, Entry, Picker};
 use smart_commit::tui::{self, Screen};
+use std::error::Error;
+
+use super::settings::{env, resolve, stop_kept_after};
 
 #[derive(Debug, Subcommand)]
-pub enum ModelCommand {
+pub(super) enum ModelCommand {
     /// The recommended models, which are installed and which is in use.
     List,
     /// Download a recommended model from Hugging Face and use it, or use a
@@ -26,11 +28,7 @@ pub enum ModelCommand {
     },
 }
 
-fn env(name: &str) -> Option<String> {
-    std::env::var(name).ok()
-}
-
-pub fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {
     match command {
         None if tui::interactive() => pick(),
         None | Some(ModelCommand::List) => list(),
@@ -42,7 +40,7 @@ pub fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {
 }
 
 fn list() -> Result<(), Box<dyn Error>> {
-    let resolved = crate::resolve(None, Vec::new())?;
+    let resolved = resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let models_dir = paths::default_models_dir(env);
     println!(
@@ -177,13 +175,13 @@ fn pick() -> Result<(), Box<dyn Error>> {
 }
 
 /// What the picker chose in the setup, which downloads later.
-pub enum Chosen {
+pub(super) enum Chosen {
     Model(&'static Model),
     File(PathBuf),
 }
 
 /// The picker on `screen`, choosing without downloading.
-pub fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Error>> {
+pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Error>> {
     let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
     let mut picker = picker(&dir)?;
     loop {
@@ -199,7 +197,7 @@ pub fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Error>> {
 
 /// The picker, on the models in `dir`.
 fn picker(dir: &Path) -> Result<Picker, Box<dyn Error>> {
-    let resolved = crate::resolve(None, Vec::new())?;
+    let resolved = resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let entries = models::REGISTRY
         .iter()
@@ -258,7 +256,7 @@ fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
     for line in select(model)? {
         println!("{line}");
     }
-    let resolved = crate::resolve(None, Vec::new())?;
+    let resolved = resolve(None, Vec::new())?;
     warn_overridden(&resolved, &["model.name", "model.gguf", "model.dir"]);
     match model.openvino {
         None => println!(
@@ -277,12 +275,12 @@ fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
 
 /// Makes `model` the one in use (model.name, without model.gguf or
 /// model.dir pointing elsewhere); returns what changed.
-pub fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error>> {
+pub(super) fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error>> {
     let path = global_config()?;
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.name", model.id, None)?;
     let mut lines = vec![format!("model.name = {}  ({origin})", model.id)];
-    lines.extend(crate::stop_kept_after("model.name"));
+    lines.extend(stop_kept_after("model.name"));
     for key in ["model.gguf", "model.dir"] {
         if config::unset_in_file(&path, key)? {
             lines.push(format!(
@@ -320,7 +318,7 @@ fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {
     for line in select_file(&path, key)? {
         println!("{line}");
     }
-    let resolved = crate::resolve(None, Vec::new())?;
+    let resolved = resolve(None, Vec::new())?;
     warn_overridden(&resolved, &[key]);
     suggest_bench();
     Ok(())
@@ -332,7 +330,7 @@ fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
     let origin = Origin::Global(config_path.clone());
     let text = path.to_string_lossy();
     config::set_in_file(&config_path, &origin, key, &text, None)?;
-    let stopped = crate::stop_kept_after(key);
+    let stopped = stop_kept_after(key);
     let devices = if key == "model.gguf" {
         "vulkan and cpu"
     } else {
@@ -350,7 +348,7 @@ fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 /// Uses a model file or directory chosen in the setup's picker.
-pub fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {
+pub(super) fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {
     let path = path.canonicalize()?;
     if path.is_dir() {
         if !path.join("openvino_model.xml").is_file() {
@@ -377,7 +375,7 @@ fn warn_overridden(resolved: &Resolved, keys: &[&str]) {
 }
 
 fn suggest_bench() {
-    if crate::bench_cmd::last_report().is_some() {
+    if super::benchmark::last_report().is_some() {
         println!("The last benchmark measured the previous model: run `smart-commit bench` again.");
     }
 }

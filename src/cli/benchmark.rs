@@ -1,7 +1,6 @@
 //! `smart-commit bench` and `smart-commit device`: measure the devices of this
 //! machine, show which one is used, and change it.
 
-use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
@@ -14,17 +13,16 @@ use smart_commit::device::{DEFAULT_ORDER, Target};
 use smart_commit::paths;
 use smart_commit::tui::bench::{Action, BenchView};
 use smart_commit::tui::{self, Screen};
+use std::error::Error;
 
-use crate::DeviceArg;
+use super::args::DeviceArg;
+use super::load::{Retry, load_with};
+use super::settings::{env, resolve, stop_kept_after, warn_renamed};
 
 #[derive(Debug, Subcommand)]
-pub enum DeviceCommand {
+pub(super) enum DeviceCommand {
     /// Use a device from now on (global config), or `auto` for the fastest.
     Use { device: DeviceArg },
-}
-
-fn env(name: &str) -> Option<String> {
-    std::env::var(name).ok()
 }
 
 fn bench_file() -> Result<PathBuf, Box<dyn Error>> {
@@ -32,7 +30,7 @@ fn bench_file() -> Result<PathBuf, Box<dyn Error>> {
 }
 
 /// The last benchmark, if there is a readable one.
-pub fn last_report() -> Option<Report> {
+pub(super) fn last_report() -> Option<Report> {
     let text = std::fs::read_to_string(bench_file().ok()?).ok()?;
     Report::from_json(&text)
 }
@@ -54,7 +52,7 @@ fn measure_all(
     mut progress: impl FnMut(Progress),
 ) -> Option<Report> {
     // A model kept loaded holds memory the measured loads need.
-    if let Some(runtime) = paths::runtime_dir(crate::env) {
+    if let Some(runtime) = paths::runtime_dir(env) {
         smart_commit::server::stop(&runtime);
     }
     let prompts = bench::prompts();
@@ -70,11 +68,11 @@ fn measure_all(
                 target,
                 &prompts,
                 &config,
-                |t, fast| crate::load_with(settings, t, fast, crate::Retry::Never),
+                |t, fast| load_with(settings, t, fast, Retry::Never),
                 |phase| progress(Progress::Start(target, phase)),
             ),
             _ => bench::measure(target, &prompts, &config, |t| {
-                crate::load_with(settings, t, false, crate::Retry::Never)
+                load_with(settings, t, false, Retry::Never)
             }),
         };
         progress(Progress::Done(entry.clone()));
@@ -97,9 +95,9 @@ fn save(report: &Report) -> Result<PathBuf, Box<dyn Error>> {
     Ok(path)
 }
 
-pub fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
-    let resolved = crate::resolve(None, Vec::new())?;
-    crate::warn_renamed(&resolved);
+pub(super) fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
+    let resolved = resolve(None, Vec::new())?;
+    warn_renamed(&resolved);
     let settings = resolved.settings();
     if !json && tui::interactive() {
         return bench_screen(settings);
@@ -141,7 +139,7 @@ fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
 }
 
 /// A finished benchmark, saved, and the device the user chose, if any.
-pub struct Benchmarked {
+pub(super) struct Benchmarked {
     pub report: Report,
     pub path: PathBuf,
     pub choice: Option<String>,
@@ -150,7 +148,10 @@ pub struct Benchmarked {
 /// Measures every device on `screen`, live, saves the report and lets the
 /// user choose a device. Ctrl+C stops after the device being measured and
 /// saves nothing.
-pub fn bench_in(screen: &mut Screen, settings: &Settings) -> Result<Benchmarked, Box<dyn Error>> {
+pub(super) fn bench_in(
+    screen: &mut Screen,
+    settings: &Settings,
+) -> Result<Benchmarked, Box<dyn Error>> {
     let auto = settings.device == DeviceSetting::Auto;
     let mut view = BenchView::measuring(
         format!("Benchmark on {}", Machine::current().cpu),
@@ -221,7 +222,7 @@ fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, B
 /// after it.
 /// Sets model.device to what the screen chose; returns what it did and the
 /// settings after it.
-pub fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>, Box<dyn Error>> {
+pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>, Box<dyn Error>> {
     let Some(name) = choice else {
         return Ok(None);
     };
@@ -230,7 +231,7 @@ pub fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>, Box<d
     config::set_in_file(&path, &origin, "model.device", &name, None)?;
     Ok(Some((
         format!("model.device = {name}  ({origin})"),
-        crate::resolve(None, Vec::new())?.settings(),
+        resolve(None, Vec::new())?.settings(),
     )))
 }
 
@@ -249,7 +250,7 @@ fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<()
         None => {
             return Err(
                 "no device could run the model; `smart-commit setup` installs \
-                        the drivers and models"
+                 the drivers and models"
                     .into(),
             );
         }
@@ -307,7 +308,7 @@ fn using_message(report: &Report, target: Target, device: DeviceSetting) -> Stri
     format!("smart-commit will use {target} on this machine{estimate}: {why}.")
 }
 
-pub fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> {
     match command {
         None => show_device(),
         Some(DeviceCommand::Use { device }) => use_device(device),
@@ -315,8 +316,8 @@ pub fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> 
 }
 
 fn show_device() -> Result<(), Box<dyn Error>> {
-    let resolved = crate::resolve(None, Vec::new())?;
-    crate::warn_renamed(&resolved);
+    let resolved = resolve(None, Vec::new())?;
+    warn_renamed(&resolved);
     let settings = resolved.settings();
     if tui::interactive()
         && let Some(report) = last_report()
@@ -336,7 +337,7 @@ fn show_device() -> Result<(), Box<dyn Error>> {
             None => return Ok(()),
         }
     }
-    let resolved = crate::resolve(None, Vec::new())?;
+    let resolved = resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let origin = resolved
         .get("model.device")
@@ -369,7 +370,7 @@ fn use_device(device: DeviceArg) -> Result<(), Box<dyn Error>> {
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", device.name(), None)?;
     println!("model.device = {}  ({origin})", device.name());
-    if let Some(note) = crate::stop_kept_after("model.device") {
+    if let Some(note) = stop_kept_after("model.device") {
         println!("{note}");
     }
     if env("SMART_COMMIT_DEVICE").is_some_and(|v| !v.is_empty()) {

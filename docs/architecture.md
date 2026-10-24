@@ -37,9 +37,11 @@ Everything except the model is deterministic and tested without hardware.
 | `hook` | the `prepare-commit-msg` script and how it fills the message file |
 | `paths` | XDG locations of config, models, caches and the benchmark |
 
-The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`, `model_cmd.rs`,
-`setup_cmd.rs`, `install_cmd.rs`) only parses arguments and wires these
-together; `update` and `uninstall` run the `install.sh` the release
+The binary (`src/main.rs` and the `src/cli/` modules: `args`, `suggest`,
+`inspect`, `git_hook`, `configure`, `benchmark`, `model`, `guided_setup`,
+`keep_loaded` and `install` for the commands, and `session`, `load`,
+`logging` and `settings`, which they share) only parses
+arguments and wires these together; `update` and `uninstall` run the `install.sh` the release
 installed in `share/smart-commit/scripts`.
 
 ## Repository style

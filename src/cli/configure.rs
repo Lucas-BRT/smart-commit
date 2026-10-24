@@ -1,15 +1,17 @@
 //! `smart-commit config`: read and change settings.
 
-use std::error::Error;
 use std::path::PathBuf;
 
 use clap::{Args, Subcommand};
 use smart_commit::config::{self, Origin, Resolved, Sources};
 use smart_commit::git::Repo;
 use smart_commit::paths;
+use std::error::Error;
+
+use super::settings::{env, resolve, stop_kept_after};
 
 #[derive(Debug, Subcommand)]
-pub enum ConfigCommand {
+pub(super) enum ConfigCommand {
     /// Show every setting with its value, after all layers.
     List {
         /// Also show where each value comes from.
@@ -57,14 +59,14 @@ pub enum ConfigCommand {
 
 /// The repository whose `.smart-commit.toml` applies, if any.
 #[derive(Debug, Args)]
-pub struct At {
+pub(super) struct At {
     #[arg(short = 'C', long = "path", default_value = ".")]
     path: PathBuf,
 }
 
 /// Which config file to change.
 #[derive(Debug, Args)]
-pub struct Target {
+pub(super) struct Target {
     /// The repository's .smart-commit.toml (shared through git) instead of
     /// the global config; only style.* settings are allowed there.
     #[arg(long)]
@@ -84,18 +86,14 @@ impl Target {
     }
 }
 
-fn env(name: &str) -> Option<String> {
-    std::env::var(name).ok()
-}
-
 /// The repository at `path`, if there is one: outside a repository only
 /// the global config applies.
 fn resolve_at(path: &PathBuf) -> Result<Resolved, Box<dyn Error>> {
     let repo = Repo::discover(path).ok();
-    Ok(crate::resolve(repo.as_ref(), Vec::new())?)
+    Ok(resolve(repo.as_ref(), Vec::new())?)
 }
 
-pub fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
     match command {
         ConfigCommand::List { show_origin, at } => {
             let resolved = resolve_at(&at.path)?;
@@ -129,7 +127,7 @@ pub fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
             let home = env("HOME");
             let value = config::set_in_file(&path, &origin, &key, &value, home.as_deref())?;
             println!("{key} = {value}  ({origin})");
-            if let Some(note) = crate::stop_kept_after(&key) {
+            if let Some(note) = stop_kept_after(&key) {
                 println!("{note}");
             }
             warn_if_shadowed(&key, &target, &origin)?;
@@ -138,7 +136,7 @@ pub fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
             let (path, origin) = target.file()?;
             if config::unset_in_file(&path, &key)? {
                 println!("removed {key} from {}", path.display());
-                if let Some(note) = crate::stop_kept_after(&key) {
+                if let Some(note) = stop_kept_after(&key) {
                     println!("{note}");
                 }
             } else {

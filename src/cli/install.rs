@@ -4,19 +4,17 @@
 //! which files it installed. Only an install made by install.sh has one: a
 //! build from source updates with git and cargo.
 
-use std::error::Error;
 use std::io::{self, BufRead, Write as _};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use smart_commit::{paths, server, tui};
+use std::error::Error;
+
+use super::settings::{env, resolve};
 
 const INSTALL: &str =
     "curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash";
-
-fn env(name: &str) -> Option<String> {
-    std::env::var(name).ok()
-}
 
 /// An installation made by install.sh: `PREFIX/bin/smart-commit`, with the
 /// release's files in `PREFIX/share/smart-commit`.
@@ -81,7 +79,7 @@ fn run_installer(install: &Installed, args: &[&str]) -> Result<(), Box<dyn Error
     Ok(())
 }
 
-pub fn update() -> Result<(), Box<dyn Error>> {
+pub(super) fn update() -> Result<(), Box<dyn Error>> {
     let install = installed(&std::env::current_exe()?.canonicalize()?)?;
     println!(
         "smart-commit {} in {}",
@@ -92,7 +90,7 @@ pub fn update() -> Result<(), Box<dyn Error>> {
     run_installer(&install, &["--update"])
 }
 
-pub fn uninstall(yes: bool, system: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn uninstall(yes: bool, system: bool) -> Result<(), Box<dyn Error>> {
     let install = installed(&std::env::current_exe()?.canonicalize()?)?;
     print!("{}", plan(&install, system));
     if !yes {
@@ -159,7 +157,7 @@ fn plan(install: &Installed, system: bool) -> String {
 /// Model files the settings name outside smart-commit's data directory
 /// (`model.gguf`, `model.dir`): the user's own, which uninstall leaves.
 fn models_elsewhere(data: Option<&Path>) -> Vec<PathBuf> {
-    let Ok(resolved) = crate::resolve(None, Vec::new()) else {
+    let Ok(resolved) = resolve(None, Vec::new()) else {
         return Vec::new();
     };
     let settings = resolved.settings();

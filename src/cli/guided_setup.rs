@@ -2,7 +2,6 @@
 //! the plan, each step's output, the benchmark); with `--yes` or without a
 //! terminal, `scripts/setup.sh`.
 
-use std::error::Error;
 use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -16,14 +15,12 @@ use smart_commit::paths;
 use smart_commit::setup::{self, Facts, StepKind};
 use smart_commit::tui::setup::{Action, SetupView, State};
 use smart_commit::tui::{self, Screen};
+use std::error::Error;
 
-use crate::model_cmd::{self, Chosen};
+use super::model::{self, Chosen};
+use super::settings::{env, hardware_sources, resolve};
 
-fn env(name: &str) -> Option<String> {
-    std::env::var(name).ok()
-}
-
-pub fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
     set_aside_invalid_settings()?;
     let exe = std::env::current_exe()?.canonicalize()?;
     let scripts = scripts_dir(&exe)?;
@@ -85,7 +82,7 @@ fn facts(
     drivers: bool,
     bench: bool,
 ) -> Result<Facts, Box<dyn Error>> {
-    let settings = crate::resolve(None, Vec::new())?.settings();
+    let settings = resolve(None, Vec::new())?.settings();
     let models_dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
     let quiet = |script: &str, args: &[&str]| {
         Command::new(scripts.join(script))
@@ -122,8 +119,8 @@ fn facts(
 }
 
 fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
-    let hw = Hardware::detect(&crate::hardware_sources());
-    let mut model = crate::resolve(None, Vec::new())?.settings().model;
+    let hw = Hardware::detect(&hardware_sources());
+    let mut model = resolve(None, Vec::new())?.settings().model;
     let plan_view = |model| -> Result<SetupView, Box<dyn Error>> {
         let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;
         Ok(SetupView::new(
@@ -144,7 +141,7 @@ fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<(), B
                 eprintln!("Setup cancelled: nothing was changed.");
                 return Ok(());
             }
-            Action::ChangeModel => match model_cmd::choose(&mut screen)? {
+            Action::ChangeModel => match model::choose(&mut screen)? {
                 Some(Chosen::Model(chosen)) => {
                     let changed = chosen.id != model.id;
                     model = chosen;
@@ -155,7 +152,7 @@ fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<(), B
                     }
                 }
                 Some(Chosen::File(path)) => {
-                    notes.extend(model_cmd::select_path(&path)?);
+                    notes.extend(model::select_path(&path)?);
                     view.remove(StepKind::Model);
                 }
                 None => {}
@@ -385,7 +382,7 @@ fn install_model(
         "checked against the pinned SHA-256: {}",
         file.display()
     ));
-    for line in model_cmd::select(model).map_err(|e| e.to_string())? {
+    for line in model::select(model).map_err(|e| e.to_string())? {
         view.log(&line);
     }
     Ok(String::new())
@@ -393,11 +390,11 @@ fn install_model(
 
 /// The live benchmark, then back to the setup.
 fn bench(screen: &mut Screen) -> Result<String, String> {
-    let settings = crate::resolve(None, Vec::new())
+    let settings = resolve(None, Vec::new())
         .map_err(|e| e.to_string())?
         .settings();
-    let benchmarked = crate::bench_cmd::bench_in(screen, &settings).map_err(|e| e.to_string())?;
-    let settings = match crate::bench_cmd::apply(benchmarked.choice).map_err(|e| e.to_string())? {
+    let benchmarked = super::benchmark::bench_in(screen, &settings).map_err(|e| e.to_string())?;
+    let settings = match super::benchmark::apply(benchmarked.choice).map_err(|e| e.to_string())? {
         Some((_, settings)) => settings,
         None => settings,
     };
