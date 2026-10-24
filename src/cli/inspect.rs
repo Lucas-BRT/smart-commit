@@ -16,6 +16,7 @@ use super::args::{BackendArgs, ModelArgs, PromptArgs};
 use super::load::load_model;
 use super::session::{staged_files, start_backend};
 use super::settings::{hardware_sources, resolve, warn_renamed};
+use super::ui::note;
 
 pub(super) fn context(path: &Path) -> Result<()> {
     let repo = Repo::discover(path)?;
@@ -126,8 +127,8 @@ pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<()> {
             let settings = resolve(None, model.flags()?)?.settings();
             let (backend, _) = load_model(&settings)?;
             if backend.describe() != trace.backend {
-                eprintln!(
-                    "note: recorded with `{}`, replaying with `{}`",
+                note!(
+                    "recorded with `{}`, replaying with `{}`",
                     trace.backend,
                     backend.describe()
                 );

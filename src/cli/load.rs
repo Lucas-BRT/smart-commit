@@ -10,6 +10,7 @@ use smart_commit::{paths, server};
 
 use super::benchmark;
 use super::settings::env;
+use super::ui::note;
 
 /// Loads the model on the configured device, or picks one for `auto`.
 pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target)> {
@@ -17,8 +18,8 @@ pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Targe
     let selection = device::load_first(&candidates, |target| load_on(settings, target))?;
     if settings.device == DeviceSetting::Auto && !selection.skipped.is_empty() {
         let skipped: Vec<&str> = selection.skipped.iter().map(|(t, _)| t.name()).collect();
-        eprintln!(
-            "note: running on {}; {} unavailable (`smart-commit device` shows why)",
+        note!(
+            "running on {}; {} unavailable (`smart-commit device` shows why)",
             selection.target,
             skipped.join(", ")
         );
@@ -65,7 +66,7 @@ pub(super) fn load_with(
             let (backend, note) =
                 LlamaCppBackend::start_or_load_normally(&options).map_err(with_kept_model_hint)?;
             if let Some(note) = note {
-                eprintln!("note: {note}");
+                note!("{note}");
             }
             return Ok(Box::new(backend));
         }
@@ -93,9 +94,7 @@ fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCp
         (_, Err(err)) => Err(err.to_string()),
     };
     result
-        .map_err(|err| {
-            eprintln!("note: cannot keep the model loaded ({err}); loading it for this commit")
-        })
+        .map_err(|err| note!("cannot keep the model loaded ({err}); loading it for this commit"))
         .ok()
 }
 

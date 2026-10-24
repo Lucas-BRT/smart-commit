@@ -54,8 +54,8 @@ fn set_aside_invalid_settings() -> Result<()> {
         return Ok(());
     };
     for removed in config::set_aside_invalid(&path, env("HOME").as_deref())? {
-        eprintln!(
-            "warning: {removed}; removed, so the default applies \
+        tracing::warn!(
+            "{removed}; removed, so the default applies \
              (`smart-commit model` or `smart-commit config set` choose again)"
         );
     }

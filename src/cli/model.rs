@@ -15,6 +15,7 @@ use smart_commit::tui::models::{Action, Entry, Picker};
 use smart_commit::tui::{self, Screen};
 
 use super::settings::{env, resolve, stop_kept_after};
+use super::ui::note;
 
 #[derive(Debug, Subcommand)]
 pub(super) enum ModelCommand {
@@ -367,7 +368,7 @@ fn global_config() -> Result<PathBuf> {
 fn warn_overridden(resolved: &Resolved, keys: &[&str]) {
     for key in keys {
         if let Some((value, origin @ Origin::Env(_))) = resolved.get(key) {
-            eprintln!("note: {key} = {value} from the {origin} overrides the config.");
+            note!("{key} = {value} from the {origin} overrides the config.");
         }
     }
 }

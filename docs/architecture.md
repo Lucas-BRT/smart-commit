@@ -47,7 +47,11 @@ installed in `share/smart-commit/scripts`.
 Errors: the library returns typed errors (`thiserror`: `GitError`,
 `ConfigError`, `BackendError`, `DeviceError`, ...); the binary collects them
 in `anyhow::Result`, adding context (`with_context`) where the cause alone
-would not say what failed, and prints the whole chain after `error:`.
+would not say what failed, and prints the whole chain after `error:`. Problems and
+diagnostics use `tracing` (`warn!`, `debug!` in the pipeline); the binary
+prints them as `warning:` and, with `-v`, `debug:` lines on stderr. Notes (what
+a command chose, what overrides what) are part of its result, not logs: they
+are printed with `note!` (`cli/ui.rs`).
 
 ## Repository style
 

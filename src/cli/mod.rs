@@ -4,7 +4,9 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use clap::{Parser, Subcommand};
+use clap::error::ErrorKind;
+use clap::parser::ValueSource;
+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 
 mod args;
 mod benchmark;
@@ -15,10 +17,12 @@ mod inspect;
 mod install;
 mod keep_loaded;
 mod load;
+mod logging;
 mod model;
 mod session;
 mod settings;
 mod suggest;
+mod ui;
 
 use args::{BackendArgs, GenerateArgs, ModelArgs, PromptArgs};
 use git_hook::HookCommand;
@@ -27,8 +31,11 @@ use keep_loaded::ServerCommand;
 /// Writes a commit message for the staged changes, in the style of the
 /// repository, with a small LLM running locally.
 #[derive(Debug, Parser)]
-#[command(version, args_conflicts_with_subcommands = true)]
+#[command(version)]
 struct Cli {
+    /// Also print what was decided and why (twice: more detail).
+    #[arg(short, long, action = clap::ArgAction::Count, global = true)]
+    verbose: u8,
     #[command(subcommand)]
     command: Option<Command>,
     #[command(flatten)]
@@ -140,8 +147,39 @@ enum Command {
     KeepServer { dir: PathBuf },
 }
 
+/// Parses the arguments. The options of the default command (`--commit`,
+/// `-C`, ...) are an error next to a subcommand, which would ignore them;
+/// clap's `args_conflicts_with_subcommands` says so too, but it would also
+/// reject `--verbose`, which works anywhere.
+fn parse() -> Cli {
+    let mut command = Cli::command();
+    let matches = command.get_matches_mut();
+    let cli = Cli::from_arg_matches(&matches).unwrap_or_else(|err| err.format(&mut command).exit());
+    if let Some((name, _)) = matches.subcommand() {
+        let given = matches.ids().find(|id| {
+            id.as_str() != "verbose"
+                && matches.value_source(id.as_str()) == Some(ValueSource::CommandLine)
+        });
+        if let Some(id) = given {
+            let option = command
+                .get_arguments()
+                .find(|arg| arg.get_id() == id)
+                .and_then(|arg| arg.get_long())
+                .map_or_else(|| id.to_string(), |long| format!("--{long}"));
+            command
+                .error(
+                    ErrorKind::ArgumentConflict,
+                    format!("the argument '{option}' cannot be used with the subcommand '{name}'"),
+                )
+                .exit();
+        }
+    }
+    cli
+}
+
 pub fn run() -> ExitCode {
-    let cli = Cli::parse();
+    let cli = parse();
+    logging::init(cli.verbose);
     let result = match cli.command {
         Some(Command::Context { path }) => inspect::context(&path),
         Some(Command::Prompt {
@@ -187,7 +225,7 @@ pub fn run() -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
-            eprintln!("error: {err:#}");
+            tracing::error!("{err:#}");
             ExitCode::FAILURE
         }
     }

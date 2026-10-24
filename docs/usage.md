@@ -77,7 +77,13 @@ git add -p                     # choose what goes into the commit
 smart-commit                   # print the suggested message
 smart-commit --commit          # review it, then commit
 smart-commit -C ../other-repo  # work on another repository
+smart-commit -v                # also print what was decided and why
 ```
+
+Errors, warnings and notes go to stderr as `error:`, `warning:` and `note:`
+lines. `-v` adds `debug:` lines (rejected replies, devices that were skipped, the
+fallback); `-vv` adds more. It works before or after a
+subcommand: `smart-commit -v device`.
 
 In a terminal, `--commit` shows the message, the model and device that
 wrote it, how long it took and the staged files:

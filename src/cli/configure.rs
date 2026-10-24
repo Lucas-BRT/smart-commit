@@ -9,6 +9,7 @@ use smart_commit::git::Repo;
 use smart_commit::paths;
 
 use super::settings::{env, resolve, stop_kept_after};
+use super::ui::note;
 
 #[derive(Debug, Subcommand)]
 pub(super) enum ConfigCommand {
@@ -190,7 +191,7 @@ fn warn_if_shadowed(key: &str, target: &Target, changed: &Origin) -> Result<()> 
             Origin::Global(_) | Origin::Default => false,
         };
         if shadowed {
-            eprintln!("note: {key} is still {value}, from the {origin}");
+            note!("{key} is still {value}, from the {origin}");
         }
     }
     Ok(())

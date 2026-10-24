@@ -158,7 +158,10 @@ pub fn load_first(
                     skipped,
                 });
             }
-            Err(err) => skipped.push((target, err)),
+            Err(err) => {
+                tracing::debug!(%target, %err, "device unavailable");
+                skipped.push((target, err));
+            }
         }
     }
     match skipped.as_slice() {

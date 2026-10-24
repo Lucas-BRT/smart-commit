@@ -29,7 +29,7 @@ pub(super) fn resolve(
 /// Warns about settings that still use an old name.
 pub(super) fn warn_renamed(resolved: &Resolved) {
     for warning in resolved.renamed_values() {
-        eprintln!("warning: {warning}");
+        tracing::warn!("{warning}");
     }
 }
 

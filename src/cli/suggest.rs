@@ -74,13 +74,13 @@ pub(super) fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<Commit
             .iter()
             .all(|a| matches!(a.rejected, Some(SanitizeError::CopiedHistory(_))));
         if copied {
-            eprintln!(
-                "warning: the model only repeated earlier commit messages; \
+            tracing::warn!(
+                "the model only repeated earlier commit messages; \
                  using a message built from the file list"
             );
         } else {
-            eprintln!(
-                "warning: the model's output was unusable after {} attempts; \
+            tracing::warn!(
+                "the model's output was unusable after {} attempts; \
                  using a message built from the file list",
                 generation.attempts.len()
             );

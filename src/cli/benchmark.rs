@@ -18,6 +18,7 @@ use smart_commit::tui::{self, Screen};
 use super::args::DeviceArg;
 use super::load::{Retry, load_with};
 use super::settings::{env, resolve, stop_kept_after, warn_renamed};
+use super::ui::note;
 
 #[derive(Debug, Subcommand)]
 pub(super) enum DeviceCommand {
@@ -373,7 +374,7 @@ fn use_device(device: DeviceArg) -> Result<()> {
         println!("{note}");
     }
     if env("SMART_COMMIT_DEVICE").is_some_and(|v| !v.is_empty()) {
-        eprintln!("note: SMART_COMMIT_DEVICE is set and overrides the config.");
+        note!("SMART_COMMIT_DEVICE is set and overrides the config.");
     }
     let Some(report) = last_report() else {
         println!("Run `smart-commit bench` to compare the devices of this machine.");
@@ -393,8 +394,8 @@ fn use_device(device: DeviceArg) -> Result<()> {
                     m.per_message_ms / 1000.0
                 );
             } else if let Some(error) = entry.and_then(|e| e.error.as_deref()) {
-                eprintln!(
-                    "note: {target} was unavailable in the last benchmark: {}",
+                note!(
+                    "{target} was unavailable in the last benchmark: {}",
                     error.lines().next().unwrap_or(error)
                 );
             }

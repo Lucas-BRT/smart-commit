@@ -80,6 +80,7 @@ pub fn generate_avoiding(
     // Turned down, git's or the file list's message goes to the model for
     // another.
     if let (true, Some(prepared)) = (avoid.is_empty(), &ctx.prepared) {
+        tracing::debug!("using the message git prepared");
         return Ok(Generation {
             message: retry::prepared_message(&prepared.message),
             source: Source::Git,
@@ -87,6 +88,7 @@ pub fn generate_avoiding(
         });
     }
     if avoid.is_empty() && rules::by_rules(ctx, files) {
+        tracing::debug!("the changes need no model; using a message built from the rules");
         return Ok(Generation {
             message: message::fallback_after(
                 &ctx.staged,
@@ -144,13 +146,20 @@ pub fn generate_avoiding(
                     attempts,
                 });
             }
-            Err(error) => attempts.push(Attempt {
-                prompt,
-                raw,
-                rejected: Some(error),
-            }),
+            Err(error) => {
+                tracing::debug!(attempt = attempts.len() + 1, %error, "reply rejected");
+                attempts.push(Attempt {
+                    prompt,
+                    raw,
+                    rejected: Some(error),
+                });
+            }
         }
     }
+    tracing::debug!(
+        attempts = attempts.len(),
+        "no usable reply; using the fallback"
+    );
     // The last reply rejected for what it said, not its form, still has a
     // type worth keeping.
     let reply = attempts.iter().rev().find_map(|a| match a.rejected {
