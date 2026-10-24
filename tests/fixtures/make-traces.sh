@@ -236,6 +236,44 @@ git merge -q side >/dev/null 2>&1 || true
 git checkout -q --ours f; git add f
 "$BIN" --backend mock --trace "$OUT/conventional-en-merge.json" >/dev/null
 
+# Changes of this repository, from pinned commits, answered as the model
+# answered them in real use (smart-commit-1.5b-v0.2): the history is the six
+# subjects before the commit, and the staged change is the commit's own, so
+# the prompt has what the model saw. The fixtures record the replies as the
+# pipeline handles them today, wrong or not; the comments say what the commit
+# message is.
+real_change() {  # NAME COMMIT REPLY
+    fresh "$1"
+    git -C "$ROOT" log --reverse -n 6 --format=%s "$2^" | while IFS= read -r s; do commit "$s"; done
+    git -C "$ROOT" diff-tree -r -M --name-status --no-commit-id "$2^" "$2" > "$WORK/$1.changes"
+    # The parent's files, committed; then the commit's, staged.
+    while IFS=$'\t' read -r status old new; do
+        case $status in A) ;; *) mkdir -p "$(dirname "$old")"; git -C "$ROOT" show "$2^:$old" > "$old" ;; esac
+    done < "$WORK/$1.changes"
+    git add -A; commit "parent of $2"
+    while IFS=$'\t' read -r status old new; do
+        case $status in
+            D) rm "$old" ;;
+            R*) git rm -q "$old"; mkdir -p "$(dirname "$new")"; git -C "$ROOT" show "$2:$new" > "$new" ;;
+            *) mkdir -p "$(dirname "$old")"; git -C "$ROOT" show "$2:$old" > "$old" ;;
+        esac
+    done < "$WORK/$1.changes"
+    git add -A
+    "$BIN" --backend mock --mock-response "$3" --trace "$OUT/$1.json" >/dev/null
+}
+# Three dependencies added, and the reply named one and invented a reason:
+# `chore(deps): add anyhow, tracing and tracing-subscriber`.
+real_change conventional-en-deps-incomplete 7a3e69d "chore(deps): add tracing for better error reporting"
+# A pure split of main.rs into modules, answered `feat`: it is a `refactor`.
+real_change conventional-en-split-as-feat af61366 "feat(cli): split the module by commands"
+# anyhow in the binary and a typed DeviceError: the reply says nothing of
+# either (`refactor: use anyhow in the binary and a typed DeviceError in the
+# library`).
+real_change conventional-en-vague-refactor 9fc1e92 "refactor(cli): add error handling to cli commands"
+# A new `-v` flag and tracing, answered `refactor` and about the wrong thing:
+# `feat(cli): report with tracing and add -v for debug output`.
+real_change conventional-en-feat-as-refactor 6cabc49 "refactor(cli): split the module by ui and notes"
+
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
 # 75th and 90th percentiles of eval-v1's prompts (the last fills the budget).

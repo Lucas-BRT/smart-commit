@@ -1,0 +1,295 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 6cabc49",
+      "refactor: use anyhow in the binary and a typed DeviceError in the library",
+      "refactor(cli): split main.rs into the cli module and its commands",
+      "chore(deps): add anyhow, tracing and tracing-subscriber",
+      "refactor(generate): split the module by notes, retry and rules",
+      "refactor(message): split the module by parsing, format and fallback",
+      "refactor(style): split the module by parsing, gitmoji, language and tickets"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "docs/usage.md",
+        "src/cli/benchmark.rs",
+        "src/cli/configure.rs",
+        "src/cli/guided_setup.rs",
+        "src/cli/inspect.rs",
+        "src/cli/load.rs",
+        "src/cli/mod.rs",
+        "src/cli/model.rs",
+        "src/cli/settings.rs",
+        "src/cli/suggest.rs",
+        "src/device.rs",
+        "src/generate/mod.rs",
+        "tests/cli.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/usage.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/benchmark.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/configure.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/guided_setup.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/inspect.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/load.rs",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "src/cli/logging.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/model.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/settings.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/suggest.rs",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "src/cli/ui.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/device.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/cli.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          5,
+          1
+        ],
+        "hunks": "@@ -49,3 +49,7 @@ Errors: the library returns typed errors (`thiserror`: `GitError`,\n in `anyhow::Result`, adding context (`with_context`) where the cause alone\n-would not say what failed, and prints the whole chain after `error:`.\n+would not say what failed, and prints the whole chain after `error:`. Problems and\n+diagnostics use `tracing` (`warn!`, `debug!` in the pipeline); the binary\n+prints them as `warning:` and, with `-v`, `debug:` lines on stderr. Notes (what\n+a command chose, what overrides what) are part of its result, not logs: they\n+are printed with `note!` (`cli/ui.rs`).\n \n"
+      },
+      {
+        "path": "docs/usage.md",
+        "old_path": null,
+        "lines": [
+          6,
+          0
+        ],
+        "hunks": "@@ -79,4 +79,10 @@ smart-commit --commit          # review it, then commit\n smart-commit -C ../other-repo  # work on another repository\n+smart-commit -v                # also print what was decided and why\n ```\n \n+Errors, warnings and notes go to stderr as `error:`, `warning:` and `note:`\n+lines. `-v` adds `debug:` lines (rejected replies, devices that were skipped, the\n+fallback); `-vv` adds more. It works before or after a\n+subcommand: `smart-commit -v device`.\n+\n In a terminal, `--commit` shows the message, the model and device that\n"
+      },
+      {
+        "path": "src/cli/benchmark.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          3
+        ],
+        "hunks": "@@ -20,2 +20,3 @@ use super::load::{Retry, load_with};\n use super::settings::{env, resolve, stop_kept_after, warn_renamed};\n+use super::ui::note;\n \n@@ -375,3 +376,3 @@ fn use_device(device: DeviceArg) -> Result<()> {\n     if env(\"SMART_COMMIT_DEVICE\").is_some_and(|v| !v.is_empty()) {\n-        eprintln!(\"note: SMART_COMMIT_DEVICE is set and overrides the config.\");\n+        note!(\"SMART_COMMIT_DEVICE is set and overrides the config.\");\n     }\n@@ -395,4 +396,4 @@ fn use_device(device: DeviceArg) -> Result<()> {\n             } else if let Some(error) = entry.and_then(|e| e.error.as_deref()) {\n-                eprintln!(\n-                    \"note: {target} was unavailable in the last benchmark: {}\",\n+                note!(\n+                    \"{target} was unavailable in the last benchmark: {}\",\n                     error.lines().next().unwrap_or(error)\n"
+      },
+      {
+        "path": "src/cli/configure.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -11,2 +11,3 @@ use smart_commit::paths;\n use super::settings::{env, resolve, stop_kept_after};\n+use super::ui::note;\n \n@@ -192,3 +193,3 @@ fn warn_if_shadowed(key: &str, target: &Target, changed: &Origin) -> Result<()>\n         if shadowed {\n-            eprintln!(\"note: {key} is still {value}, from the {origin}\");\n+            note!(\"{key} is still {value}, from the {origin}\");\n         }\n"
+      },
+      {
+        "path": "src/cli/guided_setup.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -56,4 +56,4 @@ fn set_aside_invalid_settings() -> Result<()> {\n     for removed in config::set_aside_invalid(&path, env(\"HOME\").as_deref())? {\n-        eprintln!(\n-            \"warning: {removed}; removed, so the default applies \\\n+        tracing::warn!(\n+            \"{removed}; removed, so the default applies \\\n              (`smart-commit model` or `smart-commit config set` choose again)\"\n"
+      },
+      {
+        "path": "src/cli/inspect.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          2
+        ],
+        "hunks": "@@ -18,2 +18,3 @@ use super::session::{staged_files, start_backend};\n use super::settings::{hardware_sources, resolve, warn_renamed};\n+use super::ui::note;\n \n@@ -128,4 +129,4 @@ pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<()> {\n             if backend.describe() != trace.backend {\n-                eprintln!(\n-                    \"note: recorded with `{}`, replaying with `{}`\",\n+                note!(\n+                    \"recorded with `{}`, replaying with `{}`\",\n                     trace.backend,\n"
+      },
+      {
+        "path": "src/cli/load.rs",
+        "old_path": null,
+        "lines": [
+          5,
+          6
+        ],
+        "hunks": "@@ -12,2 +12,3 @@ use super::benchmark;\n use super::settings::env;\n+use super::ui::note;\n \n@@ -19,4 +20,4 @@ pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Targe\n         let skipped: Vec<&str> = selection.skipped.iter().map(|(t, _)| t.name()).collect();\n-        eprintln!(\n-            \"note: running on {}; {} unavailable (`smart-commit device` shows why)\",\n+        note!(\n+            \"running on {}; {} unavailable (`smart-commit device` shows why)\",\n             selection.target,\n@@ -67,3 +68,3 @@ pub(super) fn load_with(\n             if let Some(note) = note {\n-                eprintln!(\"note: {note}\");\n+                note!(\"{note}\");\n             }\n@@ -95,5 +96,3 @@ fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCp\n     result\n-        .map_err(|err| {\n-            eprintln!(\"note: cannot keep the model loaded ({err}); loading it for this commit\")\n-        })\n+        .map_err(|err| note!(\"cannot keep the model loaded ({err}); loading it for this commit\"))\n         .ok()\n"
+      },
+      {
+        "path": "src/cli/logging.rs",
+        "old_path": null,
+        "lines": [
+          49,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,49 @@\n+//! Diagnostics on stderr: `error:` and `warning:` lines, plus `debug:` ones\n+//! with `-v`. (`note:` lines are not diagnostics: see `ui`.)\n+\n+use std::fmt;\n+\n+use tracing::{Event, Level, Subscriber};\n+use tracing_subscriber::fmt::format::Writer;\n+use tracing_subscriber::fmt::{FmtContext, FormatEvent, FormatFields};\n+use tracing_subscriber::registry::LookupSpan;\n+\n+/// One line per event, `level: message`, as the commands always printed.\n+struct Plain;\n+\n+impl<S, N> FormatEvent<S, N> for Plain\n+where\n+    S: Subscriber + for<'a> LookupSpan<'a>,\n+    N: for<'a> FormatFields<'a> + 'static,\n+{\n+    fn format_event(\n+        &self,\n+        ctx: &FmtContext<'_, S, N>,\n+        mut writer: Writer<'_>,\n+        event: &Event<'_>,\n+    ) -> fmt::Result {\n+        let meta = event.metadata();\n+        match *meta.level() {\n+            Level::ERROR => write!(writer, \"error: \")?,\n+            Level::WARN => write!(writer, \"warning: \")?,\n+            _ => write!(writer, \"debug: {}: \", meta.target())?,\n+        }\n+        ctx.field_format().format_fields(writer.by_ref(), event)?;\n+        writeln!(writer)\n+    }\n+}\n+\n+/// Shows warnings and errors; `-v` adds what the pipeline decided, `-vv` more.\n+pub(super) fn init(verbose: u8) {\n+    let level = match verbose {\n+        0 => Level::WARN,\n+        1 => Level::DEBUG,\n+        _ => Level::TRACE,\n+    };\n+    // A second call (tests in one process) keeps the first subscriber.\n+    let _ = tracing_subscriber::fmt()\n+        .event_format(Plain)\n+        .with_max_level(level)\n+        .with_writer(std::io::stderr)\n+        .try_init();\n+}\n"
+      },
+      {
+        "path": "src/cli/mod.rs",
+        "old_path": null,
+        "lines": [
+          42,
+          4
+        ],
+        "hunks": "@@ -6,3 +6,5 @@ use std::process::ExitCode;\n \n-use clap::{Parser, Subcommand};\n+use clap::error::ErrorKind;\n+use clap::parser::ValueSource;\n+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};\n \n@@ -17,2 +19,3 @@ mod keep_loaded;\n mod load;\n+mod logging;\n mod model;\n@@ -21,2 +24,3 @@ mod settings;\n mod suggest;\n+mod ui;\n \n@@ -29,4 +33,7 @@ use keep_loaded::ServerCommand;\n #[derive(Debug, Parser)]\n-#[command(version, args_conflicts_with_subcommands = true)]\n+#[command(version)]\n struct Cli {\n+    /// Also print what was decided and why (twice: more detail).\n+    #[arg(short, long, action = clap::ArgAction::Count, global = true)]\n+    verbose: u8,\n     #[command(subcommand)]\n@@ -142,4 +149,35 @@ enum Command {\n \n+/// Parses the arguments. The options of the default command (`--commit`,\n+/// `-C`, ...) are an error next to a subcommand, which would ignore them;\n+/// clap's `args_conflicts_with_subcommands` says so too, but it would also\n+/// reject `--verbose`, which works anywhere.\n+fn parse() -> Cli {\n+    let mut command = Cli::command();\n+    let matches = command.get_matches_mut();\n+    let cli = Cli::from_arg_matches(&matches).unwrap_or_else(|err| err.format(&mut command).exit());\n+    if let Some((name, _)) = matches.subcommand() {\n+        let given = matches.ids().find(|id| {\n+            id.as_str() != \"verbose\"\n+                && matches.value_source(id.as_str()) == Some(ValueSource::CommandLine)\n+        });\n+        if let Some(id) = given {\n+            let option = command\n+                .get_arguments()\n+                .find(|arg| arg.get_id() == id)\n+                .and_then(|arg| arg.get_long())\n+                .map_or_else(|| id.to_string(), |long| format!(\"--{long}\"));\n+            command\n+                .error(\n+                    ErrorKind::ArgumentConflict,\n+                    format!(\"the argument '{option}' cannot be used with the subcommand '{name}'\"),\n+                )\n+                .exit();\n+        }\n+    }\n+    cli\n+}\n+\n pub fn run() -> ExitCode {\n-    let cli = Cli::parse();\n+    let cli = parse();\n+    logging::init(cli.verbose);\n     let result = match cli.command {\n@@ -189,3 +227,3 @@ pub fn run() -> ExitCode {\n         Err(err) => {\n-            eprintln!(\"error: {err:#}\");\n+            tracing::error!(\"{err:#}\");\n             ExitCode::FAILURE\n"
+      },
+      {
+        "path": "src/cli/model.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -17,2 +17,3 @@ use smart_commit::tui::{self, Screen};\n use super::settings::{env, resolve, stop_kept_after};\n+use super::ui::note;\n \n@@ -369,3 +370,3 @@ fn warn_overridden(resolved: &Resolved, keys: &[&str]) {\n         if let Some((value, origin @ Origin::Env(_))) = resolved.get(key) {\n-            eprintln!(\"note: {key} = {value} from the {origin} overrides the config.\");\n+            note!(\"{key} = {value} from the {origin} overrides the config.\");\n         }\n"
+      },
+      {
+        "path": "src/cli/settings.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -31,3 +31,3 @@ pub(super) fn warn_renamed(resolved: &Resolved) {\n     for warning in resolved.renamed_values() {\n-        eprintln!(\"warning: {warning}\");\n+        tracing::warn!(\"{warning}\");\n     }\n"
+      },
+      {
+        "path": "src/cli/suggest.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          4
+        ],
+        "hunks": "@@ -76,4 +76,4 @@ pub(super) fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<Commit\n         if copied {\n-            eprintln!(\n-                \"warning: the model only repeated earlier commit messages; \\\n+            tracing::warn!(\n+                \"the model only repeated earlier commit messages; \\\n                  using a message built from the file list\"\n@@ -81,4 +81,4 @@ pub(super) fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<Commit\n         } else {\n-            eprintln!(\n-                \"warning: the model's output was unusable after {} attempts; \\\n+            tracing::warn!(\n+                \"the model's output was unusable after {} attempts; \\\n                  using a message built from the file list\",\n"
+      },
+      {
+        "path": "src/cli/ui.rs",
+        "old_path": null,
+        "lines": [
+          15,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,15 @@\n+//! What a command tells the person running it, apart from its output.\n+//!\n+//! Notes are part of a command's result (what it chose, what overrides what),\n+//! not diagnostics, so they are always printed. Problems are `tracing`\n+//! warnings and errors, and the pipeline's decisions are `tracing` debug\n+//! events (see `logging`).\n+\n+/// Prints `note: ...` on stderr.\n+macro_rules! note {\n+    ($($arg:tt)*) => {\n+        eprintln!(\"note: {}\", format_args!($($arg)*))\n+    };\n+}\n+\n+pub(super) use note;\n"
+      },
+      {
+        "path": "src/device.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          1
+        ],
+        "hunks": "@@ -160,3 +160,6 @@ pub fn load_first(\n             }\n-            Err(err) => skipped.push((target, err)),\n+            Err(err) => {\n+                tracing::debug!(%target, %err, \"device unavailable\");\n+                skipped.push((target, err));\n+            }\n         }\n"
+      },
+      {
+        "path": "src/generate/mod.rs",
+        "old_path": null,
+        "lines": [
+          14,
+          5
+        ],
+        "hunks": "@@ -82,2 +82,3 @@ pub fn generate_avoiding(\n     if let (true, Some(prepared)) = (avoid.is_empty(), &ctx.prepared) {\n+        tracing::debug!(\"using the message git prepared\");\n         return Ok(Generation {\n@@ -89,2 +90,3 @@ pub fn generate_avoiding(\n     if avoid.is_empty() && rules::by_rules(ctx, files) {\n+        tracing::debug!(\"the changes need no model; using a message built from the rules\");\n         return Ok(Generation {\n@@ -146,9 +148,16 @@ pub fn generate_avoiding(\n             }\n-            Err(error) => attempts.push(Attempt {\n-                prompt,\n-                raw,\n-                rejected: Some(error),\n-            }),\n+            Err(error) => {\n+                tracing::debug!(attempt = attempts.len() + 1, %error, \"reply rejected\");\n+                attempts.push(Attempt {\n+                    prompt,\n+                    raw,\n+                    rejected: Some(error),\n+                });\n+            }\n         }\n     }\n+    tracing::debug!(\n+        attempts = attempts.len(),\n+        \"no usable reply; using the fallback\"\n+    );\n     // The last reply rejected for what it said, not its form, still has a\n"
+      },
+      {
+        "path": "tests/cli.rs",
+        "old_path": null,
+        "lines": [
+          58,
+          0
+        ],
+        "hunks": "@@ -34,2 +34,60 @@ fn stderr(output: &Output) -> String {\n \n+#[test]\n+fn verbose_shows_why_a_reply_was_rejected_and_quiet_runs_do_not() {\n+    let repo = staged_repo();\n+    let args = |verbose: bool| {\n+        let mut args = vec![\"--backend\", \"mock\", \"--mock-response\", \"not a message\"];\n+        if verbose {\n+            args.insert(0, \"-v\");\n+        }\n+        args\n+    };\n+    let quiet = smart_commit(&args(false), repo.path());\n+    assert!(!stderr(&quiet).contains(\"debug:\"), \"{}\", stderr(&quiet));\n+\n+    let verbose = smart_commit(&args(true), repo.path());\n+    assert!(verbose.status.success(), \"{}\", stderr(&verbose));\n+    let err = stderr(&verbose);\n+    assert!(\n+        err.contains(\"debug: smart_commit::generate: reply rejected attempt=1\"),\n+        \"{err}\"\n+    );\n+    assert!(\n+        err.contains(\"warning: the model's output was unusable\"),\n+        \"{err}\"\n+    );\n+    // The message on stdout is the same either way.\n+    assert_eq!(stdout(&verbose), stdout(&quiet));\n+}\n+\n+#[test]\n+fn verbose_works_before_and_after_a_subcommand() {\n+    let repo = staged_repo();\n+    for args in [&[\"-v\", \"context\"][..], &[\"context\", \"-v\"]] {\n+        let output = smart_commit(args, repo.path());\n+        assert!(output.status.success(), \"{args:?}: {}\", stderr(&output));\n+        assert!(stdout(&output).starts_with(\"repository:\"), \"{args:?}\");\n+    }\n+}\n+\n+#[test]\n+fn options_of_the_default_command_conflict_with_a_subcommand() {\n+    let repo = staged_repo();\n+    for (args, option) in [\n+        (&[\"--commit\", \"context\"][..], \"--commit\"),\n+        (&[\"-C\", \".\", \"context\"], \"--path\"),\n+        (&[\"--backend\", \"mock\", \"context\"], \"--backend\"),\n+    ] {\n+        let output = smart_commit(args, repo.path());\n+        assert_eq!(output.status.code(), Some(2), \"{args:?}\");\n+        assert!(\n+            stderr(&output).starts_with(&format!(\n+                \"error: the argument '{option}' cannot be used with the subcommand 'context'\"\n+            )),\n+            \"{args:?}: {}\",\n+            stderr(&output)\n+        );\n+    }\n+}\n+\n #[test]\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "refactor(cli): split the module by ui and notes",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, chore.\n- Scopes used here: cli, deps, generate, message, style. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor: use anyhow in the binary and a typed DeviceError in the library\nrefactor(cli): split main.rs into the cli module and its commands\nchore(deps): add anyhow, tracing and tracing-subscriber\nrefactor(generate): split the module by notes, retry and rules\nrefactor(message): split the module by parsing, format and fallback\n",
+          "user": "Files changed:\ndocs/architecture.md | +5 -1\ndocs/usage.md | +6 -0\nsrc/cli/benchmark.rs | +4 -3\nsrc/cli/configure.rs | +2 -1\nsrc/cli/guided_setup.rs | +2 -2\nsrc/cli/inspect.rs | +3 -2\nsrc/cli/load.rs | +5 -6\nsrc/cli/logging.rs | new, +49 -0\nsrc/cli/mod.rs | +42 -4\nsrc/cli/model.rs | +2 -1\nsrc/cli/settings.rs | +1 -1\nsrc/cli/suggest.rs | +4 -4\nsrc/cli/ui.rs | new, +15 -0\nsrc/device.rs | +4 -1\nsrc/generate/mod.rs | +14 -5\ntests/cli.rs | +58 -0\n\nDiff:\n--- src/cli/benchmark.rs\n@@ -20,2 +20,3 @@ use super::load::{Retry, load_with};\n use super::settings::{env, resolve, stop_kept_after, warn_renamed};\n+use super::ui::note;\n \n[... 12 more lines]\n--- src/cli/configure.rs\n@@ -11,2 +11,3 @@ use smart_commit::paths;\n use super::settings::{env, resolve, stop_kept_after};\n+use super::ui::note;\n \n[... 5 more lines]\n--- src/cli/guided_setup.rs\n@@ -56,4 +56,4 @@ fn set_aside_invalid_settings() -> Result<()> {\n     for removed in config::set_aside_invalid(&path, env(\"HOME\").as_deref())? {\n-        eprintln!(\n-            \"warning: {removed}; removed, so the default applies \\\n[... 3 more lines]\n--- src/cli/model.rs\n@@ -17,2 +17,3 @@ use smart_commit::tui::{self, Screen};\n use super::settings::{env, resolve, stop_kept_after};\n+use super::ui::note;\n \n[... 5 more lines]\n--- src/cli/settings.rs\n@@ -31,3 +31,3 @@ pub(super) fn warn_renamed(resolved: &Resolved) {\n     for warning in resolved.renamed_values() {\n-        eprintln!(\"warning: {warning}\");\n+        tracing::warn!(\"{warning}\");\n     }\n--- src/cli/ui.rs\n@@ -0,0 +1,15 @@\n+//! What a command tells the person running it, apart from its output.\n+//!\n+//! Notes are part of a command's result (what it chose, what overrides what),\n[... 12 more lines]\n--- src/device.rs\n@@ -160,3 +160,6 @@ pub fn load_first(\n             }\n-            Err(err) => skipped.push((target, err)),\n+            Err(err) => {\n[... 4 more lines]\n\n(15 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "refactor(cli): split the module by ui and notes",
+        "rejected": null
+      }
+    ]
+  }
+}

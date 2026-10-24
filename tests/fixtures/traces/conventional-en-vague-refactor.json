@@ -1,0 +1,312 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 9fc1e92",
+      "refactor(cli): split main.rs into the cli module and its commands",
+      "chore(deps): add anyhow, tracing and tracing-subscriber",
+      "refactor(generate): split the module by notes, retry and rules",
+      "refactor(message): split the module by parsing, format and fallback",
+      "refactor(style): split the module by parsing, gitmoji, language and tickets",
+      "test(fixtures): regenerate traces for refactor type list change"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "src/cli/args.rs",
+        "src/cli/benchmark.rs",
+        "src/cli/configure.rs",
+        "src/cli/git_hook.rs",
+        "src/cli/guided_setup.rs",
+        "src/cli/inspect.rs",
+        "src/cli/install.rs",
+        "src/cli/keep_loaded.rs",
+        "src/cli/load.rs",
+        "src/cli/mod.rs",
+        "src/cli/model.rs",
+        "src/cli/session.rs",
+        "src/cli/suggest.rs",
+        "src/device.rs",
+        "src/git.rs",
+        "src/trace.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/args.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/benchmark.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/configure.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/git_hook.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/guided_setup.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/inspect.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/install.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/keep_loaded.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/load.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/model.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/session.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/suggest.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/device.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/git.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/trace.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          5,
+          0
+        ],
+        "hunks": "@@ -46,2 +46,7 @@ installed in `share/smart-commit/scripts`.\n \n+Errors: the library returns typed errors (`thiserror`: `GitError`,\n+`ConfigError`, `BackendError`, `DeviceError`, ...); the binary collects them\n+in `anyhow::Result`, adding context (`with_context`) where the cause alone\n+would not say what failed, and prints the whole chain after `error:`.\n+\n ## Repository style\n"
+      },
+      {
+        "path": "src/cli/args.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -4,2 +4,3 @@ use std::path::PathBuf;\n \n+use anyhow::Result;\n use clap::{Args, ValueEnum};\n@@ -7,3 +8,2 @@ use smart_commit::device::Target;\n use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules};\n-use std::error::Error;\n \n@@ -150,3 +150,3 @@ impl DeviceArg {\n impl BackendArgs {\n-    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {\n+    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>> {\n         let mut flags = self.model.flags()?;\n@@ -166,3 +166,3 @@ impl BackendArgs {\n impl ModelArgs {\n-    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {\n+    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>> {\n         let mut flags = Vec::new();\n"
+      },
+      {
+        "path": "src/cli/benchmark.rs",
+        "old_path": null,
+        "lines": [
+          21,
+          22
+        ],
+        "hunks": "@@ -8,2 +8,3 @@ use std::time::Duration;\n \n+use anyhow::{Context as _, Result, anyhow, bail};\n use clap::Subcommand;\n@@ -15,3 +16,2 @@ use smart_commit::tui::bench::{Action, BenchView};\n use smart_commit::tui::{self, Screen};\n-use std::error::Error;\n \n@@ -27,4 +27,4 @@ pub(super) enum DeviceCommand {\n \n-fn bench_file() -> Result<PathBuf, Box<dyn Error>> {\n-    Ok(paths::default_bench_file(env).ok_or(\"HOME is not set\")?)\n+fn bench_file() -> Result<PathBuf> {\n+    paths::default_bench_file(env).context(\"HOME is not set\")\n }\n@@ -88,3 +88,3 @@ fn measure_all(\n \n-fn save(report: &Report) -> Result<PathBuf, Box<dyn Error>> {\n+fn save(report: &Report) -> Result<PathBuf> {\n     let path = bench_file()?;\n@@ -97,3 +97,3 @@ fn save(report: &Report) -> Result<PathBuf, Box<dyn Error>> {\n \n-pub(super) fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run_bench(json: bool) -> Result<()> {\n     let resolved = resolve(None, Vec::new())?;\n@@ -121,3 +121,3 @@ pub(super) fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {\n /// screen.\n-fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {\n+fn bench_screen(settings: Settings) -> Result<()> {\n     let mut screen = Screen::new()?;\n@@ -150,6 +150,3 @@ pub(super) struct Benchmarked {\n /// saves nothing.\n-pub(super) fn bench_in(\n-    screen: &mut Screen,\n-    settings: &Settings,\n-) -> Result<Benchmarked, Box<dyn Error>> {\n+pub(super) fn bench_in(screen: &mut Screen, settings: &Settings) -> Result<Benchmarked> {\n     let auto = settings.device == DeviceSetting::Auto;\n@@ -178,5 +175,8 @@ pub(super) fn bench_in(\n         if worker.is_finished() {\n-            match worker.join().map_err(|_| \"the benchmark crashed\")? {\n+            match worker\n+                .join()\n+                .map_err(|_| anyhow!(\"the benchmark crashed\"))?\n+            {\n                 Some(report) => break report,\n-                None => return Err(\"benchmark stopped; nothing was saved\".into()),\n+                None => bail!(\"benchmark stopped; nothing was saved\"),\n             }\n@@ -208,3 +208,3 @@ pub(super) fn bench_in(\n /// Waits for the user to pick a device, or none.\n-fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, Box<dyn Error>> {\n+fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>> {\n     loop {\n@@ -224,3 +224,3 @@ fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, B\n /// settings after it.\n-pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>, Box<dyn Error>> {\n+pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>> {\n     let Some(name) = choice else {\n@@ -228,3 +228,3 @@ pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>\n     };\n-    let path = paths::default_config_file(env).ok_or(\"HOME is not set\")?;\n+    let path = paths::default_config_file(env).context(\"HOME is not set\")?;\n     let origin = Origin::Global(path.clone());\n@@ -237,3 +237,3 @@ pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>\n \n-fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<(), Box<dyn Error>> {\n+fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<()> {\n     let selected = effective(report, settings.device);\n@@ -250,6 +250,5 @@ fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<()\n         None => {\n-            return Err(\n+            bail!(\n                 \"no device could run the model; `smart-commit setup` installs \\\n                  the drivers and models\"\n-                    .into(),\n             );\n@@ -310,3 +309,3 @@ fn using_message(report: &Report, target: Target, device: DeviceSetting) -> Stri\n \n-pub(super) fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run_device(command: Option<DeviceCommand>) -> Result<()> {\n     match command {\n@@ -317,3 +316,3 @@ pub(super) fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn E\n \n-fn show_device() -> Result<(), Box<dyn Error>> {\n+fn show_device() -> Result<()> {\n     let resolved = resolve(None, Vec::new())?;\n@@ -367,4 +366,4 @@ fn show_device() -> Result<(), Box<dyn Error>> {\n \n-fn use_device(device: DeviceArg) -> Result<(), Box<dyn Error>> {\n-    let path = paths::default_config_file(env).ok_or(\"HOME is not set\")?;\n+fn use_device(device: DeviceArg) -> Result<()> {\n+    let path = paths::default_config_file(env).context(\"HOME is not set\")?;\n     let origin = Origin::Global(path.clone());\n"
+      },
+      {
+        "path": "src/cli/configure.rs",
+        "old_path": null,
+        "lines": [
+          11,
+          12
+        ],
+        "hunks": "@@ -4,2 +4,3 @@ use std::path::PathBuf;\n \n+use anyhow::{Context as _, Result, anyhow, bail};\n use clap::{Args, Subcommand};\n@@ -8,3 +9,2 @@ use smart_commit::git::Repo;\n use smart_commit::paths;\n-use std::error::Error;\n \n@@ -78,3 +78,3 @@ pub(super) struct Target {\n impl Target {\n-    fn file(&self) -> Result<(PathBuf, Origin), Box<dyn Error>> {\n+    fn file(&self) -> Result<(PathBuf, Origin)> {\n         if self.repo {\n@@ -83,3 +83,3 @@ impl Target {\n         }\n-        let path = paths::default_config_file(env).ok_or(\"HOME is not set\")?;\n+        let path = paths::default_config_file(env).context(\"HOME is not set\")?;\n         Ok((path.clone(), Origin::Global(path)))\n@@ -90,3 +90,3 @@ impl Target {\n /// the global config applies.\n-fn resolve_at(path: &PathBuf) -> Result<Resolved, Box<dyn Error>> {\n+fn resolve_at(path: &PathBuf) -> Result<Resolved> {\n     let repo = Repo::discover(path).ok();\n@@ -95,3 +95,3 @@ fn resolve_at(path: &PathBuf) -> Result<Resolved, Box<dyn Error>> {\n \n-pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run(command: ConfigCommand) -> Result<()> {\n     match command {\n@@ -114,3 +114,3 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {\n                 if key == \"model.dir\" {\n-                    format!(\n+                    anyhow!(\n                         \"model.dir has no value: {} has no OpenVINO version\",\n@@ -119,3 +119,3 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {\n                 } else {\n-                    format!(\"{key} has no value (its default needs $HOME)\")\n+                    anyhow!(\"{key} has no value (its default needs $HOME)\")\n                 }\n@@ -150,7 +150,6 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {\n             if path.exists() && !force {\n-                return Err(format!(\n+                bail!(\n                     \"{} already exists; use --force to overwrite it\",\n                     path.display()\n-                )\n-                .into());\n+                );\n             }\n@@ -169,3 +168,3 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {\n /// home and XDG directories.\n-fn built_in_defaults() -> Result<Resolved, Box<dyn Error>> {\n+fn built_in_defaults() -> Result<Resolved> {\n     let env = |name: &str| {\n@@ -184,3 +183,3 @@ fn built_in_defaults() -> Result<Resolved, Box<dyn Error>> {\n /// After a change, says so if a higher layer still decides the value.\n-fn warn_if_shadowed(key: &str, target: &Target, changed: &Origin) -> Result<(), Box<dyn Error>> {\n+fn warn_if_shadowed(key: &str, target: &Target, changed: &Origin) -> Result<()> {\n     let resolved = resolve_at(&target.path)?;\n"
+      },
+      {
+        "path": "src/cli/git_hook.rs",
+        "old_path": null,
+        "lines": [
+          13,
+          16
+        ],
+        "hunks": "@@ -4,2 +4,3 @@ use std::path::{Path, PathBuf};\n \n+use anyhow::{Result, anyhow, bail};\n use clap::Subcommand;\n@@ -7,3 +8,2 @@ use smart_commit::git::Repo;\n use smart_commit::hook;\n-use std::error::Error;\n \n@@ -45,3 +45,3 @@ pub(super) enum HookCommand {\n \n-pub(super) fn run(command: HookCommand) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run(command: HookCommand) -> Result<()> {\n     match command {\n@@ -61,3 +61,3 @@ pub(super) fn run(command: HookCommand) -> Result<(), Box<dyn Error>> {\n \n-fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {\n+fn install(path: &Path, force: bool) -> Result<()> {\n     let dir = Repo::discover(path)?.hooks_dir()?;\n@@ -68,3 +68,3 @@ fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {\n         if !force {\n-            return Err(format!(\n+            bail!(\n                 \"{} already exists and was not installed by smart-commit; \\\n@@ -72,4 +72,3 @@ fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {\n                 hook.display()\n-            )\n-            .into());\n+            );\n         }\n@@ -77,7 +76,6 @@ fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {\n         if backup.exists() {\n-            return Err(format!(\n+            bail!(\n                 \"{} already exists; move it away before replacing another hook\",\n                 backup.display()\n-            )\n-            .into());\n+            );\n         }\n@@ -94,3 +92,3 @@ fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {\n \n-fn uninstall(path: &Path) -> Result<(), Box<dyn Error>> {\n+fn uninstall(path: &Path) -> Result<()> {\n     let dir = Repo::discover(path)?.hooks_dir()?;\n@@ -98,9 +96,8 @@ fn uninstall(path: &Path) -> Result<(), Box<dyn Error>> {\n     let existing = std::fs::read_to_string(&hook)\n-        .map_err(|_| format!(\"no {HOOK_NAME} hook in {}\", dir.display()))?;\n+        .map_err(|_| anyhow!(\"no {HOOK_NAME} hook in {}\", dir.display()))?;\n     if !hook::is_ours(&existing) {\n-        return Err(format!(\n+        bail!(\n             \"{} was not installed by smart-commit; leaving it alone\",\n             hook.display()\n-        )\n-        .into());\n+        );\n     }\n@@ -134,3 +131,3 @@ fn fill(message_file: &Path, source: Option<&str>, backend: &BackendArgs) {\n     if let Err(err) = fill_message_file(message_file, backend) {\n-        eprintln!(\"smart-commit: {err}; the commit message was left as is\");\n+        eprintln!(\"smart-commit: {err:#}; the commit message was left as is\");\n     }\n@@ -138,3 +135,3 @@ fn fill(message_file: &Path, source: Option<&str>, backend: &BackendArgs) {\n \n-fn fill_message_file(message_file: &Path, backend: &BackendArgs) -> Result<(), Box<dyn Error>> {\n+fn fill_message_file(message_file: &Path, backend: &BackendArgs) -> Result<()> {\n     // Git runs hooks from the root of the work tree, with GIT_INDEX_FILE\n"
+      },
+      {
+        "path": "src/cli/guided_setup.rs",
+        "old_path": null,
+        "lines": [
+          27,
+          25
+        ],
+        "hunks": "@@ -10,2 +10,3 @@ use std::time::Duration;\n \n+use anyhow::{Context as _, Result, bail};\n use smart_commit::config;\n@@ -17,3 +18,2 @@ use smart_commit::tui::setup::{Action, SetupView, State};\n use smart_commit::tui::{self, Screen};\n-use std::error::Error;\n \n@@ -22,3 +22,3 @@ use super::settings::{env, hardware_sources, resolve};\n \n-pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {\n     set_aside_invalid_settings()?;\n@@ -40,5 +40,5 @@ pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box\n         .status()\n-        .map_err(|err| format!(\"cannot run {}: {err}\", script.display()))?;\n+        .with_context(|| format!(\"cannot run {}\", script.display()))?;\n     if !status.success() {\n-        return Err(format!(\"setup failed ({status})\").into());\n+        bail!(\"setup failed ({status})\");\n     }\n@@ -51,3 +51,3 @@ pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box\n /// applies until something else is chosen.\n-fn set_aside_invalid_settings() -> Result<(), Box<dyn Error>> {\n+fn set_aside_invalid_settings() -> Result<()> {\n     let Some(path) = paths::default_config_file(env) else {\n@@ -65,5 +65,5 @@ fn set_aside_invalid_settings() -> Result<(), Box<dyn Error>> {\n /// The scripts next to the binary: installed, or in a checkout.\n-fn scripts_dir(exe: &Path) -> Result<PathBuf, Box<dyn Error>> {\n-    let bin = exe.parent().ok_or(\"the binary has no directory\")?;\n-    Ok([\n+fn scripts_dir(exe: &Path) -> Result<PathBuf> {\n+    let bin = exe.parent().context(\"the binary has no directory\")?;\n+    [\n         bin.join(\"../share/smart-commit/scripts\"),\n@@ -73,3 +73,3 @@ fn scripts_dir(exe: &Path) -> Result<PathBuf, Box<dyn Error>> {\n     .find(|p| p.join(\"setup.sh\").is_file())\n-    .ok_or(\"the setup scripts are not next to the binary; reinstall smart-commit\")?)\n+    .context(\"the setup scripts are not next to the binary; reinstall smart-commit\")\n }\n@@ -83,5 +83,5 @@ fn facts(\n     bench: bool,\n-) -> Result<Facts, Box<dyn Error>> {\n+) -> Result<Facts> {\n     let settings = resolve(None, Vec::new())?.settings();\n-    let models_dir = paths::default_models_dir(env).ok_or(\"HOME is not set\")?;\n+    let models_dir = paths::default_models_dir(env).context(\"HOME is not set\")?;\n     let quiet = |script: &str, args: &[&str]| {\n@@ -120,6 +120,6 @@ fn facts(\n \n-fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {\n+fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {\n     let hw = Hardware::detect(&hardware_sources());\n     let mut model = resolve(None, Vec::new())?.settings().model;\n-    let plan_view = |model| -> Result<SetupView, Box<dyn Error>> {\n+    let plan_view = |model| -> Result<SetupView> {\n         let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;\n@@ -292,6 +292,6 @@ fn piped(\n             .draw(|frame| view.render(frame))\n-            .map_err(|e| e.to_string())?;\n+            .map_err(|e| format!(\"{e:#}\"))?;\n         if let Some(key) = screen\n             .key_within(Duration::from_millis(100))\n-            .map_err(|e| e.to_string())?\n+            .map_err(|e| format!(\"{e:#}\"))?\n         {\n@@ -324,3 +324,3 @@ fn with_sudo(screen: &mut Screen, script: &Path, args: &[&str]) -> Result<String\n         })\n-        .map_err(|e| e.to_string())?\n+        .map_err(|e| format!(\"{e:#}\"))?\n         .map_err(|err| format!(\"cannot run {}: {err}\", script.display()))?;\n@@ -368,6 +368,6 @@ fn install_model(\n             .draw(|frame| view.render(frame))\n-            .map_err(|e| e.to_string())?;\n+            .map_err(|e| format!(\"{e:#}\"))?;\n         if let Some(key) = screen\n             .key_within(Duration::from_millis(150))\n-            .map_err(|e| e.to_string())?\n+            .map_err(|e| format!(\"{e:#}\"))?\n         {\n@@ -384,3 +384,3 @@ fn install_model(\n     ));\n-    for line in model::select(model).map_err(|e| e.to_string())? {\n+    for line in model::select(model).map_err(|e| format!(\"{e:#}\"))? {\n         view.log(&line);\n@@ -393,9 +393,11 @@ fn bench(screen: &mut Screen) -> Result<String, String> {\n     let settings = resolve(None, Vec::new())\n-        .map_err(|e| e.to_string())?\n+        .map_err(|e| format!(\"{e:#}\"))?\n         .settings();\n-    let benchmarked = super::benchmark::bench_in(screen, &settings).map_err(|e| e.to_string())?;\n-    let settings = match super::benchmark::apply(benchmarked.choice).map_err(|e| e.to_string())? {\n-        Some((_, settings)) => settings,\n-        None => settings,\n-    };\n+    let benchmarked =\n+        super::benchmark::bench_in(screen, &settings).map_err(|e| format!(\"{e:#}\"))?;\n+    let settings =\n+        match super::benchmark::apply(benchmarked.choice).map_err(|e| format!(\"{e:#}\"))? {\n+            Some((_, settings)) => settings,\n+            None => settings,\n+        };\n     let target = match settings.device {\n"
+      },
+      {
+        "path": "src/cli/inspect.rs",
+        "old_path": null,
+        "lines": [
+          15,
+          22
+        ],
+        "hunks": "@@ -6,2 +6,3 @@ use std::path::Path;\n \n+use anyhow::{Context as _, Result, bail};\n use smart_commit::config::Settings;\n@@ -12,3 +13,2 @@ use smart_commit::trace::{Inputs, Trace};\n use smart_commit::{diff, generate, prompt};\n-use std::error::Error;\n \n@@ -19,3 +19,3 @@ use super::settings::{hardware_sources, resolve, warn_renamed};\n \n-pub(super) fn context(path: &Path) -> Result<(), Box<dyn Error>> {\n+pub(super) fn context(path: &Path) -> Result<()> {\n     let repo = Repo::discover(path)?;\n@@ -28,3 +28,3 @@ pub(super) fn context(path: &Path) -> Result<(), Box<dyn Error>> {\n /// Prints the prompt the model would get for the staged changes.\n-pub(super) fn prompt(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dyn Error>> {\n+pub(super) fn prompt(path: &Path, prompt_args: &PromptArgs) -> Result<()> {\n     let repo = Repo::discover(path)?;\n@@ -49,3 +49,3 @@ pub(super) fn prompt(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dy\n /// global settings apply, since there is no repository.\n-pub(super) fn prompt_inputs(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dyn Error>> {\n+pub(super) fn prompt_inputs(path: &Path, prompt_args: &PromptArgs) -> Result<()> {\n     let inputs = read_inputs(path)?;\n@@ -63,3 +63,3 @@ pub(super) fn prompt_inputs(path: &Path, prompt_args: &PromptArgs) -> Result<(),\n /// Reads JSON Lines of trace inputs from `path`, or stdin for `-`.\n-fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {\n+fn read_inputs(path: &Path) -> Result<Vec<Inputs>> {\n     let text = if path == Path::new(\"-\") {\n@@ -67,4 +67,3 @@ fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {\n     } else {\n-        std::fs::read_to_string(path)\n-            .map_err(|err| format!(\"cannot read {}: {err}\", path.display()))?\n+        std::fs::read_to_string(path).with_context(|| format!(\"cannot read {}\", path.display()))?\n     };\n@@ -76,5 +75,4 @@ fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {\n         inputs.push(\n-            serde_json::from_str(line).map_err(|err| {\n-                format!(\"{}:{}: invalid inputs: {err}\", path.display(), index + 1)\n-            })?,\n+            serde_json::from_str(line)\n+                .with_context(|| format!(\"{}:{}: invalid inputs\", path.display(), index + 1))?,\n         );\n@@ -87,9 +85,5 @@ fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {\n /// those of `--trace`. Like `prompt --inputs`, only global settings apply.\n-pub(super) fn eval(\n-    path: &Path,\n-    args: &BackendArgs,\n-    prompt_args: &PromptArgs,\n-) -> Result<(), Box<dyn Error>> {\n+pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) -> Result<()> {\n     if args.trace.is_some() {\n-        return Err(\"eval writes its traces to stdout; --trace does not apply\".into());\n+        bail!(\"eval writes its traces to stdout; --trace does not apply\");\n     }\n@@ -122,5 +116,5 @@ pub(super) fn eval(\n \n-pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Error>> {\n-    let json = std::fs::read_to_string(path)\n-        .map_err(|err| format!(\"cannot read {}: {err}\", path.display()))?;\n+pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<()> {\n+    let json =\n+        std::fs::read_to_string(path).with_context(|| format!(\"cannot read {}\", path.display()))?;\n     let trace = Trace::from_json(&json)?;\n@@ -147,3 +141,3 @@ pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<d\n         }\n-        return Err(format!(\n+        bail!(\n             \"not reproduced (trace written by smart-commit {}, this is {})\",\n@@ -151,4 +145,3 @@ pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<d\n             env!(\"CARGO_PKG_VERSION\")\n-        )\n-        .into());\n+        );\n     }\n"
+      },
+      {
+        "path": "src/cli/install.rs",
+        "old_path": null,
+        "lines": [
+          22,
+          15
+        ],
+        "hunks": "@@ -10,4 +10,4 @@ use std::process::Command;\n \n+use anyhow::{Context as _, Result, anyhow, bail};\n use smart_commit::{paths, server, tui};\n-use std::error::Error;\n \n@@ -27,5 +27,5 @@ struct Installed {\n \n-fn installed(exe: &Path) -> Result<Installed, String> {\n+fn installed(exe: &Path) -> Result<Installed> {\n     let not_installed = || {\n-        format!(\n+        anyhow!(\n             \"{} was not installed by install.sh; a build from source is updated and removed \\\n@@ -45,6 +45,6 @@ fn installed(exe: &Path) -> Result<Installed, String> {\n     if !installer.is_file() {\n-        return Err(format!(\n+        bail!(\n             \"smart-commit {version} predates `smart-commit update` and `uninstall`; update once \\\n              with `{INSTALL} -s -- --no-setup`, or remove it with `{INSTALL} -s -- --purge`\"\n-        ));\n+        );\n     }\n@@ -67,3 +67,3 @@ fn stop_kept_models() {\n \n-fn run_installer(install: &Installed, args: &[&str]) -> Result<(), Box<dyn Error>> {\n+fn run_installer(install: &Installed, args: &[&str]) -> Result<()> {\n     let status = Command::new(\"bash\")\n@@ -74,5 +74,5 @@ fn run_installer(install: &Installed, args: &[&str]) -> Result<(), Box<dyn Error\n         .status()\n-        .map_err(|err| format!(\"cannot run {}: {err}\", install.installer.display()))?;\n+        .with_context(|| format!(\"cannot run {}\", install.installer.display()))?;\n     if !status.success() {\n-        return Err(format!(\"{} failed ({status})\", install.installer.display()).into());\n+        bail!(\"{} failed ({status})\", install.installer.display());\n     }\n@@ -81,3 +81,3 @@ fn run_installer(install: &Installed, args: &[&str]) -> Result<(), Box<dyn Error\n \n-pub(super) fn update() -> Result<(), Box<dyn Error>> {\n+pub(super) fn update() -> Result<()> {\n     let install = installed(&std::env::current_exe()?.canonicalize()?)?;\n@@ -92,3 +92,3 @@ pub(super) fn update() -> Result<(), Box<dyn Error>> {\n \n-pub(super) fn uninstall(yes: bool, system: bool) -> Result<(), Box<dyn Error>> {\n+pub(super) fn uninstall(yes: bool, system: bool) -> Result<()> {\n     let install = installed(&std::env::current_exe()?.canonicalize()?)?;\n@@ -97,3 +97,3 @@ pub(super) fn uninstall(yes: bool, system: bool) -> Result<(), Box<dyn Error>> {\n         if !tui::interactive() {\n-            return Err(\"uninstall removes the models and the configuration; pass --yes\".into());\n+            bail!(\"uninstall removes the models and the configuration; pass --yes\");\n         }\n@@ -225,3 +225,6 @@ mod tests {\n         let err = installed(&dir.path().join(\"target/release/smart-commit\")).unwrap_err();\n-        assert!(err.contains(\"not installed by install.sh\"), \"{err}\");\n+        assert!(\n+            err.to_string().contains(\"not installed by install.sh\"),\n+            \"{err}\"\n+        );\n         // bin/ without the release's files.\n@@ -229,3 +232,6 @@ mod tests {\n         let err = installed(&dir.path().join(\"bin/smart-commit\")).unwrap_err();\n-        assert!(err.contains(\"not installed by install.sh\"), \"{err}\");\n+        assert!(\n+            err.to_string().contains(\"not installed by install.sh\"),\n+            \"{err}\"\n+        );\n         // A release from before install.sh was shipped.\n@@ -234,6 +240,7 @@ mod tests {\n         assert!(\n-            err.contains(\"0.8.0 predates `smart-commit update`\"),\n+            err.to_string()\n+                .contains(\"0.8.0 predates `smart-commit update`\"),\n             \"{err}\"\n         );\n-        assert!(err.contains(\"--purge\"), \"{err}\");\n+        assert!(err.to_string().contains(\"--purge\"), \"{err}\");\n     }\n"
+      },
+      {
+        "path": "src/cli/keep_loaded.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,5 +2,5 @@\n \n+use anyhow::Result;\n use clap::Subcommand;\n use smart_commit::{paths, server};\n-use std::error::Error;\n \n@@ -16,3 +16,3 @@ pub(super) enum ServerCommand {\n \n-pub(super) fn run(command: ServerCommand) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run(command: ServerCommand) -> Result<()> {\n     let Some(runtime) = paths::runtime_dir(env) else {\n"
+      },
+      {
+        "path": "src/cli/load.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          4
+        ],
+        "hunks": "@@ -2,2 +2,3 @@\n \n+use anyhow::Result;\n use smart_commit::backend::{Backend, BackendError};\n@@ -8,3 +9,2 @@ use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};\n use smart_commit::{paths, server};\n-use std::error::Error;\n \n@@ -14,5 +14,3 @@ use super::settings::env;\n /// Loads the model on the configured device, or picks one for `auto`.\n-pub(super) fn load_model(\n-    settings: &Settings,\n-) -> Result<(Box<dyn Backend>, Target), Box<dyn Error>> {\n+pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target)> {\n     let candidates = device::candidates(settings.backend, settings.device, &preferred_devices())?;\n"
+      },
+      {
+        "path": "src/cli/mod.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -189,3 +189,3 @@ pub fn run() -> ExitCode {\n         Err(err) => {\n-            eprintln!(\"error: {err}\");\n+            eprintln!(\"error: {err:#}\");\n             ExitCode::FAILURE\n"
+      },
+      {
+        "path": "src/cli/model.rs",
+        "old_path": null,
+        "lines": [
+          21,
+          23
+        ],
+        "hunks": "@@ -8,2 +8,3 @@ use std::time::Duration;\n \n+use anyhow::{Context as _, Result, bail};\n use clap::Subcommand;\n@@ -14,3 +15,2 @@ use smart_commit::tui::models::{Action, Entry, Picker};\n use smart_commit::tui::{self, Screen};\n-use std::error::Error;\n \n@@ -30,3 +30,3 @@ pub(super) enum ModelCommand {\n \n-pub(super) fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run(command: Option<ModelCommand>) -> Result<()> {\n     match command {\n@@ -41,3 +41,3 @@ pub(super) fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {\n \n-fn list() -> Result<(), Box<dyn Error>> {\n+fn list() -> Result<()> {\n     let resolved = resolve(None, Vec::new())?;\n@@ -119,4 +119,4 @@ fn installed(model: &Model, dir: &Path) -> Vec<&'static str> {\n /// `model use`.\n-fn pick() -> Result<(), Box<dyn Error>> {\n-    let dir = paths::default_models_dir(env).ok_or(\"HOME is not set\")?;\n+fn pick() -> Result<()> {\n+    let dir = paths::default_models_dir(env).context(\"HOME is not set\")?;\n     let mut picker = picker(&dir)?;\n@@ -183,4 +183,4 @@ pub(super) enum Chosen {\n /// The picker on `screen`, choosing without downloading.\n-pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Error>> {\n-    let dir = paths::default_models_dir(env).ok_or(\"HOME is not set\")?;\n+pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>> {\n+    let dir = paths::default_models_dir(env).context(\"HOME is not set\")?;\n     let mut picker = picker(&dir)?;\n@@ -198,3 +198,3 @@ pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Erro\n /// The picker, on the models in `dir`.\n-fn picker(dir: &Path) -> Result<Picker, Box<dyn Error>> {\n+fn picker(dir: &Path) -> Result<Picker> {\n     let resolved = resolve(None, Vec::new())?;\n@@ -234,4 +234,4 @@ fn hugging_face() -> String {\n \n-fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {\n-    let dir = paths::default_models_dir(env).ok_or(\"HOME is not set\")?;\n+fn use_recommended(model: &'static Model) -> Result<()> {\n+    let dir = paths::default_models_dir(env).context(\"HOME is not set\")?;\n     let base = hugging_face();\n@@ -277,3 +277,3 @@ fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {\n /// model.dir pointing elsewhere); returns what changed.\n-pub(super) fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error>> {\n+pub(super) fn select(model: &'static Model) -> Result<Vec<String>> {\n     let path = global_config()?;\n@@ -294,10 +294,9 @@ pub(super) fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error\n \n-fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {\n+fn use_file(arg: &str) -> Result<()> {\n     let path = Path::new(arg);\n     if !path.exists() {\n-        return Err(format!(\n+        bail!(\n             \"{arg} is neither a recommended model ({}) nor a file\",\n             models::IDS.join(\", \")\n-        )\n-        .into());\n+        );\n     }\n@@ -306,7 +305,6 @@ fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {\n         if !path.join(\"openvino_model.xml\").is_file() {\n-            return Err(format!(\n+            bail!(\n                 \"{} has no openvino_model.xml: not an OpenVINO model\",\n                 path.display()\n-            )\n-            .into());\n+            );\n         }\n@@ -327,3 +325,3 @@ fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {\n /// Sets `key` (model.gguf or model.dir) to `path`; returns what changed.\n-fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {\n+fn select_file(path: &Path, key: &str) -> Result<Vec<String>> {\n     let config_path = global_config()?;\n@@ -350,3 +348,3 @@ fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {\n /// Uses a model file or directory chosen in the setup's picker.\n-pub(super) fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {\n+pub(super) fn select_path(path: &Path) -> Result<Vec<String>> {\n     let path = path.canonicalize()?;\n@@ -354,3 +352,3 @@ pub(super) fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {\n         if !path.join(\"openvino_model.xml\").is_file() {\n-            return Err(format!(\"{} has no openvino_model.xml\", path.display()).into());\n+            bail!(\"{} has no openvino_model.xml\", path.display());\n         }\n@@ -363,4 +361,4 @@ pub(super) fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {\n \n-fn global_config() -> Result<PathBuf, Box<dyn Error>> {\n-    Ok(paths::default_config_file(env).ok_or(\"HOME is not set\")?)\n+fn global_config() -> Result<PathBuf> {\n+    paths::default_config_file(env).context(\"HOME is not set\")\n }\n"
+      },
+      {
+        "path": "src/cli/session.rs",
+        "old_path": null,
+        "lines": [
+          8,
+          14
+        ],
+        "hunks": "@@ -5,2 +5,3 @@ use std::path::{Path, PathBuf};\n \n+use anyhow::{Context as _, Result, bail};\n use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};\n@@ -14,3 +15,2 @@ use smart_commit::prompt::PromptOptions;\n use smart_commit::trace::Trace;\n-use std::error::Error;\n \n@@ -39,3 +39,3 @@ pub(super) struct Session {\n impl Session {\n-    pub(super) fn start(repo: &Repo, args: &BackendArgs) -> Result<Self, Box<dyn Error>> {\n+    pub(super) fn start(repo: &Repo, args: &BackendArgs) -> Result<Self> {\n         let resolved = resolve(Some(repo), args.flags()?)?;\n@@ -58,3 +58,3 @@ impl Session {\n     /// The backend, loaded the first time.\n-    fn backend(&self) -> Result<&Loaded, Box<dyn Error>> {\n+    fn backend(&self) -> Result<&Loaded> {\n         if let Some(loaded) = self.backend.get() {\n@@ -75,3 +75,3 @@ impl Session {\n     /// A message other than those in `avoid`, writing the trace if asked.\n-    pub(super) fn generate(&self, avoid: &[String]) -> Result<Generation, Box<dyn Error>> {\n+    pub(super) fn generate(&self, avoid: &[String]) -> Result<Generation> {\n         let backend: &dyn Backend = if generate::needs_model(&self.context, &self.files, avoid) {\n@@ -99,3 +99,3 @@ impl Session {\n             std::fs::write(path, trace.to_json())\n-                .map_err(|err| format!(\"cannot write {}: {err}\", path.display()))?;\n+                .with_context(|| format!(\"cannot write {}\", path.display()))?;\n         }\n@@ -106,6 +106,3 @@ impl Session {\n /// The backend `resolved` asks for, and its model and device for people.\n-pub(super) fn start_backend(\n-    resolved: &Resolved,\n-    mock_responses: &[String],\n-) -> Result<Loaded, Box<dyn Error>> {\n+pub(super) fn start_backend(resolved: &Resolved, mock_responses: &[String]) -> Result<Loaded> {\n     let settings = resolved.settings();\n@@ -143,9 +140,6 @@ fn model_label(resolved: &Resolved, target: Target) -> String {\n /// merge resolved to what HEAD already has stages nothing, yet commits).\n-pub(super) fn staged_files(\n-    repo: &Repo,\n-    context: &RepoContext,\n-) -> Result<Vec<FileDiff>, Box<dyn Error>> {\n+pub(super) fn staged_files(repo: &Repo, context: &RepoContext) -> Result<Vec<FileDiff>> {\n     let files = repo.staged_diff()?;\n     if files.is_empty() && context.prepared.is_none() {\n-        return Err(\"nothing staged\".into());\n+        bail!(\"nothing staged\");\n     }\n"
+      },
+      {
+        "path": "src/cli/suggest.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          7
+        ],
+        "hunks": "@@ -5,2 +5,3 @@ use std::time::Instant;\n \n+use anyhow::Result;\n use smart_commit::generate::Source;\n@@ -10,3 +11,2 @@ use smart_commit::tui::review::{self, Review};\n use smart_commit::tui::{self, Screen};\n-use std::error::Error;\n \n@@ -15,3 +15,3 @@ use super::session::Session;\n \n-pub(super) fn run(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {\n+pub(super) fn run(args: &GenerateArgs) -> Result<()> {\n     let repo = Repo::discover(&args.path)?;\n@@ -31,3 +31,3 @@ pub(super) fn run(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {\n /// editor, asks the model for another one or gives up.\n-fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Error>> {\n+fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<()> {\n     let started = Instant::now();\n@@ -68,6 +68,3 @@ fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Erro\n /// asked and warning when the fallback had to be used.\n-pub(super) fn generate_message(\n-    repo: &Repo,\n-    args: &BackendArgs,\n-) -> Result<CommitMessage, Box<dyn Error>> {\n+pub(super) fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage> {\n     let generation = Session::start(repo, args)?.generate(&[])?;\n"
+      },
+      {
+        "path": "src/device.rs",
+        "old_path": null,
+        "lines": [
+          37,
+          17
+        ],
+        "hunks": "@@ -76,2 +76,23 @@ impl fmt::Display for Target {\n \n+/// Why no device could be chosen or loaded.\n+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]\n+pub enum DeviceError {\n+    #[error(\"the mock backend has no devices\")]\n+    MockHasNoDevices,\n+    #[error(\"model.device = {device} needs backend = {needs} (or auto)\")]\n+    WrongBackend { device: Target, needs: &'static str },\n+    /// The only candidate failed: its own error.\n+    #[error(transparent)]\n+    Only(BackendError),\n+    #[error(\"no device could run the model:{}\", list_failures(.0))]\n+    NoneWorked(Vec<(Target, BackendError)>),\n+}\n+\n+fn list_failures(failures: &[(Target, BackendError)]) -> String {\n+    failures\n+        .iter()\n+        .map(|(target, err)| format!(\"\\n  {target}: {err}\"))\n+        .collect()\n+}\n+\n /// The devices to try, in order. `preferred` (from a benchmark, fastest\n@@ -82,3 +103,3 @@ pub fn candidates(\n     preferred: &[Target],\n-) -> Result<Vec<Target>, String> {\n+) -> Result<Vec<Target>, DeviceError> {\n     let fixed = match device {\n@@ -93,3 +114,3 @@ pub fn candidates(\n     if backend == BackendKind::Mock {\n-        return Err(\"the mock backend has no devices\".to_owned());\n+        return Err(DeviceError::MockHasNoDevices);\n     }\n@@ -101,5 +122,6 @@ pub fn candidates(\n             };\n-            return Err(format!(\n-                \"model.device = {target} needs backend = {needs} (or auto)\"\n-            ));\n+            return Err(DeviceError::WrongBackend {\n+                device: target,\n+                needs,\n+            });\n         }\n@@ -127,3 +149,3 @@ pub fn load_first(\n     mut load: impl FnMut(Target) -> Result<Box<dyn Backend>, BackendError>,\n-) -> Result<Selection, String> {\n+) -> Result<Selection, DeviceError> {\n     let mut skipped = Vec::new();\n@@ -142,9 +164,4 @@ pub fn load_first(\n     match skipped.as_slice() {\n-        [(_, only)] => Err(only.to_string()),\n-        all => Err(format!(\n-            \"no device could run the model:{}\",\n-            all.iter()\n-                .map(|(target, err)| format!(\"\\n  {target}: {err}\"))\n-                .collect::<String>()\n-        )),\n+        [(_, only)] => Err(DeviceError::Only(only.clone())),\n+        _ => Err(DeviceError::NoneWorked(skipped)),\n     }\n@@ -227,6 +244,9 @@ mod tests {\n         let err = candidates(BackendKind::Openvino, fixed(Target::Cpu), &[]).unwrap_err();\n-        assert_eq!(err, \"model.device = cpu needs backend = llamacpp (or auto)\");\n+        assert_eq!(\n+            err.to_string(),\n+            \"model.device = cpu needs backend = llamacpp (or auto)\"\n+        );\n         let err = candidates(BackendKind::LlamaCpp, fixed(Target::OpenvinoCpu), &[]).unwrap_err();\n         assert_eq!(\n-            err,\n+            err.to_string(),\n             \"model.device = openvino-cpu needs backend = openvino (or auto)\"\n@@ -266,3 +286,3 @@ mod tests {\n         assert_eq!(\n-            err,\n+            err.to_string(),\n             \"no device could run the model:\\n  intel-gpu: backend unavailable: intel-gpu \\\n@@ -272,3 +292,3 @@ mod tests {\n         let err = load_first(&[Target::Cpu], fail).err().unwrap();\n-        assert_eq!(err, \"backend unavailable: cpu missing\");\n+        assert_eq!(err.to_string(), \"backend unavailable: cpu missing\");\n     }\n"
+      },
+      {
+        "path": "src/git.rs",
+        "old_path": null,
+        "lines": [
+          11,
+          1
+        ],
+        "hunks": "@@ -14,3 +14,3 @@ use crate::diff::{self, FileDiff};\n pub enum GitError {\n-    #[error(\"failed to run git: {0}\")]\n+    #[error(\"failed to run git\")]\n     Spawn(#[from] std::io::Error),\n@@ -364,4 +364,14 @@ fn parse_name_status_z(out: &str) -> Vec<FileChange> {\n mod tests {\n+    use std::error::Error as _;\n+\n     use super::*;\n \n+    #[test]\n+    fn a_wrapped_error_is_the_source_not_part_of_the_message() {\n+        let io = std::io::Error::new(std::io::ErrorKind::NotFound, \"no such file\");\n+        let err = GitError::from(io);\n+        assert_eq!(err.to_string(), \"failed to run git\");\n+        assert_eq!(err.source().unwrap().to_string(), \"no such file\");\n+    }\n+\n     fn change(status: ChangeStatus, path: &str, old_path: Option<&str>) -> FileChange {\n"
+      },
+      {
+        "path": "src/trace.rs",
+        "old_path": null,
+        "lines": [
+          10,
+          1
+        ],
+        "hunks": "@@ -77,3 +77,3 @@ impl Inputs {\n pub enum TraceError {\n-    #[error(\"invalid trace: {0}\")]\n+    #[error(\"invalid trace\")]\n     Json(#[from] serde_json::Error),\n@@ -228,3 +228,12 @@ fn compare(recorded: &Generation, replayed: &Generation) -> Vec<String> {\n mod tests {\n+    use std::error::Error as _;\n+\n     use super::*;\n+\n+    #[test]\n+    fn an_invalid_trace_keeps_the_parse_error_as_its_source() {\n+        let err = Trace::from_json(\"{\").unwrap_err();\n+        assert_eq!(err.to_string(), \"invalid trace\");\n+        assert!(err.source().is_some());\n+    }\n     use crate::git::ChangeStatus;\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "refactor(cli): add error handling to cli commands",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, chore, test.\n- Scopes used here: cli, deps, fixtures, generate, message, style. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(cli): split main.rs into the cli module and its commands\nchore(deps): add anyhow, tracing and tracing-subscriber\nrefactor(generate): split the module by notes, retry and rules\nrefactor(message): split the module by parsing, format and fallback\nrefactor(style): split the module by parsing, gitmoji, language and tickets\n",
+          "user": "Files changed:\ndocs/architecture.md | +5 -0\nsrc/cli/args.rs | +3 -3\nsrc/cli/benchmark.rs | +21 -22\nsrc/cli/configure.rs | +11 -12\nsrc/cli/git_hook.rs | +13 -16\nsrc/cli/guided_setup.rs | +27 -25\nsrc/cli/inspect.rs | +15 -22\nsrc/cli/install.rs | +22 -15\nsrc/cli/keep_loaded.rs | +2 -2\nsrc/cli/load.rs | +2 -4\nsrc/cli/mod.rs | +1 -1\nsrc/cli/model.rs | +21 -23\nsrc/cli/session.rs | +8 -14\nsrc/cli/suggest.rs | +4 -7\nsrc/device.rs | +37 -17\nsrc/git.rs | +11 -1\nsrc/trace.rs | +10 -1\n\nDiff:\n--- src/cli/args.rs\n@@ -4,2 +4,3 @@ use std::path::PathBuf;\n \n+use anyhow::Result;\n use clap::{Args, ValueEnum};\n[... 14 more lines]\n--- src/cli/keep_loaded.rs\n@@ -2,5 +2,5 @@\n \n+use anyhow::Result;\n use clap::Subcommand;\n[... 8 more lines]\n--- src/cli/load.rs\n@@ -2,2 +2,3 @@\n \n+use anyhow::Result;\n use smart_commit::backend::{Backend, BackendError};\n[... 11 more lines]\n--- src/cli/mod.rs\n@@ -189,3 +189,3 @@ pub fn run() -> ExitCode {\n         Err(err) => {\n-            eprintln!(\"error: {err}\");\n+            eprintln!(\"error: {err:#}\");\n             ExitCode::FAILURE\n--- src/cli/session.rs\n@@ -5,2 +5,3 @@ use std::path::{Path, PathBuf};\n \n+use anyhow::{Context as _, Result, bail};\n use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};\n[... 44 more lines]\n--- src/cli/suggest.rs\n@@ -5,2 +5,3 @@ use std::time::Instant;\n \n+use anyhow::Result;\n use smart_commit::generate::Source;\n[... 22 more lines]\n--- src/git.rs\n@@ -14,3 +14,3 @@ use crate::diff::{self, FileDiff};\n pub enum GitError {\n-    #[error(\"failed to run git: {0}\")]\n+    #[error(\"failed to run git\")]\n[... 16 more lines]\n--- src/trace.rs\n@@ -77,3 +77,3 @@ impl Inputs {\n pub enum TraceError {\n-    #[error(\"invalid trace: {0}\")]\n+    #[error(\"invalid trace\")]\n[... 14 more lines]\n\n(16 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "refactor(cli): add error handling to cli commands",
+        "rejected": null
+      }
+    ]
+  }
+}
