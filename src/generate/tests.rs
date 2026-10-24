@@ -1,312 +1,17 @@
-//! From context and diff to a commit message: prompt, generate, sanitize,
-//! retry once, and fall back to a message built from the file list. When
-//! only lockfiles and generated files are staged, the file list says it all
-//! and the model is not asked.
-
-use serde::{Deserialize, Serialize};
-
-use crate::backend::{Backend, BackendError, GenerationConfig};
-use crate::context::RepoContext;
-use crate::diff::{self, FileDiff};
-use crate::message::{self, CommitMessage, SanitizeError};
-use crate::prompt::{self, Prompt, PromptOptions};
-use crate::style::{self, Convention, Language};
-
-/// The first try plus one retry that says what was wrong.
-pub const MAX_ATTEMPTS: usize = 2;
-/// The share of an earlier subject's words a reply must cover, with no
-/// word of its own, to count as a copy of it.
-const NEAR_COPY_SHARE: f64 = 0.6;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Attempt {
-    pub prompt: Prompt,
-    /// What the model returned, unmodified.
-    pub raw: String,
-    /// Why the output was rejected, if it was.
-    pub rejected: Option<SanitizeError>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Source {
-    Model,
-    /// Every attempt was rejected; built from the file list.
-    Fallback,
-    /// Only lockfiles and generated files were staged: built from the file
-    /// list without asking the model, whose prompt would not show them.
-    Rules,
-    /// Git prepared it for the merge, revert or cherry-pick in progress,
-    /// which the diff does not show: used as is, as `git commit` would.
-    Git,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Generation {
-    pub message: CommitMessage,
-    pub source: Source,
-    pub attempts: Vec<Attempt>,
-}
-
-pub fn generate(
-    ctx: &RepoContext,
-    files: &[FileDiff],
-    backend: &dyn Backend,
-    options: &PromptOptions,
-    config: &GenerationConfig,
-) -> Result<Generation, BackendError> {
-    generate_avoiding(ctx, files, backend, options, config, &[])
-}
-
-/// Like [`generate`], asking for a message other than those in `avoid`
-/// (messages the user turned down). Decoding is greedy, so only a different
-/// prompt can give a different message; this one depends on `avoid` alone.
-pub fn generate_avoiding(
-    ctx: &RepoContext,
-    files: &[FileDiff],
-    backend: &dyn Backend,
-    options: &PromptOptions,
-    config: &GenerationConfig,
-    avoid: &[String],
-) -> Result<Generation, BackendError> {
-    let (convention, language) = prompt::effective_style(&ctx.style, options);
-    // Turned down, git's or the file list's message goes to the model for
-    // another.
-    if let (true, Some(prepared)) = (avoid.is_empty(), &ctx.prepared) {
-        return Ok(Generation {
-            message: prepared_message(&prepared.message),
-            source: Source::Git,
-            attempts: Vec::new(),
-        });
-    }
-    if avoid.is_empty() && by_rules(ctx, files) {
-        return Ok(Generation {
-            message: message::fallback_after(
-                &ctx.staged,
-                convention,
-                language,
-                None,
-                options.subject_max,
-            ),
-            source: Source::Rules,
-            attempts: Vec::new(),
-        });
-    }
-    let turned_down: Vec<String> = avoid
-        .iter()
-        .map(|m| m.lines().next().unwrap_or_default().to_owned())
-        .collect();
-    let avoid = avoid_note(avoid);
-    let mut attempts: Vec<Attempt> = Vec::new();
-    while attempts.len() < MAX_ATTEMPTS {
-        let retry = attempts
-            .last()
-            .and_then(|a| a.rejected.as_ref())
-            .map(|error| retry_note(error, convention, language));
-        let note = match (&avoid, retry) {
-            (Some(avoid), Some(retry)) => Some(format!("{avoid}\n{retry}")),
-            (avoid, retry) => retry.or_else(|| avoid.clone()),
-        };
-        let prompt = prompt::build_with_note(ctx, files, options, note.as_deref());
-        let raw = backend.generate(&prompt, config)?;
-        let checked =
-            message::sanitize_within(&raw, convention, options.subject_max).and_then(|message| {
-                if let Some(subject) = copied_from(&message.subject, &ctx.subjects) {
-                    return Err(SanitizeError::CopiedHistory(subject.to_owned()));
-                }
-                if let Some(subject) = copied_from(&message.subject, &turned_down) {
-                    return Err(SanitizeError::TurnedDown(subject.to_owned()));
-                }
-                // A default language, with no history to tell, is not enforced.
-                let known = options.language.is_some() || ctx.style.language != Language::Unknown;
-                if known && in_other_language(&message.subject, language, &ctx.subjects) {
-                    return Err(SanitizeError::WrongLanguage(message.subject));
-                }
-                Ok(message)
-            });
-        match checked {
-            Ok(message) => {
-                attempts.push(Attempt {
-                    prompt,
-                    raw,
-                    rejected: None,
-                });
-                return Ok(Generation {
-                    message,
-                    source: Source::Model,
-                    attempts,
-                });
-            }
-            Err(error) => attempts.push(Attempt {
-                prompt,
-                raw,
-                rejected: Some(error),
-            }),
-        }
-    }
-    // The last reply rejected for what it said, not its form, still has a
-    // type worth keeping.
-    let reply = attempts.iter().rev().find_map(|a| match a.rejected {
-        Some(
-            SanitizeError::CopiedHistory(_)
-            | SanitizeError::WrongLanguage(_)
-            | SanitizeError::TurnedDown(_),
-        ) => message::sanitize_within(&a.raw, convention, options.subject_max)
-            .ok()
-            .map(|m| m.subject),
-        _ => None,
-    });
-    Ok(Generation {
-        message: message::fallback_after(
-            &ctx.staged,
-            convention,
-            language,
-            reply.as_deref(),
-            options.subject_max,
-        ),
-        source: Source::Fallback,
-        attempts,
-    })
-}
-
-/// Whether the message for `avoid` comes without a model: from git, or
-/// from the file list.
-pub fn needs_model(ctx: &RepoContext, files: &[FileDiff], avoid: &[String]) -> bool {
-    !avoid.is_empty() || (ctx.prepared.is_none() && !by_rules(ctx, files))
-}
-
-/// Git's prepared message as subject and body.
-fn prepared_message(text: &str) -> CommitMessage {
-    let (subject, body) = text.split_once('\n').unwrap_or((text, ""));
-    let body = body.trim();
-    CommitMessage {
-        subject: subject.trim().to_owned(),
-        body: (!body.is_empty()).then(|| body.to_owned()),
-    }
-}
-
-/// Whether the message comes from the file list alone: every staged file
-/// was written by a tool (see [`diff::machine_written`]).
-pub fn by_rules(ctx: &RepoContext, files: &[FileDiff]) -> bool {
-    !files.is_empty()
-        && files
-            .iter()
-            .all(|f| diff::machine_written(f, &ctx.generated))
-}
-
-/// The history subject `subject` repeats, ignoring case and a final period.
-///
-/// Or nearly: every word of the subject's description, four or more, is in
-/// a history subject's, and covers at least [`NEAR_COPY_SHARE`] of it, as
-/// when the model drops a few words of an earlier subject. A subject that
-/// adds words of its own (a history subject plus "in hooks") is not a copy.
-fn copied_from<'a>(subject: &str, history: &'a [String]) -> Option<&'a str> {
-    let normalize = |s: &str| s.trim().trim_end_matches('.').to_lowercase();
-    let exact = normalize(subject);
-    if let Some(h) = history.iter().find(|h| normalize(h) == exact) {
-        return Some(h);
-    }
-    let words = style::words(subject);
-    if words.len() < 4 {
-        return None;
-    }
-    history
-        .iter()
-        .find(|h| {
-            let theirs = style::words(h);
-            words.iter().all(|w| theirs.contains(w))
-                && words.len() as f64 >= NEAR_COPY_SHARE * theirs.len() as f64
-        })
-        .map(String::as_str)
-}
-
-/// Whether `subject` is clearly in another language than `language`, the
-/// repository's: only when its words are all of the other one, and no
-/// history subject is in that one (a repository that sometimes writes it
-/// accepts it).
-fn in_other_language(subject: &str, language: Language, history: &[String]) -> bool {
-    let theirs = style::language_of(subject);
-    matches!(
-        (language, theirs),
-        (Language::Portuguese, Language::English) | (Language::English, Language::Portuguese)
-    ) && !history.iter().any(|h| style::language_of(h) == theirs)
-}
-
-/// Asks for a message other than the subjects of `messages`.
-pub fn avoid_note(messages: &[String]) -> Option<String> {
-    if messages.is_empty() {
-        return None;
-    }
-    let subjects: Vec<String> = messages
-        .iter()
-        .map(|m| {
-            let subject: String = m
-                .lines()
-                .next()
-                .unwrap_or_default()
-                .chars()
-                .take(message::SUBJECT_MAX)
-                .collect();
-            format!("\"{subject}\"")
-        })
-        .collect();
-    Some(format!(
-        "The user turned down {}: {}. Write a different message that describes \
-         the change better.",
-        if messages.len() == 1 {
-            "this message"
-        } else {
-            "these messages"
-        },
-        subjects.join("; ")
-    ))
-}
-
-/// Tells the model why its previous reply was rejected.
-pub fn retry_note(error: &SanitizeError, convention: Convention, language: Language) -> String {
-    let reason = match error {
-        SanitizeError::Empty => "it contained no commit message".to_owned(),
-        SanitizeError::NotConventional(subject) => {
-            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
-            format!("\"{subject}\" does not follow `type(scope): description`")
-        }
-        SanitizeError::CopiedHistory(subject) => {
-            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
-            format!(
-                "\"{subject}\" repeats an earlier commit of this repository; \
-                 describe what this diff changes instead"
-            )
-        }
-        SanitizeError::TurnedDown(subject) => {
-            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
-            format!("\"{subject}\" is a message the user turned down; write a different one")
-        }
-        SanitizeError::WrongLanguage(subject) => {
-            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
-            let language = match language {
-                Language::Portuguese => "Brazilian Portuguese",
-                _ => "English",
-            };
-            format!("\"{subject}\" is not in {language}; write it in {language}")
-        }
-    };
-    let format = match convention {
-        Convention::Conventional => " in the `type(scope): description` format",
-        _ => "",
-    };
-    format!(
-        "Your previous reply was rejected because {reason}. \
-         Reply again with only the commit message{format}."
-    )
-}
-
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod tests {
     use std::path::PathBuf;
 
-    use super::*;
     use crate::backend::MockBackend;
+    use crate::backend::{Backend, BackendError, GenerationConfig};
+    use crate::context::RepoContext;
+    use crate::diff::FileDiff;
+    use crate::generate::{self, Generation, MAX_ATTEMPTS, Source, needs_model};
     use crate::git::{ChangeStatus, FileChange};
+    use crate::message::SanitizeError;
+    use crate::prompt::{Prompt, PromptOptions};
+    use crate::style::{Convention, Language};
 
     fn context(subjects: &[&str]) -> RepoContext {
         RepoContext::new(
@@ -331,7 +36,7 @@ mod tests {
     }
 
     fn run(subjects: &[&str], mock: &MockBackend) -> Generation {
-        generate(
+        crate::generate::generate(
             &context(subjects),
             &files(),
             mock,
@@ -439,16 +144,19 @@ mod tests {
         ];
         let near = "refatoração e estruturação de objetos, falta modelar a cena da fase 1";
         assert_eq!(
-            copied_from(near, &history.map(String::from)),
+            generate::copied_from(near, &history.map(String::from)),
             Some(history[0])
         );
         // Short replies and replies with words of their own are kept.
         let history = ["fix(git): handle detached HEAD".to_owned()];
         assert_eq!(
-            copied_from("fix(git): handle detached HEAD in hooks", &history),
+            generate::copied_from("fix(git): handle detached HEAD in hooks", &history),
             None
         );
-        assert_eq!(copied_from("fix(git): handle HEAD", &history), None);
+        assert_eq!(
+            generate::copied_from("fix(git): handle HEAD", &history),
+            None
+        );
     }
 
     #[test]
@@ -529,7 +237,7 @@ mod tests {
         // Real use: the model saw only `Cargo.lock | +7 -0` and repeated the
         // history twice; the file list was the right message all along.
         let mock = MockBackend::new(["feat: Add a simple hello world program"]);
-        let generation = generate(
+        let generation = crate::generate::generate(
             &lockfile_context(),
             &lockfile(),
             &mock,
@@ -553,7 +261,7 @@ mod tests {
         }));
         let mock = MockBackend::new(["fix(git): read the branch name"]);
         assert!(!needs_model(&ctx, &files(), &[]));
-        let generation = generate(
+        let generation = crate::generate::generate(
             &ctx,
             &files(),
             &mock,
@@ -574,7 +282,7 @@ mod tests {
         // Turned down, it goes to the model for another.
         let avoid = [generation.message.subject.clone()];
         assert!(needs_model(&ctx, &files(), &avoid));
-        let generation = generate_avoiding(
+        let generation = crate::generate::generate_avoiding(
             &ctx,
             &files(),
             &mock,
@@ -595,7 +303,7 @@ mod tests {
             "fix(git): read the branch name",
             "fix(git): use --show-current for the branch",
         ]);
-        let generation = generate_avoiding(
+        let generation = crate::generate::generate_avoiding(
             &context(CONVENTIONAL),
             &files(),
             &mock,
@@ -628,7 +336,7 @@ mod tests {
         // Repeated twice: the fallback, with the reply's type and scope, is
         // not the message turned down.
         let mock = MockBackend::new(["fix(git): read the branch name from git"; 2]);
-        let generation = generate_avoiding(
+        let generation = crate::generate::generate_avoiding(
             &context(CONVENTIONAL),
             &files(),
             &mock,
@@ -644,7 +352,7 @@ mod tests {
     #[test]
     fn a_turned_down_lockfile_message_goes_to_the_model() {
         let mock = MockBackend::new(["chore(deps): pin the dependencies"]);
-        let generation = generate_avoiding(
+        let generation = crate::generate::generate_avoiding(
             &lockfile_context(),
             &lockfile(),
             &mock,
@@ -661,9 +369,9 @@ mod tests {
     fn a_lockfile_with_code_still_asks_the_model() {
         let mut files = lockfile();
         files.extend(self::files());
-        assert!(!by_rules(&lockfile_context(), &files));
-        assert!(by_rules(&lockfile_context(), &lockfile()));
-        assert!(!by_rules(&lockfile_context(), &[]));
+        assert!(!generate::by_rules(&lockfile_context(), &files));
+        assert!(generate::by_rules(&lockfile_context(), &lockfile()));
+        assert!(!generate::by_rules(&lockfile_context(), &[]));
     }
 
     #[test]
@@ -703,7 +411,7 @@ mod tests {
 
     #[test]
     fn backend_errors_are_not_hidden_by_the_fallback() {
-        let result = generate(
+        let result = crate::generate::generate(
             &context(CONVENTIONAL),
             &files(),
             &Failing,
@@ -715,20 +423,20 @@ mod tests {
 
     #[test]
     fn another_message_is_asked_for_deterministically() {
-        assert_eq!(avoid_note(&[]), None);
+        assert_eq!(generate::avoid_note(&[]), None);
         assert_eq!(
-            avoid_note(&["feat: add a\n\nbody".to_owned()]).unwrap(),
+            generate::avoid_note(&["feat: add a\n\nbody".to_owned()]).unwrap(),
             "The user turned down this message: \"feat: add a\". Write a different \
              message that describes the change better."
         );
-        let two = avoid_note(&["feat: a".to_owned(), "fix: b".to_owned()]).unwrap();
+        let two = generate::avoid_note(&["feat: a".to_owned(), "fix: b".to_owned()]).unwrap();
         assert!(two.starts_with("The user turned down these messages: \"feat: a\"; \"fix: b\"."));
 
         let ctx = context(&["feat: add login"]);
         let files = files();
         let backend = MockBackend::new(["feat: add retry"]);
         let avoid = vec!["feat: add loop".to_owned()];
-        let generation = generate_avoiding(
+        let generation = crate::generate::generate_avoiding(
             &ctx,
             &files,
             &backend,
@@ -739,8 +447,11 @@ mod tests {
         .unwrap();
         assert_eq!(generation.message.subject, "feat: add retry");
         let user = &generation.attempts[0].prompt.user;
-        assert!(user.contains(&avoid_note(&avoid).unwrap()), "{user}");
-        let again = generate_avoiding(
+        assert!(
+            user.contains(&generate::avoid_note(&avoid).unwrap()),
+            "{user}"
+        );
+        let again = crate::generate::generate_avoiding(
             &ctx,
             &files,
             &MockBackend::new(["feat: add retry"]),
@@ -757,7 +468,7 @@ mod tests {
         let ctx = context(&["feat: add login", "fix: typo"]);
         let backend = MockBackend::new(["", "feat: add retry"]);
         let avoid = vec!["feat: add loop".to_owned()];
-        let generation = generate_avoiding(
+        let generation = crate::generate::generate_avoiding(
             &ctx,
             &files(),
             &backend,
@@ -774,7 +485,7 @@ mod tests {
     #[test]
     fn retry_note_without_a_required_format() {
         assert_eq!(
-            retry_note(&SanitizeError::Empty, Convention::Free, Language::English),
+            generate::retry_note(&SanitizeError::Empty, Convention::Free, Language::English),
             "Your previous reply was rejected because it contained no commit message. \
              Reply again with only the commit message."
         );
