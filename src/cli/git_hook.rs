@@ -2,10 +2,10 @@
 
 use std::path::{Path, PathBuf};
 
+use anyhow::{Result, anyhow, bail};
 use clap::Subcommand;
 use smart_commit::git::Repo;
 use smart_commit::hook;
-use std::error::Error;
 
 use super::args::BackendArgs;
 use super::suggest::generate_message;
@@ -43,7 +43,7 @@ pub(super) enum HookCommand {
     },
 }
 
-pub(super) fn run(command: HookCommand) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(command: HookCommand) -> Result<()> {
     match command {
         HookCommand::Install { path, force } => install(&path, force),
         HookCommand::Uninstall { path } => uninstall(&path),
@@ -59,27 +59,25 @@ pub(super) fn run(command: HookCommand) -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {
+fn install(path: &Path, force: bool) -> Result<()> {
     let dir = Repo::discover(path)?.hooks_dir()?;
     let hook = dir.join(HOOK_NAME);
     if let Ok(existing) = std::fs::read_to_string(&hook)
         && !hook::is_ours(&existing)
     {
         if !force {
-            return Err(format!(
+            bail!(
                 "{} already exists and was not installed by smart-commit; \
                  use --force to replace it (it will be kept as a backup)",
                 hook.display()
-            )
-            .into());
+            );
         }
         let backup = dir.join(HOOK_BACKUP);
         if backup.exists() {
-            return Err(format!(
+            bail!(
                 "{} already exists; move it away before replacing another hook",
                 backup.display()
-            )
-            .into());
+            );
         }
         std::fs::rename(&hook, &backup)?;
         println!("backed up the existing hook to {}", backup.display());
@@ -92,17 +90,16 @@ fn install(path: &Path, force: bool) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn uninstall(path: &Path) -> Result<(), Box<dyn Error>> {
+fn uninstall(path: &Path) -> Result<()> {
     let dir = Repo::discover(path)?.hooks_dir()?;
     let hook = dir.join(HOOK_NAME);
     let existing = std::fs::read_to_string(&hook)
-        .map_err(|_| format!("no {HOOK_NAME} hook in {}", dir.display()))?;
+        .map_err(|_| anyhow!("no {HOOK_NAME} hook in {}", dir.display()))?;
     if !hook::is_ours(&existing) {
-        return Err(format!(
+        bail!(
             "{} was not installed by smart-commit; leaving it alone",
             hook.display()
-        )
-        .into());
+        );
     }
     std::fs::remove_file(&hook)?;
     println!("removed {}", hook.display());
@@ -132,11 +129,11 @@ fn fill(message_file: &Path, source: Option<&str>, backend: &BackendArgs) {
         return;
     }
     if let Err(err) = fill_message_file(message_file, backend) {
-        eprintln!("smart-commit: {err}; the commit message was left as is");
+        eprintln!("smart-commit: {err:#}; the commit message was left as is");
     }
 }
 
-fn fill_message_file(message_file: &Path, backend: &BackendArgs) -> Result<(), Box<dyn Error>> {
+fn fill_message_file(message_file: &Path, backend: &BackendArgs) -> Result<()> {
     // Git runs hooks from the root of the work tree, with GIT_INDEX_FILE
     // pointing at the index being committed (e.g. for `commit -a`).
     let repo = Repo::discover(".")?;

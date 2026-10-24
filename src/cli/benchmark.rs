@@ -6,6 +6,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
 use std::time::Duration;
 
+use anyhow::{Context as _, Result, anyhow, bail};
 use clap::Subcommand;
 use smart_commit::bench::{self, Entry, Machine, Report};
 use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};
@@ -13,7 +14,6 @@ use smart_commit::device::{DEFAULT_ORDER, Target};
 use smart_commit::paths;
 use smart_commit::tui::bench::{Action, BenchView};
 use smart_commit::tui::{self, Screen};
-use std::error::Error;
 
 use super::args::DeviceArg;
 use super::load::{Retry, load_with};
@@ -25,8 +25,8 @@ pub(super) enum DeviceCommand {
     Use { device: DeviceArg },
 }
 
-fn bench_file() -> Result<PathBuf, Box<dyn Error>> {
-    Ok(paths::default_bench_file(env).ok_or("HOME is not set")?)
+fn bench_file() -> Result<PathBuf> {
+    paths::default_bench_file(env).context("HOME is not set")
 }
 
 /// The last benchmark, if there is a readable one.
@@ -86,7 +86,7 @@ fn measure_all(
     })
 }
 
-fn save(report: &Report) -> Result<PathBuf, Box<dyn Error>> {
+fn save(report: &Report) -> Result<PathBuf> {
     let path = bench_file()?;
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
@@ -95,7 +95,7 @@ fn save(report: &Report) -> Result<PathBuf, Box<dyn Error>> {
     Ok(path)
 }
 
-pub(super) fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_bench(json: bool) -> Result<()> {
     let resolved = resolve(None, Vec::new())?;
     warn_renamed(&resolved);
     let settings = resolved.settings();
@@ -119,7 +119,7 @@ pub(super) fn run_bench(json: bool) -> Result<(), Box<dyn Error>> {
 /// The benchmark in a terminal: devices as they are measured, then a
 /// choice of device; the summary is printed afterwards, so it stays on
 /// screen.
-fn bench_screen(settings: Settings) -> Result<(), Box<dyn Error>> {
+fn bench_screen(settings: Settings) -> Result<()> {
     let mut screen = Screen::new()?;
     let benchmarked = bench_in(&mut screen, &settings);
     drop(screen);
@@ -148,10 +148,7 @@ pub(super) struct Benchmarked {
 /// Measures every device on `screen`, live, saves the report and lets the
 /// user choose a device. Ctrl+C stops after the device being measured and
 /// saves nothing.
-pub(super) fn bench_in(
-    screen: &mut Screen,
-    settings: &Settings,
-) -> Result<Benchmarked, Box<dyn Error>> {
+pub(super) fn bench_in(screen: &mut Screen, settings: &Settings) -> Result<Benchmarked> {
     let auto = settings.device == DeviceSetting::Auto;
     let mut view = BenchView::measuring(
         format!("Benchmark on {}", Machine::current().cpu),
@@ -176,9 +173,12 @@ pub(super) fn bench_in(
             }
         }
         if worker.is_finished() {
-            match worker.join().map_err(|_| "the benchmark crashed")? {
+            match worker
+                .join()
+                .map_err(|_| anyhow!("the benchmark crashed"))?
+            {
                 Some(report) => break report,
-                None => return Err("benchmark stopped; nothing was saved".into()),
+                None => bail!("benchmark stopped; nothing was saved"),
             }
         }
         view.tick();
@@ -206,7 +206,7 @@ pub(super) fn bench_in(
 }
 
 /// Waits for the user to pick a device, or none.
-fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, Box<dyn Error>> {
+fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>> {
     loop {
         screen.draw(|frame| view.render(frame))?;
         match view.on_key(screen.key()?) {
@@ -222,11 +222,11 @@ fn choose(screen: &mut Screen, view: &mut BenchView) -> Result<Option<String>, B
 /// after it.
 /// Sets model.device to what the screen chose; returns what it did and the
 /// settings after it.
-pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>, Box<dyn Error>> {
+pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>> {
     let Some(name) = choice else {
         return Ok(None);
     };
-    let path = paths::default_config_file(env).ok_or("HOME is not set")?;
+    let path = paths::default_config_file(env).context("HOME is not set")?;
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", &name, None)?;
     Ok(Some((
@@ -235,7 +235,7 @@ pub(super) fn apply(choice: Option<String>) -> Result<Option<(String, Settings)>
     )))
 }
 
-fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<(), Box<dyn Error>> {
+fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<()> {
     let selected = effective(report, settings.device);
     println!(
         "Benchmark on {}: {} prompts, after one warm-up load.\n",
@@ -248,10 +248,9 @@ fn print_summary(report: &Report, settings: &Settings, path: &Path) -> Result<()
     match selected {
         Some(target) => println!("{}", using_message(report, target, settings.device)),
         None => {
-            return Err(
+            bail!(
                 "no device could run the model; `smart-commit setup` installs \
                  the drivers and models"
-                    .into(),
             );
         }
     }
@@ -308,14 +307,14 @@ fn using_message(report: &Report, target: Target, device: DeviceSetting) -> Stri
     format!("smart-commit will use {target} on this machine{estimate}: {why}.")
 }
 
-pub(super) fn run_device(command: Option<DeviceCommand>) -> Result<(), Box<dyn Error>> {
+pub(super) fn run_device(command: Option<DeviceCommand>) -> Result<()> {
     match command {
         None => show_device(),
         Some(DeviceCommand::Use { device }) => use_device(device),
     }
 }
 
-fn show_device() -> Result<(), Box<dyn Error>> {
+fn show_device() -> Result<()> {
     let resolved = resolve(None, Vec::new())?;
     warn_renamed(&resolved);
     let settings = resolved.settings();
@@ -365,8 +364,8 @@ fn show_device() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn use_device(device: DeviceArg) -> Result<(), Box<dyn Error>> {
-    let path = paths::default_config_file(env).ok_or("HOME is not set")?;
+fn use_device(device: DeviceArg) -> Result<()> {
+    let path = paths::default_config_file(env).context("HOME is not set")?;
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.device", device.name(), None)?;
     println!("model.device = {}  ({origin})", device.name());

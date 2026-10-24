@@ -75,7 +75,7 @@ impl Inputs {
 
 #[derive(Debug, thiserror::Error)]
 pub enum TraceError {
-    #[error("invalid trace: {0}")]
+    #[error("invalid trace")]
     Json(#[from] serde_json::Error),
     #[error("trace format {found} is not supported (expected {FORMAT})")]
     UnsupportedFormat { found: u32 },
@@ -226,7 +226,16 @@ fn compare(recorded: &Generation, replayed: &Generation) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error as _;
+
     use super::*;
+
+    #[test]
+    fn an_invalid_trace_keeps_the_parse_error_as_its_source() {
+        let err = Trace::from_json("{").unwrap_err();
+        assert_eq!(err.to_string(), "invalid trace");
+        assert!(err.source().is_some());
+    }
     use crate::git::ChangeStatus;
 
     fn recorded(replies: &[&str]) -> Trace {

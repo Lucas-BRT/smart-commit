@@ -187,7 +187,7 @@ pub fn run() -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
-            eprintln!("error: {err}");
+            eprintln!("error: {err:#}");
             ExitCode::FAILURE
         }
     }

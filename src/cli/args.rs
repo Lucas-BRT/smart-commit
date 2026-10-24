@@ -2,10 +2,10 @@
 
 use std::path::PathBuf;
 
+use anyhow::Result;
 use clap::{Args, ValueEnum};
 use smart_commit::device::Target;
 use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules};
-use std::error::Error;
 
 #[derive(Debug, Args)]
 pub(super) struct GenerateArgs {
@@ -148,7 +148,7 @@ impl DeviceArg {
 }
 
 impl BackendArgs {
-    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {
+    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>> {
         let mut flags = self.model.flags()?;
         if let Some(backend) = self.backend {
             let name = match backend {
@@ -164,7 +164,7 @@ impl BackendArgs {
 }
 
 impl ModelArgs {
-    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>, Box<dyn Error>> {
+    pub(super) fn flags(&self) -> Result<Vec<(&'static str, String)>> {
         let mut flags = Vec::new();
         if let Some(device) = self.device {
             flags.push(("model.device", device.name().to_owned()));

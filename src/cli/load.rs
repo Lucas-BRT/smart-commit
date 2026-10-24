@@ -1,20 +1,18 @@
 //! Loading the model on a device, or on the first that works.
 
+use anyhow::Result;
 use smart_commit::backend::{Backend, BackendError};
 use smart_commit::config::{DeviceSetting, Settings};
 use smart_commit::device::{self, Target};
 use smart_commit::genai::{Device, GenaiBackend};
 use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
 use smart_commit::{paths, server};
-use std::error::Error;
 
 use super::benchmark;
 use super::settings::env;
 
 /// Loads the model on the configured device, or picks one for `auto`.
-pub(super) fn load_model(
-    settings: &Settings,
-) -> Result<(Box<dyn Backend>, Target), Box<dyn Error>> {
+pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target)> {
     let candidates = device::candidates(settings.backend, settings.device, &preferred_devices())?;
     let selection = device::load_first(&candidates, |target| load_on(settings, target))?;
     if settings.device == DeviceSetting::Auto && !selection.skipped.is_empty() {

@@ -1,8 +1,8 @@
 //! `smart-commit server`: the models kept loaded between commits.
 
+use anyhow::Result;
 use clap::Subcommand;
 use smart_commit::{paths, server};
-use std::error::Error;
 
 use super::settings::env;
 
@@ -14,7 +14,7 @@ pub(super) enum ServerCommand {
     Stop,
 }
 
-pub(super) fn run(command: ServerCommand) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(command: ServerCommand) -> Result<()> {
     let Some(runtime) = paths::runtime_dir(env) else {
         println!("No model is kept loaded: $XDG_RUNTIME_DIR is not set.");
         return Ok(());

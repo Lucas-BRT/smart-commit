@@ -74,13 +74,34 @@ impl fmt::Display for Target {
     }
 }
 
+/// Why no device could be chosen or loaded.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum DeviceError {
+    #[error("the mock backend has no devices")]
+    MockHasNoDevices,
+    #[error("model.device = {device} needs backend = {needs} (or auto)")]
+    WrongBackend { device: Target, needs: &'static str },
+    /// The only candidate failed: its own error.
+    #[error(transparent)]
+    Only(BackendError),
+    #[error("no device could run the model:{}", list_failures(.0))]
+    NoneWorked(Vec<(Target, BackendError)>),
+}
+
+fn list_failures(failures: &[(Target, BackendError)]) -> String {
+    failures
+        .iter()
+        .map(|(target, err)| format!("\n  {target}: {err}"))
+        .collect()
+}
+
 /// The devices to try, in order. `preferred` (from a benchmark, fastest
 /// first) goes before the default order. Not for the mock backend.
 pub fn candidates(
     backend: BackendKind,
     device: DeviceSetting,
     preferred: &[Target],
-) -> Result<Vec<Target>, String> {
+) -> Result<Vec<Target>, DeviceError> {
     let fixed = match device {
         DeviceSetting::Auto => None,
         DeviceSetting::Fixed(target) => Some(target),
@@ -91,7 +112,7 @@ pub fn candidates(
         kind => target.backend() == kind,
     };
     if backend == BackendKind::Mock {
-        return Err("the mock backend has no devices".to_owned());
+        return Err(DeviceError::MockHasNoDevices);
     }
     if let Some(target) = fixed {
         if !allowed(target) {
@@ -99,9 +120,10 @@ pub fn candidates(
                 BackendKind::LlamaCpp => "llamacpp",
                 _ => "openvino",
             };
-            return Err(format!(
-                "model.device = {target} needs backend = {needs} (or auto)"
-            ));
+            return Err(DeviceError::WrongBackend {
+                device: target,
+                needs,
+            });
         }
         return Ok(vec![target]);
     }
@@ -125,7 +147,7 @@ pub struct Selection {
 pub fn load_first(
     candidates: &[Target],
     mut load: impl FnMut(Target) -> Result<Box<dyn Backend>, BackendError>,
-) -> Result<Selection, String> {
+) -> Result<Selection, DeviceError> {
     let mut skipped = Vec::new();
     for &target in candidates {
         match load(target) {
@@ -140,13 +162,8 @@ pub fn load_first(
         }
     }
     match skipped.as_slice() {
-        [(_, only)] => Err(only.to_string()),
-        all => Err(format!(
-            "no device could run the model:{}",
-            all.iter()
-                .map(|(target, err)| format!("\n  {target}: {err}"))
-                .collect::<String>()
-        )),
+        [(_, only)] => Err(DeviceError::Only(only.clone())),
+        _ => Err(DeviceError::NoneWorked(skipped)),
     }
 }
 
@@ -225,10 +242,13 @@ mod tests {
             [Target::Vulkan]
         );
         let err = candidates(BackendKind::Openvino, fixed(Target::Cpu), &[]).unwrap_err();
-        assert_eq!(err, "model.device = cpu needs backend = llamacpp (or auto)");
+        assert_eq!(
+            err.to_string(),
+            "model.device = cpu needs backend = llamacpp (or auto)"
+        );
         let err = candidates(BackendKind::LlamaCpp, fixed(Target::OpenvinoCpu), &[]).unwrap_err();
         assert_eq!(
-            err,
+            err.to_string(),
             "model.device = openvino-cpu needs backend = openvino (or auto)"
         );
         assert!(candidates(BackendKind::Mock, DeviceSetting::Auto, &[]).is_err());
@@ -264,12 +284,12 @@ mod tests {
             .err()
             .unwrap();
         assert_eq!(
-            err,
+            err.to_string(),
             "no device could run the model:\n  intel-gpu: backend unavailable: intel-gpu \
              missing\n  cpu: backend unavailable: cpu missing"
         );
         // One candidate: its error as is.
         let err = load_first(&[Target::Cpu], fail).err().unwrap();
-        assert_eq!(err, "backend unavailable: cpu missing");
+        assert_eq!(err.to_string(), "backend unavailable: cpu missing");
     }
 }

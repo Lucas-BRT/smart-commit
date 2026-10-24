@@ -2,11 +2,11 @@
 
 use std::path::PathBuf;
 
+use anyhow::{Context as _, Result, anyhow, bail};
 use clap::{Args, Subcommand};
 use smart_commit::config::{self, Origin, Resolved, Sources};
 use smart_commit::git::Repo;
 use smart_commit::paths;
-use std::error::Error;
 
 use super::settings::{env, resolve, stop_kept_after};
 
@@ -76,24 +76,24 @@ pub(super) struct Target {
 }
 
 impl Target {
-    fn file(&self) -> Result<(PathBuf, Origin), Box<dyn Error>> {
+    fn file(&self) -> Result<(PathBuf, Origin)> {
         if self.repo {
             let path = Repo::discover(&self.path)?.root().join(config::REPO_FILE);
             return Ok((path.clone(), Origin::Repo(path)));
         }
-        let path = paths::default_config_file(env).ok_or("HOME is not set")?;
+        let path = paths::default_config_file(env).context("HOME is not set")?;
         Ok((path.clone(), Origin::Global(path)))
     }
 }
 
 /// The repository at `path`, if there is one: outside a repository only
 /// the global config applies.
-fn resolve_at(path: &PathBuf) -> Result<Resolved, Box<dyn Error>> {
+fn resolve_at(path: &PathBuf) -> Result<Resolved> {
     let repo = Repo::discover(path).ok();
     Ok(resolve(repo.as_ref(), Vec::new())?)
 }
 
-pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(command: ConfigCommand) -> Result<()> {
     match command {
         ConfigCommand::List { show_origin, at } => {
             let resolved = resolve_at(&at.path)?;
@@ -112,12 +112,12 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
             let resolved = resolve_at(&at.path)?;
             let (value, _) = resolved.get(&key).ok_or_else(|| {
                 if key == "model.dir" {
-                    format!(
+                    anyhow!(
                         "model.dir has no value: {} has no OpenVINO version",
                         resolved.settings().model.id
                     )
                 } else {
-                    format!("{key} has no value (its default needs $HOME)")
+                    anyhow!("{key} has no value (its default needs $HOME)")
                 }
             })?;
             println!("{value}");
@@ -148,11 +148,10 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
         ConfigCommand::Init { target, force } => {
             let (path, _) = target.file()?;
             if path.exists() && !force {
-                return Err(format!(
+                bail!(
                     "{} already exists; use --force to overwrite it",
                     path.display()
-                )
-                .into());
+                );
             }
             let template = config::template(target.repo, &built_in_defaults()?);
             if let Some(dir) = path.parent() {
@@ -167,7 +166,7 @@ pub(super) fn run(command: ConfigCommand) -> Result<(), Box<dyn Error>> {
 
 /// Defaults alone: no files, and of the environment only what locates the
 /// home and XDG directories.
-fn built_in_defaults() -> Result<Resolved, Box<dyn Error>> {
+fn built_in_defaults() -> Result<Resolved> {
     let env = |name: &str| {
         (name == "HOME" || name.starts_with("XDG_"))
             .then(|| std::env::var(name).ok())
@@ -182,7 +181,7 @@ fn built_in_defaults() -> Result<Resolved, Box<dyn Error>> {
 }
 
 /// After a change, says so if a higher layer still decides the value.
-fn warn_if_shadowed(key: &str, target: &Target, changed: &Origin) -> Result<(), Box<dyn Error>> {
+fn warn_if_shadowed(key: &str, target: &Target, changed: &Origin) -> Result<()> {
     let resolved = resolve_at(&target.path)?;
     if let Some((value, origin)) = resolved.get(key) {
         let shadowed = match origin {

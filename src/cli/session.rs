@@ -3,6 +3,7 @@
 use std::cell::OnceCell;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result, bail};
 use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};
 use smart_commit::config::{BackendKind, Origin, Resolved, Value};
 use smart_commit::context::RepoContext;
@@ -12,7 +13,6 @@ use smart_commit::generate::{self, Generation};
 use smart_commit::git::Repo;
 use smart_commit::prompt::PromptOptions;
 use smart_commit::trace::Trace;
-use std::error::Error;
 
 use super::args::BackendArgs;
 use super::load::load_model;
@@ -37,7 +37,7 @@ pub(super) struct Session {
 }
 
 impl Session {
-    pub(super) fn start(repo: &Repo, args: &BackendArgs) -> Result<Self, Box<dyn Error>> {
+    pub(super) fn start(repo: &Repo, args: &BackendArgs) -> Result<Self> {
         let resolved = resolve(Some(repo), args.flags()?)?;
         warn_renamed(&resolved);
         let settings = resolved.settings();
@@ -56,7 +56,7 @@ impl Session {
     }
 
     /// The backend, loaded the first time.
-    fn backend(&self) -> Result<&Loaded, Box<dyn Error>> {
+    fn backend(&self) -> Result<&Loaded> {
         if let Some(loaded) = self.backend.get() {
             return Ok(loaded);
         }
@@ -73,7 +73,7 @@ impl Session {
     }
 
     /// A message other than those in `avoid`, writing the trace if asked.
-    pub(super) fn generate(&self, avoid: &[String]) -> Result<Generation, Box<dyn Error>> {
+    pub(super) fn generate(&self, avoid: &[String]) -> Result<Generation> {
         let backend: &dyn Backend = if generate::needs_model(&self.context, &self.files, avoid) {
             self.backend()?.0.as_ref()
         } else {
@@ -97,17 +97,14 @@ impl Session {
                 &generation,
             );
             std::fs::write(path, trace.to_json())
-                .map_err(|err| format!("cannot write {}: {err}", path.display()))?;
+                .with_context(|| format!("cannot write {}", path.display()))?;
         }
         Ok(generation)
     }
 }
 
 /// The backend `resolved` asks for, and its model and device for people.
-pub(super) fn start_backend(
-    resolved: &Resolved,
-    mock_responses: &[String],
-) -> Result<Loaded, Box<dyn Error>> {
+pub(super) fn start_backend(resolved: &Resolved, mock_responses: &[String]) -> Result<Loaded> {
     let settings = resolved.settings();
     Ok(match settings.backend {
         BackendKind::Mock => (
@@ -141,13 +138,10 @@ fn model_label(resolved: &Resolved, target: Target) -> String {
 
 /// The staged diff; none is an error, unless git prepared the message (a
 /// merge resolved to what HEAD already has stages nothing, yet commits).
-pub(super) fn staged_files(
-    repo: &Repo,
-    context: &RepoContext,
-) -> Result<Vec<FileDiff>, Box<dyn Error>> {
+pub(super) fn staged_files(repo: &Repo, context: &RepoContext) -> Result<Vec<FileDiff>> {
     let files = repo.staged_diff()?;
     if files.is_empty() && context.prepared.is_none() {
-        return Err("nothing staged".into());
+        bail!("nothing staged");
     }
     Ok(files)
 }

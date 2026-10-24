@@ -8,6 +8,7 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::time::Duration;
 
+use anyhow::{Context as _, Result, bail};
 use smart_commit::config;
 use smart_commit::hardware::{Hardware, Npu};
 use smart_commit::models::{self, Model};
@@ -15,12 +16,11 @@ use smart_commit::paths;
 use smart_commit::setup::{self, Facts, StepKind};
 use smart_commit::tui::setup::{Action, SetupView, State};
 use smart_commit::tui::{self, Screen};
-use std::error::Error;
 
 use super::model::{self, Chosen};
 use super::settings::{env, hardware_sources, resolve};
 
-pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {
     set_aside_invalid_settings()?;
     let exe = std::env::current_exe()?.canonicalize()?;
     let scripts = scripts_dir(&exe)?;
@@ -38,9 +38,9 @@ pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box
         // So the setup benchmarks this very binary.
         .env("SMART_COMMIT_BIN", &exe)
         .status()
-        .map_err(|err| format!("cannot run {}: {err}", script.display()))?;
+        .with_context(|| format!("cannot run {}", script.display()))?;
     if !status.success() {
-        return Err(format!("setup failed ({status})").into());
+        bail!("setup failed ({status})");
     }
     Ok(())
 }
@@ -49,7 +49,7 @@ pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<(), Box
 /// version cannot read (a model a newer build added, say) must not stop it:
 /// it is removed with a warning naming the old value, and the default
 /// applies until something else is chosen.
-fn set_aside_invalid_settings() -> Result<(), Box<dyn Error>> {
+fn set_aside_invalid_settings() -> Result<()> {
     let Some(path) = paths::default_config_file(env) else {
         return Ok(());
     };
@@ -63,15 +63,15 @@ fn set_aside_invalid_settings() -> Result<(), Box<dyn Error>> {
 }
 
 /// The scripts next to the binary: installed, or in a checkout.
-fn scripts_dir(exe: &Path) -> Result<PathBuf, Box<dyn Error>> {
-    let bin = exe.parent().ok_or("the binary has no directory")?;
-    Ok([
+fn scripts_dir(exe: &Path) -> Result<PathBuf> {
+    let bin = exe.parent().context("the binary has no directory")?;
+    [
         bin.join("../share/smart-commit/scripts"),
         bin.join("../../scripts"),
     ]
     .into_iter()
     .find(|p| p.join("setup.sh").is_file())
-    .ok_or("the setup scripts are not next to the binary; reinstall smart-commit")?)
+    .context("the setup scripts are not next to the binary; reinstall smart-commit")
 }
 
 /// What is already on this machine.
@@ -81,9 +81,9 @@ fn facts(
     model: &'static Model,
     drivers: bool,
     bench: bool,
-) -> Result<Facts, Box<dyn Error>> {
+) -> Result<Facts> {
     let settings = resolve(None, Vec::new())?.settings();
-    let models_dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
+    let models_dir = paths::default_models_dir(env).context("HOME is not set")?;
     let quiet = |script: &str, args: &[&str]| {
         Command::new(scripts.join(script))
             .args(args)
@@ -118,10 +118,10 @@ fn facts(
     })
 }
 
-fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<(), Box<dyn Error>> {
+fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {
     let hw = Hardware::detect(&hardware_sources());
     let mut model = resolve(None, Vec::new())?.settings().model;
-    let plan_view = |model| -> Result<SetupView, Box<dyn Error>> {
+    let plan_view = |model| -> Result<SetupView> {
         let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;
         Ok(SetupView::new(
             &hw.inventory(),
@@ -290,10 +290,10 @@ fn piped(
         }
         screen
             .draw(|frame| view.render(frame))
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| format!("{e:#}"))?;
         if let Some(key) = screen
             .key_within(Duration::from_millis(100))
-            .map_err(|e| e.to_string())?
+            .map_err(|e| format!("{e:#}"))?
         {
             view.on_key(key);
         }
@@ -322,7 +322,7 @@ fn with_sudo(screen: &mut Screen, script: &Path, args: &[&str]) -> Result<String
             let _ = std::io::stdin().lock().read_line(&mut String::new());
             status
         })
-        .map_err(|e| e.to_string())?
+        .map_err(|e| format!("{e:#}"))?
         .map_err(|err| format!("cannot run {}: {err}", script.display()))?;
     if status.success() {
         Ok(String::new())
@@ -366,10 +366,10 @@ fn install_model(
         }
         screen
             .draw(|frame| view.render(frame))
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| format!("{e:#}"))?;
         if let Some(key) = screen
             .key_within(Duration::from_millis(150))
-            .map_err(|e| e.to_string())?
+            .map_err(|e| format!("{e:#}"))?
         {
             view.on_key(key);
         }
@@ -382,7 +382,7 @@ fn install_model(
         "checked against the pinned SHA-256: {}",
         file.display()
     ));
-    for line in model::select(model).map_err(|e| e.to_string())? {
+    for line in model::select(model).map_err(|e| format!("{e:#}"))? {
         view.log(&line);
     }
     Ok(String::new())
@@ -391,13 +391,15 @@ fn install_model(
 /// The live benchmark, then back to the setup.
 fn bench(screen: &mut Screen) -> Result<String, String> {
     let settings = resolve(None, Vec::new())
-        .map_err(|e| e.to_string())?
+        .map_err(|e| format!("{e:#}"))?
         .settings();
-    let benchmarked = super::benchmark::bench_in(screen, &settings).map_err(|e| e.to_string())?;
-    let settings = match super::benchmark::apply(benchmarked.choice).map_err(|e| e.to_string())? {
-        Some((_, settings)) => settings,
-        None => settings,
-    };
+    let benchmarked =
+        super::benchmark::bench_in(screen, &settings).map_err(|e| format!("{e:#}"))?;
+    let settings =
+        match super::benchmark::apply(benchmarked.choice).map_err(|e| format!("{e:#}"))? {
+            Some((_, settings)) => settings,
+            None => settings,
+        };
     let target = match settings.device {
         smart_commit::config::DeviceSetting::Fixed(target) => Some(target),
         smart_commit::config::DeviceSetting::Auto => benchmarked.report.fastest(),

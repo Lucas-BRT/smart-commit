@@ -44,6 +44,11 @@ The binary (`src/main.rs` and the `src/cli/` modules: `args`, `suggest`,
 arguments and wires these together; `update` and `uninstall` run the `install.sh` the release
 installed in `share/smart-commit/scripts`.
 
+Errors: the library returns typed errors (`thiserror`: `GitError`,
+`ConfigError`, `BackendError`, `DeviceError`, ...); the binary collects them
+in `anyhow::Result`, adding context (`with_context`) where the cause alone
+would not say what failed, and prints the whole chain after `error:`.
+
 ## Repository style
 
 From the last `style.history_depth` (30) subjects, merges excluded:

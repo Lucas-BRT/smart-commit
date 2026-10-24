@@ -8,8 +8,8 @@ use std::io::{self, BufRead, Write as _};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use anyhow::{Context as _, Result, anyhow, bail};
 use smart_commit::{paths, server, tui};
-use std::error::Error;
 
 use super::settings::{env, resolve};
 
@@ -25,9 +25,9 @@ struct Installed {
     installer: PathBuf,
 }
 
-fn installed(exe: &Path) -> Result<Installed, String> {
+fn installed(exe: &Path) -> Result<Installed> {
     let not_installed = || {
-        format!(
+        anyhow!(
             "{} was not installed by install.sh; a build from source is updated and removed \
              with git and cargo",
             exe.display()
@@ -43,10 +43,10 @@ fn installed(exe: &Path) -> Result<Installed, String> {
     let version = version.trim().to_owned();
     let installer = share.join("scripts/install.sh");
     if !installer.is_file() {
-        return Err(format!(
+        bail!(
             "smart-commit {version} predates `smart-commit update` and `uninstall`; update once \
              with `{INSTALL} -s -- --no-setup`, or remove it with `{INSTALL} -s -- --purge`"
-        ));
+        );
     }
     Ok(Installed {
         prefix,
@@ -65,21 +65,21 @@ fn stop_kept_models() {
     }
 }
 
-fn run_installer(install: &Installed, args: &[&str]) -> Result<(), Box<dyn Error>> {
+fn run_installer(install: &Installed, args: &[&str]) -> Result<()> {
     let status = Command::new("bash")
         .arg(&install.installer)
         .args(args)
         .arg("--prefix")
         .arg(&install.prefix)
         .status()
-        .map_err(|err| format!("cannot run {}: {err}", install.installer.display()))?;
+        .with_context(|| format!("cannot run {}", install.installer.display()))?;
     if !status.success() {
-        return Err(format!("{} failed ({status})", install.installer.display()).into());
+        bail!("{} failed ({status})", install.installer.display());
     }
     Ok(())
 }
 
-pub(super) fn update() -> Result<(), Box<dyn Error>> {
+pub(super) fn update() -> Result<()> {
     let install = installed(&std::env::current_exe()?.canonicalize()?)?;
     println!(
         "smart-commit {} in {}",
@@ -90,12 +90,12 @@ pub(super) fn update() -> Result<(), Box<dyn Error>> {
     run_installer(&install, &["--update"])
 }
 
-pub(super) fn uninstall(yes: bool, system: bool) -> Result<(), Box<dyn Error>> {
+pub(super) fn uninstall(yes: bool, system: bool) -> Result<()> {
     let install = installed(&std::env::current_exe()?.canonicalize()?)?;
     print!("{}", plan(&install, system));
     if !yes {
         if !tui::interactive() {
-            return Err("uninstall removes the models and the configuration; pass --yes".into());
+            bail!("uninstall removes the models and the configuration; pass --yes");
         }
         print!("Remove all of it? [y/N] ");
         io::stdout().flush()?;
@@ -223,19 +223,26 @@ mod tests {
         let dir = tempfile::TempDir::new().unwrap();
         // A build from source: target/release/smart-commit.
         let err = installed(&dir.path().join("target/release/smart-commit")).unwrap_err();
-        assert!(err.contains("not installed by install.sh"), "{err}");
+        assert!(
+            err.to_string().contains("not installed by install.sh"),
+            "{err}"
+        );
         // bin/ without the release's files.
         std::fs::create_dir_all(dir.path().join("bin")).unwrap();
         let err = installed(&dir.path().join("bin/smart-commit")).unwrap_err();
-        assert!(err.contains("not installed by install.sh"), "{err}");
+        assert!(
+            err.to_string().contains("not installed by install.sh"),
+            "{err}"
+        );
         // A release from before install.sh was shipped.
         let exe = layout(dir.path(), false);
         let err = installed(&exe).unwrap_err();
         assert!(
-            err.contains("0.8.0 predates `smart-commit update`"),
+            err.to_string()
+                .contains("0.8.0 predates `smart-commit update`"),
             "{err}"
         );
-        assert!(err.contains("--purge"), "{err}");
+        assert!(err.to_string().contains("--purge"), "{err}");
     }
 
     #[test]

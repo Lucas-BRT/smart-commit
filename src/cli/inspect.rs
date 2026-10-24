@@ -4,20 +4,20 @@
 use std::io::Write as _;
 use std::path::Path;
 
+use anyhow::{Context as _, Result, bail};
 use smart_commit::config::Settings;
 use smart_commit::context::RepoContext;
 use smart_commit::git::Repo;
 use smart_commit::hardware::Hardware;
 use smart_commit::trace::{Inputs, Trace};
 use smart_commit::{diff, generate, prompt};
-use std::error::Error;
 
 use super::args::{BackendArgs, ModelArgs, PromptArgs};
 use super::load::load_model;
 use super::session::{staged_files, start_backend};
 use super::settings::{hardware_sources, resolve, warn_renamed};
 
-pub(super) fn context(path: &Path) -> Result<(), Box<dyn Error>> {
+pub(super) fn context(path: &Path) -> Result<()> {
     let repo = Repo::discover(path)?;
     let settings = resolve(Some(&repo), Vec::new())?.settings();
     let context = RepoContext::collect_with_history(&repo, settings.history_depth)?;
@@ -26,7 +26,7 @@ pub(super) fn context(path: &Path) -> Result<(), Box<dyn Error>> {
 }
 
 /// Prints the prompt the model would get for the staged changes.
-pub(super) fn prompt(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dyn Error>> {
+pub(super) fn prompt(path: &Path, prompt_args: &PromptArgs) -> Result<()> {
     let repo = Repo::discover(path)?;
     let settings = resolve(Some(&repo), Vec::new())?.settings();
     let context = RepoContext::collect_with_history(&repo, settings.history_depth)?;
@@ -47,7 +47,7 @@ pub(super) fn prompt(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dy
 /// `prompt --inputs`: the prompts of many recorded inputs, e.g. to build a
 /// training set with the exact prompts smart-commit sends. Only the user's
 /// global settings apply, since there is no repository.
-pub(super) fn prompt_inputs(path: &Path, prompt_args: &PromptArgs) -> Result<(), Box<dyn Error>> {
+pub(super) fn prompt_inputs(path: &Path, prompt_args: &PromptArgs) -> Result<()> {
     let inputs = read_inputs(path)?;
     let mut options = resolve(None, Vec::new())?.settings().prompt_options();
     prompt_args.apply(&mut options);
@@ -61,12 +61,11 @@ pub(super) fn prompt_inputs(path: &Path, prompt_args: &PromptArgs) -> Result<(),
 }
 
 /// Reads JSON Lines of trace inputs from `path`, or stdin for `-`.
-fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {
+fn read_inputs(path: &Path) -> Result<Vec<Inputs>> {
     let text = if path == Path::new("-") {
         std::io::read_to_string(std::io::stdin())?
     } else {
-        std::fs::read_to_string(path)
-            .map_err(|err| format!("cannot read {}: {err}", path.display()))?
+        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?
     };
     let mut inputs = Vec::new();
     for (index, line) in text.lines().enumerate() {
@@ -74,9 +73,8 @@ fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {
             continue;
         }
         inputs.push(
-            serde_json::from_str(line).map_err(|err| {
-                format!("{}:{}: invalid inputs: {err}", path.display(), index + 1)
-            })?,
+            serde_json::from_str(line)
+                .with_context(|| format!("{}:{}: invalid inputs", path.display(), index + 1))?,
         );
     }
     Ok(inputs)
@@ -85,13 +83,9 @@ fn read_inputs(path: &Path) -> Result<Vec<Inputs>, Box<dyn Error>> {
 /// `eval`: the whole pipeline (prompt, model, sanitizer, retry, fallback)
 /// on each recorded input, loading the model once. Each trace replays like
 /// those of `--trace`. Like `prompt --inputs`, only global settings apply.
-pub(super) fn eval(
-    path: &Path,
-    args: &BackendArgs,
-    prompt_args: &PromptArgs,
-) -> Result<(), Box<dyn Error>> {
+pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) -> Result<()> {
     if args.trace.is_some() {
-        return Err("eval writes its traces to stdout; --trace does not apply".into());
+        bail!("eval writes its traces to stdout; --trace does not apply");
     }
     let inputs = read_inputs(path)?;
     let resolved = resolve(None, args.flags()?)?;
@@ -120,9 +114,9 @@ pub(super) fn eval(
     Ok(())
 }
 
-pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<dyn Error>> {
-    let json = std::fs::read_to_string(path)
-        .map_err(|err| format!("cannot read {}: {err}", path.display()))?;
+pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<()> {
+    let json =
+        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
     let trace = Trace::from_json(&json)?;
     let replay = match model {
         None => trace.replay()?,
@@ -145,12 +139,11 @@ pub(super) fn replay(path: &Path, model: Option<&ModelArgs>) -> Result<(), Box<d
         for difference in &replay.differences {
             eprintln!("differs: {difference}");
         }
-        return Err(format!(
+        bail!(
             "not reproduced (trace written by smart-commit {}, this is {})",
             trace.tool_version,
             env!("CARGO_PKG_VERSION")
-        )
-        .into());
+        );
     }
     println!(
         "reproduced: {} attempt(s), {:?} message",

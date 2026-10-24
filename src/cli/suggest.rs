@@ -3,17 +3,17 @@
 
 use std::time::Instant;
 
+use anyhow::Result;
 use smart_commit::generate::Source;
 use smart_commit::git::Repo;
 use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::tui::review::{self, Review};
 use smart_commit::tui::{self, Screen};
-use std::error::Error;
 
 use super::args::{BackendArgs, GenerateArgs};
 use super::session::Session;
 
-pub(super) fn run(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(args: &GenerateArgs) -> Result<()> {
     let repo = Repo::discover(&args.path)?;
     if args.commit && tui::interactive() {
         return review_and_commit(&repo, &args.backend);
@@ -29,7 +29,7 @@ pub(super) fn run(args: &GenerateArgs) -> Result<(), Box<dyn Error>> {
 
 /// `--commit` in a terminal: shows the message, then commits it, opens the
 /// editor, asks the model for another one or gives up.
-fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Error>> {
+fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<()> {
     let started = Instant::now();
     let session = Session::start(repo, args)?;
     let generation = session.generate(&[])?;
@@ -66,10 +66,7 @@ fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<(), Box<dyn Erro
 
 /// Generates a message for what is staged in `repo`, writing the trace if
 /// asked and warning when the fallback had to be used.
-pub(super) fn generate_message(
-    repo: &Repo,
-    args: &BackendArgs,
-) -> Result<CommitMessage, Box<dyn Error>> {
+pub(super) fn generate_message(repo: &Repo, args: &BackendArgs) -> Result<CommitMessage> {
     let generation = Session::start(repo, args)?.generate(&[])?;
     if generation.source == Source::Fallback {
         let copied = generation

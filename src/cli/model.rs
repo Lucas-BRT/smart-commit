@@ -6,13 +6,13 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::time::Duration;
 
+use anyhow::{Context as _, Result, bail};
 use clap::Subcommand;
 use smart_commit::config::{self, Origin, Resolved};
 use smart_commit::models::{self, Model};
 use smart_commit::paths;
 use smart_commit::tui::models::{Action, Entry, Picker};
 use smart_commit::tui::{self, Screen};
-use std::error::Error;
 
 use super::settings::{env, resolve, stop_kept_after};
 
@@ -28,7 +28,7 @@ pub(super) enum ModelCommand {
     },
 }
 
-pub(super) fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {
+pub(super) fn run(command: Option<ModelCommand>) -> Result<()> {
     match command {
         None if tui::interactive() => pick(),
         None | Some(ModelCommand::List) => list(),
@@ -39,7 +39,7 @@ pub(super) fn run(command: Option<ModelCommand>) -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn list() -> Result<(), Box<dyn Error>> {
+fn list() -> Result<()> {
     let resolved = resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let models_dir = paths::default_models_dir(env);
@@ -117,8 +117,8 @@ fn installed(model: &Model, dir: &Path) -> Vec<&'static str> {
 
 /// The model picker, in a terminal; what it chooses is then used as with
 /// `model use`.
-fn pick() -> Result<(), Box<dyn Error>> {
-    let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
+fn pick() -> Result<()> {
+    let dir = paths::default_models_dir(env).context("HOME is not set")?;
     let mut picker = picker(&dir)?;
     let base = hugging_face();
     let mut screen = Screen::new()?;
@@ -181,8 +181,8 @@ pub(super) enum Chosen {
 }
 
 /// The picker on `screen`, choosing without downloading.
-pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Error>> {
-    let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
+pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>> {
+    let dir = paths::default_models_dir(env).context("HOME is not set")?;
     let mut picker = picker(&dir)?;
     loop {
         screen.draw(|frame| picker.render(frame))?;
@@ -196,7 +196,7 @@ pub(super) fn choose(screen: &mut Screen) -> Result<Option<Chosen>, Box<dyn Erro
 }
 
 /// The picker, on the models in `dir`.
-fn picker(dir: &Path) -> Result<Picker, Box<dyn Error>> {
+fn picker(dir: &Path) -> Result<Picker> {
     let resolved = resolve(None, Vec::new())?;
     let settings = resolved.settings();
     let entries = models::REGISTRY
@@ -232,8 +232,8 @@ fn hugging_face() -> String {
     env("SMART_COMMIT_HF_BASE").unwrap_or_else(|| models::HUGGING_FACE.to_owned())
 }
 
-fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
-    let dir = paths::default_models_dir(env).ok_or("HOME is not set")?;
+fn use_recommended(model: &'static Model) -> Result<()> {
+    let dir = paths::default_models_dir(env).context("HOME is not set")?;
     let base = hugging_face();
     let file = dir.join(model.gguf.file);
     if models::is_installed(&model.gguf, &file) {
@@ -275,7 +275,7 @@ fn use_recommended(model: &'static Model) -> Result<(), Box<dyn Error>> {
 
 /// Makes `model` the one in use (model.name, without model.gguf or
 /// model.dir pointing elsewhere); returns what changed.
-pub(super) fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error>> {
+pub(super) fn select(model: &'static Model) -> Result<Vec<String>> {
     let path = global_config()?;
     let origin = Origin::Global(path.clone());
     config::set_in_file(&path, &origin, "model.name", model.id, None)?;
@@ -292,23 +292,21 @@ pub(super) fn select(model: &'static Model) -> Result<Vec<String>, Box<dyn Error
     Ok(lines)
 }
 
-fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {
+fn use_file(arg: &str) -> Result<()> {
     let path = Path::new(arg);
     if !path.exists() {
-        return Err(format!(
+        bail!(
             "{arg} is neither a recommended model ({}) nor a file",
             models::IDS.join(", ")
-        )
-        .into());
+        );
     }
     let path: PathBuf = path.canonicalize()?;
     let key = if path.is_dir() {
         if !path.join("openvino_model.xml").is_file() {
-            return Err(format!(
+            bail!(
                 "{} has no openvino_model.xml: not an OpenVINO model",
                 path.display()
-            )
-            .into());
+            );
         }
         "model.dir"
     } else {
@@ -325,7 +323,7 @@ fn use_file(arg: &str) -> Result<(), Box<dyn Error>> {
 }
 
 /// Sets `key` (model.gguf or model.dir) to `path`; returns what changed.
-fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
+fn select_file(path: &Path, key: &str) -> Result<Vec<String>> {
     let config_path = global_config()?;
     let origin = Origin::Global(config_path.clone());
     let text = path.to_string_lossy();
@@ -348,11 +346,11 @@ fn select_file(path: &Path, key: &str) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 /// Uses a model file or directory chosen in the setup's picker.
-pub(super) fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {
+pub(super) fn select_path(path: &Path) -> Result<Vec<String>> {
     let path = path.canonicalize()?;
     if path.is_dir() {
         if !path.join("openvino_model.xml").is_file() {
-            return Err(format!("{} has no openvino_model.xml", path.display()).into());
+            bail!("{} has no openvino_model.xml", path.display());
         }
         select_file(&path, "model.dir")
     } else {
@@ -361,8 +359,8 @@ pub(super) fn select_path(path: &Path) -> Result<Vec<String>, Box<dyn Error>> {
     }
 }
 
-fn global_config() -> Result<PathBuf, Box<dyn Error>> {
-    Ok(paths::default_config_file(env).ok_or("HOME is not set")?)
+fn global_config() -> Result<PathBuf> {
+    paths::default_config_file(env).context("HOME is not set")
 }
 
 /// A note for each of `keys` still set by the environment or a flag.
