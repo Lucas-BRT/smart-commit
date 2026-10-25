@@ -621,6 +621,70 @@ branch, paired with `sc-training score --against` against the plain list:
   out of the diff made it invent until the list said which whitespace.
 - Next: train v0.3 on the annotated list (T1).
 
+### H12. DPO on the model's own samples removes its typical failures — first run: yes, but it cost the scope; second run planned
+
+SFT shows what to write, never what not to. DPO trains on pairs: a reply the
+model sampled that a check rejects (a history subject copied, a detail found
+nowhere in the diff, a vague description), against one that passes
+(`train_dpo.py`: a LoRA on the SFT model merged, which is also the
+reference; `mine_pairs.py` and `sc-training pairs` make the pairs).
+
+**First run** (v0.1 0.5B, `--rules full --diff plain`). 3,551 inputs of
+`data/test2to5h` outside the evaluation sets' repositories, four samples each
+at 0.7, 1,287 pairs (964 with the real subject chosen), of which only 72
+Conventional (191 of the 3,551 inputs were), judged by the checks that need
+no reference. β 0.1, learning rate 2e-5, 80 steps of 16 pairs, 12 minutes on the
+RTX 3050. One binary, Vulkan, greedy, eval-v1 (250 + 250) and eval-short
+(47 + 150), the SFT model re-exported the same way, paired:
+
+| eval-v1 | SFT | DPO β 0.1 | DPO β 0.3 |
+|---|---|---|---|
+| ungrounded, Conventional / free | 0.104 / 0.108 | 0.008 / 0.012 | 0.012 / 0.016 |
+| first_copied, Conventional / free | 0.040 / 0.084 | 0.016 / 0.008 | 0.020 / 0.008 |
+| fallback, Conventional / free | 0.028 / 0.076 | 0.008 / 0.008 | 0.012 / 0.008 |
+| first_try, Conventional / free | 0.960 / 0.916 | 0.980 / 0.992 | 0.980 / 0.992 |
+| scope_known, Conventional | 0.844 | 0.796 | 0.804 |
+| type_match, Conventional | 0.628 | 0.612 | 0.612 |
+| word_f1, Conventional / free | 0.333 / 0.230 | 0.319 / 0.251 | 0.323 / 0.250 |
+
+- What the pairs teach, it learns: paired on all of eval-v1, `ungrounded`
+  +0/−48, `first_copied` +2/−27, `first_try` +27/−3 (all p < 0.001), the
+  same on eval-short. The messages do not turn generic: they are a little
+  longer (39 columns against 37; the real ones 41) and the share of content
+  words found nowhere in the diff, paths or history does not grow (0.188 →
+  0.167 Conventional, 0.149 → 0.135 free; the real subjects 0.39 / 0.41).
+- What it did not teach, it lost: `scope_known` +0/−12 (p < 0.001; eval-short
+  0.681 → 0.617) and `type_match` +9/−13 (p = 0.52; eval-short 0.617 → 0.702).
+  β 0.3 stays closer to the SFT model and did not recover the scope, so the
+  cause is the pairs, not how far the model moves.
+- The pairs: 94% of them are free-style prompts. The 191 Conventional inputs
+  came from 20 repositories (few repositories of the test splits are
+  Conventional), and the judge ignored the type and the scope. Of those
+  inputs, 78% have at least one sample of the real type, 50% have samples of
+  the right and the wrong type, and 53% of the samples are right: there is
+  room for pairs on the type.
+
+**Second run (planned).** Conventional inputs from `data/train-all`
+without the commits the SFT trained on (`data/curve`) and without the
+evaluation and validation repositories: 4,500 from 680 repositories (at most
+8 each, 22% of a type) and 1,000 of young repositories, six samples each,
+mined on Kaggle's T4s; a judge that also rejects a scope the history never
+used and a type other than the real commit's, and prefers a sample of the
+model itself; pairs balanced by repository, type and bucket, a tenth of the
+repositories apart for validation (`sc-training balance`). A sweep of β,
+learning rate, epochs and `--sft-weight` on the 0.5B chosen on `data/val1`,
+never on eval-v1, which is read once, for the chosen configuration; then the
+1.5B.
+
+*Fixed before the second run.* It counts as better if, on eval-v1 and
+eval-short, paired against the SFT model: `type_match` and `type_macro_f1`
+rise on the Conventional set, `scope_known` is back at 0.84 or more, and
+`ungrounded`, `first_copied` and `first_try` keep at least 80% of the first
+run's gain; and none of `word_f1`, `exact` or the share of content words found
+nowhere falls with significance, the mean subject stays between 36 and 42
+columns, and a reading of 30 messages side by side shows no new habit. If
+not, the result goes here as it is and Kaggle's quota goes no further on it.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
