@@ -177,6 +177,44 @@ fn a_model_kept_loaded_gives_the_same_replies() {
 
 #[test]
 #[ignore = "needs OpenVINO GenAI and an exported model"]
+fn llamacpp_tells_the_type_and_writes_for_a_chosen_one() {
+    if llamacpp_options().is_none() {
+        println!("only the llama.cpp devices tell the type and start a reply");
+        return;
+    }
+    let backend = backend();
+    let config = GenerationConfig::default();
+    // The first prompt of ten fixtures: enough to see it works, quick on the CPU.
+    for (name, prompt) in fixture_prompts().into_iter().step_by(5).take(10) {
+        let choices = backend.type_choices(&prompt).unwrap();
+        assert!(!choices.is_empty(), "{name}: no type among the candidates");
+        let total: f64 = choices.iter().map(|c| c.probability).sum();
+        assert!((total - 1.0).abs() < 1e-6, "{name}: {choices:?}");
+        assert!(
+            choices
+                .windows(2)
+                .all(|w| w[0].probability >= w[1].probability)
+        );
+        // The reply is made to begin with a type the model did not pick.
+        let other = if choices[0].name == "docs" {
+            "fix"
+        } else {
+            "docs"
+        };
+        let reply = backend
+            .generate_starting_with(&prompt, other, &config)
+            .unwrap();
+        println!("{name}: {choices:?} -> {reply:?}");
+        assert!(reply.starts_with(other), "{name}: {reply:?}");
+        assert!(
+            reply.len() > other.len(),
+            "{name}: only the start came back"
+        );
+    }
+}
+
+#[test]
+#[ignore = "needs OpenVINO GenAI and an exported model"]
 fn same_prompt_gives_the_same_reply() {
     let backend = backend();
     let config = GenerationConfig::default();

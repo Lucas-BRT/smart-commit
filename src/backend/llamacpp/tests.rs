@@ -335,3 +335,82 @@ fn socket_dirs_are_private_and_short() {
     }
     std::fs::remove_dir(dir).unwrap();
 }
+
+#[test]
+fn a_reply_can_be_begun_for_the_model() {
+    let request =
+        chat_request_starting_with(&prompt(), &GenerationConfig { max_new_tokens: 96 }, "fix");
+    let messages = request["messages"].as_array().unwrap();
+    assert_eq!(messages.len(), 3);
+    assert_eq!(messages[2]["role"], "assistant");
+    assert_eq!(messages[2]["content"], "fix");
+    // Everything else is as greedy and seeded as a plain request.
+    assert_eq!(request["temperature"], 0);
+    assert_eq!(request["max_tokens"], 96);
+    assert_eq!(request["cache_prompt"], false);
+}
+
+#[test]
+fn the_type_is_asked_with_one_token_and_its_alternatives() {
+    let request = type_request(&prompt());
+    assert_eq!(request["max_tokens"], 1);
+    assert_eq!(request["logprobs"], true);
+    assert_eq!(request["top_logprobs"], 12);
+    assert_eq!(request["temperature"], 0);
+    assert_eq!(request["messages"].as_array().unwrap().len(), 2);
+}
+
+#[test]
+fn types_are_read_from_the_first_tokens_candidates() {
+    let body = r#"{"choices":[{"logprobs":{"content":[{"token":"feat","logprob":-0.654,
+        "top_logprobs":[
+          {"token":"feat","logprob":-0.654},{"token":"fix","logprob":-0.894},
+          {"token":"ch","logprob":-3.453},{"token":"ref","logprob":-3.697},
+          {"token":"Fix","logprob":-6.878},{"token":"(","logprob":-9.0}]}]}}]}"#;
+    let choices = parse_type_choices(body).unwrap();
+    let names: Vec<&str> = choices.iter().map(|c| c.name.as_str()).collect();
+    assert_eq!(names, ["feat", "fix", "chore", "refactor"]);
+    let total: f64 = choices.iter().map(|c| c.probability).sum();
+    assert!((total - 1.0).abs() < 1e-9);
+    assert!(choices[0].probability > choices[1].probability);
+
+    let err = parse_type_choices(r#"{"choices":[{"message":{"content":"feat"}}]}"#).unwrap_err();
+    assert!(err.to_string().contains("no log probabilities"), "{err}");
+    assert!(parse_type_choices("not json").is_err());
+}
+
+#[test]
+fn types_and_a_chosen_start_go_through_the_socket() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let socket = dir.path().join("server.sock");
+    let choices = r#"{"choices":[{"logprobs":{"content":[{"token":"feat","logprob":-0.7,
+        "top_logprobs":[{"token":"feat","logprob":-0.7},{"token":"fix","logprob":-0.9}]}]}}]}"#;
+    let reply_body = r#"{"choices":[{"message":{"content":"fix(core): stop the crash"}}],
+        "timings":{"prompt_n":10,"predicted_n":6}}"#;
+    let server = fake_server(
+        &socket,
+        vec![reply("200 OK", choices), reply("200 OK", reply_body)],
+    );
+    let backend = LlamaCppBackend::connect(socket, "fake".into());
+
+    let types = backend.type_choices(&prompt()).unwrap();
+    assert_eq!(types[0].name, "feat");
+    assert_eq!(types[1].name, "fix");
+    let text = backend
+        .generate_starting_with(&prompt(), "fix", &GenerationConfig::default())
+        .unwrap();
+    assert_eq!(text, "fix(core): stop the crash");
+    assert_eq!(backend.last_metrics().unwrap().output_tokens, 6);
+
+    let requests = server.join().unwrap();
+    assert!(
+        requests[0].contains(r#""logprobs":true"#),
+        "{}",
+        requests[0]
+    );
+    // The last message is the assistant's, begun with the type (the order
+    // of an object's keys depends on the features serde_json is built with).
+    let body: Value = serde_json::from_str(requests[1].split("\r\n\r\n").nth(1).unwrap()).unwrap();
+    let last = body["messages"].as_array().unwrap().last().unwrap().clone();
+    assert_eq!(last, json!({"role": "assistant", "content": "fix"}));
+}
