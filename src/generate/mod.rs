@@ -55,6 +55,15 @@ pub struct Generation {
     pub attempts: Vec<Attempt>,
 }
 
+/// `options` with the budget `backend` can take: what to build the prompts
+/// with, and what a trace of them records.
+pub fn budgeted(options: &PromptOptions, backend: &dyn Backend) -> PromptOptions {
+    PromptOptions {
+        max_prompt_tokens: backend.prompt_budget(options.max_prompt_tokens),
+        ..options.clone()
+    }
+}
+
 pub fn generate(
     ctx: &RepoContext,
     files: &[FileDiff],

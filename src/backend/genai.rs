@@ -108,6 +108,7 @@ pub fn missing_openvino(device: Device) -> &'static str {
 }
 
 pub struct GenaiBackend {
+    device: Device,
     pipeline: Mutex<LlmPipeline>,
     description: String,
     last_metrics: Mutex<Option<Metrics>>,
@@ -150,6 +151,7 @@ impl GenaiBackend {
                 ))
             })?;
         Ok(Self {
+            device: options.device,
             pipeline: Mutex::new(pipeline),
             description: describe(options, &identity),
             last_metrics: Mutex::new(None),
@@ -160,6 +162,10 @@ impl GenaiBackend {
 impl Backend for GenaiBackend {
     fn describe(&self) -> String {
         self.description.clone()
+    }
+
+    fn prompt_budget(&self, requested: usize) -> usize {
+        device_prompt_budget(self.device, requested)
     }
 
     fn last_metrics(&self) -> Option<Metrics> {
@@ -211,6 +217,23 @@ impl Backend for GenaiBackend {
             *self.last_metrics.lock().expect("metrics lock") = metrics;
         }
         Ok(text)
+    }
+}
+
+/// The share of the prompt budget the NPU gets, as a fraction. It compiles
+/// for the budget and fails on a longer prompt, and the estimate is up to
+/// 1.25 times short on dense text (see [`crate::diff::estimate_tokens`]), so
+/// the budget it is given is a fifth smaller. Compiling for more than the
+/// budget instead, to leave room, makes the cached graph fail to load again
+/// (`Cannot find tensor for port`, OpenVINO 2026.3 and 2026.4, NPU driver
+/// 1.38).
+const NPU_BUDGET: (usize, usize) = (4, 5);
+
+/// The prompt budget `device` can take when asked for `requested`.
+pub fn device_prompt_budget(device: Device, requested: usize) -> usize {
+    match device {
+        Device::Npu => requested * NPU_BUDGET.0 / NPU_BUDGET.1,
+        Device::Gpu | Device::Cpu => requested,
     }
 }
 
@@ -303,6 +326,23 @@ mod tests {
         let cpu = missing_openvino(Device::Cpu);
         assert!(cpu.contains("only openvino-cpu needs it"), "{cpu}");
         assert!(cpu.contains("the cpu device runs on llama.cpp"), "{cpu}");
+    }
+
+    #[test]
+    fn the_npu_is_given_a_fifth_less_than_it_compiles_for() {
+        // A prompt estimated at the budget may be up to 1.25 times longer;
+        // the NPU fails past the length it compiled for.
+        let budget = device_prompt_budget(Device::Npu, 1024);
+        assert_eq!(budget, 819);
+        assert!(budget * 125 / 100 <= 1024);
+        assert_eq!(device_prompt_budget(Device::Npu, 512), 409);
+        // Devices without a static shape take what they are asked for.
+        assert_eq!(device_prompt_budget(Device::Gpu, 1024), 1024);
+        assert_eq!(device_prompt_budget(Device::Cpu, 1024), 1024);
+        // What the NPU compiles for is the budget itself.
+        let options = options(Path::new("/m"), Device::Npu);
+        let npu = pipeline_properties(&options);
+        assert!(npu.contains(&("MAX_PROMPT_LEN", "1024".to_owned())));
     }
 
     #[test]

@@ -22,6 +22,13 @@ pub use parse::parse;
 /// length fails the generation, while underfilling only loses some context.
 pub const CHARS_PER_TOKEN: usize = 3;
 
+/// Letters per token in long runs mixing letters and digits (hashes,
+/// base64, keys), which split into short tokens.
+const DENSE_LETTERS_PER_TOKEN: usize = 2;
+
+/// Runs at least this long, of letters and digits mixed, count as dense.
+const DENSE_RUN: usize = 16;
+
 /// Below this, a file's hunks are dropped instead of truncated: a few lines
 /// of a large change mislead more than they help.
 const MIN_FILE_TOKENS: usize = 24;
@@ -30,8 +37,46 @@ const MIN_FILE_TOKENS: usize = 24;
 /// does not.
 const MIN_BODY_LINES: usize = 3;
 
+/// The tokens of `text` for Qwen's tokenizer, from above for most text:
+/// [`CHARS_PER_TOKEN`] characters per token, except that every digit is a
+/// token of its own and the letters of dense runs (hashes, base64) go
+/// [`DENSE_LETTERS_PER_TOKEN`] per token. Characters / 3 alone was well
+/// short on such diffs; the backends' headroom covers what is left (see
+/// `docs/measurements.md`).
 pub fn estimate_tokens(text: &str) -> usize {
-    text.chars().count().div_ceil(CHARS_PER_TOKEN)
+    // (digits, letters of dense runs, other characters)
+    let mut counts = (0, 0, 0);
+    let mut run_start = None;
+    let add_run = |run: &str, counts: &mut (usize, usize, usize)| {
+        let digits = run.chars().filter(char::is_ascii_digit).count();
+        let letters = run.chars().filter(char::is_ascii_alphabetic).count();
+        let len = run.chars().count();
+        counts.0 += digits;
+        if len >= DENSE_RUN && digits > 0 && letters > 0 {
+            counts.1 += letters;
+            counts.2 += len - digits - letters;
+        } else {
+            counts.2 += len - digits;
+        }
+    };
+    for (i, c) in text.char_indices() {
+        let in_run = c.is_ascii_alphanumeric() || "+/=_-".contains(c);
+        match (in_run, run_start) {
+            (true, None) => run_start = Some(i),
+            (false, Some(start)) => {
+                add_run(&text[start..i], &mut counts);
+                run_start = None;
+                counts.2 += 1;
+            }
+            (false, None) => counts.2 += 1,
+            (true, Some(_)) => {}
+        }
+    }
+    if let Some(start) = run_start {
+        add_run(&text[start..], &mut counts);
+    }
+    let (digits, dense_letters, other) = counts;
+    digits + dense_letters.div_ceil(DENSE_LETTERS_PER_TOKEN) + other.div_ceil(CHARS_PER_TOKEN)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

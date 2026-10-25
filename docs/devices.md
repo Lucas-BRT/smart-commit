@@ -212,7 +212,9 @@ misleading `CL_OUT_OF_HOST_MEMORY`.
 ## The NPU
 
 The NPU compiles the model for fixed shapes: a prompt of
-`model.max_prompt_tokens` and a reply of `model.max_new_tokens`.
+`model.max_prompt_tokens` and a reply of `model.max_new_tokens`. A longer
+prompt fails, and the token estimate can be short, so the NPU is given a
+fifth less than that as the prompt budget.
 
 - **Cache.** The first load compiles the graph; later loads read it from
   `$XDG_CACHE_HOME/smart-commit/openvino`.
@@ -224,7 +226,7 @@ The NPU compiles the model for fixed shapes: a prompt of
   (`UnrollPermuteDMA`).
 - **`GENERATE_HINT=BEST_PERF`** (`model.npu_generate_hint`) compiles slower,
   once, for faster tokens.
-- Both settings give identical replies (a hardware test checks it).
+- The two settings give the same reply for nearly every prompt: chunked prefill and `BEST_PERF` change the arithmetic, so a reply near a tie can differ (4 of the 51 fixture prompts do); a hardware test requires that at most one in ten does.
 
 What they gain is in [measurements](measurements.md#the-npu).
 

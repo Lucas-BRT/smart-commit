@@ -5,6 +5,25 @@ use super::compact::*;
 use super::parse::*;
 use super::*;
 
+#[test]
+fn estimate_counts_digits_and_dense_runs_apart() {
+    // Prose and code: about 3 characters per token.
+    assert_eq!(estimate_tokens("fix the parser"), 5);
+    assert_eq!(estimate_tokens(""), 0);
+    // Every digit is a token of its own.
+    assert_eq!(estimate_tokens("v1.2.3"), 3 + 1);
+    // A hash: 40 digits, 24 letters at 2 per token.
+    let sha = "141eb93384ad59f77eba3a21bde871851c766de891f778c5686218c214c48f11";
+    let digits = sha.chars().filter(char::is_ascii_digit).count();
+    assert_eq!(estimate_tokens(sha), digits + (64 - digits).div_ceil(2));
+    assert!(estimate_tokens(sha) > sha.len().div_ceil(CHARS_PER_TOKEN) * 3 / 2);
+    // A long word without digits is not dense.
+    let word = "configurationvaluesbuilder";
+    assert_eq!(estimate_tokens(word), word.len().div_ceil(3));
+    // Short runs mixing letters and digits are not dense either.
+    assert_eq!(estimate_tokens("abc123"), 3 + 1);
+}
+
 fn file(path: &str, hunks: &str) -> FileDiff {
     let added = hunks.lines().filter(|l| l.starts_with('+')).count();
     let deleted = hunks.lines().filter(|l| l.starts_with('-')).count();

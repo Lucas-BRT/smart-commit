@@ -296,9 +296,9 @@ impl Backend for LlamaCppBackend {
 /// Everything explicit: all layers on the chosen GPU, a context that fits
 /// exactly our prompt budget and reply, one slot, no web UI, no network.
 /// The context the server is started with: the prompt budget, half again
-/// as room for a prompt whose tokens were underestimated (the budget counts
-/// about 3 characters per token, and hashes, base64 or long numbers take
-/// up to twice as many tokens: Qwen splits every digit), and the reply. A
+/// as room for a prompt whose tokens were underestimated (at most 1.25
+/// times on the prompts measured, see [`crate::diff::estimate_tokens`]),
+/// and the reply. A
 /// longer prompt is read a little longer instead of failing; the KV cache
 /// it costs is a few megabytes for the small models.
 pub fn context_size(options: &LlamaCppOptions) -> usize {

@@ -397,6 +397,85 @@ mod tests {
         assert_eq!(first, second);
     }
 
+    /// A backend that takes four fifths of the budget it is asked for, as the
+    /// NPU does, and records the prompts it was given.
+    struct Tight(MockBackend);
+
+    impl Backend for Tight {
+        fn describe(&self) -> String {
+            "tight".into()
+        }
+
+        fn generate(
+            &self,
+            prompt: &Prompt,
+            config: &GenerationConfig,
+        ) -> Result<String, BackendError> {
+            self.0.generate(prompt, config)
+        }
+
+        fn prompt_budget(&self, requested: usize) -> usize {
+            requested * 4 / 5
+        }
+    }
+
+    #[test]
+    fn a_backend_can_take_less_than_the_budget_asked_for() {
+        let options = PromptOptions::default();
+        let tight = Tight(MockBackend::new(["fix(git): x"]));
+        let budgeted = crate::generate::budgeted(&options, &tight);
+        assert_eq!(
+            budgeted.max_prompt_tokens,
+            options.max_prompt_tokens * 4 / 5
+        );
+        // Nothing else changes, and a backend that takes all keeps the options.
+        assert_eq!(
+            PromptOptions {
+                max_prompt_tokens: options.max_prompt_tokens,
+                ..budgeted
+            },
+            options
+        );
+        assert_eq!(
+            crate::generate::budgeted(&options, &MockBackend::new(["x"])),
+            options
+        );
+    }
+
+    #[test]
+    fn a_tighter_budget_cuts_the_diff_sooner() {
+        let big = vec![FileDiff {
+            path: "src/git.rs".into(),
+            old_path: None,
+            lines: Some((400, 0)),
+            hunks: format!(
+                "@@ -0,0 +1,400 @@\n{}",
+                "+let value = compute(1);\n".repeat(400)
+            ),
+        }];
+        let tokens = |budget: usize| {
+            let mock = MockBackend::new(["fix(git): x"]);
+            let options = PromptOptions {
+                max_prompt_tokens: budget,
+                ..PromptOptions::default()
+            };
+            crate::generate::generate(
+                &context(CONVENTIONAL),
+                &big,
+                &mock,
+                &options,
+                &GenerationConfig::default(),
+            )
+            .unwrap();
+            let prompt = &mock.prompts()[0];
+            crate::diff::estimate_tokens(&prompt.system)
+                + crate::diff::estimate_tokens(&prompt.user)
+        };
+        let (full, tight) = (tokens(1024), tokens(819));
+        assert!(full <= 1024 && tight <= 819, "{full} {tight}");
+        assert!(tight < full);
+    }
+
     struct Failing;
 
     impl Backend for Failing {

@@ -226,11 +226,17 @@ Portuguese, so those prompts ask for Portuguese).
 
 ## Token estimate
 
-The prompt budget estimates tokens as characters / 3 (`estimate_tokens`). It
-stays above the tokenizer's count for most prompts, as the budget requires:
-real prompts are 3.4 to 3.75 characters per token, and a hardware test
-checks it. It is not above for all: on eval-v1 the estimate was up to 1.45
-times short for 2–3% of the prompts (hashes, base64 and long numbers).
+The prompt budget estimates tokens with `estimate_tokens`: 3 characters per
+token, except that every digit is a token and the letters of long runs
+mixing letters and digits (hashes, base64) go 2 per token. Plain characters
+/ 3 was up to 2.1 times short on diffs of checksums or keys (real prompts
+are 3.4 to 3.75 characters per token, so it is above for most). Against the
+tokenizer on eval-v1, eval-short and 3,000 training prompts the estimate is
+at most 1.25 times short, at a cost of about 7% of the budget where it
+binds. llama.cpp starts its server with half the budget again as context,
+which covers it; the NPU, which cannot be compiled with spare length, gets
+a fifth less budget (1 / 1.25). A hardware test checks that the estimate
+stays within that room.
 
 ## Model export
 

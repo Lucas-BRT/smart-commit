@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "docs: list the mirrors",
+      "feat: publish the 1.0 archives"
+    ],
+    "history_files": [
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "added",
+        "path": "SHA256SUMS",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "SHA256SUMS",
+        "old_path": null,
+        "lines": [
+          60,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,60 @@\n+d9baf236e10ad5bd745fb8001fe97479eb06de761f4a692da31410c2365fe910  smart-commit-1.tar.gz\n+f12584295f96d08290f2fda7368dd6a67b958b5893918604d3327744f37286f3  smart-commit-2.tar.gz\n+780a315ab1a8b28868019df4b8f93814cf5c42c2f59a950e02605a2f7c70a60c  smart-commit-3.tar.gz\n+a1ce7c66a3c7207cc66a4be748523bbd3673fe0a4fea5121da93f44ed316381a  smart-commit-4.tar.gz\n+6c57a613be859bdb60ab8c628d987d7fe44046b251dc58a745eadade77dbf08d  smart-commit-5.tar.gz\n+8e217e76d8afebb3834d20f1a99146376bf282256148fdb0f3d431324431c0db  smart-commit-6.tar.gz\n+1f53a4c69d3ac811c99c162ca62c369fd8b1bb6f922fb16827f8c76118d8a091  smart-commit-7.tar.gz\n+e70bdfb4b7b4ff90a19ae85b66fc9cdcdc3865f029eb60657a18abda67d9091f  smart-commit-8.tar.gz\n+d68d38de712c4e5c7a90e02cc0256a421a21c2cb8c5a498f9eb55992d43b6540  smart-commit-9.tar.gz\n+23da0ab56240f0311284ddf8d35187ae9c4ceff0a4f133c2220ce5840ee54f7d  smart-commit-10.tar.gz\n+d1f06e405277d13f7471467efef7bd8e85e24c03c357ae8b7a5aacfcaade518e  smart-commit-11.tar.gz\n+66a234c5acc803e1e0f5f4963afb7191159f3e115edd256a944c8325c0baf710  smart-commit-12.tar.gz\n+897444e6dfdd19b1958573e77e9fb9f2f91d55be80c3f5bf7768a090956cb922  smart-commit-13.tar.gz\n+71f3f209b0e9cdeb2b7f68f0395c7b71c1cf11ff7909ad8f8fc903f104d3a25c  smart-commit-14.tar.gz\n+ae2c8b88e4ec90b129f7aea82befa724753166c75d04fe1443dd3d41cae1b1c0  smart-commit-15.tar.gz\n+64cbf13ff55901560bd383b925a21175b5f574da45c2ab3f1ee854d21c3d6333  smart-commit-16.tar.gz\n+008052fe8e853b5f22997b3af02d576a69ba6b4c8257f0441ffe25f732c385ae  smart-commit-17.tar.gz\n+2915029aa141a95aa5df4181e18d8185c259b4852189b516b4be215e3f39083a  smart-commit-18.tar.gz\n+1b043647d77ae866d38ecb2ff1f5005ee8e6e58d3c7ccc5ec3f679c110339374  smart-commit-19.tar.gz\n+3bd611e61bb7436bd6e5bf91a0e02d15623a7716aa2a505746b1bf7cac8f1bce  smart-commit-20.tar.gz\n+56512a2a93da3ca7d9fb1d66925a90155318f1d0a363ed640de3fb0197cdacbd  smart-commit-21.tar.gz\n+123fde3bf898302ef40e9d0f8534ec32a3c97f53df179bac3baa578062d6224c  smart-commit-22.tar.gz\n+1086fd90e67b33fe76a8c0d0d0bea30e574460e1bf2ab0ae0e25b8860c9fc74d  smart-commit-23.tar.gz\n+be92a4bb9c6fe953833fe46c17b447c1d2669692050b057c6c6847a96d1bca3f  smart-commit-24.tar.gz\n+b56f8ebe1901ac4af978652b739e3624a467b7e92d9d199de365c35685dd3fa7  smart-commit-25.tar.gz\n+a28ff5c261ea40f200a030d47d414e6b43820751db511c92a1b1f35cf9b5b2b5  smart-commit-26.tar.gz\n+2e5b90dfa1081237a75806565d5fc3fefaccd37475a172500262ed692cd9488d  smart-commit-27.tar.gz\n+555357b3ccb2464b048745983bf0e7649155f4d68f0fe2eb38f1e604820c4bf4  smart-commit-28.tar.gz\n+8d07d63faae77b76eaea0e142a2f4f5bf4c78c58cc3c54e5dac9e407acbfab3b  smart-commit-29.tar.gz\n+0f00f4d6caf63a5673e2a6d0209b66d5a9e4a36a89aa9fb2e8715b8212f95264  smart-commit-30.tar.gz\n+e4f0393d8d94047a30650c22af7e71a75d8b3bde34ccbde8f5589b48df6e34c6  smart-commit-31.tar.gz\n+c032195a474583e2de7d7e77a1fa675996943071afc80c09dd7b01d254b80300  smart-commit-32.tar.gz\n+ab166294c154b4b569c6555deb4058f832889506103f455274153fcfbd5a445c  smart-commit-33.tar.gz\n+e0952d6da678bc9e88e3fee5a0bf6fd35b9f45dc5566ce67a4cf25d1520176a5  smart-commit-34.tar.gz\n+8d8b1f2112e32b11d6ca9c7af4aeb69d6958401d3a0f0aaeb997a3ea09b6fecd  smart-commit-35.tar.gz\n+01c09905c82008c1a88c94b9849d548e24f70fd1cbb153c2948e6302a84cb633  smart-commit-36.tar.gz\n+e6163f82f9f8cff3598599c7f282895de874522f8ea6676e97317214658a0802  smart-commit-37.tar.gz\n+e999ccbd78349d402d5d9551d6f62ac237b8a010dbcc91ae5af247bb0f511dd0  smart-commit-38.tar.gz\n+6e0518093ddc63c12c3750dcfa2893ed201b15e9345a85822edfae95d64d1b5a  smart-commit-39.tar.gz\n+f599afdaec6a0a57c66771f4fe0b50ea871eaae586440cd4b8fa68a0944a5807  smart-commit-40.tar.gz\n+f061b03bf9882f5988996115f0576f2294c973250ef218341162e223910b42c4  smart-commit-41.tar.gz\n+553caccc56805718cca2df3e523336067dae9e7e19b8c09a8011aaadd7626bb8  smart-commit-42.tar.gz\n+372ee46576ee415cb7dff6c2175001d3bebd7d1ae648a27f262f9f8c3e5351a2  smart-commit-43.tar.gz\n+8cc795e80b0e33d9ca9eb8e41fee1ffc5ad1867d924dabffcda457275b60dfa7  smart-commit-44.tar.gz\n+245245ea9c36942501872cad58264ca55dd3e17b37b6c0845bb30753fb8a3dd6  smart-commit-45.tar.gz\n+3fa544a6cffa3902e4943fcc33823f3c8d65649c679598adef57edc1e50a0cb8  smart-commit-46.tar.gz\n+b95eec65c976bd25f1dfaef8cb872abcf82f6a1d5a6e22d8088ad5dff0a0602c  smart-commit-47.tar.gz\n+ffeeb69897bbeefcddf9ac9f9874eb1d9d693b0375c9247063abf23d15f532de  smart-commit-48.tar.gz\n+ba5cb320b8768918c8a7b4f56b2548bdbf11b8e3b72a7c01cbfdb4b9eae3c40b  smart-commit-49.tar.gz\n+639de59cf2413343aab6400efa9c93cbe95dfe6dea16ff9df05dff2e0cbffb24  smart-commit-50.tar.gz\n+6ef7c700d45fd1d094d3dd096be52fcc21422155a5e0f7dde97b1f2e521a3268  smart-commit-51.tar.gz\n+de149e145025ff58bcd4fa6b7a748f7fd1eff9f442230ddefae14c54e5ed7712  smart-commit-52.tar.gz\n+e7fc490adeabecff573c32c41f00f4d60c282dba6300763f810e8a66e3860169  smart-commit-53.tar.gz\n+ee7bf45d9b1700a6f5f291bc4ad5235ca610b379681b450603796a27ae767a0f  smart-commit-54.tar.gz\n+d29a1ad260dbd1046be5d454590b78ec9315c7b1447b3b87ad53be50a460382a  smart-commit-55.tar.gz\n+bb379a71dd93ff5bec85d5ee015c604f875a5dc57dc4255222bc80d1c865436e  smart-commit-56.tar.gz\n+b257842dadd2f4379f90f8a170095ae730fbc8d8de64fc65924bf97b8b5ec102  smart-commit-57.tar.gz\n+07eba76873ff743a61c3bf46b47d0c61c5cf92e83061c884498b6ae28d386221  smart-commit-58.tar.gz\n+2f80fc36701f238ea1490b29e1924a6de64e7595e652c91b5eb9ea559400c4cd  smart-commit-59.tar.gz\n+cd97aa7121e7040ef944f4fb15247e7aa64063f269937c95df0165993ed691b2  smart-commit-60.tar.gz\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "chore: add the checksums of the archives",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, refactor.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs: list the mirrors\nfeat: publish the 1.0 archives\n",
+          "user": "Files changed:\nSHA256SUMS | new, +60 -0\n\nDiff:\n--- SHA256SUMS\n@@ -0,0 +1,60 @@\n+d9baf236e10ad5bd745fb8001fe97479eb06de761f4a692da31410c2365fe910  smart-commit-1.tar.gz\n+f12584295f96d08290f2fda7368dd6a67b958b5893918604d3327744f37286f3  smart-commit-2.tar.gz\n+780a315ab1a8b28868019df4b8f93814cf5c42c2f59a950e02605a2f7c70a60c  smart-commit-3.tar.gz\n+a1ce7c66a3c7207cc66a4be748523bbd3673fe0a4fea5121da93f44ed316381a  smart-commit-4.tar.gz\n+6c57a613be859bdb60ab8c628d987d7fe44046b251dc58a745eadade77dbf08d  smart-commit-5.tar.gz\n+8e217e76d8afebb3834d20f1a99146376bf282256148fdb0f3d431324431c0db  smart-commit-6.tar.gz\n+1f53a4c69d3ac811c99c162ca62c369fd8b1bb6f922fb16827f8c76118d8a091  smart-commit-7.tar.gz\n+e70bdfb4b7b4ff90a19ae85b66fc9cdcdc3865f029eb60657a18abda67d9091f  smart-commit-8.tar.gz\n+d68d38de712c4e5c7a90e02cc0256a421a21c2cb8c5a498f9eb55992d43b6540  smart-commit-9.tar.gz\n+23da0ab56240f0311284ddf8d35187ae9c4ceff0a4f133c2220ce5840ee54f7d  smart-commit-10.tar.gz\n+d1f06e405277d13f7471467efef7bd8e85e24c03c357ae8b7a5aacfcaade518e  smart-commit-11.tar.gz\n[... 49 more lines]\n\n(1 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "chore: add the checksums of the archives",
+        "rejected": null
+      }
+    ]
+  }
+}
