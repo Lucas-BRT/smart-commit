@@ -22,7 +22,8 @@ use self::keys::known_keys;
 pub use cli::{set_aside_invalid, set_in_file, template, unset_in_file};
 pub use keys::{KEYS, Key, Kind, Scope, key, parse};
 pub use store::{
-    BackendKind, DeviceSetting, FastLoad, Resolved, Settings, Sources, parse_file, read_file,
+    AskType, BackendKind, DeviceSetting, FastLoad, Resolved, Settings, Sources, parse_file,
+    read_file,
 };
 
 /// The per-repository file, at the root of the work tree.
