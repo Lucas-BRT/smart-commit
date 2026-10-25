@@ -12,7 +12,7 @@
 #                     (the driver itself is never changed)
 #   NVIDIA (nouveau)  Mesa NVK (vulkan; Turing / GTX 16xx or newer)
 #
-# llama.cpp itself, which runs the vulkan device, is setup-llamacpp.sh's job;
+# llama.cpp itself, which runs the vulkan device, is `smart-commit setup`'s job;
 # OpenVINO, which intel-gpu also needs, is setup-npu.sh --openvino-only's.
 #
 #   scripts/setup-gpu.sh [--dry-run] [--yes]
@@ -37,8 +37,7 @@ INTEL_DEBS=(
     "i/intel-gmmlib/libigdgmm12_22.10.0-1~24.04~ppa1_amd64.deb 63fe9e124c3394193226c6cb8398dcabdc9306b5a10f63668118f7c799f5d792"
 )
 
-# shellcheck source=/dev/null  # hardware.sh, next to this script
-. "$(dirname "$0")/hardware.sh"
+SYSFS=${SMART_COMMIT_SYSFS:-/sys}
 DRY_RUN=0
 ASSUME_YES=0
 for arg in "$@"; do
@@ -114,7 +113,22 @@ installed() {
 apt_packages=()
 need_apt() { apt_packages+=("$@"); }
 
-# --- detection (list_gpus comes from hardware.sh) ------------------------------
+# --- detection -----------------------------------------------------------------
+
+# list_gpus: "vendor driver slot" for every display controller (PCI class
+# 0x03), from sysfs, in slot order.
+list_gpus() {
+    local dev driver
+    for dev in "$SYSFS"/bus/pci/devices/*; do
+        [ -r "$dev/class" ] || continue
+        case $(cat "$dev/class") in 0x03*) ;; *) continue ;; esac
+        driver=none
+        if [ -L "$dev/driver" ]; then
+            driver=$(basename "$(readlink "$dev/driver")")
+        fi
+        echo "$(cat "$dev/vendor") $driver $(basename "$dev")"
+    done
+}
 
 nvidia_driver_version() {
     cat "$SYSFS/module/nvidia/version" 2>/dev/null || true
@@ -248,5 +262,5 @@ fi
 
 echo
 echo "Done. If you were added to the render group, log out and back in."
-echo "The vulkan device also needs llama.cpp (setup-llamacpp.sh); then"
+echo "The vulkan device also needs llama.cpp (\`smart-commit setup\` installs it); then"
 echo "\`smart-commit bench\` measures every device and picks the fastest."

@@ -45,6 +45,13 @@ The binary (`src/main.rs` and the `src/cli/` modules: `args`, `suggest`,
 arguments and wires these together; `update` and `uninstall` run the `install.sh` the release
 installed in `share/smart-commit/scripts`.
 
+Tools for working on smart-commit are crates of their own in the workspace,
+outside `default-members`: what they need never reaches the binary users
+install, and the release build does not compile them. `tools/` (the binary
+`sc-tools`) times llama-server on prompt files and writes the release notes;
+`training/tools/` (`sc-training`) builds, selects and scores the training data
+and the commit scenarios, and is the only place that reads parquet.
+
 Errors: the library returns typed errors (`thiserror`: `GitError`,
 `ConfigError`, `BackendError`, `DeviceError`, ...); the binary collects them
 in `anyhow::Result`, adding context (`with_context`) where the cause alone

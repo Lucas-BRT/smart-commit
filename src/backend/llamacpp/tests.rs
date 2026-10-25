@@ -287,6 +287,25 @@ fn a_server_that_dies_is_reported_with_its_output() {
 }
 
 #[test]
+fn extra_flags_reach_the_server_after_ours() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let mut options = options(dir.path());
+    std::fs::write(&options.model, "gguf").unwrap();
+    let server = dir.path().join("fake-server");
+    std::fs::write(&server, "#!/bin/sh\necho \"flags: $*\" >&2\nexit 3\n").unwrap();
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&server, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    options.server = server;
+    let extra = ["-b".to_owned(), "1024".to_owned()];
+    let err = LlamaCppBackend::start_with(&options, None, &extra)
+        .unwrap_err()
+        .to_string();
+    assert!(err.contains("--offline -b 1024"), "{err}");
+}
+
+#[test]
 fn description_names_build_device_and_model() {
     let dir = tempfile::TempDir::new().unwrap();
     let options = options(dir.path());
@@ -300,12 +319,6 @@ fn description_names_build_device_and_model() {
     )
     .unwrap();
     assert!(describe(&options).contains("sha256=cc324af070c2ecbf"));
-}
-
-#[test]
-fn setup_script_installs_what_the_code_expects() {
-    let script = include_str!("../../../scripts/setup-llamacpp.sh");
-    assert!(script.contains(&format!("\nLLAMA_BUILD={LLAMA_CPP_BUILD}\n")));
 }
 
 #[test]

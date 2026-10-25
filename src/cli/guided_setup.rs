@@ -1,14 +1,15 @@
 //! `smart-commit setup`: in a terminal, a full-screen setup (the hardware,
 //! the plan, each step's output, the benchmark); with `--yes` or without a
-//! terminal, `scripts/setup.sh`.
+//! terminal, the same plan as text.
 
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::time::Duration;
 
-use anyhow::{Context as _, Result, bail};
+use anyhow::{Context as _, Result};
+use smart_commit::backend::llamacpp;
 use smart_commit::config;
 use smart_commit::hardware::{Hardware, Npu};
 use smart_commit::models::{self, Model};
@@ -20,29 +21,193 @@ use smart_commit::tui::{self, Screen};
 use super::model::{self, Chosen};
 use super::settings::{env, hardware_sources, resolve};
 
-pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {
+pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool, llamacpp_only: bool) -> Result<()> {
     set_aside_invalid_settings()?;
+    if llamacpp_only {
+        let server = install_llamacpp(&mut |_| {})?;
+        println!("llama.cpp: {}", server.display());
+        return Ok(());
+    }
     let exe = std::env::current_exe()?.canonicalize()?;
     let scripts = scripts_dir(&exe)?;
     if !yes && tui::interactive() {
         return interactive(&scripts, no_drivers, no_bench);
     }
-    let flags = [
-        (yes, "--yes"),
-        (no_drivers, "--no-drivers"),
-        (no_bench, "--no-bench"),
-    ];
-    let script = scripts.join("setup.sh");
-    let status = Command::new(&script)
-        .args(flags.iter().filter(|(on, _)| *on).map(|(_, flag)| flag))
-        // So the setup benchmarks this very binary.
-        .env("SMART_COMMIT_BIN", &exe)
-        .status()
-        .with_context(|| format!("cannot run {}", script.display()))?;
-    if !status.success() {
-        bail!("setup failed ({status})");
+    plain(&scripts, yes, no_drivers, no_bench)
+}
+
+/// The llama.cpp build this release pins, in the data directory (from
+/// `SMART_COMMIT_LLAMACPP_URL`, for tests; the pinned SHA-256 still applies).
+fn install_llamacpp(progress: &mut dyn FnMut(u64)) -> Result<PathBuf> {
+    let server = paths::default_llama_server(env).context("HOME is not set")?;
+    let dir = server
+        .parent()
+        .and_then(Path::parent)
+        .context("the llama.cpp directory has no parent")?;
+    let url = env("SMART_COMMIT_LLAMACPP_URL").unwrap_or_else(llamacpp::install::archive_url);
+    Ok(llamacpp::install::install(
+        dir,
+        &url,
+        llamacpp::install::ARCHIVE_SHA256,
+        progress,
+    )?)
+}
+
+/// `setup` without the full screen, for `--yes` and for output that is not a
+/// terminal: the hardware, the plan, then each step that is not done yet,
+/// asking before what needs sudo.
+fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {
+    let hw = Hardware::detect(&hardware_sources());
+    let model = resolve(None, Vec::new())?.settings().model;
+    let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;
+    let steps = setup::plan(&hw, &facts);
+    println!("\n==> Hardware\n{}", hw.inventory().trim_end());
+    println!("\n==> Plan");
+    for step in &steps {
+        let state = if step.installed {
+            " (already set up)"
+        } else {
+            ""
+        };
+        let sudo = if step.sudo { " (sudo)" } else { "" };
+        println!("  {}{sudo}: {}{state}", step.title, step.detail);
     }
+    if let Some(why) = setup::not_needed(&hw) {
+        println!("  {why}");
+    }
+    for step in steps.iter().filter(|s| !s.installed) {
+        match step.kind {
+            StepKind::LlamaCpp => {
+                println!("\n==> llama.cpp");
+                match install_llamacpp(&mut |_| {}) {
+                    Ok(server) => {
+                        println!("  {}", server.display());
+                        let devices = llamacpp::install::list_devices(&server);
+                        if !devices.is_empty() {
+                            println!("  devices seen by llama.cpp (besides the CPU):\n{devices}");
+                        }
+                    }
+                    Err(err) => println!(
+                        "  Could not install llama.cpp ({err:#}); run `smart-commit setup` again."
+                    ),
+                }
+            }
+            StepKind::Model => {
+                println!("\n==> Model {}", model.id);
+                match plain_model(model) {
+                    Ok(file) => {
+                        println!("  checked against the pinned SHA-256: {}", file.display())
+                    }
+                    Err(err) => {
+                        println!(
+                            "  Could not install {} ({err:#}); run `smart-commit setup` again.",
+                            model.id
+                        );
+                    }
+                }
+            }
+            StepKind::GpuDrivers => {
+                println!("\n==> GPU drivers");
+                if ask("Set up the GPUs as planned above (may use sudo)?", yes) {
+                    run_script(
+                        &scripts.join("setup-gpu.sh"),
+                        if yes { &["--yes"] } else { &[] },
+                    );
+                }
+            }
+            StepKind::NpuStack => {
+                if ask(
+                    "Install the Intel NPU driver and OpenVINO (uses sudo)?",
+                    yes,
+                ) {
+                    run_script(&scripts.join("setup-npu.sh"), &[]);
+                }
+            }
+            StepKind::Openvino => {
+                if ask("Install OpenVINO, for the Intel GPU (uses sudo)?", yes) {
+                    run_script(&scripts.join("setup-npu.sh"), &["--openvino-only"]);
+                }
+            }
+            StepKind::ExportModel => {
+                println!("\n==> OpenVINO model");
+                if ask(
+                    "Export the model for OpenVINO here (downloads it from Hugging Face; \
+                     about 10 GB of disk while it runs, a few minutes)?",
+                    yes,
+                ) && !run_script(&scripts.join("export-model.sh"), &[])
+                {
+                    println!("  Could not export the model; run `smart-commit setup` again.");
+                }
+            }
+            StepKind::Bench if render_group_pending() => {
+                println!("\n==> Benchmark postponed");
+                println!(
+                    "  You were just added to the render group, which only applies after\n  \
+                     logging out and back in. Then run: smart-commit bench"
+                );
+            }
+            StepKind::Bench => {
+                println!("\n==> Benchmark");
+                if let Err(err) = super::benchmark::run_bench(false) {
+                    println!("  Nothing could run the model yet ({err:#}); see above.");
+                }
+            }
+        }
+    }
+    for step in steps
+        .iter()
+        .filter(|s| s.installed && s.kind == StepKind::NpuStack)
+    {
+        println!("\n==> {}: already set up", step.title);
+    }
+    println!("\n==> Done");
+    println!("  Generate a message:   git add -p && smart-commit");
+    println!("  Commit with it:       smart-commit --commit");
+    println!("  On every git commit:  smart-commit hook install");
+    println!(
+        "  Change the device:    smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu|auto>"
+    );
     Ok(())
+}
+
+/// Downloads `model` into the models directory, as `setup` does for the
+/// one in use.
+fn plain_model(model: &'static Model) -> Result<PathBuf> {
+    let dir = paths::default_models_dir(env).context("HOME is not set")?;
+    let base = env("SMART_COMMIT_HF_BASE").unwrap_or_else(|| models::HUGGING_FACE.to_owned());
+    println!(
+        "  {} ({}, {}) from huggingface.co/{}",
+        model.name,
+        models::size(model.gguf.size),
+        model.license,
+        model.gguf.repo
+    );
+    Ok(models::install_gguf(model, &dir, &base, |_| {})?)
+}
+
+/// Runs a setup script with the terminal, and whether it succeeded.
+fn run_script(script: &Path, args: &[&str]) -> bool {
+    Command::new(script)
+        .args(args)
+        .status()
+        .map_err(|err| println!("  cannot run {}: {err}", script.display()))
+        .is_ok_and(|status| status.success())
+}
+
+/// `question`: yes with `--yes`; no without a terminal to ask on.
+fn ask(question: &str, yes: bool) -> bool {
+    if yes {
+        return true;
+    }
+    if !std::io::stdin().is_terminal() {
+        println!("{question} [skipped: no terminal; run `smart-commit setup` again to do it]");
+        return false;
+    }
+    print!("{question} [y/N] ");
+    let _ = std::io::stdout().flush();
+    let mut answer = String::new();
+    std::io::stdin().lock().read_line(&mut answer).is_ok()
+        && matches!(answer.trim(), "y" | "Y" | "yes" | "s" | "S" | "sim")
 }
 
 /// Setup is how a broken install gets fixed, so a global setting this
@@ -70,7 +235,7 @@ fn scripts_dir(exe: &Path) -> Result<PathBuf> {
         bin.join("../../scripts"),
     ]
     .into_iter()
-    .find(|p| p.join("setup.sh").is_file())
+    .find(|p| p.join("setup-gpu.sh").is_file())
     .context("the setup scripts are not next to the binary; reinstall smart-commit")
 }
 
@@ -94,15 +259,23 @@ fn facts(
     let gpu_plan = if hw.gpus.is_empty() {
         Vec::new()
     } else {
+        // What setup-gpu.sh would do, and what it warns about (a GPU with no
+        // kernel driver, say), which the plan should say too.
         Command::new(scripts.join("setup-gpu.sh"))
             .arg("--dry-run")
             .stdin(Stdio::null())
             .output()
             .map(|o| {
-                String::from_utf8_lossy(&o.stdout)
+                let steps = String::from_utf8_lossy(&o.stdout)
                     .lines()
                     .filter_map(|l| l.strip_prefix("==> ").map(str::to_owned))
-                    .collect()
+                    .collect::<Vec<_>>();
+                let warnings = String::from_utf8_lossy(&o.stderr)
+                    .lines()
+                    .filter(|l| l.starts_with("warning: "))
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>();
+                [steps, warnings].concat()
             })
             .unwrap_or_default()
     };
@@ -169,12 +342,7 @@ fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {
         view.set(kind, State::Running);
         screen.draw(|frame| view.render(frame))?;
         let result = match kind {
-            StepKind::LlamaCpp => piped(
-                &mut screen,
-                &mut view,
-                &scripts.join("setup-llamacpp.sh"),
-                &["--server-only"],
-            ),
+            StepKind::LlamaCpp => install_llamacpp_step(&mut screen, &mut view),
             StepKind::Model => install_model(&mut screen, &mut view, model),
             StepKind::GpuDrivers => {
                 with_sudo(&mut screen, &scripts.join("setup-gpu.sh"), &["--yes"])
@@ -329,6 +497,52 @@ fn with_sudo(screen: &mut Screen, script: &Path, args: &[&str]) -> Result<String
     } else {
         Err(status.to_string())
     }
+}
+
+/// Installs llama.cpp with a progress bar.
+fn install_llamacpp_step(screen: &mut Screen, view: &mut SetupView) -> Result<String, String> {
+    view.log(&format!(
+        "llama.cpp {} ({}) from github.com/ggml-org/llama.cpp",
+        llamacpp::LLAMA_CPP_BUILD,
+        models::size(llamacpp::install::ARCHIVE_SIZE)
+    ));
+    let (sender, progress) = mpsc::channel();
+    let worker = std::thread::spawn(move || {
+        install_llamacpp(&mut |bytes| {
+            let _ = sender.send(bytes);
+        })
+        .map_err(|e| format!("{e:#}"))
+    });
+    while !worker.is_finished() {
+        while let Ok(bytes) = progress.try_recv() {
+            view.progress(
+                format!(
+                    "llama.cpp: {} of {}",
+                    models::size(bytes),
+                    models::size(llamacpp::install::ARCHIVE_SIZE)
+                ),
+                bytes as f64 / llamacpp::install::ARCHIVE_SIZE as f64,
+            );
+        }
+        screen
+            .draw(|frame| view.render(frame))
+            .map_err(|e| format!("{e:#}"))?;
+        if let Some(key) = screen
+            .key_within(Duration::from_millis(150))
+            .map_err(|e| format!("{e:#}"))?
+        {
+            view.on_key(key);
+        }
+    }
+    let server = worker
+        .join()
+        .map_err(|_| "the download crashed".to_owned())??;
+    view.log(&format!("installed: {}", server.display()));
+    let devices = llamacpp::install::list_devices(&server);
+    for line in devices.lines() {
+        view.log(line);
+    }
+    Ok(String::new())
 }
 
 /// Downloads `model` with a progress bar, then makes it the one in use.

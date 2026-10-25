@@ -883,7 +883,7 @@ fn offline_setup(extra: &[(&str, &str)]) -> Output {
             "SMART_COMMIT_LLAMACPP_URL",
             "file:///nonexistent/llama.tar.gz",
         ),
-        ("SMART_COMMIT_GGUF_URL", "file:///nonexistent/model.gguf"),
+        ("SMART_COMMIT_HF_BASE", "file:///nonexistent/hf"),
         ("SMART_COMMIT_RELEASE_BASE", "file:///nonexistent/releases"),
         ("XDG_DATA_HOME", data.path().to_str().unwrap()),
     ];
@@ -898,7 +898,7 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {
     let out = stdout(&output);
     assert!(out.contains("==> Hardware\n  CPU  Test CPU"), "{out}");
     assert!(out.contains("  GPU  none\n"), "{out}");
-    assert!(out.contains("not needed: OpenVINO"), "{out}");
+    assert!(out.contains("Not needed: OpenVINO"), "{out}");
     assert!(out.contains("Could not install llama.cpp"), "{out}");
     assert!(!out.contains("OpenVINO model"), "{out}");
     assert!(out.contains("smart-commit hook install"), "{out}");

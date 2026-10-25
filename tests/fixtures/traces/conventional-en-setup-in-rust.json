@@ -1,0 +1,511 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 1dd70cd",
+      "refactor(training): remove the Python data tools",
+      "feat(training): select, score and build the scenarios with sc-training",
+      "feat(training): build the training inputs with sc-training build-inputs",
+      "chore(deps): add the training tools crate and its dependencies",
+      "refactor: write the release notes in sc-tools instead of a shell script",
+      "refactor: move the llama-server timing out of the binary into sc-tools"
+    ],
+    "history_files": [
+      [
+        ".github/workflows/ci.yml",
+        "AGENTS.md",
+        "docs/configuration.md",
+        "docs/devices.md",
+        "docs/reproducibility.md",
+        "docs/usage.md",
+        "install.sh",
+        "scripts/hardware.sh",
+        "scripts/package.sh",
+        "scripts/setup-gpu.sh",
+        "scripts/setup-llamacpp.sh",
+        "scripts/setup.sh",
+        "src/backend/llamacpp/mod.rs",
+        "src/backend/llamacpp/tests.rs",
+        "src/cli/guided_setup.rs",
+        "src/cli/mod.rs",
+        "src/cli/settings.rs",
+        "src/hardware/fake.rs",
+        "src/hardware/mod.rs",
+        "src/models/install.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": ".github/workflows/ci.yml",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "AGENTS.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/configuration.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/devices.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/reproducibility.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/usage.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "install.sh",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/hardware.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "scripts/package.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "scripts/setup-gpu.sh",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/setup-llamacpp.sh",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/setup.sh",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "src/backend/llamacpp/install.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/llamacpp/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/guided_setup.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/settings.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/hardware/fake.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/hardware/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/models/install.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/models/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/setup.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/cli.rs",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "tests/hardware_inventory.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/scripts/test-install-data.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/scripts/test-install.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/scripts/test-setup-gpu.sh",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "tests/scripts/test-setup-llamacpp.sh",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "tests/scripts/test-setup.sh",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tests/setup_cli.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/ci.yml",
+        "old_path": null,
+        "lines": [
+          0,
+          2
+        ],
+        "hunks": "@@ -36,4 +36,2 @@ jobs:\n       - run: tests/scripts/test-export-model.sh\n-      - run: tests/scripts/test-setup.sh\n-      - run: tests/scripts/test-setup-llamacpp.sh\n       - run: tests/scripts/test-install-data.sh\n"
+      },
+      {
+        "path": "AGENTS.md",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -39,3 +39,3 @@ for test in tests/scripts/test-*.sh; do \"$test\"; done   # test-install.sh needs\n | Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |\n-| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |\n+| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, `tests/setup_cli.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |\n | Trace fixtures | `tests/replay_fixtures.rs` |\n"
+      },
+      {
+        "path": "docs/configuration.md",
+        "old_path": null,
+        "lines": [
+          4,
+          4
+        ],
+        "hunks": "@@ -125,6 +125,6 @@ A few more exist for tests and scripts, not for configuring a machine:\n `SMART_COMMIT_SYSFS`, `SMART_COMMIT_CPUINFO` and `SMART_COMMIT_OPENVINO_DIR`\n-point the hardware inventory at a fake tree (`scripts/hardware.sh` reads them\n-too), `SMART_COMMIT_HF_BASE` replaces the Hugging Face URL models are\n-downloaded from, and `smart-commit setup` sets `SMART_COMMIT_BIN` for the\n-scripts it runs.\n+point the hardware inventory at a fake tree (`scripts/setup-gpu.sh` reads\n+`SMART_COMMIT_SYSFS` too), `SMART_COMMIT_HF_BASE` replaces the Hugging Face\n+URL models are downloaded from, and `SMART_COMMIT_LLAMACPP_URL` the one\n+llama.cpp is (the pinned SHA-256 is still required).\n \n"
+      },
+      {
+        "path": "docs/devices.md",
+        "old_path": null,
+        "lines": [
+          4,
+          5
+        ],
+        "hunks": "@@ -174,5 +174,6 @@ with an RTX 3050:\n OpenVINO, the NPU driver and Intel's GPU runtime are never installed on a\n-machine without an Intel NPU or GPU. The steps are scripts that can also run\n-on their own, from `~/.local/share/smart-commit/scripts/` (or `scripts/` in\n-a checkout):\n+machine without an Intel NPU or GPU. `smart-commit setup` installs llama.cpp\n+and the model itself; the steps that need the system are scripts, which can\n+also run on their own, from `~/.local/share/smart-commit/scripts/` (or\n+`scripts/` in a checkout):\n \n@@ -180,4 +181,2 @@ a checkout):\n |---|---|---|\n-| `hardware.sh` | prints the hardware list above, like `smart-commit hardware` (a test keeps both the same) | no |\n-| `setup-llamacpp.sh [--dry-run]` | llama.cpp and the GGUF model, both pinned by SHA-256 | no |\n | `setup-gpu.sh [--dry-run] [--yes]` | the system drivers each GPU needs (below) | only for system packages |\n"
+      },
+      {
+        "path": "docs/reproducibility.md",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -108,3 +108,3 @@ sources):\n | Intel GPU compute runtime | intel-opencl-icd 26.27.39122.14, IGC 2.38.5, gmmlib 22.10.0, same snapshot |\n-| llama.cpp | b11381, Vulkan build (it runs the `cpu` device too), in `setup-llamacpp.sh` |\n+| llama.cpp | b11381, Vulkan build (it runs the `cpu` device too), in `src/backend/llamacpp/install.rs` |\n | Qwen2.5-Coder-1.5B-Instruct | revision `2e1fd397` (OpenVINO export), `f86cb2c1` (GGUF) |\n"
+      },
+      {
+        "path": "docs/usage.md",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -27,3 +27,4 @@ outside the full screen, where `sudo` can ask for the password. Steps\n already done are listed but off. With `--yes`, or without a terminal, the\n-same plan runs as text (`scripts/setup.sh`).\n+same plan runs as text, asking before each step that uses `sudo` (with\n+`--yes`, without asking; without a terminal, those steps are skipped).\n \n"
+      },
+      {
+        "path": "install.sh",
+        "old_path": null,
+        "lines": [
+          9,
+          8
+        ],
+        "hunks": "@@ -205,6 +205,6 @@ if [ \"$UPDATE\" = 1 ]; then\n     [ -n \"$old\" ] && say \"updated from $old\"\n-    # The new binary looks for the llama.cpp build its release pins; the\n-    # script is a no-op when that build is already there.\n+    # The new binary looks for the llama.cpp build its release pins; it\n+    # does nothing when that build is already there.\n     if [ -d \"${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit/llama.cpp\" ]; then\n-        \"$PREFIX/share/smart-commit/scripts/setup-llamacpp.sh\" --server-only\n+        \"$PREFIX/bin/smart-commit\" setup --llamacpp-only\n     fi\n@@ -218,8 +218,9 @@ esac\n if [ \"$SETUP\" = 1 ]; then\n-    # With a terminal, `smart-commit setup` opens the full-screen setup; with\n-    # curl | bash, stdin is the pipe, so it is given the terminal instead.\n-    if [ \"${#setup_args[@]}\" -eq 0 ] && { : </dev/tty; } 2>/dev/null; then\n-        \"$PREFIX/bin/smart-commit\" setup </dev/tty\n+    # With a terminal, `smart-commit setup` opens the full-screen setup (or\n+    # asks its questions, with --yes it asks none); with curl | bash, stdin is\n+    # the pipe, so it is given the terminal instead.\n+    if { : </dev/tty; } 2>/dev/null; then\n+        \"$PREFIX/bin/smart-commit\" setup \"${setup_args[@]}\" </dev/tty\n     else\n-        \"$PREFIX/share/smart-commit/scripts/setup.sh\" \"${setup_args[@]}\"\n+        \"$PREFIX/bin/smart-commit\" setup \"${setup_args[@]}\"\n     fi\n"
+      },
+      {
+        "path": "scripts/hardware.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          147
+        ],
+        "hunks": "@@ -1,147 +0,0 @@\n-#!/usr/bin/env bash\n-# The hardware of this machine, as smart-commit sees it: the CPU, every GPU\n-# and NPU, their vendor and kernel driver, and which smart-commit devices\n-# each one gives.\n-#\n-#   scripts/hardware.sh            prints the inventory\n-#   . scripts/hardware.sh          defines the functions below, for the\n-#                                  other setup scripts\n-#\n-# Everything comes from sysfs and /proc/cpuinfo; nothing needs root.\n-# SMART_COMMIT_SYSFS overrides /sys (lspci, which reads the real machine, is\n-# then not used), SMART_COMMIT_CPUINFO /proc/cpuinfo and\n-# SMART_COMMIT_OPENVINO_DIR /opt/intel/openvino, for tests.\n-\n-SYSFS=${SMART_COMMIT_SYSFS:-/sys}\n-CPUINFO=${SMART_COMMIT_CPUINFO:-/proc/cpuinfo}\n-OPENVINO_DIR=${SMART_COMMIT_OPENVINO_DIR:-/opt/intel/openvino}\n-\n-# cpu_field NAME: the first value of NAME in /proc/cpuinfo.\n-cpu_field() {\n-    sed -n \"s/^$1[[:space:]]*: //p\" \"$CPUINFO\" 2>/dev/null | head -1\n-}\n-\n-# cpu_vendor: intel, amd or other.\n-cpu_vendor() {\n-    case $(cpu_field vendor_id) in\n-        GenuineIntel) echo intel ;;\n-        AuthenticAMD) echo amd ;;\n-        *) echo other ;;\n-    esac\n-}\n-\n-cpu_model() {\n-    local model\n-    model=$(cpu_field 'model name')\n-    echo \"${model:-unknown CPU}\"\n-}\n-\n-# pci_devices CLASS_PREFIX: prints \"vendor device driver slot\" for each PCI\n-# device whose class starts with CLASS_PREFIX (0x03 for display controllers).\n-pci_devices() {\n-    local dev class driver\n-    for dev in \"$SYSFS\"/bus/pci/devices/*; do\n-        [ -r \"$dev/class\" ] || continue\n-        class=$(cat \"$dev/class\")\n-        case $class in \"$1\"*) ;; *) continue ;; esac\n-        driver=none\n-        if [ -L \"$dev/driver\" ]; then\n-            driver=$(basename \"$(readlink \"$dev/driver\")\")\n-        fi\n-        echo \"$(cat \"$dev/vendor\") $(cat \"$dev/device\" 2>/dev/null || echo 0x0000) $driver $(basename \"$dev\")\"\n-    done\n-}\n-\n-# list_gpus: \"vendor driver slot\" for every display controller.\n-list_gpus() {\n-    pci_devices 0x03 | while read -r vendor _ driver slot; do\n-        echo \"$vendor $driver $slot\"\n-    done\n-}\n-\n-gpu_count() { list_gpus | wc -l; }\n-\n-has_intel_gpu() { list_gpus | grep -q '^0x8086 '; }\n-\n-# has_intel_npu: Intel's NPUs are processing accelerators (class 0x1200);\n-# the intel_vpu module is the fallback for kernels that list them otherwise.\n-has_intel_npu() {\n-    pci_devices 0x1200 | grep -q '^0x8086 ' || [ -d \"$SYSFS/module/intel_vpu\" ]\n-}\n-\n-# has_amd_npu: Ryzen AI (XDNA) NPUs, which smart-commit does not use.\n-has_amd_npu() {\n-    pci_devices 0x11 | grep -qE '^0x1022 (0x1502|0x17f0) '\n-}\n-\n-# needs_openvino: only Intel's NPU and GPUs need OpenVINO.\n-needs_openvino() { has_intel_npu || has_intel_gpu; }\n-\n-openvino_installed() { [ -e \"$OPENVINO_DIR/runtime/lib/intel64/libopenvino_genai_c.so\" ]; }\n-\n-vendor_name() {\n-    case $1 in\n-        0x8086) echo Intel ;;\n-        0x1002 | 0x1022) echo AMD ;;\n-        0x10de) echo NVIDIA ;;\n-        *) echo \"vendor $1\" ;;\n-    esac\n-}\n-\n-# pci_name SLOT VENDOR DEVICE: the marketing name from lspci when this is the\n-# real machine, else the PCI IDs.\n-pci_name() {\n-    local name=\n-    if [ \"$SYSFS\" = /sys ] && command -v lspci >/dev/null; then\n-        name=$(lspci -vmm -s \"$1\" 2>/dev/null | sed -n 's/^Device:[[:space:]]*//p' | head -1)\n-    fi\n-    echo \"${name:-$(vendor_name \"$2\") device ${3#0x}}\"\n-}\n-\n-# gpu_devices VENDOR DRIVER: the smart-commit devices a GPU gives.\n-gpu_devices() {\n-    case $1:$2 in\n-        0x8086:i915 | 0x8086:xe) echo \"intel-gpu (OpenVINO), vulkan (Mesa ANV)\" ;;\n-        0x1002:amdgpu) echo \"vulkan (Mesa RADV)\" ;;\n-        0x10de:nvidia) echo \"vulkan (the NVIDIA driver's Vulkan ICD)\" ;;\n-        0x10de:nouveau) echo \"vulkan (Mesa NVK, Turing or newer)\" ;;\n-        *:none) echo \"none until a kernel driver is bound\" ;;\n-        0x1002:radeon) echo \"none: the old radeon driver has no Vulkan; amdgpu does\" ;;\n-        *) echo \"none: not supported\" ;;\n-    esac\n-}\n-\n-# print_inventory: what this machine has, and what smart-commit can use.\n-print_inventory() {\n-    local vendor device driver slot found=0 version\n-    echo \"  CPU  $(cpu_model) ($(uname -m))\"\n-    case $(uname -m) in\n-        x86_64) echo \"       -> cpu (llama.cpp); openvino-cpu where OpenVINO is installed\" ;;\n-        *) echo \"       -> none: smart-commit runs on x86_64 only\" ;;\n-    esac\n-    while read -r vendor device driver slot; do\n-        [ -n \"$vendor\" ] || continue\n-        found=1\n-        version=\n-        if [ \"$driver\" = nvidia ]; then\n-            version=\" $(cat \"$SYSFS/module/nvidia/version\" 2>/dev/null || echo '(unknown version)')\"\n-        fi\n-        echo \"  GPU  $(pci_name \"$slot\" \"$vendor\" \"$device\") [$slot], driver $driver$version\"\n-        echo \"       -> $(gpu_devices \"$vendor\" \"$driver\")\"\n-    done < <(pci_devices 0x03)\n-    [ \"$found\" = 1 ] || echo \"  GPU  none\"\n-    if has_intel_npu; then\n-        echo \"  NPU  Intel NPU\"\n-        echo \"       -> npu (OpenVINO)\"\n-    elif has_amd_npu; then\n-        echo \"  NPU  AMD Ryzen AI (XDNA)\"\n-        echo \"       -> none: not supported\"\n-    else\n-        echo \"  NPU  none\"\n-    fi\n-}\n-\n-if [ \"${BASH_SOURCE[0]}\" = \"$0\" ]; then\n-    set -euo pipefail\n-    print_inventory\n-fi\n"
+      },
+      {
+        "path": "scripts/package.sh",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -56,4 +56,3 @@ install -m 755 \"$binary/smart-commit\" \"$stage/bin/\"\n rm -rf \"$binary\"\n-for script in setup.sh hardware.sh setup-llamacpp.sh setup-npu.sh setup-gpu.sh check-npu.sh \\\n-    export-model.sh; do\n+for script in setup-npu.sh setup-gpu.sh check-npu.sh export-model.sh; do\n     install -m 755 \"scripts/$script\" \"$stage/share/smart-commit/scripts/\"\n"
+      },
+      {
+        "path": "scripts/setup-gpu.sh",
+        "old_path": null,
+        "lines": [
+          19,
+          5
+        ],
+        "hunks": "@@ -14,3 +14,3 @@\n #\n-# llama.cpp itself, which runs the vulkan device, is setup-llamacpp.sh's job;\n+# llama.cpp itself, which runs the vulkan device, is `smart-commit setup`'s job;\n # OpenVINO, which intel-gpu also needs, is setup-npu.sh --openvino-only's.\n@@ -39,4 +39,3 @@ INTEL_DEBS=(\n \n-# shellcheck source=/dev/null  # hardware.sh, next to this script\n-. \"$(dirname \"$0\")/hardware.sh\"\n+SYSFS=${SMART_COMMIT_SYSFS:-/sys}\n DRY_RUN=0\n@@ -116,3 +115,18 @@ need_apt() { apt_packages+=(\"$@\"); }\n \n-# --- detection (list_gpus comes from hardware.sh) ------------------------------\n+# --- detection -----------------------------------------------------------------\n+\n+# list_gpus: \"vendor driver slot\" for every display controller (PCI class\n+# 0x03), from sysfs, in slot order.\n+list_gpus() {\n+    local dev driver\n+    for dev in \"$SYSFS\"/bus/pci/devices/*; do\n+        [ -r \"$dev/class\" ] || continue\n+        case $(cat \"$dev/class\") in 0x03*) ;; *) continue ;; esac\n+        driver=none\n+        if [ -L \"$dev/driver\" ]; then\n+            driver=$(basename \"$(readlink \"$dev/driver\")\")\n+        fi\n+        echo \"$(cat \"$dev/vendor\") $driver $(basename \"$dev\")\"\n+    done\n+}\n \n@@ -250,3 +264,3 @@ echo\n echo \"Done. If you were added to the render group, log out and back in.\"\n-echo \"The vulkan device also needs llama.cpp (setup-llamacpp.sh); then\"\n+echo \"The vulkan device also needs llama.cpp (\\`smart-commit setup\\` installs it); then\"\n echo \"\\`smart-commit bench\\` measures every device and picks the fastest.\"\n"
+      },
+      {
+        "path": "scripts/setup-llamacpp.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          95
+        ],
+        "hunks": "@@ -1,95 +0,0 @@\n-#!/usr/bin/env bash\n-# Installs llama.cpp and its model, which run the `cpu` device on any x86_64\n-# machine (Intel or AMD) and the `vulkan` device on any GPU with a Vulkan\n-# driver. Nothing here needs sudo:\n-#\n-#   llama.cpp b11381 (the Vulkan build; it also has the CPU code for every\n-#   x86_64 generation, picked at run time) in $XDG_DATA_HOME/smart-commit/llama.cpp\n-#   the GGUF model in $XDG_DATA_HOME/smart-commit/models\n-#\n-# Every download is checked against a pinned SHA-256.\n-#\n-#   scripts/setup-llamacpp.sh [--dry-run] [--server-only]\n-#\n-#   --dry-run      print what would be done, change nothing\n-#   --server-only  only llama.cpp, not the model (`smart-commit model use`\n-#                  downloads the one chosen)\n-#\n-# SMART_COMMIT_LLAMACPP_URL and SMART_COMMIT_GGUF_URL replace the download\n-# URLs, for tests; the pinned SHA-256 is still required.\n-set -euo pipefail\n-\n-LLAMA_BUILD=b11381\n-LLAMA_URL=${SMART_COMMIT_LLAMACPP_URL:-https://github.com/ggml-org/llama.cpp/releases/download/$LLAMA_BUILD/llama-$LLAMA_BUILD-bin-ubuntu-vulkan-x64.tar.gz}\n-LLAMA_SHA256=6f93bf4138e9ad6a380ff605be1fd5108a66ec1977218eb74613f90634e18c64\n-\n-GGUF_NAME=qwen2.5-coder-1.5b-instruct-q4_k_m.gguf\n-GGUF_URL=${SMART_COMMIT_GGUF_URL:-https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/f86cb2c1fa58255f8052cc32aeede1b7482d4361/$GGUF_NAME}\n-GGUF_SHA256=cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046\n-\n-DATA=${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit\n-DRY_RUN=0\n-MODEL=1\n-for arg in \"$@\"; do\n-    case $arg in\n-        --dry-run) DRY_RUN=1 ;;\n-        --server-only) MODEL=0 ;;\n-        -h | --help)\n-            sed -n '2,/^set -euo/p' \"$0\" | sed '$d; s/^# \\{0,1\\}//'\n-            exit 0\n-            ;;\n-        *)\n-            echo \"unknown option: $arg\" >&2\n-            exit 2\n-            ;;\n-    esac\n-done\n-\n-say() { echo \"==> $*\"; }\n-\n-# run CMD...: runs it, or prints it with --dry-run.\n-run() {\n-    if [ \"$DRY_RUN\" = 1 ]; then\n-        echo \"would run: $*\"\n-    else\n-        \"$@\"\n-    fi\n-}\n-\n-# fetch URL SHA256 DEST: downloads and refuses another checksum.\n-fetch() {\n-    if [ \"$DRY_RUN\" = 1 ]; then\n-        echo \"would download: $1 -> $3 (sha256 $2)\"\n-        return\n-    fi\n-    mkdir -p \"$(dirname \"$3\")\"\n-    curl -fL --retry 3 -o \"$3.partial\" \"$1\"\n-    echo \"$2  $3.partial\" | sha256sum --check --quiet -\n-    mv \"$3.partial\" \"$3\"\n-}\n-\n-say \"installing llama.cpp $LLAMA_BUILD in $DATA/llama.cpp\"\n-if [ -x \"$DATA/llama.cpp/llama-$LLAMA_BUILD/llama-server\" ]; then\n-    echo \"    already installed\"\n-else\n-    archive=$DATA/llama.cpp/llama-$LLAMA_BUILD.tar.gz\n-    fetch \"$LLAMA_URL\" \"$LLAMA_SHA256\" \"$archive\"\n-    run tar -xzf \"$archive\" -C \"$DATA/llama.cpp\"\n-    run rm -f \"$archive\"\n-fi\n-\n-if [ \"$MODEL\" = 1 ]; then\n-    say \"fetching the GGUF model in $DATA/models\"\n-    model=$DATA/models/$GGUF_NAME\n-    if [ -f \"$model\" ] && echo \"$GGUF_SHA256  $model\" | sha256sum --check --quiet - 2>/dev/null; then\n-        echo \"    already there\"\n-    else\n-        fetch \"$GGUF_URL\" \"$GGUF_SHA256\" \"$model\"\n-    fi\n-    [ \"$DRY_RUN\" = 1 ] || echo \"$GGUF_SHA256  $GGUF_NAME\" >\"$model.sha256\"\n-fi\n-\n-if [ \"$DRY_RUN\" = 0 ]; then\n-    say \"devices seen by llama.cpp (besides the CPU):\"\n-    \"$DATA/llama.cpp/llama-$LLAMA_BUILD/llama-server\" --list-devices 2>&1 | sed -n '/Available devices/,$p' || true\n-fi\n"
+      },
+      {
+        "path": "scripts/setup.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          147
+        ],
+        "hunks": "@@ -1,147 +0,0 @@\n-#!/usr/bin/env bash\n-# Guided setup, run by install.sh and `smart-commit setup`. It lists the\n-# hardware of this machine first (CPU, GPUs, NPU, with vendor and driver),\n-# then plans what that hardware needs and only that, asks before each step\n-# that uses sudo, and benchmarks the devices so `model.device = auto` uses\n-# the fastest one:\n-#\n-#   always              llama.cpp + the GGUF model, no sudo: the cpu device\n-#                       (any x86_64) and the vulkan device (any GPU)\n-#   per GPU             its Vulkan driver (setup-gpu.sh); Intel GPUs also\n-#                       Intel's compute runtime, for intel-gpu\n-#   Intel NPU           the NPU driver and Level Zero (setup-npu.sh)\n-#   Intel NPU or GPU    OpenVINO GenAI, and the model exported for it on\n-#                       this machine; nothing else needs OpenVINO\n-#\n-#   setup.sh [--yes] [--no-drivers] [--no-bench]\n-#\n-#   --yes         answer yes to every question (sudo is still sudo)\n-#   --no-drivers  skip system drivers and runtimes (no sudo at all)\n-#   --no-bench    skip the benchmark\n-#\n-# Every step is optional and can be run again later on its own:\n-# hardware.sh, setup-llamacpp.sh, setup-gpu.sh, setup-npu.sh,\n-# export-model.sh and `smart-commit bench`. SMART_COMMIT_BIN names the smart-commit binary\n-# to benchmark; hardware.sh lists the variables tests use.\n-set -euo pipefail\n-\n-HERE=$(cd \"$(dirname \"$0\")\" && pwd)\n-# shellcheck source=/dev/null  # hardware.sh, next to this script\n-. \"$HERE/hardware.sh\"\n-ASSUME_YES=0\n-DRIVERS=1\n-BENCH=1\n-for arg in \"$@\"; do\n-    case $arg in\n-        --yes) ASSUME_YES=1 ;;\n-        --no-drivers) DRIVERS=0 ;;\n-        --no-bench) BENCH=0 ;;\n-        *)\n-            echo \"unknown option: $arg\" >&2\n-            exit 2\n-            ;;\n-    esac\n-done\n-\n-# The binary: the one that called us, installed next to share/, on PATH, or\n-# this checkout's.\n-if [ -n \"${SMART_COMMIT_BIN:-}\" ]; then\n-    SMART_COMMIT=$SMART_COMMIT_BIN\n-elif [ -x \"$HERE/../../../bin/smart-commit\" ]; then\n-    SMART_COMMIT=$HERE/../../../bin/smart-commit\n-elif command -v smart-commit >/dev/null; then\n-    SMART_COMMIT=smart-commit\n-else\n-    SMART_COMMIT=$HERE/../target/release/smart-commit\n-fi\n-\n-say() { printf '\\n==> %s\\n' \"$*\"; }\n-\n-# ask QUESTION: yes with --yes; no without a terminal to ask on.\n-ask() {\n-    if [ \"$ASSUME_YES\" = 1 ]; then\n-        return 0\n-    fi\n-    if ! { : </dev/tty; } 2>/dev/null; then\n-        echo \"$1 [skipped: no terminal; run setup.sh again to do it]\"\n-        return 1\n-    fi\n-    printf '%s [y/N] ' \"$1\"\n-    local answer\n-    read -r answer </dev/tty || return 1\n-    case $answer in y | Y | yes | s | S | sim) return 0 ;; *) return 1 ;; esac\n-}\n-\n-say \"Hardware\"\n-print_inventory\n-\n-# The plan, from the hardware alone: what each part needs, and why.\n-say \"Plan\"\n-echo \"  llama.cpp and the GGUF model (no sudo): the cpu device, and vulkan on the GPUs\"\n-if [ \"$(gpu_count)\" -gt 0 ]; then\n-    \"$HERE/setup-gpu.sh\" --dry-run | grep '^==>' | sed 's/^==> /  /' || true\n-fi\n-if has_intel_npu; then\n-    echo \"  Intel NPU: the NPU driver 1.38.0 and Level Zero 1.32.0 (sudo)\"\n-fi\n-if needs_openvino; then\n-    echo \"  OpenVINO GenAI 2026.3.1 (sudo), for the Intel NPU or GPU (it also gives openvino-cpu),\"\n-    echo \"  and the model exported for it here, from Hugging Face\"\n-elif openvino_installed; then\n-    echo \"  the model exported for OpenVINO here, for openvino-cpu (OpenVINO is already installed)\"\n-else\n-    echo \"  not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime, since\"\n-    echo \"  there is no Intel NPU or GPU here\"\n-fi\n-\n-say \"llama.cpp\"\n-\"$HERE/setup-llamacpp.sh\" || echo \"  Could not install llama.cpp; run $HERE/setup-llamacpp.sh again.\"\n-\n-if [ \"$DRIVERS\" = 1 ]; then\n-    if has_intel_npu; then\n-        if \"$HERE/check-npu.sh\" >/dev/null 2>&1; then\n-            say \"Intel NPU: driver and OpenVINO already set up\"\n-        elif ask \"Install the Intel NPU driver and OpenVINO (uses sudo)?\"; then\n-            \"$HERE/setup-npu.sh\"\n-        fi\n-    elif has_intel_gpu && ! openvino_installed; then\n-        if ask \"Install OpenVINO, for the Intel GPU (uses sudo)?\"; then\n-            \"$HERE/setup-npu.sh\" --openvino-only\n-        fi\n-    fi\n-    if [ \"$(gpu_count)\" -gt 0 ]; then\n-        say \"GPU drivers\"\n-        if ask \"Set up the GPUs as planned above (may use sudo)?\"; then\n-            yes_flag=()\n-            [ \"$ASSUME_YES\" = 1 ] && yes_flag=(--yes)\n-            \"$HERE/setup-gpu.sh\" \"${yes_flag[@]}\"\n-        fi\n-    fi\n-fi\n-\n-if needs_openvino || openvino_installed; then\n-    say \"OpenVINO model\"\n-    if \"$HERE/export-model.sh\" --check; then\n-        echo \"  already exported, every file checked\"\n-    elif ask \"Export the model for OpenVINO here (downloads it from Hugging Face; about 10 GB of disk while it runs, a few minutes)?\"; then\n-        \"$HERE/export-model.sh\" ||\n-            echo \"  Could not export the model; run $HERE/export-model.sh again.\"\n-    fi\n-fi\n-\n-if [ \"$BENCH\" = 1 ]; then\n-    if ! id -nG | grep -qw render && getent group render | grep -qw \"$USER\"; then\n-        say \"Benchmark postponed\"\n-        echo \"  You were just added to the render group, which only applies after\"\n-        echo \"  logging out and back in. Then run: smart-commit bench\"\n-    else\n-        say \"Benchmark\"\n-        \"$SMART_COMMIT\" bench || echo \"  Nothing could run the model yet; see above.\"\n-    fi\n-fi\n-\n-say \"Done\"\n-echo \"  Generate a message:   git add -p && smart-commit\"\n-echo \"  Commit with it:       smart-commit --commit\"\n-echo \"  On every git commit:  smart-commit hook install\"\n-echo \"  Change the device:    smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu|auto>\"\n"
+      },
+      {
+        "path": "src/backend/llamacpp/install.rs",
+        "old_path": null,
+        "lines": [
+          235,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,235 @@\n+//! Installing llama.cpp: the Vulkan build `smart-commit setup` pins, which\n+//! runs the `cpu` device on any x86_64 machine and the `vulkan` device on\n+//! any GPU with a Vulkan driver. Nothing here needs sudo.\n+\n+use std::path::{Path, PathBuf};\n+use std::process::{Command, Stdio};\n+\n+use super::LLAMA_CPP_BUILD;\n+use crate::models::{ModelError, fetch};\n+\n+/// The SHA-256 of the pinned release archive.\n+pub const ARCHIVE_SHA256: &str = \"6f93bf4138e9ad6a380ff605be1fd5108a66ec1977218eb74613f90634e18c64\";\n+\n+/// The size of the pinned release archive, in bytes.\n+pub const ARCHIVE_SIZE: u64 = 31_615_869;\n+\n+/// Where the pinned release is downloaded from.\n+pub fn archive_url() -> String {\n+    format!(\n+        \"https://github.com/ggml-org/llama.cpp/releases/download/{LLAMA_CPP_BUILD}/\\\n+         llama-{LLAMA_CPP_BUILD}-bin-ubuntu-vulkan-x64.tar.gz\"\n+    )\n+}\n+\n+/// The server of the build in `dir` (`.../smart-commit/llama.cpp`).\n+pub fn server_in(dir: &Path) -> PathBuf {\n+    dir.join(format!(\"llama-{LLAMA_CPP_BUILD}/llama-server\"))\n+}\n+\n+/// Downloads the archive at `url`, checks it against `sha256`, unpacks it in\n+/// `dir` and returns the server; a build already there is left alone.\n+pub fn install(\n+    dir: &Path,\n+    url: &str,\n+    sha256: &'static str,\n+    progress: impl FnMut(u64),\n+) -> Result<PathBuf, ModelError> {\n+    let server = server_in(dir);\n+    if server.is_file() {\n+        return Ok(server);\n+    }\n+    let io = |what: &Path| {\n+        let what = what.display().to_string();\n+        move |err: std::io::Error| ModelError::Io(format!(\"{what}: {err}\"))\n+    };\n+    std::fs::create_dir_all(dir).map_err(io(dir))?;\n+    let archive = dir.join(format!(\"llama-{LLAMA_CPP_BUILD}.tar.gz\"));\n+    fetch(\"llama.cpp\", url, sha256, &archive, progress)?;\n+    let status = Command::new(\"tar\")\n+        .arg(\"-xzf\")\n+        .arg(&archive)\n+        .arg(\"-C\")\n+        .arg(dir)\n+        .stdin(Stdio::null())\n+        .status()\n+        .map_err(io(&archive))?;\n+    let _ = std::fs::remove_file(&archive);\n+    if !status.success() {\n+        return Err(ModelError::Io(format!(\"cannot unpack {url}: tar {status}\")));\n+    }\n+    if !server.is_file() {\n+        return Err(ModelError::Io(format!(\n+            \"{} has no {}\",\n+            url,\n+            server.strip_prefix(dir).unwrap_or(&server).display()\n+        )));\n+    }\n+    Ok(server)\n+}\n+\n+/// What llama-server lists as the devices it can use besides the CPU.\n+pub fn list_devices(server: &Path) -> String {\n+    let output = Command::new(server)\n+        .arg(\"--list-devices\")\n+        .stdin(Stdio::null())\n+        .output();\n+    let Ok(output) = output else {\n+        return String::new();\n+    };\n+    let text = format!(\n+        \"{}{}\",\n+        String::from_utf8_lossy(&output.stderr),\n+        String::from_utf8_lossy(&output.stdout)\n+    );\n+    text.lines()\n+        .skip_while(|l| !l.contains(\"Available devices\"))\n+        .collect::<Vec<_>>()\n+        .join(\"\\n\")\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use sha2::{Digest, Sha256};\n+\n+    use super::*;\n+\n+    fn hex(bytes: &[u8]) -> String {\n+        Sha256::digest(bytes)\n+            .iter()\n+            .map(|b| format!(\"{b:02x}\"))\n+            .collect()\n+    }\n+\n+    /// A release archive holding a `llama-server`, and its hash.\n+    fn archive(dir: &Path, with_server: bool) -> (PathBuf, &'static str) {\n+        let root = dir.join(\"stage\");\n+        let inner = root.join(format!(\"llama-{LLAMA_CPP_BUILD}\"));\n+        std::fs::create_dir_all(&inner).unwrap();\n+        std::fs::write(\n+            inner.join(if with_server { \"llama-server\" } else { \"other\" }),\n+            \"#!/bin/sh\\n\",\n+        )\n+        .unwrap();\n+        let tarball = dir.join(\"release.tar.gz\");\n+        let status = Command::new(\"tar\")\n+            .arg(\"-czf\")\n+            .arg(&tarball)\n+            .arg(\"-C\")\n+            .arg(&root)\n+            .arg(format!(\"llama-{LLAMA_CPP_BUILD}\"))\n+            .status()\n+            .unwrap();\n+        assert!(status.success());\n+        let sha = hex(&std::fs::read(&tarball).unwrap());\n+        (tarball, Box::leak(sha.into_boxed_str()))\n+    }\n+\n+    fn url(path: &Path) -> String {\n+        format!(\"file://{}\", path.display())\n+    }\n+\n+    #[test]\n+    fn the_pinned_release_is_the_build_the_code_expects() {\n+        assert_eq!(\n+            archive_url(),\n+            \"https://github.com/ggml-org/llama.cpp/releases/download/b11381/llama-b11381-bin-ubuntu-vulkan-x64.tar.gz\"\n+        );\n+        assert_eq!(ARCHIVE_SHA256.len(), 64);\n+        assert_eq!(\n+            server_in(Path::new(\"/d\")),\n+            Path::new(\"/d/llama-b11381/llama-server\")\n+        );\n+    }\n+\n+    #[test]\n+    fn a_checked_archive_is_unpacked_and_removed() {\n+        let dir = tempfile::TempDir::new().unwrap();\n+        let (tarball, sha) = archive(dir.path(), true);\n+        let target = dir.path().join(\"llama.cpp\");\n+        let mut seen = 0;\n+        let server = install(&target, &url(&tarball), sha, |bytes| seen = bytes).unwrap();\n+        assert!(server.is_file());\n+        assert!(seen > 0);\n+        assert!(\n+            !target\n+                .join(format!(\"llama-{LLAMA_CPP_BUILD}.tar.gz\"))\n+                .exists()\n+        );\n+        // Already there: nothing is downloaded, so a bad URL is not a problem.\n+        assert_eq!(\n+            install(&target, \"file:///nonexistent\", sha, |_| {}).unwrap(),\n+            server\n+        );\n+    }\n+\n+    #[test]\n+    fn another_archive_is_refused_and_leaves_nothing() {\n+        let dir = tempfile::TempDir::new().unwrap();\n+        let (tarball, _) = archive(dir.path(), true);\n+        let target = dir.path().join(\"llama.cpp\");\n+        let err = install(&target, &url(&tarball), ARCHIVE_SHA256, |_| {}).unwrap_err();\n+        assert!(\n+            err.to_string()\n+                .contains(\"is not the file pinned for llama.cpp\"),\n+            \"{err}\"\n+        );\n+        assert!(!server_in(&target).exists());\n+        assert!(\n+            !target\n+                .join(format!(\"llama-{LLAMA_CPP_BUILD}.tar.gz.partial\"))\n+                .exists()\n+        );\n+    }\n+\n+    #[test]\n+    fn an_archive_without_the_server_is_an_error() {\n+        let dir = tempfile::TempDir::new().unwrap();\n+        let (tarball, sha) = archive(dir.path(), false);\n+        let err = install(&dir.path().join(\"llama.cpp\"), &url(&tarball), sha, |_| {}).unwrap_err();\n+        assert!(\n+            err.to_string().contains(\"has no llama-b11381/llama-server\"),\n+            \"{err}\"\n+        );\n+    }\n+\n+    #[test]\n+    fn a_missing_download_is_reported() {\n+        let dir = tempfile::TempDir::new().unwrap();\n+        let err = install(\n+            &dir.path().join(\"l\"),\n+            \"file:///nonexistent/x.tar.gz\",\n+            ARCHIVE_SHA256,\n+            |_| {},\n+        )\n+        .unwrap_err();\n+        assert!(err.to_string().contains(\"cannot download\"), \"{err}\");\n+    }\n+\n+    #[test]\n+    fn the_devices_are_what_the_server_lists_from_its_header_on() {\n+        let dir = tempfile::TempDir::new().unwrap();\n+        let server = dir.path().join(\"llama-server\");\n+        std::fs::write(\n+            &server,\n+            \"#!/bin/sh\\necho 'loading' >&2\\necho 'Available devices:'\\necho '  Vulkan0: GPU (8192 MiB)'\\n\",\n+        )\n+        .unwrap();\n+        {\n+            use std::os::unix::fs::PermissionsExt;\n+            std::fs::set_permissions(&server, std::fs::Permissions::from_mode(0o755)).unwrap();\n+        }\n+        // Running a script just written can meet \"text file busy\" while another\n+        // test's child process still holds the descriptor: try again.\n+        let mut devices = String::new();\n+        for _ in 0..20 {\n+            devices = list_devices(&server);\n+            if !devices.is_empty() {\n+                break;\n+            }\n+            std::thread::sleep(std::time::Duration::from_millis(50));\n+        }\n+        assert_eq!(devices, \"Available devices:\\n  Vulkan0: GPU (8192 MiB)\");\n+        assert_eq!(list_devices(&dir.path().join(\"missing\")), \"\");\n+    }\n+}\n"
+      },
+      {
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -14,2 +14,3 @@\n mod http;\n+pub mod install;\n #[cfg(test)]\n"
+      },
+      {
+        "path": "src/backend/llamacpp/tests.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          6
+        ],
+        "hunks": "@@ -323,8 +323,2 @@ fn description_names_build_device_and_model() {\n \n-#[test]\n-fn setup_script_installs_what_the_code_expects() {\n-    let script = include_str!(\"../../../scripts/setup-llamacpp.sh\");\n-    assert!(script.contains(&format!(\"\\nLLAMA_BUILD={LLAMA_CPP_BUILD}\\n\")));\n-}\n-\n #[test]\n"
+      },
+      {
+        "path": "src/cli/guided_setup.rs",
+        "old_path": null,
+        "lines": [
+          241,
+          27
+        ],
+        "hunks": "@@ -2,5 +2,5 @@\n //! the plan, each step's output, the benchmark); with `--yes` or without a\n-//! terminal, `scripts/setup.sh`.\n+//! terminal, the same plan as text.\n \n-use std::io::{BufRead, BufReader, Read};\n+use std::io::{BufRead, BufReader, IsTerminal, Read, Write};\n use std::path::{Path, PathBuf};\n@@ -10,3 +10,4 @@ use std::time::Duration;\n \n-use anyhow::{Context as _, Result, bail};\n+use anyhow::{Context as _, Result};\n+use smart_commit::backend::llamacpp;\n use smart_commit::config;\n@@ -22,4 +23,9 @@ use super::settings::{env, hardware_sources, resolve};\n \n-pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {\n+pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool, llamacpp_only: bool) -> Result<()> {\n     set_aside_invalid_settings()?;\n+    if llamacpp_only {\n+        let server = install_llamacpp(&mut |_| {})?;\n+        println!(\"llama.cpp: {}\", server.display());\n+        return Ok(());\n+    }\n     let exe = std::env::current_exe()?.canonicalize()?;\n@@ -29,17 +35,136 @@ pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {\n     }\n-    let flags = [\n-        (yes, \"--yes\"),\n-        (no_drivers, \"--no-drivers\"),\n-        (no_bench, \"--no-bench\"),\n-    ];\n-    let script = scripts.join(\"setup.sh\");\n-    let status = Command::new(&script)\n-        .args(flags.iter().filter(|(on, _)| *on).map(|(_, flag)| flag))\n-        // So the setup benchmarks this very binary.\n-        .env(\"SMART_COMMIT_BIN\", &exe)\n-        .status()\n-        .with_context(|| format!(\"cannot run {}\", script.display()))?;\n-    if !status.success() {\n-        bail!(\"setup failed ({status})\");\n+    plain(&scripts, yes, no_drivers, no_bench)\n+}\n+\n+/// The llama.cpp build this release pins, in the data directory (from\n+/// `SMART_COMMIT_LLAMACPP_URL`, for tests; the pinned SHA-256 still applies).\n+fn install_llamacpp(progress: &mut dyn FnMut(u64)) -> Result<PathBuf> {\n+    let server = paths::default_llama_server(env).context(\"HOME is not set\")?;\n+    let dir = server\n+        .parent()\n+        .and_then(Path::parent)\n+        .context(\"the llama.cpp directory has no parent\")?;\n+    let url = env(\"SMART_COMMIT_LLAMACPP_URL\").unwrap_or_else(llamacpp::install::archive_url);\n+    Ok(llamacpp::install::install(\n+        dir,\n+        &url,\n+        llamacpp::install::ARCHIVE_SHA256,\n+        progress,\n+    )?)\n+}\n+\n+/// `setup` without the full screen, for `--yes` and for output that is not a\n+/// terminal: the hardware, the plan, then each step that is not done yet,\n+/// asking before what needs sudo.\n+fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {\n+    let hw = Hardware::detect(&hardware_sources());\n+    let model = resolve(None, Vec::new())?.settings().model;\n+    let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;\n+    let steps = setup::plan(&hw, &facts);\n+    println!(\"\\n==> Hardware\\n{}\", hw.inventory().trim_end());\n+    println!(\"\\n==> Plan\");\n+    for step in &steps {\n+        let state = if step.installed {\n+            \" (already set up)\"\n+        } else {\n+            \"\"\n+        };\n+        let sudo = if step.sudo { \" (sudo)\" } else { \"\" };\n+        println!(\"  {}{sudo}: {}{state}\", step.title, step.detail);\n+    }\n+    if let Some(why) = setup::not_needed(&hw) {\n+        println!(\"  {why}\");\n     }\n+    for step in steps.iter().filter(|s| !s.installed) {\n+        match step.kind {\n+            StepKind::LlamaCpp => {\n+                println!(\"\\n==> llama.cpp\");\n+                match install_llamacpp(&mut |_| {}) {\n+                    Ok(server) => {\n+                        println!(\"  {}\", server.display());\n+                        let devices = llamacpp::install::list_devices(&server);\n+                        if !devices.is_empty() {\n+                            println!(\"  devices seen by llama.cpp (besides the CPU):\\n{devices}\");\n+                        }\n+                    }\n+                    Err(err) => println!(\n+                        \"  Could not install llama.cpp ({err:#}); run `smart-commit setup` again.\"\n+                    ),\n+                }\n+            }\n+            StepKind::Model => {\n+                println!(\"\\n==> Model {}\", model.id);\n+                match plain_model(model) {\n+                    Ok(file) => {\n+                        println!(\"  checked against the pinned SHA-256: {}\", file.display())\n+                    }\n+                    Err(err) => {\n+                        println!(\n+                            \"  Could not install {} ({err:#}); run `smart-commit setup` again.\",\n+                            model.id\n+                        );\n+                    }\n+                }\n+            }\n+            StepKind::GpuDrivers => {\n+                println!(\"\\n==> GPU drivers\");\n+                if ask(\"Set up the GPUs as planned above (may use sudo)?\", yes) {\n+                    run_script(\n+                        &scripts.join(\"setup-gpu.sh\"),\n+                        if yes { &[\"--yes\"] } else { &[] },\n+                    );\n+                }\n+            }\n+            StepKind::NpuStack => {\n+                if ask(\n+                    \"Install the Intel NPU driver and OpenVINO (uses sudo)?\",\n+                    yes,\n+                ) {\n+                    run_script(&scripts.join(\"setup-npu.sh\"), &[]);\n+                }\n+            }\n+            StepKind::Openvino => {\n+                if ask(\"Install OpenVINO, for the Intel GPU (uses sudo)?\", yes) {\n+                    run_script(&scripts.join(\"setup-npu.sh\"), &[\"--openvino-only\"]);\n+                }\n+            }\n+            StepKind::ExportModel => {\n+                println!(\"\\n==> OpenVINO model\");\n+                if ask(\n+                    \"Export the model for OpenVINO here (downloads it from Hugging Face; \\\n+                     about 10 GB of disk while it runs, a few minutes)?\",\n+                    yes,\n+                ) && !run_script(&scripts.join(\"export-model.sh\"), &[])\n+                {\n+                    println!(\"  Could not export the model; run `smart-commit setup` again.\");\n+                }\n+            }\n+            StepKind::Bench if render_group_pending() => {\n+                println!(\"\\n==> Benchmark postponed\");\n+                println!(\n+                    \"  You were just added to the render group, which only applies after\\n  \\\n+                     logging out and back in. Then run: smart-commit bench\"\n+                );\n+            }\n+            StepKind::Bench => {\n+                println!(\"\\n==> Benchmark\");\n+                if let Err(err) = super::benchmark::run_bench(false) {\n+                    println!(\"  Nothing could run the model yet ({err:#}); see above.\");\n+                }\n+            }\n+        }\n+    }\n+    for step in steps\n+        .iter()\n+        .filter(|s| s.installed && s.kind == StepKind::NpuStack)\n+    {\n+        println!(\"\\n==> {}: already set up\", step.title);\n+    }\n+    println!(\"\\n==> Done\");\n+    println!(\"  Generate a message:   git add -p && smart-commit\");\n+    println!(\"  Commit with it:       smart-commit --commit\");\n+    println!(\"  On every git commit:  smart-commit hook install\");\n+    println!(\n+        \"  Change the device:    smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu|auto>\"\n+    );\n     Ok(())\n@@ -47,2 +172,42 @@ pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool) -> Result<()> {\n \n+/// Downloads `model` into the models directory, as `setup` does for the\n+/// one in use.\n+fn plain_model(model: &'static Model) -> Result<PathBuf> {\n+    let dir = paths::default_models_dir(env).context(\"HOME is not set\")?;\n+    let base = env(\"SMART_COMMIT_HF_BASE\").unwrap_or_else(|| models::HUGGING_FACE.to_owned());\n+    println!(\n+        \"  {} ({}, {}) from huggingface.co/{}\",\n+        model.name,\n+        models::size(model.gguf.size),\n+        model.license,\n+        model.gguf.repo\n+    );\n+    Ok(models::install_gguf(model, &dir, &base, |_| {})?)\n+}\n+\n+/// Runs a setup script with the terminal, and whether it succeeded.\n+fn run_script(script: &Path, args: &[&str]) -> bool {\n+    Command::new(script)\n+        .args(args)\n+        .status()\n+        .map_err(|err| println!(\"  cannot run {}: {err}\", script.display()))\n+        .is_ok_and(|status| status.success())\n+}\n+\n+/// `question`: yes with `--yes`; no without a terminal to ask on.\n+fn ask(question: &str, yes: bool) -> bool {\n+    if yes {\n+        return true;\n+    }\n+    if !std::io::stdin().is_terminal() {\n+        println!(\"{question} [skipped: no terminal; run `smart-commit setup` again to do it]\");\n+        return false;\n+    }\n+    print!(\"{question} [y/N] \");\n+    let _ = std::io::stdout().flush();\n+    let mut answer = String::new();\n+    std::io::stdin().lock().read_line(&mut answer).is_ok()\n+        && matches!(answer.trim(), \"y\" | \"Y\" | \"yes\" | \"s\" | \"S\" | \"sim\")\n+}\n+\n /// Setup is how a broken install gets fixed, so a global setting this\n@@ -72,3 +237,3 @@ fn scripts_dir(exe: &Path) -> Result<PathBuf> {\n     .into_iter()\n-    .find(|p| p.join(\"setup.sh\").is_file())\n+    .find(|p| p.join(\"setup-gpu.sh\").is_file())\n     .context(\"the setup scripts are not next to the binary; reinstall smart-commit\")\n@@ -96,2 +261,4 @@ fn facts(\n     } else {\n+        // What setup-gpu.sh would do, and what it warns about (a GPU with no\n+        // kernel driver, say), which the plan should say too.\n         Command::new(scripts.join(\"setup-gpu.sh\"))\n@@ -101,6 +268,12 @@ fn facts(\n             .map(|o| {\n-                String::from_utf8_lossy(&o.stdout)\n+                let steps = String::from_utf8_lossy(&o.stdout)\n                     .lines()\n                     .filter_map(|l| l.strip_prefix(\"==> \").map(str::to_owned))\n-                    .collect()\n+                    .collect::<Vec<_>>();\n+                let warnings = String::from_utf8_lossy(&o.stderr)\n+                    .lines()\n+                    .filter(|l| l.starts_with(\"warning: \"))\n+                    .map(str::to_owned)\n+                    .collect::<Vec<_>>();\n+                [steps, warnings].concat()\n             })\n@@ -171,8 +344,3 @@ fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {\n         let result = match kind {\n-            StepKind::LlamaCpp => piped(\n-                &mut screen,\n-                &mut view,\n-                &scripts.join(\"setup-llamacpp.sh\"),\n-                &[\"--server-only\"],\n-            ),\n+            StepKind::LlamaCpp => install_llamacpp_step(&mut screen, &mut view),\n             StepKind::Model => install_model(&mut screen, &mut view, model),\n@@ -333,2 +501,48 @@ fn with_sudo(screen: &mut Screen, script: &Path, args: &[&str]) -> Result<String\n \n+/// Installs llama.cpp with a progress bar.\n+fn install_llamacpp_step(screen: &mut Screen, view: &mut SetupView) -> Result<String, String> {\n+    view.log(&format!(\n+        \"llama.cpp {} ({}) from github.com/ggml-org/llama.cpp\",\n+        llamacpp::LLAMA_CPP_BUILD,\n+        models::size(llamacpp::install::ARCHIVE_SIZE)\n+    ));\n+    let (sender, progress) = mpsc::channel();\n+    let worker = std::thread::spawn(move || {\n+        install_llamacpp(&mut |bytes| {\n+            let _ = sender.send(bytes);\n+        })\n+        .map_err(|e| format!(\"{e:#}\"))\n+    });\n+    while !worker.is_finished() {\n+        while let Ok(bytes) = progress.try_recv() {\n+            view.progress(\n+                format!(\n+                    \"llama.cpp: {} of {}\",\n+                    models::size(bytes),\n+                    models::size(llamacpp::install::ARCHIVE_SIZE)\n+                ),\n+                bytes as f64 / llamacpp::install::ARCHIVE_SIZE as f64,\n+            );\n+        }\n+        screen\n+            .draw(|frame| view.render(frame))\n+            .map_err(|e| format!(\"{e:#}\"))?;\n+        if let Some(key) = screen\n+            .key_within(Duration::from_millis(150))\n+            .map_err(|e| format!(\"{e:#}\"))?\n+        {\n+            view.on_key(key);\n+        }\n+    }\n+    let server = worker\n+        .join()\n+        .map_err(|_| \"the download crashed\".to_owned())??;\n+    view.log(&format!(\"installed: {}\", server.display()));\n+    let devices = llamacpp::install::list_devices(&server);\n+    for line in devices.lines() {\n+        view.log(line);\n+    }\n+    Ok(String::new())\n+}\n+\n /// Downloads `model` with a progress bar, then makes it the one in use.\n"
+      },
+      {
+        "path": "src/cli/mod.rs",
+        "old_path": null,
+        "lines": [
+          6,
+          1
+        ],
+        "hunks": "@@ -126,2 +126,6 @@ enum Command {\n         no_bench: bool,\n+        /// Only install the llama.cpp build this release pins (what an update\n+        /// runs).\n+        #[arg(long, hide = true)]\n+        llamacpp_only: bool,\n     },\n@@ -217,3 +221,4 @@ pub fn run() -> ExitCode {\n             no_bench,\n-        }) => guided_setup::run(yes, no_drivers, no_bench),\n+            llamacpp_only,\n+        }) => guided_setup::run(yes, no_drivers, no_bench, llamacpp_only),\n         Some(Command::Server(command)) => keep_loaded::run(command),\n"
+      },
+      {
+        "path": "src/cli/settings.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -47,4 +47,4 @@ pub(super) fn stop_kept_after(key: &str) -> Option<String> {\n \n-/// The real machine, or the fake one tests point at (the variables\n-/// `scripts/hardware.sh` reads too).\n+/// The real machine, or the fake one tests point at (`SMART_COMMIT_SYSFS`\n+/// is read by `scripts/setup-gpu.sh` too).\n pub(super) fn hardware_sources() -> hardware::Sources {\n"
+      },
+      {
+        "path": "src/hardware/fake.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -1,3 +1,2 @@\n-//! Fake machines: a sysfs tree and a cpuinfo, like\n-//! `tests/scripts/test-setup.sh` builds.\n+//! Fake machines: a sysfs tree and a cpuinfo.\n \n"
+      },
+      {
+        "path": "src/hardware/mod.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          4
+        ],
+        "hunks": "@@ -3,5 +3,2 @@\n //! each one gives. Read from sysfs and /proc/cpuinfo, without root.\n-//!\n-//! `scripts/hardware.sh` does the same for the setup scripts; a test checks\n-//! that both print the same inventory.\n \n@@ -190,3 +187,3 @@ impl Hardware {\n \n-    /// The inventory, as `scripts/hardware.sh` prints it.\n+    /// The inventory, as `smart-commit hardware` prints it.\n     pub fn inventory(&self) -> String {\n"
+      },
+      {
+        "path": "src/models/install.rs",
+        "old_path": null,
+        "lines": [
+          23,
+          11
+        ],
+        "hunks": "@@ -90,19 +90,31 @@ pub fn install_gguf(\n     std::fs::create_dir_all(dir).map_err(io(dir.display()))?;\n-    let partial = dir.join(format!(\"{}.partial\", gguf.file));\n-    let url = gguf.url(base);\n-    download(&url, &partial, &mut progress)?;\n+    fetch(model.id, &gguf.url(base), gguf.sha256, &file, &mut progress)?;\n+    std::fs::write(sidecar(&file), format!(\"{}  {}\\n\", gguf.sha256, gguf.file))\n+        .map_err(io(file.display()))?;\n+    Ok(file)\n+}\n+\n+/// Downloads `url` to `dest`, through a `.partial` file that only becomes\n+/// `dest` when its SHA-256 is `expected`; `label` names what it is in the\n+/// error. `progress` is called with the bytes downloaded so far.\n+pub fn fetch(\n+    label: &'static str,\n+    url: &str,\n+    expected: &'static str,\n+    dest: &Path,\n+    mut progress: impl FnMut(u64),\n+) -> Result<(), ModelError> {\n+    let partial = PathBuf::from(format!(\"{}.partial\", dest.display()));\n+    download(url, &partial, &mut progress)?;\n     let actual = sha256_file(&partial).map_err(io(partial.display()))?;\n-    if actual != gguf.sha256 {\n+    if actual != expected {\n         let _ = std::fs::remove_file(&partial);\n         return Err(ModelError::Checksum {\n-            id: model.id,\n-            path: url,\n+            id: label,\n+            path: url.to_owned(),\n             actual,\n-            expected: gguf.sha256,\n+            expected,\n         });\n     }\n-    std::fs::rename(&partial, &file).map_err(io(file.display()))?;\n-    std::fs::write(sidecar(&file), format!(\"{}  {}\\n\", gguf.sha256, gguf.file))\n-        .map_err(io(file.display()))?;\n-    Ok(file)\n+    std::fs::rename(&partial, dest).map_err(io(dest.display()))\n }\n"
+      },
+      {
+        "path": "src/models/tests.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          5
+        ],
+        "hunks": "@@ -98,8 +98,4 @@ fn own_fine_tunes_follow_the_naming_rule() {\n #[test]\n-fn the_default_model_is_the_one_the_scripts_install() {\n+fn the_default_model_is_the_one_the_export_script_makes() {\n     let model = find(DEFAULT).unwrap();\n-    let script = include_str!(\"../../scripts/setup-llamacpp.sh\");\n-    assert!(script.contains(&format!(\"GGUF_NAME={}\\n\", model.gguf.file)));\n-    assert!(script.contains(&format!(\"GGUF_SHA256={}\\n\", model.gguf.sha256)));\n-    assert!(script.contains(model.gguf.revision));\n     let export = include_str!(\"../../scripts/export-model.sh\");\n"
+      },
+      {
+        "path": "src/setup.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -1,3 +1,3 @@\n //! What `smart-commit setup` does on a machine: the steps its hardware\n-//! needs, and only those, as `scripts/setup.sh` plans them.\n+//! needs, and only those, as `smart-commit setup` plans them.\n //!\n"
+      },
+      {
+        "path": "tests/cli.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -885,3 +885,3 @@ fn offline_setup(extra: &[(&str, &str)]) -> Output {\n         ),\n-        (\"SMART_COMMIT_GGUF_URL\", \"file:///nonexistent/model.gguf\"),\n+        (\"SMART_COMMIT_HF_BASE\", \"file:///nonexistent/hf\"),\n         (\"SMART_COMMIT_RELEASE_BASE\", \"file:///nonexistent/releases\"),\n@@ -900,3 +900,3 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {\n     assert!(out.contains(\"  GPU  none\\n\"), \"{out}\");\n-    assert!(out.contains(\"not needed: OpenVINO\"), \"{out}\");\n+    assert!(out.contains(\"Not needed: OpenVINO\"), \"{out}\");\n     assert!(out.contains(\"Could not install llama.cpp\"), \"{out}\");\n"
+      },
+      {
+        "path": "tests/hardware_inventory.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          132
+        ],
+        "hunks": "@@ -1,132 +0,0 @@\n-//! `smart-commit hardware` and `scripts/hardware.sh` print the same\n-//! inventory of the same (fake) machines: the setup screen uses the first,\n-//! the setup scripts the second.\n-\n-use std::path::Path;\n-use std::process::Command;\n-\n-use tempfile::TempDir;\n-\n-mod common;\n-\n-fn pci(sysfs: &Path, slot: &str, class: &str, vendor: &str, device: &str, driver: &str) {\n-    let dev = sysfs.join(\"bus/pci/devices\").join(slot);\n-    std::fs::create_dir_all(&dev).unwrap();\n-    std::fs::create_dir_all(sysfs.join(\"bus/pci/drivers\").join(driver)).unwrap();\n-    std::fs::write(dev.join(\"class\"), format!(\"{class}\\n\")).unwrap();\n-    std::fs::write(dev.join(\"vendor\"), format!(\"{vendor}\\n\")).unwrap();\n-    std::fs::write(dev.join(\"device\"), format!(\"{device}\\n\")).unwrap();\n-    if driver != \"none\" {\n-        std::os::unix::fs::symlink(\n-            format!(\"../../../bus/pci/drivers/{driver}\"),\n-            dev.join(\"driver\"),\n-        )\n-        .unwrap();\n-    }\n-}\n-\n-fn cpu(sysfs: &Path, vendor: &str, model: &str) {\n-    std::fs::write(\n-        sysfs.join(\"cpuinfo\"),\n-        format!(\"vendor_id\\t: {vendor}\\nmodel name\\t: {model}\\n\"),\n-    )\n-    .unwrap();\n-}\n-\n-/// Runs both on the machine `build` makes; returns their outputs.\n-fn both(build: impl FnOnce(&Path)) -> (String, String) {\n-    let dir = TempDir::new().unwrap();\n-    let sysfs = dir.path().join(\"sys\");\n-    std::fs::create_dir_all(sysfs.join(\"bus/pci/devices\")).unwrap();\n-    build(&sysfs);\n-    let env = [\n-        (\"SMART_COMMIT_SYSFS\", sysfs.clone()),\n-        (\"SMART_COMMIT_CPUINFO\", sysfs.join(\"cpuinfo\")),\n-        (\"SMART_COMMIT_OPENVINO_DIR\", dir.path().join(\"no-openvino\")),\n-    ];\n-    let rust = common::isolate(&mut Command::new(env!(\"CARGO_BIN_EXE_smart-commit\")))\n-        .arg(\"hardware\")\n-        .envs(env.iter().map(|(k, v)| (k, v)))\n-        .output()\n-        .unwrap();\n-    let script = Command::new(\"bash\")\n-        .arg(Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"scripts/hardware.sh\"))\n-        .envs(env.iter().map(|(k, v)| (k, v)))\n-        .output()\n-        .unwrap();\n-    assert!(rust.status.success() && script.status.success());\n-    (\n-        String::from_utf8(rust.stdout).unwrap(),\n-        String::from_utf8(script.stdout).unwrap(),\n-    )\n-}\n-\n-#[test]\n-fn amd_cpu_and_nvidia_gpu() {\n-    let (rust, script) = both(|sys| {\n-        cpu(sys, \"AuthenticAMD\", \"AMD Ryzen 5 5500\");\n-        pci(\n-            sys,\n-            \"0000:01:00.0\",\n-            \"0x030000\",\n-            \"0x10de\",\n-            \"0x2507\",\n-            \"nvidia\",\n-        );\n-        std::fs::create_dir_all(sys.join(\"module/nvidia\")).unwrap();\n-        std::fs::write(sys.join(\"module/nvidia/version\"), \"595.104.02\\n\").unwrap();\n-    });\n-    assert_eq!(rust, script);\n-    assert!(rust.contains(\"GPU  NVIDIA device 2507 [0000:01:00.0], driver nvidia 595.104.02\"));\n-}\n-\n-#[test]\n-fn intel_cpu_gpu_and_npu() {\n-    let (rust, script) = both(|sys| {\n-        cpu(sys, \"GenuineIntel\", \"Intel(R) Core(TM) Ultra 5 225H\");\n-        pci(sys, \"0000:00:02.0\", \"0x030000\", \"0x8086\", \"0x7d51\", \"xe\");\n-        pci(\n-            sys,\n-            \"0000:00:0b.0\",\n-            \"0x120000\",\n-            \"0x8086\",\n-            \"0xad1d\",\n-            \"intel_vpu\",\n-        );\n-    });\n-    assert_eq!(rust, script);\n-    assert!(rust.contains(\"NPU  Intel NPU\"));\n-}\n-\n-#[test]\n-fn unsupported_and_unbound_devices() {\n-    let (rust, script) = both(|sys| {\n-        cpu(sys, \"AuthenticAMD\", \"AMD FX-8350\");\n-        pci(\n-            sys,\n-            \"0000:01:00.0\",\n-            \"0x030000\",\n-            \"0x1002\",\n-            \"0x6798\",\n-            \"radeon\",\n-        );\n-        pci(sys, \"0000:02:00.0\", \"0x030000\", \"0x10de\", \"0x1c82\", \"none\");\n-        pci(\n-            sys,\n-            \"0000:c4:00.1\",\n-            \"0x118000\",\n-            \"0x1022\",\n-            \"0x1502\",\n-            \"amdxdna\",\n-        );\n-    });\n-    assert_eq!(rust, script);\n-    assert!(rust.contains(\"NPU  AMD Ryzen AI (XDNA)\"));\n-}\n-\n-#[test]\n-fn nothing_but_a_cpu() {\n-    let (rust, script) = both(|sys| cpu(sys, \"AuthenticAMD\", \"AMD Ryzen 7 8845HS\"));\n-    assert_eq!(rust, script);\n-    assert!(rust.contains(\"GPU  none\"));\n-}\n"
+      },
+      {
+        "path": "tests/scripts/test-install-data.sh",
+        "old_path": null,
+        "lines": [
+          6,
+          8
+        ],
+        "hunks": "@@ -21,9 +21,7 @@ release() {\n     mkdir -p \"$stage/bin\" \"$stage/share/smart-commit/scripts\" \"$stage/share/doc/smart-commit\"\n-    printf '#!/bin/sh\\necho \"smart-commit %s\"\\n' \"$1\" >\"$stage/bin/smart-commit\"\n+    # Records how --update calls its setup.\n+    printf '#!/bin/sh\\nif [ \"$1\" = setup ]; then echo \"%s $*\" >>\"%s/llamacpp-calls\"; exit 0; fi\\necho \"smart-commit %s\"\\n' \\\n+        \"$1\" \"$work\" \"$1\" >\"$stage/bin/smart-commit\"\n     chmod +x \"$stage/bin/smart-commit\"\n-    echo \"# setup $1\" >\"$stage/share/smart-commit/scripts/setup.sh\"\n-    # Records how --update calls it.\n-    printf '#!/bin/sh\\necho \"%s $*\" >>\"%s/llamacpp-calls\"\\n' \"$1\" \"$work\" \\\n-        >\"$stage/share/smart-commit/scripts/setup-llamacpp.sh\"\n-    chmod +x \"$stage/share/smart-commit/scripts/setup-llamacpp.sh\"\n+    echo \"# setup $1\" >\"$stage/share/smart-commit/scripts/setup-gpu.sh\"\n     echo \"$1\" >\"$stage/share/smart-commit/VERSION\"\n@@ -70,3 +68,3 @@ setup_data() {\n installed() { [ \"$(\"$prefix/bin/smart-commit\")\" = \"smart-commit $1\" ]; }\n-upgraded() { [ \"$(cat \"$data/VERSION\")\" = \"$1\" ] && grep -q \"setup $1\" \"$data/scripts/setup.sh\"; }\n+upgraded() { [ \"$(cat \"$data/VERSION\")\" = \"$1\" ] && grep -q \"setup $1\" \"$data/scripts/setup-gpu.sh\"; }\n release_gone() {\n@@ -104,3 +102,3 @@ check \"--update says from what\" grep -qF \"updated from 1.1.0\" \"$work/out\"\n check \"--update keeps the models, llama.cpp and the benchmark\" data_kept\n-check \"--update brings llama.cpp to the new release's build\" llamacpp_calls \"1.2.0 --server-only\"\n+check \"--update brings llama.cpp to the new release's build\" llamacpp_calls \"1.2.0 setup --llamacpp-only\"\n check \"--update does not point to the setup\" not grep -qF \"smart-commit setup\" \"$work/out\"\n"
+      },
+      {
+        "path": "tests/scripts/test-install.sh",
+        "old_path": null,
+        "lines": [
+          2,
+          3
+        ],
+        "hunks": "@@ -32,5 +32,4 @@ install --no-setup\n \"$work/prefix/bin/smart-commit\" --version | grep -qx \"smart-commit $VERSION\"\n-for file in share/smart-commit/scripts/setup.sh share/smart-commit/scripts/setup-gpu.sh \\\n-    share/smart-commit/scripts/hardware.sh share/smart-commit/scripts/setup-llamacpp.sh \\\n-    share/smart-commit/scripts/export-model.sh share/smart-commit/scripts/install.sh \\\n+for file in share/smart-commit/scripts/setup-gpu.sh share/smart-commit/scripts/setup-npu.sh \\\n+    share/smart-commit/scripts/check-npu.sh share/smart-commit/scripts/export-model.sh share/smart-commit/scripts/install.sh \\\n     share/smart-commit/scripts/export/MANIFEST.sha256 \\\n"
+      },
+      {
+        "path": "tests/scripts/test-setup-gpu.sh",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -88,3 +88,3 @@ expect intel \"would run: sudo apt-get install -y libvulkan1 mesa-vulkan-drivers\"\n expect intel \"Intel's compute runtime 26.27.39122.14 for OpenVINO\"\n-# llama.cpp is setup-llamacpp.sh's job.\n+# llama.cpp is `smart-commit setup`'s job.\n refute intel \"llama-b11381\"\n"
+      },
+      {
+        "path": "tests/scripts/test-setup-llamacpp.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          73
+        ],
+        "hunks": "@@ -1,73 +0,0 @@\n-#!/usr/bin/env bash\n-# Runs scripts/setup-llamacpp.sh --dry-run, then with llama.cpp already in\n-# place, then with --server-only: it downloads the pinned build and model\n-# into the data directory and skips what is there. No network or sudo.\n-#\n-#   tests/scripts/test-setup-llamacpp.sh\n-set -euo pipefail\n-\n-ROOT=$(cd \"$(dirname \"$0\")/../..\" && pwd)\n-SCRIPT=$ROOT/scripts/setup-llamacpp.sh\n-work=$(mktemp -d)\n-trap 'rm -rf \"$work\"' EXIT\n-failures=0\n-\n-expect() {\n-    if grep -qF -- \"$2\" \"$work/$1.out\"; then\n-        echo \"ok    $1: $2\"\n-    else\n-        echo \"FAIL  $1: expected: $2\"\n-        sed 's/^/        /' \"$work/$1.out\"\n-        failures=$((failures + 1))\n-    fi\n-}\n-\n-refute() {\n-    if grep -qF -- \"$2\" \"$work/$1.out\"; then\n-        echo \"FAIL  $1: unexpected: $2\"\n-        failures=$((failures + 1))\n-    else\n-        echo \"ok    $1: no $2\"\n-    fi\n-}\n-\n-data=$work/data\n-XDG_DATA_HOME=$data bash \"$SCRIPT\" --dry-run >\"$work/fresh.out\" 2>&1\n-expect fresh \"would download: https://github.com/ggml-org/llama.cpp/releases/download/b11381/llama-b11381-bin-ubuntu-vulkan-x64.tar.gz -> $data/smart-commit/llama.cpp/llama-b11381.tar.gz (sha256 6f93bf41\"\n-expect fresh \"would run: tar -xzf $data/smart-commit/llama.cpp/llama-b11381.tar.gz\"\n-expect fresh \"qwen2.5-coder-1.5b-instruct-q4_k_m.gguf -> $data/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf (sha256 cc324af0\"\n-refute fresh \"sudo\"\n-if [ -e \"$data\" ]; then\n-    echo \"FAIL  fresh: --dry-run wrote $data\"\n-    failures=$((failures + 1))\n-else\n-    echo \"ok    fresh: nothing written\"\n-fi\n-\n-# llama.cpp already installed: only the model is left.\n-mkdir -p \"$data/smart-commit/llama.cpp/llama-b11381\"\n-printf '#!/bin/sh\\n' >\"$data/smart-commit/llama.cpp/llama-b11381/llama-server\"\n-chmod +x \"$data/smart-commit/llama.cpp/llama-b11381/llama-server\"\n-XDG_DATA_HOME=$data bash \"$SCRIPT\" --dry-run >\"$work/installed.out\" 2>&1\n-expect installed \"already installed\"\n-refute installed \"llama-b11381-bin-ubuntu-vulkan-x64.tar.gz\"\n-expect installed \"q4_k_m.gguf (sha256\"\n-\n-# --server-only: llama.cpp, not the model.\n-XDG_DATA_HOME=$work/data2 bash \"$SCRIPT\" --dry-run --server-only >\"$work/server.out\" 2>&1\n-expect server \"llama-b11381-bin-ubuntu-vulkan-x64.tar.gz\"\n-refute server \"gguf\"\n-\n-bash \"$SCRIPT\" --frobnicate >\"$work/usage.out\" 2>&1 && status=0 || status=$?\n-if [ \"$status\" = 2 ]; then\n-    echo \"ok    usage: unknown option exits 2\"\n-else\n-    echo \"FAIL  usage: exit $status\"\n-    failures=$((failures + 1))\n-fi\n-\n-if [ \"$failures\" -gt 0 ]; then\n-    echo \"$failures failure(s)\"\n-    exit 1\n-fi\n-echo \"all cases passed\"\n"
+      },
+      {
+        "path": "tests/scripts/test-setup.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          179
+        ],
+        "hunks": "@@ -1,179 +0,0 @@\n-#!/usr/bin/env bash\n-# Runs scripts/setup.sh without drivers on fake machines (a fake /sys and\n-# /proc/cpuinfo), with a stub smart-commit and\n-# stub setup-llamacpp.sh and export-model.sh: it lists the hardware, plans\n-# only what that hardware needs, exports the OpenVINO model only for Intel\n-# devices and runs the benchmark. No network, sudo or hardware.\n-#\n-#   tests/scripts/test-setup.sh\n-set -euo pipefail\n-\n-ROOT=$(cd \"$(dirname \"$0\")/../..\" && pwd)\n-work=$(mktemp -d)\n-trap 'rm -rf \"$work\"' EXIT\n-failures=0\n-\n-# The installed layout: prefix/bin and prefix/share/smart-commit/scripts.\n-prefix=$work/prefix\n-scripts=$prefix/share/smart-commit/scripts\n-mkdir -p \"$prefix/bin\" \"$scripts/export\"\n-cp \"$ROOT\"/scripts/{setup.sh,hardware.sh,setup-npu.sh,setup-gpu.sh,check-npu.sh} \"$scripts/\"\n-printf '#!/bin/sh\\necho \"stub smart-commit $*\"\\n' >\"$prefix/bin/smart-commit\"\n-printf '#!/bin/sh\\necho \"stub setup-llamacpp $*\"\\n' >\"$scripts/setup-llamacpp.sh\"\n-# Not exported yet: --check fails.\n-cat >\"$scripts/export-model.sh\" <<'STUB'\n-#!/bin/sh\n-[ \"$1\" = --check ] && exit 1\n-echo \"stub export-model $*\"\n-STUB\n-chmod +x \"$prefix/bin/smart-commit\" \"$scripts/setup-llamacpp.sh\" \"$scripts/export-model.sh\"\n-\n-# pci SYSFS SLOT CLASS VENDOR DEVICE DRIVER: adds a PCI device.\n-pci() {\n-    local dev=$1/bus/pci/devices/$2\n-    mkdir -p \"$dev\" \"$1/bus/pci/drivers/$6\"\n-    echo \"$3\" >\"$dev/class\"\n-    echo \"$4\" >\"$dev/vendor\"\n-    echo \"$5\" >\"$dev/device\"\n-    [ \"$6\" = none ] || ln -s \"../../../bus/pci/drivers/$6\" \"$dev/driver\"\n-}\n-\n-# cpu SYSFS VENDOR_ID MODEL: the CPU, in the tree's cpuinfo.\n-cpu() { printf 'vendor_id\\t: %s\\nmodel name\\t: %s\\n' \"$2\" \"$3\" >\"$1/cpuinfo\"; }\n-\n-amd_nvidia() {\n-    cpu \"$1\" AuthenticAMD \"AMD Ryzen 5 5500\"\n-    pci \"$1\" 0000:01:00.0 0x030000 0x10de 0x2507 nvidia\n-    mkdir -p \"$1/module/nvidia\"\n-    echo 595.104.02 >\"$1/module/nvidia/version\"\n-}\n-all_intel() {\n-    cpu \"$1\" GenuineIntel \"Intel(R) Core(TM) Ultra 5 225H\"\n-    pci \"$1\" 0000:00:02.0 0x030000 0x8086 0x7d51 xe\n-    pci \"$1\" 0000:00:0b.0 0x120000 0x8086 0xad1d intel_vpu\n-}\n-amd_only() {\n-    cpu \"$1\" AuthenticAMD \"AMD Ryzen 7 8845HS\"\n-    # A Ryzen AI NPU, which smart-commit does not use.\n-    pci \"$1\" 0000:c4:00.1 0x118000 0x1022 0x1502 amdxdna\n-}\n-old_amd() {\n-    cpu \"$1\" AuthenticAMD \"AMD FX-8350\"\n-    pci \"$1\" 0000:01:00.0 0x030000 0x1002 0x6798 radeon\n-    pci \"$1\" 0000:02:00.0 0x030000 0x10de 0x1c82 none\n-}\n-\n-# scenario NAME SETUP [OPTION...]: builds a fake machine with SETUP and runs\n-# setup.sh --no-drivers [OPTION...].\n-scenario() {\n-    local name=$1 setup=$2\n-    shift 2\n-    local machine=$work/$name\n-    mkdir -p \"$machine/sys/bus/pci/devices\"\n-    $setup \"$machine/sys\"\n-    SMART_COMMIT_SYSFS=$machine/sys SMART_COMMIT_CPUINFO=$machine/sys/cpuinfo \\\n-        SMART_COMMIT_OPENVINO_DIR=$machine/no-openvino SMART_COMMIT_DPKG_QUERY=false \\\n-        XDG_DATA_HOME=$machine/data \\\n-        bash \"$scripts/setup.sh\" --no-drivers \"$@\" </dev/null >\"$work/$name.out\" 2>&1 || {\n-        echo \"FAIL  $name: exited with $?\"\n-        failures=$((failures + 1))\n-    }\n-}\n-\n-expect() {\n-    if grep -qF -- \"$2\" \"$work/$1.out\"; then\n-        echo \"ok    $1: $2\"\n-    else\n-        echo \"FAIL  $1: expected: $2\"\n-        sed 's/^/        /' \"$work/$1.out\"\n-        failures=$((failures + 1))\n-    fi\n-}\n-\n-refute() {\n-    if grep -qF -- \"$2\" \"$work/$1.out\"; then\n-        echo \"FAIL  $1: unexpected: $2\"\n-        sed 's/^/        /' \"$work/$1.out\"\n-        failures=$((failures + 1))\n-    else\n-        echo \"ok    $1: no $2\"\n-    fi\n-}\n-\n-# The hardware comes before the plan, and the plan before any step.\n-in_order() {\n-    local first second\n-    first=$(grep -nF -- \"$2\" \"$work/$1.out\" | head -1 | cut -d: -f1)\n-    second=$(grep -nF -- \"$3\" \"$work/$1.out\" | head -1 | cut -d: -f1)\n-    if [ -n \"$first\" ] && [ -n \"$second\" ] && [ \"$first\" -lt \"$second\" ]; then\n-        echo \"ok    $1: \\\"$2\\\" before \\\"$3\\\"\"\n-    else\n-        echo \"FAIL  $1: expected \\\"$2\\\" before \\\"$3\\\"\"\n-        failures=$((failures + 1))\n-    fi\n-}\n-\n-scenario amd_nvidia amd_nvidia\n-expect amd_nvidia \"CPU  AMD Ryzen 5 5500\"\n-expect amd_nvidia \"-> cpu (llama.cpp)\"\n-expect amd_nvidia \"GPU  NVIDIA device 2507 [0000:01:00.0], driver nvidia 595.104.02\"\n-expect amd_nvidia \"-> vulkan (the NVIDIA driver's Vulkan ICD)\"\n-expect amd_nvidia \"NPU  none\"\n-expect amd_nvidia \"NVIDIA GPU (0000:01:00.0, proprietary driver 595.104.02)\"\n-expect amd_nvidia \"not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime\"\n-expect amd_nvidia \"stub setup-llamacpp\"\n-refute amd_nvidia \"OpenVINO GenAI 2026.3.1\"\n-refute amd_nvidia \"OpenVINO model\"\n-refute amd_nvidia \"stub export-model\"\n-in_order amd_nvidia \"==> Hardware\" \"==> Plan\"\n-in_order amd_nvidia \"==> Plan\" \"stub setup-llamacpp\"\n-\n-scenario all_intel all_intel --yes\n-expect all_intel \"CPU  Intel(R) Core(TM) Ultra 5 225H\"\n-expect all_intel \"-> intel-gpu (OpenVINO), vulkan (Mesa ANV)\"\n-expect all_intel \"NPU  Intel NPU\"\n-expect all_intel \"-> npu (OpenVINO)\"\n-expect all_intel \"Intel NPU: the NPU driver 1.38.0 and Level Zero 1.32.0\"\n-expect all_intel \"OpenVINO GenAI 2026.3.1 (sudo), for the Intel NPU or GPU\"\n-expect all_intel \"and the model exported for it here, from Hugging Face\"\n-expect all_intel \"Intel GPU (0000:00:02.0, driver xe)\"\n-expect all_intel \"stub export-model\"\n-in_order all_intel \"==> OpenVINO model\" \"stub export-model\"\n-\n-# Without --yes and without a terminal, the export is not started.\n-scenario intel_no_terminal all_intel\n-expect intel_no_terminal \"Export the model for OpenVINO here\"\n-expect intel_no_terminal \"[skipped: no terminal; run setup.sh again to do it]\"\n-refute intel_no_terminal \"stub export-model\"\n-refute all_intel \"not needed\"\n-\n-scenario amd_only amd_only\n-expect amd_only \"GPU  none\"\n-expect amd_only \"NPU  AMD Ryzen AI (XDNA)\"\n-expect amd_only \"-> none: not supported\"\n-expect amd_only \"not needed: OpenVINO\"\n-expect amd_only \"stub setup-llamacpp\"\n-refute amd_only \"OpenVINO model\"\n-refute amd_only \"stub export-model\"\n-\n-scenario old_amd old_amd\n-expect old_amd \"-> none: the old radeon driver has no Vulkan; amdgpu does\"\n-expect old_amd \"-> none until a kernel driver is bound\"\n-expect old_amd \"has no driver bound\"\n-expect old_amd \"stub setup-llamacpp\"\n-\n-for name in amd_nvidia all_intel amd_only old_amd; do\n-    # The benchmark runs unless the render group was just added; both are fine.\n-    if grep -q \"Benchmark postponed\" \"$work/$name.out\"; then\n-        expect \"$name\" \"smart-commit bench\"\n-    else\n-        expect \"$name\" \"stub smart-commit bench\"\n-    fi\n-    expect \"$name\" \"smart-commit hook install\"\n-done\n-\n-if [ \"$failures\" -gt 0 ]; then\n-    echo \"$failures failure(s)\"\n-    exit 1\n-fi\n-echo \"all scenarios passed\"\n"
+      },
+      {
+        "path": "tests/setup_cli.rs",
+        "old_path": null,
+        "lines": [
+          356,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,356 @@\n+//! `smart-commit setup` as text (`--yes`, or without a terminal), on fake\n+//! machines (a fake /sys and /proc/cpuinfo) with stub setup scripts: it lists\n+//! the hardware, plans only what that hardware needs, exports the OpenVINO\n+//! model only for Intel devices, and says what failed instead of stopping.\n+//! No network, sudo or hardware.\n+\n+use std::path::{Path, PathBuf};\n+use std::process::{Command, Stdio};\n+\n+use tempfile::TempDir;\n+\n+mod common;\n+\n+struct Machine {\n+    dir: TempDir,\n+}\n+\n+/// Writing a file and running it while another test's child process still\n+/// holds the descriptor fails with \"text file busy\"; so one test at a time\n+/// creates machines and spawns processes.\n+static SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());\n+\n+fn serial() -> std::sync::MutexGuard<'static, ()> {\n+    SERIAL\n+        .lock()\n+        .unwrap_or_else(|poisoned| poisoned.into_inner())\n+}\n+\n+fn pci(sysfs: &Path, slot: &str, class: &str, vendor: &str, device: &str, driver: &str) {\n+    let dev = sysfs.join(\"bus/pci/devices\").join(slot);\n+    std::fs::create_dir_all(&dev).unwrap();\n+    std::fs::create_dir_all(sysfs.join(\"bus/pci/drivers\").join(driver)).unwrap();\n+    std::fs::write(dev.join(\"class\"), format!(\"{class}\\n\")).unwrap();\n+    std::fs::write(dev.join(\"vendor\"), format!(\"{vendor}\\n\")).unwrap();\n+    std::fs::write(dev.join(\"device\"), format!(\"{device}\\n\")).unwrap();\n+    if driver != \"none\" {\n+        std::os::unix::fs::symlink(\n+            format!(\"../../../bus/pci/drivers/{driver}\"),\n+            dev.join(\"driver\"),\n+        )\n+        .unwrap();\n+    }\n+}\n+\n+fn cpu(sysfs: &Path, vendor: &str, model: &str) {\n+    std::fs::write(\n+        sysfs.join(\"cpuinfo\"),\n+        format!(\"vendor_id\\t: {vendor}\\nmodel name\\t: {model}\\n\"),\n+    )\n+    .unwrap();\n+}\n+\n+fn amd_nvidia(sysfs: &Path) {\n+    cpu(sysfs, \"AuthenticAMD\", \"AMD Ryzen 5 5500\");\n+    pci(\n+        sysfs,\n+        \"0000:01:00.0\",\n+        \"0x030000\",\n+        \"0x10de\",\n+        \"0x2507\",\n+        \"nvidia\",\n+    );\n+    std::fs::create_dir_all(sysfs.join(\"module/nvidia\")).unwrap();\n+    std::fs::write(sysfs.join(\"module/nvidia/version\"), \"595.104.02\\n\").unwrap();\n+}\n+\n+fn all_intel(sysfs: &Path) {\n+    cpu(sysfs, \"GenuineIntel\", \"Intel(R) Core(TM) Ultra 5 225H\");\n+    pci(sysfs, \"0000:00:02.0\", \"0x030000\", \"0x8086\", \"0x7d51\", \"xe\");\n+    pci(\n+        sysfs,\n+        \"0000:00:0b.0\",\n+        \"0x120000\",\n+        \"0x8086\",\n+        \"0xad1d\",\n+        \"intel_vpu\",\n+    );\n+}\n+\n+fn amd_only(sysfs: &Path) {\n+    cpu(sysfs, \"AuthenticAMD\", \"AMD Ryzen 7 8845HS\");\n+    // A Ryzen AI NPU, which smart-commit does not use.\n+    pci(\n+        sysfs,\n+        \"0000:c4:00.1\",\n+        \"0x118000\",\n+        \"0x1022\",\n+        \"0x1502\",\n+        \"amdxdna\",\n+    );\n+}\n+\n+fn old_amd(sysfs: &Path) {\n+    cpu(sysfs, \"AuthenticAMD\", \"AMD FX-8350\");\n+    pci(\n+        sysfs,\n+        \"0000:01:00.0\",\n+        \"0x030000\",\n+        \"0x1002\",\n+        \"0x6798\",\n+        \"radeon\",\n+    );\n+    pci(\n+        sysfs,\n+        \"0000:02:00.0\",\n+        \"0x030000\",\n+        \"0x10de\",\n+        \"0x1c82\",\n+        \"none\",\n+    );\n+}\n+\n+impl Machine {\n+    fn new(build: fn(&Path)) -> Self {\n+        let dir = TempDir::new().unwrap();\n+        let sysfs = dir.path().join(\"sys\");\n+        std::fs::create_dir_all(sysfs.join(\"bus/pci/devices\")).unwrap();\n+        build(&sysfs);\n+        // The installed layout: prefix/bin and prefix/share/smart-commit/scripts.\n+        let prefix = dir.path().join(\"prefix\");\n+        let scripts = prefix.join(\"share/smart-commit/scripts\");\n+        std::fs::create_dir_all(prefix.join(\"bin\")).unwrap();\n+        std::fs::create_dir_all(&scripts).unwrap();\n+        std::fs::copy(\n+            env!(\"CARGO_BIN_EXE_smart-commit\"),\n+            prefix.join(\"bin/smart-commit\"),\n+        )\n+        .unwrap();\n+        let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"scripts\");\n+        std::fs::copy(root.join(\"setup-gpu.sh\"), scripts.join(\"setup-gpu.sh\")).unwrap();\n+        let stub = |name: &str, body: &str| {\n+            use std::os::unix::fs::PermissionsExt;\n+            let path = scripts.join(name);\n+            std::fs::write(&path, format!(\"#!/bin/sh\\n{body}\\n\")).unwrap();\n+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();\n+        };\n+        // Neither the NPU stack nor the export is there yet.\n+        stub(\"check-npu.sh\", \"exit 1\");\n+        stub(\"setup-npu.sh\", \"echo \\\"stub setup-npu $*\\\"\");\n+        stub(\n+            \"export-model.sh\",\n+            \"[ \\\"$1\\\" = --check ] && exit 1\\necho \\\"stub export-model $*\\\"\",\n+        );\n+        Self { dir }\n+    }\n+\n+    fn binary(&self) -> PathBuf {\n+        self.dir.path().join(\"prefix/bin/smart-commit\")\n+    }\n+\n+    /// Runs `setup` with `args`, no terminal; its output.\n+    fn setup(&self, args: &[&str]) -> String {\n+        let sysfs = self.dir.path().join(\"sys\");\n+        let mut command = Command::new(self.binary());\n+        let output = common::isolate(&mut command)\n+            .arg(\"setup\")\n+            .args(args)\n+            .env(\"SMART_COMMIT_SYSFS\", &sysfs)\n+            .env(\"SMART_COMMIT_CPUINFO\", sysfs.join(\"cpuinfo\"))\n+            .env(\n+                \"SMART_COMMIT_OPENVINO_DIR\",\n+                self.dir.path().join(\"no-openvino\"),\n+            )\n+            .env(\"SMART_COMMIT_DPKG_QUERY\", \"false\")\n+            .env(\"XDG_DATA_HOME\", self.dir.path().join(\"data\"))\n+            .env(\"XDG_CONFIG_HOME\", self.dir.path().join(\"config\"))\n+            .env(\n+                \"SMART_COMMIT_LLAMACPP_URL\",\n+                \"file:///nonexistent/llama.tar.gz\",\n+            )\n+            .env(\"SMART_COMMIT_HF_BASE\", \"file:///nonexistent/hf\")\n+            .stdin(Stdio::null())\n+            .output()\n+            .unwrap();\n+        let text = format!(\n+            \"{}{}\",\n+            String::from_utf8_lossy(&output.stdout),\n+            String::from_utf8_lossy(&output.stderr)\n+        );\n+        assert!(output.status.success(), \"setup failed:\\n{text}\");\n+        text\n+    }\n+}\n+\n+fn has(output: &str, text: &str) {\n+    assert!(output.contains(text), \"expected {text:?} in:\\n{output}\");\n+}\n+\n+fn lacks(output: &str, text: &str) {\n+    assert!(!output.contains(text), \"unexpected {text:?} in:\\n{output}\");\n+}\n+\n+/// The hardware comes before the plan, and the plan before any step.\n+fn in_order(output: &str, first: &str, second: &str) {\n+    let at = |text: &str| {\n+        output\n+            .find(text)\n+            .unwrap_or_else(|| panic!(\"no {text:?} in:\\n{output}\"))\n+    };\n+    assert!(\n+        at(first) < at(second),\n+        \"{first:?} before {second:?} in:\\n{output}\"\n+    );\n+}\n+\n+#[test]\n+fn an_amd_cpu_with_an_nvidia_gpu_needs_llama_cpp_and_the_vulkan_driver_only() {\n+    let _serial = serial();\n+    let out = Machine::new(amd_nvidia).setup(&[\"--no-bench\"]);\n+    has(&out, \"CPU  AMD Ryzen 5 5500\");\n+    has(&out, \"-> cpu (llama.cpp)\");\n+    has(\n+        &out,\n+        \"GPU  NVIDIA device 2507 [0000:01:00.0], driver nvidia 595.104.02\",\n+    );\n+    has(&out, \"-> vulkan (the NVIDIA driver's Vulkan ICD)\");\n+    has(&out, \"NPU  none\");\n+    has(\n+        &out,\n+        \"NVIDIA GPU (0000:01:00.0, proprietary driver 595.104.02)\",\n+    );\n+    has(\n+        &out,\n+        \"Not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime\",\n+    );\n+    has(&out, \"==> llama.cpp\");\n+    lacks(&out, \"OpenVINO GenAI 2026.3.1\");\n+    lacks(&out, \"OpenVINO model\");\n+    lacks(&out, \"stub export-model\");\n+    in_order(&out, \"==> Hardware\", \"==> Plan\");\n+    in_order(&out, \"==> Plan\", \"==> llama.cpp\");\n+    // Nothing needing sudo runs without being asked, and nothing asks here.\n+    has(\n+        &out,\n+        \"Set up the GPUs as planned above (may use sudo)? [skipped: no terminal\",\n+    );\n+}\n+\n+#[test]\n+fn an_intel_machine_exports_the_openvino_model_when_told_to() {\n+    let _serial = serial();\n+    let out = Machine::new(all_intel).setup(&[\"--yes\", \"--no-drivers\", \"--no-bench\"]);\n+    has(&out, \"CPU  Intel(R) Core(TM) Ultra 5 225H\");\n+    has(&out, \"-> intel-gpu (OpenVINO), vulkan (Mesa ANV)\");\n+    has(&out, \"NPU  Intel NPU\");\n+    has(&out, \"-> npu (OpenVINO)\");\n+    has(&out, \"the model for OpenVINO\");\n+    has(&out, \"stub export-model\");\n+    lacks(&out, \"Not needed\");\n+    in_order(&out, \"==> OpenVINO model\", \"stub export-model\");\n+}\n+\n+#[test]\n+fn without_yes_and_without_a_terminal_the_export_is_not_started() {\n+    let _serial = serial();\n+    let out = Machine::new(all_intel).setup(&[\"--no-drivers\", \"--no-bench\"]);\n+    has(&out, \"Export the model for OpenVINO here\");\n+    has(\n+        &out,\n+        \"[skipped: no terminal; run `smart-commit setup` again to do it]\",\n+    );\n+    lacks(&out, \"stub export-model\");\n+}\n+\n+#[test]\n+fn an_intel_machine_asks_before_its_sudo_steps() {\n+    let _serial = serial();\n+    let out = Machine::new(all_intel).setup(&[\"--no-bench\"]);\n+    has(\n+        &out,\n+        \"Install the Intel NPU driver and OpenVINO (uses sudo)? [skipped: no terminal\",\n+    );\n+    has(\n+        &out,\n+        \"Set up the GPUs as planned above (may use sudo)? [skipped: no terminal\",\n+    );\n+    lacks(&out, \"stub setup-npu\");\n+    let yes = Machine::new(all_intel).setup(&[\"--yes\", \"--no-bench\"]);\n+    has(&yes, \"stub setup-npu\");\n+}\n+\n+#[test]\n+fn an_amd_npu_is_listed_as_unsupported_and_needs_nothing() {\n+    let _serial = serial();\n+    let out = Machine::new(amd_only).setup(&[\"--no-bench\"]);\n+    has(&out, \"GPU  none\");\n+    has(&out, \"NPU  AMD Ryzen AI (XDNA)\");\n+    has(&out, \"-> none: not supported\");\n+    has(&out, \"Not needed: OpenVINO\");\n+    has(&out, \"==> llama.cpp\");\n+    lacks(&out, \"OpenVINO model\");\n+    lacks(&out, \"stub export-model\");\n+}\n+\n+#[test]\n+fn gpus_without_vulkan_are_explained() {\n+    let _serial = serial();\n+    let out = Machine::new(old_amd).setup(&[\"--no-bench\"]);\n+    has(\n+        &out,\n+        \"-> none: the old radeon driver has no Vulkan; amdgpu does\",\n+    );\n+    has(&out, \"-> none until a kernel driver is bound\");\n+    has(&out, \"has no driver bound\");\n+    has(&out, \"==> llama.cpp\");\n+}\n+\n+#[test]\n+fn steps_that_fail_are_reported_and_the_setup_goes_on() {\n+    let _serial = serial();\n+    // The URLs are unreachable: the setup says so and still finishes.\n+    let out = Machine::new(amd_nvidia).setup(&[\"--no-bench\", \"--no-drivers\"]);\n+    has(&out, \"Could not install llama.cpp\");\n+    has(&out, \"Could not install qwen2.5-coder-1.5b\");\n+    has(&out, \"run `smart-commit setup` again\");\n+    has(&out, \"==> Done\");\n+    in_order(&out, \"==> llama.cpp\", \"==> Done\");\n+}\n+\n+#[test]\n+fn the_benchmark_runs_last_unless_the_render_group_is_pending() {\n+    let _serial = serial();\n+    let out = Machine::new(amd_only).setup(&[\"--no-drivers\"]);\n+    // Either, depending on the user running the test.\n+    assert!(\n+        out.contains(\"==> Benchmark\\n\") || out.contains(\"==> Benchmark postponed\"),\n+        \"{out}\"\n+    );\n+    in_order(&out, \"==> llama.cpp\", \"==> Benchmark\");\n+    in_order(&out, \"==> Benchmark\", \"==> Done\");\n+    has(&out, \"smart-commit hook install\");\n+}\n+\n+#[test]\n+fn an_update_only_installs_llama_cpp() {\n+    let _serial = serial();\n+    let machine = Machine::new(amd_only);\n+    let mut command = Command::new(machine.binary());\n+    let output = common::isolate(&mut command)\n+        .args([\"setup\", \"--llamacpp-only\"])\n+        .env(\"XDG_DATA_HOME\", machine.dir.path().join(\"data\"))\n+        .env(\n+            \"SMART_COMMIT_LLAMACPP_URL\",\n+            \"file:///nonexistent/llama.tar.gz\",\n+        )\n+        .stdin(Stdio::null())\n+        .output()\n+        .unwrap();\n+    assert!(!output.status.success());\n+    let err = String::from_utf8_lossy(&output.stderr);\n+    assert!(\n+        err.contains(\"cannot download file:///nonexistent/llama.tar.gz\"),\n+        \"{err}\"\n+    );\n+    assert!(!String::from_utf8_lossy(&output.stdout).contains(\"==> Hardware\"));\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(deps): add the LLaMA-CPP backend",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, feat, chore.\n- Scopes used here: training, deps. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(training): remove the Python data tools\nfeat(training): select, score and build the scenarios with sc-training\nfeat(training): build the training inputs with sc-training build-inputs\nchore(deps): add the training tools crate and its dependencies\nrefactor: write the release notes in sc-tools instead of a shell script\n",
+          "user": "Files changed:\n.github/workflows/ci.yml | +0 -2\nAGENTS.md | +1 -1\ndocs/configuration.md | +4 -4\ndocs/devices.md | +4 -5\ndocs/reproducibility.md | +1 -1\ndocs/usage.md | +2 -1\ninstall.sh | +9 -8\nscripts/hardware.sh | deleted, +0 -147\nscripts/package.sh | +1 -2\nscripts/setup-gpu.sh | +19 -5\nscripts/setup-llamacpp.sh | deleted, +0 -95\nscripts/setup.sh | deleted, +0 -147\nsrc/backend/llamacpp/install.rs | new, +235 -0\nsrc/backend/llamacpp/mod.rs | +1 -0\nsrc/backend/llamacpp/tests.rs | +0 -6\nsrc/cli/guided_setup.rs | +241 -27\nsrc/cli/mod.rs | +6 -1\nsrc/cli/settings.rs | comments only, +2 -2\nsrc/hardware/fake.rs | comments only, +1 -2\nsrc/hardware/mod.rs | comments only, +1 -4\nsrc/models/install.rs | +23 -11\nsrc/models/tests.rs | +1 -5\nsrc/setup.rs | comments only, +1 -1\ntests/cli.rs | +2 -2\ntests/hardware_inventory.rs | deleted, +0 -132\ntests/scripts/test-install-data.sh | +6 -8\ntests/scripts/test-install.sh | +2 -3\n... and 4 more files\n\nDiff:\n--- scripts/package.sh\n@@ -56,4 +56,3 @@ install -m 755 \"$binary/smart-commit\" \"$stage/bin/\"\n rm -rf \"$binary\"\n-for script in setup.sh hardware.sh setup-llamacpp.sh setup-npu.sh setup-gpu.sh check-npu.sh \\\n-    export-model.sh; do\n[... 2 more lines]\n--- src/backend/llamacpp/mod.rs\n@@ -14,2 +14,3 @@\n mod http;\n+pub mod install;\n #[cfg(test)]\n--- src/backend/llamacpp/tests.rs\n@@ -323,8 +323,2 @@ fn description_names_build_device_and_model() {\n \n-#[test]\n-fn setup_script_installs_what_the_code_expects() {\n[... 5 more lines]\n--- src/hardware/fake.rs\n@@ -1,3 +1,2 @@\n-//! Fake machines: a sysfs tree and a cpuinfo, like\n-//! `tests/scripts/test-setup.sh` builds.\n+//! Fake machines: a sysfs tree and a cpuinfo.\n \n--- src/setup.rs\n@@ -1,3 +1,3 @@\n //! What `smart-commit setup` does on a machine: the steps its hardware\n-//! needs, and only those, as `scripts/setup.sh` plans them.\n+//! needs, and only those, as `smart-commit setup` plans them.\n //!\n\n(28 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(deps): add the LLaMA-CPP backend",
+        "rejected": null
+      }
+    ]
+  }
+}

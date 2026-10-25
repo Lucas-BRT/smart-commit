@@ -45,8 +45,8 @@ pub(super) fn stop_kept_after(key: &str) -> Option<String> {
     (stopped > 0).then(|| format!("stopped the model kept loaded, since {key} changed"))
 }
 
-/// The real machine, or the fake one tests point at (the variables
-/// `scripts/hardware.sh` reads too).
+/// The real machine, or the fake one tests point at (`SMART_COMMIT_SYSFS`
+/// is read by `scripts/setup-gpu.sh` too).
 pub(super) fn hardware_sources() -> hardware::Sources {
     let real = hardware::Sources::real();
     let var = |name: &str| std::env::var_os(name).map(PathBuf::from);

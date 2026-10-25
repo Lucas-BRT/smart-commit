@@ -1,6 +1,6 @@
 # Hypotheses and measurements
 
-Every number comes from `score.py` on `data/eval-v1` (500 commits from 70
+Every number comes from `sc-training score` on `data/eval-v1` (500 commits from 70
 repositories of CommitChronicle's test split: 250 Conventional from 7
 mostly-Conventional repositories, 250 from 63 others), generated with
 `smart-commit eval --device vulkan` on the RTX 3050. With n = 250, a rate
@@ -116,7 +116,7 @@ map of H4, so trained on the prompt without it): a learning curve on the
 0.5B with nested subsets (`nest.py`) of 2.5k, 5k, 20k and 40k examples,
 the 40k set on the 1.5B, and h3a, the 0.5B on 9,278 examples: H1's set
 with the unsupported and version-only targets dropped and nothing chosen
-in their place, `filter_supported.py data/h1 data/h3a` (first made with an
+in their place, `sc-training filter-supported data/h1 data/h3a` (first made with an
 unrecorded inline script; the versioned one rebuilds `inputs.jsonl`,
 `meta.jsonl` and the bundle's `examples.jsonl`, sha256 `27747f54…`, byte for
 byte). Same recipe as H1/H2 otherwise.
@@ -248,7 +248,7 @@ hello world program`) and a one-line change adding a `println!` with a sum.
 Every model tried, base and fine-tuned, 0.5B and 1.5B, answered with the
 history subject verbatim; H1 came closest (`... with a print statement`).
 
-Cause in our data: `select.py` requires `--min-history 10`, for training
+Cause in our data: `sc-training select` requires `--min-history 10`, for training
 and for eval-v1, so neither has ever seen a young repository. With one
 example and "follow their style", repeating it is the easy answer.
 
@@ -257,7 +257,7 @@ example and "follow their style", repeating it is the easy answer.
   retried with a note naming it; repeated again, it falls back to the file
   list. Nothing copied reaches the user, but the fallback is generic.
 - **eval-short**: young repositories, 1–5 history subjects, from test
-  shards 2–5 (`select.py --min-history 1 --max-history 5 --per-repo 5`):
+  shards 2–5 (`sc-training select --min-history 1 --max-history 5 --per-repo 5`):
   47 Conventional commits from 13 repositories, 150 others from 132.
   Too few Conventional commits for type_match; it measures copying.
 
@@ -357,18 +357,18 @@ v0.1 set), on the 25,652 targets matching `type(scope)!: `:
   With no listed scope fitting `mise.toml`, the 0.5B takes the most
   frequent one, the 1.5B makes one from the file name.
 
-- **Release bumps.** `build_inputs.py` drops every release bump
+- **Release bumps.** `sc-training build-inputs` drops every release bump
   (`chore: release …`, version-only descriptions), so the models never saw
   one. Keep those whose version is in the diff (a `version = ` line), where
   the target is predictable; keep dropping version-only ones without it.
-  Built: `build_inputs.py --releases` keeps only those (the filters stay
+  Built: `sc-training build-inputs --releases` keeps only those (the filters stay
   as they are, so earlier sets rebuild the same): 7,639 of the train
   split's 7.66M commits, from 988 repositories, 1,125 Conventional (1,023
   `chore`). Selected: `data/h7`, 219 Conventional and 200 free, at most 5
-  per repository (`select.py --releases`), about 2% of a 20k bundle.
+  per repository (`sc-training select --releases`), about 2% of a 20k bundle.
 - **Data.** Raise the share of targets whose type is outside the list and
   of unscoped targets under a fully scoped history, by selection in
-  `select.py`, not by editing targets. Train with the scope map of H4
+  `sc-training select`, not by editing targets. Train with the scope map of H4
   (H4b) so "no scope fits" is visible in the prompt.
 - **Prompt, if data is not enough.** List the standard Conventional types
   after the ones used here, so `chore` and `build` are always offered.
@@ -416,12 +416,12 @@ grouped by path rules: docs, tests, CI, build files, else code):
   errors (`fix→feat` alone 30) and 25 of the 1.5B's 89; then `fix→chore`
   (10, 11) and `refactor→feat`.
 - The 0.5B finds 51% of the `fix` commits and 79% of the `feat` ones. The
-  selection caps each type at 30% (`select.py --max-type-share 0.3`). Less
+  selection caps each type at 30% (`sc-training select --max-type-share 0.3`). Less
   than it seemed: without the cap, `fix` is 34.9% of the same selection
   (a cap of 0.45 does not bind and gives the same commits), and the 41% of
   eval-v1 is its own: 20% to 70% across its 7 Conventional repositories.
   The cap moves `fix` by 5 points, not 11.
-- `score.py` now reports each type's precision, recall and F1 and their
+- `sc-training score` now reports each type's precision, recall and F1 and their
   mean, `type_macro_f1`: base 1.5B 0.172, v0.1 0.5B 0.537, v0.1 1.5B
   0.548 (type_match 0.480, 0.588, 0.648 on the same traces). Spellings of
   one type are folded (`tests` is `test`) in selection and scoring; the
@@ -605,7 +605,7 @@ deleted, renamed, only reformatted or only commented. `--diff annotated`
 says so (src/annotate.rs). eval-v1, Vulkan, greedy, each model with its
 best rules (0.5B v0.2 `--rules omitted`, the others `--rules full`), with
 the near-copy and language retries and the typed fallback of the same
-branch, paired with `score.py --against` against the plain list:
+branch, paired with `sc-training score --against` against the plain list:
 
 | Model | type_match plain → annotated | Paired | type_macro_f1 |
 |---|---|---|---|
@@ -624,7 +624,7 @@ branch, paired with `score.py --against` against the plain list:
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
-  hand; `unsupported` and `ungrounded` in `score.py` are the cheap checks.
+  hand; `unsupported` and `ungrounded` in `sc-training score` are the cheap checks.
 - A body in the target when the real commit has one.
 - A second epoch instead of more data (H3's curve flattens at about 20k).
 - Portuguese and gitmoji targets: v0.1 is English, and eval-v1 has neither.

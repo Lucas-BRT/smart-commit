@@ -106,7 +106,7 @@ sources):
 | Level Zero loader (`libze1`) | 1.32.0, from the PPA snapshot the driver release names |
 | OpenVINO GenAI archive | 2026.3.1, the version the NPU driver was validated with |
 | Intel GPU compute runtime | intel-opencl-icd 26.27.39122.14, IGC 2.38.5, gmmlib 22.10.0, same snapshot |
-| llama.cpp | b11381, Vulkan build (it runs the `cpu` device too), in `setup-llamacpp.sh` |
+| llama.cpp | b11381, Vulkan build (it runs the `cpu` device too), in `src/backend/llamacpp/install.rs` |
 | Qwen2.5-Coder-1.5B-Instruct | revision `2e1fd397` (OpenVINO export), `f86cb2c1` (GGUF) |
 
 To change one, change its version and hash together.

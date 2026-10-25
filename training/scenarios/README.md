@@ -8,26 +8,28 @@ the commit.
 
 A case is data: a base repository, a list of operations, a target. Building
 it runs smart-commit's mock backend on the result and keeps the trace's
-inputs, so the cases come out in the format of `select.py`:
+inputs, so the cases come out in the format of `sc-training select`:
 
 ```bash
 SC=../target/release/smart-commit
-uv run --locked python -I build_scenarios.py list                      # cases per level and split
-uv run --locked python -I build_scenarios.py build data/scenarios-eval $SC --split eval
-uv run --locked python -I build_scenarios.py build data/scenarios-train $SC --split train
+SCT=../target/release/sc-training   # cargo build --locked --release -p smart-commit-training
+$SCT scenarios list                      # cases per level and split
+$SCT scenarios build data/scenarios-eval $SC --split eval
+$SCT scenarios build data/scenarios-train $SC --split train
 
 # Evaluate, like eval-v1: one section per level besides free/conventional.
 XDG_CONFIG_HOME=$C/empty-config SMART_COMMIT_GGUF=... \
   $SC eval data/scenarios-eval/inputs.jsonl --device vulkan > data/scenarios-eval/h1.jsonl
-uv run --locked python -I score.py data/scenarios-eval data/scenarios-eval/h1.jsonl
+$SCT score data/scenarios-eval data/scenarios-eval/h1.jsonl
 
 # Train: examples like any selection, then appended to the run's examples.
 uv run --locked python -I make_examples.py data/scenarios-train $SC
 cat data/h1/examples.jsonl data/scenarios-train/examples.jsonl > data/h1s/examples.jsonl
 ```
 
-`uv run --locked python -I test_scenarios.py $SC` checks the cases and the
-builder, and builds everything twice, requiring identical files.
+`cargo test --locked -p smart-commit-training` checks the cases and the
+builder; with `-- --ignored` (and `cargo build` first) it also builds everything
+twice, requiring identical files.
 
 ## Train or eval
 
@@ -62,7 +64,7 @@ so the hashes are the same on every machine.
 | `cafeteria` | Python, Portuguese identifiers | free, Portuguese, informal |
 | `ledger` | TypeScript | Conventional Commits with scopes, English |
 
-`build_scenarios.py show DIR --repo cafeteria` leaves a base repository in
+`sc-training scenarios show DIR --repo cafeteria` leaves a base repository in
 DIR, and `show DIR --case ID` a case applied on it, to look at while
 writing cases.
 
@@ -100,7 +102,7 @@ must refuse, e.g. nothing staged) and `issue` (a known bug: the build
 reports the case instead of failing).
 
 `expect` patterns are regular expressions matched on the subject in
-lowercase without accents; `score.py` reports them as `expected`. `{{name}}`
+lowercase without accents; `sc-training score` reports them as `expected`. `{{name}}`
 is replaced only in cases with variants, so code keeps its own braces.
 
 ## Operations

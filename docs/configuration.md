@@ -123,10 +123,10 @@ generation to that file, see [reproducibility](reproducibility.md)).
 
 A few more exist for tests and scripts, not for configuring a machine:
 `SMART_COMMIT_SYSFS`, `SMART_COMMIT_CPUINFO` and `SMART_COMMIT_OPENVINO_DIR`
-point the hardware inventory at a fake tree (`scripts/hardware.sh` reads them
-too), `SMART_COMMIT_HF_BASE` replaces the Hugging Face URL models are
-downloaded from, and `smart-commit setup` sets `SMART_COMMIT_BIN` for the
-scripts it runs.
+point the hardware inventory at a fake tree (`scripts/setup-gpu.sh` reads
+`SMART_COMMIT_SYSFS` too), `SMART_COMMIT_HF_BASE` replaces the Hugging Face
+URL models are downloaded from, and `SMART_COMMIT_LLAMACPP_URL` the one
+llama.cpp is (the pinned SHA-256 is still required).
 
 ## Rules
 

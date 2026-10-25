@@ -1,0 +1,19 @@
+[package]
+name = "smart-commit-tools"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+description = "Tools for working on smart-commit; not part of the release"
+publish = false
+
+[[bin]]
+name = "sc-tools"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+smart-commit = { path = ".." }
+
+[dev-dependencies]
+tempfile = "3"

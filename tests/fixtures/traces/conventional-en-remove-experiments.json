@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 3da2923",
+      "test(fixtures): trace twelve messages from the module splits and the docs",
+      "test(docs): check that links between the pages and their headings resolve",
+      "docs: gather every timing in one page, measurements.md",
+      "docs: bring the roadmap and the training pages up to v0.2",
+      "test(docs): check that the pages name real paths and list every command",
+      "docs: fix paths of the split modules and two misplaced passages"
+    ],
+    "history_files": [
+      [
+        "docs/roadmap.md",
+        "scripts/experiments/README.md",
+        "scripts/experiments/cand_gpu.py",
+        "scripts/experiments/gpu_precision.py",
+        "scripts/experiments/npu_hints.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/roadmap.md",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/experiments/README.md",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/experiments/cand_gpu.py",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/experiments/gpu_precision.py",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/experiments/npu_hints.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/roadmap.md",
+        "old_path": null,
+        "lines": [
+          0,
+          2
+        ],
+        "hunks": "@@ -97,4 +97,2 @@ NPU does not take. Models are exported with the pinned toolchain instead.\n \n-The exploratory scripts behind these numbers are in `scripts/experiments/`.\n-\n ## Sources\n"
+      },
+      {
+        "path": "scripts/experiments/README.md",
+        "old_path": null,
+        "lines": [
+          0,
+          34
+        ],
+        "hunks": "@@ -1,34 +0,0 @@\n-# Exploratory experiments (2026-10-18)\n-\n-The scripts behind the device and model measurements in\n-[docs/devices.md](../../docs/devices.md) and\n-[docs/roadmap.md](../../docs/roadmap.md). They are exploratory: Python,\n-outside smart-commit, written to decide what to build. Device comparisons for\n-users come from `smart-commit bench`.\n-\n-They all run the prompts of the trace fixtures (`tests/fixtures/traces`), so\n-the inputs are the same on every machine.\n-\n-## Environment\n-\n-```bash\n-uv venv --python 3.11.17 /tmp/genai-venv\n-uv pip install --python /tmp/genai-venv/bin/python \"openvino-genai==2026.3.1.0\"\n-```\n-\n-To try the Intel GPU without installing its runtime system-wide: extract the\n-`.deb` files of `intel-opencl-icd`, `libigc2`, `libigdfcl2` and `libigdgmm12`\n-(snapshot `20260830T100000Z` of the `kobuk-team/intel-graphics` PPA) into a\n-directory `ROOT`, run `ldconfig -n ROOT/usr/lib/x86_64-linux-gnu` (without\n-the soname links the runtime fails with `CL_OUT_OF_HOST_MEMORY`), write a\n-`vendors/intel.icd` that points at\n-`ROOT/usr/lib/x86_64-linux-gnu/intel-opencl/libigdrcl.so`, and export\n-`OCL_ICD_VENDORS=vendors LD_LIBRARY_PATH=ROOT/usr/lib/x86_64-linux-gnu`.\n-\n-## Scripts\n-\n-| Script | Measures |\n-|---|---|\n-| `npu_hints.py MODEL FIXTURES CACHE` | NPU: `NPUW_LLM_PREFILL_CHUNK_SIZE` and `GENERATE_HINT`, with cold and warm caches |\n-| `gpu_precision.py MODEL FIXTURES CACHE` | GPU: f16 (the default) against f32 |\n-| `cand_gpu.py MODEL FIXTURES CACHE think\\|nothink` | GPU: load, time to first token, time per token, memory and replies of a model |\n"
+      },
+      {
+        "path": "scripts/experiments/cand_gpu.py",
+        "old_path": null,
+        "lines": [
+          0,
+          18
+        ],
+        "hunks": "@@ -1,18 +0,0 @@\n-import json, sys, time, glob, os, resource\n-import openvino_genai as g\n-model, fixtures, cache, think = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4] == \"think\"\n-prompts = [a[\"prompt\"] for p in sorted(glob.glob(fixtures + \"/*.json\")) for a in json.load(open(p))[\"generation\"][\"attempts\"]]\n-t = time.time()\n-pipe = g.LLMPipeline(model, \"GPU\", CACHE_DIR=cache)\n-load = time.time() - t\n-cfg = g.GenerationConfig(max_new_tokens=128, do_sample=False)\n-ttft, tpot, total, out = [], [], [], []\n-for p in prompts:\n-    h = g.ChatHistory(); h.append({\"role\": \"system\", \"content\": p[\"system\"]}); h.append({\"role\": \"user\", \"content\": p[\"user\"]})\n-    if not think: h.set_extra_context({\"enable_thinking\": False})\n-    t = time.time(); r = pipe.generate(h, cfg); total.append(time.time() - t); m = r.perf_metrics\n-    ttft.append(m.get_ttft().mean); tpot.append(m.get_tpot().mean); out.append(r.texts[0].strip()[:90])\n-rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6\n-name = os.path.basename(model) + (\" (think)\" if think else \"\")\n-print(f\"{name:40} load {load:4.1f}s  TTFT {sum(ttft)/len(ttft):5.0f}ms  TPOT {sum(tpot)/len(tpot):5.1f}ms  gen/prompt {sum(total)/len(total):4.2f}s  RSS {rss:4.2f}GB\")\n-for o in out: print(\"    \", repr(o))\n"
+      },
+      {
+        "path": "scripts/experiments/gpu_precision.py",
+        "old_path": null,
+        "lines": [
+          0,
+          13
+        ],
+        "hunks": "@@ -1,13 +0,0 @@\n-import json, sys, time, glob\n-import openvino_genai as g\n-model, fixtures, cache = sys.argv[1:4]\n-prompts = [a[\"prompt\"] for path in sorted(glob.glob(fixtures + \"/*.json\")) for a in json.load(open(path))[\"generation\"][\"attempts\"]]\n-for name, props in {\"GPU f32 + KV f32\": {\"INFERENCE_PRECISION_HINT\": \"f32\", \"KV_CACHE_PRECISION\": \"f32\"}}.items():\n-    pipe = g.LLMPipeline(model, \"GPU\", CACHE_DIR=f\"{cache}/{len(props)}\", **props)\n-    cfg = g.GenerationConfig(max_new_tokens=128, do_sample=False)\n-    ttft, tpot, out = [], [], []\n-    for p in prompts:\n-        h = g.ChatHistory(); h.append({\"role\": \"system\", \"content\": p[\"system\"]}); h.append({\"role\": \"user\", \"content\": p[\"user\"]})\n-        r = pipe.generate(h, cfg); m = r.perf_metrics\n-        ttft.append(m.get_ttft().mean); tpot.append(m.get_tpot().mean); out.append(r.texts[0])\n-    print(f\"{name:18} TTFT {sum(ttft[1:])/len(ttft[1:]):5.0f} ms  TPOT {sum(tpot)/len(tpot):5.1f} ms\\n   {out}\", flush=True)\n"
+      },
+      {
+        "path": "scripts/experiments/npu_hints.py",
+        "old_path": null,
+        "lines": [
+          0,
+          34
+        ],
+        "hunks": "@@ -1,34 +0,0 @@\n-import json, sys, time, glob\n-import openvino_genai as g\n-model, fixtures, cache = sys.argv[1], sys.argv[2], sys.argv[3]\n-prompts = []\n-for path in sorted(glob.glob(fixtures + \"/*.json\")):\n-    for a in json.load(open(path))[\"generation\"][\"attempts\"]:\n-        prompts.append(a[\"prompt\"])\n-variants = {\n-    \"chunk 512 + BEST_PERF\": {\"NPUW_LLM_PREFILL_CHUNK_SIZE\": 512, \"GENERATE_HINT\": \"BEST_PERF\"},\n-}\n-for name, extra in variants.items():\n-    props = {\"MAX_PROMPT_LEN\": 1024, \"MIN_RESPONSE_LEN\": 128, \"CACHE_DIR\": f\"{cache}/{len(extra)}-{abs(hash(name))}\"}\n-    props.update(extra)\n-    for run in (\"cold\", \"warm\"):\n-        t = time.time()\n-        try:\n-            pipe = g.LLMPipeline(model, \"NPU\", **props)\n-        except Exception as e:\n-            print(f\"{name:36} {run}: FAILED to compile: {str(e).splitlines()[-1][:120]}\", flush=True)\n-            out = []\n-            break\n-        load = time.time() - t\n-        cfg = g.GenerationConfig(max_new_tokens=128, do_sample=False)\n-        ttft, tpot, out = [], [], []\n-        for p in prompts:\n-            h = g.ChatHistory()\n-            h.append({\"role\": \"system\", \"content\": p[\"system\"]})\n-            h.append({\"role\": \"user\", \"content\": p[\"user\"]})\n-            r = pipe.generate(h, cfg)\n-            m = r.perf_metrics\n-            ttft.append(m.get_ttft().mean); tpot.append(m.get_tpot().mean); out.append(r.texts[0])\n-        print(f\"{name:36} {run}: load {load:5.1f}s  TTFT {sum(ttft)/len(ttft):6.0f} ms  TPOT {sum(tpot)/len(tpot):5.1f} ms\", flush=True)\n-        del pipe\n-    print(\"   replies:\", out, flush=True)\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs: remove all experiments scripts",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, test, refactor.\n- Scopes used here: docs, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace twelve messages from the module splits and the docs\ntest(docs): check that links between the pages and their headings resolve\ndocs: gather every timing in one page, measurements.md\ndocs: bring the roadmap and the training pages up to v0.2\ntest(docs): check that the pages name real paths and list every command\n",
+          "user": "Files changed:\ndocs/roadmap.md | +0 -2\nscripts/experiments/README.md | deleted, +0 -34\nscripts/experiments/cand_gpu.py | deleted, +0 -18\nscripts/experiments/gpu_precision.py | deleted, +0 -13\nscripts/experiments/npu_hints.py | deleted, +0 -34\n\nDiff:\n--- scripts/experiments/cand_gpu.py\n@@ -1,18 +0,0 @@\n-import json, sys, time, glob, os, resource\n-import openvino_genai as g\n-model, fixtures, cache, think = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4] == \"think\"\n-prompts = [a[\"prompt\"] for p in sorted(glob.glob(fixtures + \"/*.json\")) for a in json.load(open(p))[\"generation\"][\"attempts\"]]\n-t = time.time()\n-pipe = g.LLMPipeline(model, \"GPU\", CACHE_DIR=cache)\n-load = time.time() - t\n-cfg = g.GenerationConfig(max_new_tokens=128, do_sample=False)\n[... 10 more lines]\n--- scripts/experiments/gpu_precision.py\n@@ -1,13 +0,0 @@\n-import json, sys, time, glob\n-import openvino_genai as g\n-model, fixtures, cache = sys.argv[1:4]\n-prompts = [a[\"prompt\"] for path in sorted(glob.glob(fixtures + \"/*.json\")) for a in json.load(open(path))[\"generation\"][\"attempts\"]]\n-for name, props in {\"GPU f32 + KV f32\": {\"INFERENCE_PRECISION_HINT\": \"f32\", \"KV_CACHE_PRECISION\": \"f32\"}}.items():\n-    pipe = g.LLMPipeline(model, \"GPU\", CACHE_DIR=f\"{cache}/{len(props)}\", **props)\n[... 7 more lines]\n--- scripts/experiments/npu_hints.py\n@@ -1,34 +0,0 @@\n-import json, sys, time, glob\n-import openvino_genai as g\n-model, fixtures, cache = sys.argv[1], sys.argv[2], sys.argv[3]\n-prompts = []\n-for path in sorted(glob.glob(fixtures + \"/*.json\")):\n-    for a in json.load(open(path))[\"generation\"][\"attempts\"]:\n-        prompts.append(a[\"prompt\"])\n-variants = {\n-    \"chunk 512 + BEST_PERF\": {\"NPUW_LLM_PREFILL_CHUNK_SIZE\": 512, \"GENERATE_HINT\": \"BEST_PERF\"},\n-}\n-for name, extra in variants.items():\n[... 23 more lines]\n\n(5 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs: remove all experiments scripts",
+        "rejected": null
+      }
+    ]
+  }
+}

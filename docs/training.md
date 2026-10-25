@@ -164,7 +164,7 @@ time.
 
 Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
 `smart-commit eval`, which runs the whole pipeline, and
-`training/score.py`, so the same numbers judge every model:
+`training/sc-training score`, so the same numbers judge every model:
 
 - **eval-v1**: 500 commits of CommitChronicle's test split, from 70
   repositories never seen in training, 250 Conventional and 250 free;
@@ -173,7 +173,7 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
 - **Scenarios**: hand-written cases of git operations on two synthetic
   repositories (Python in Portuguese with free style, TypeScript with
   Conventional Commits), by level of complexity from a typo to a merge in
-  progress, each with its target; `score.py` reports them per level and
+  progress, each with its target; `sc-training score` reports them per level and
   checks the words a right subject must have (`expected`). Each case is in
   the train or the eval split, never both; those whose target depends on
   what the inputs do not record (merge, revert, file modes) are eval only.
@@ -181,10 +181,10 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
 - Metrics: first_try, fallback, copied, type_match, scope_known,
   scope_fits, word_f1, and two cheap faithfulness checks, `unsupported`
   (specifics found nowhere in the input) and `ungrounded` (a description
-  with no word from the diff); `score.py`'s docstring defines them.
+  with no word from the diff); `sc-training score`'s docstring defines them.
 - Always report the base model's scores on the same set and binary.
 - Two versions of a model or a prompt answer the same cases: compare them
-  case by case with `score.py EVAL_DIR NEW.jsonl --against OLD.jsonl`,
+  case by case with `sc-training score EVAL_DIR NEW.jsonl --against OLD.jsonl`,
   which counts the cases each gets right that the other does not and gives
   McNemar's exact p. A change of 1–3 points on eval-v1 is often a handful
   of cases either way.
@@ -246,7 +246,7 @@ What is published is one model per size smart-commit offers, named
 2. ~~Dataset builder: CommitChronicle → `Inputs` → prompts → JSON Lines with
    targets, split by repository.~~ Done: [training/](../training/README.md).
 3. ~~Evaluation, and the base 1.5B and 0.5B scores.~~ Done: `smart-commit
-   eval` and `training/score.py`; scores in
+   eval` and `training/sc-training score`; scores in
    [training/HYPOTHESES.md](../training/HYPOTHESES.md).
 4. ~~LoRA on the 1.5B; compare; then the 0.5B.~~ Done: H1 to H3 in
    HYPOTHESES.md.

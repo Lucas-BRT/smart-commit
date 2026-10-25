@@ -15,8 +15,8 @@ CI runs all of these on every push, and they must pass before any commit:
 
 ```bash
 cargo fmt --check
-cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace
 shellcheck install.sh scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh   # 0.11.0, as CI
 for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs Docker
 ```
@@ -37,9 +37,10 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 | Unit | `tests.rs` beside the `mod.rs` of a module with its own directory, or `#[cfg(test)] mod tests` in a small file, under `src/` |
 | Prompt snapshots | `insta::assert_snapshot!`, files in the `snapshots/` directory beside the module (`src/prompt/snapshots/`); update with `INSTA_UPDATE=always cargo test` and review the diff |
 | Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |
-| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
+| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, `tests/setup_cli.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
 | Trace fixtures | `tests/replay_fixtures.rs` |
 | Docs | `tests/docs.rs`: the paths the pages name exist, every command is in `docs/usage.md` |
+| Tools | tests inside `tools/` and `training/tools/` (workspace members outside `default-members`; `cargo test --workspace` runs them); the scenarios built twice need `cargo test -- --ignored` after `cargo build` |
 | Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |
 | Hardware | `tests/hardware.rs`, ignored by default: `cargo test --test hardware -- --ignored --test-threads 1`, with `SMART_COMMIT_TEST_DEVICE=npu\|intel-gpu\|vulkan\|cpu\|openvino-cpu`; use the fixture prompts, never ad hoc inputs |
 
@@ -121,7 +122,7 @@ Before each commit, check that **what is staged alone** builds and passes:
 
 ```bash
 git stash push --keep-index --include-untracked
-cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked
+cargo fmt --check && cargo clippy --locked --workspace --all-targets -- -D warnings && cargo test --locked --workspace
 git stash pop
 ```
 
@@ -153,7 +154,7 @@ is not obvious. Release notes are generated from these subjects.
 - **To release, bump `version` in `Cargo.toml`** (semver) in a commit
   `chore: release X.Y.Z` on `main`. `.github/workflows/release.yml` tests,
   packages and publishes the release, with notes from the commits
-  (`scripts/release-notes.sh`). Never create tags or releases by hand.
+  (`sc-tools release-notes`). Never create tags or releases by hand.
 - The tarball must stay reproducible: `tests/scripts/test-install.sh`
   packages twice and requires identical bytes, and CI prints the hash of
   every commit.

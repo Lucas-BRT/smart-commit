@@ -44,7 +44,7 @@ jobs:
       - if: steps.version.outputs.new == 'true'
         run: scripts/package.sh dist
       - if: steps.version.outputs.new == 'true'
-        run: scripts/release-notes.sh "v${{ steps.version.outputs.version }}" >notes.md
+        run: cargo run --release --locked -q -p smart-commit-tools -- release-notes "v${{ steps.version.outputs.version }}" >notes.md
       - if: steps.version.outputs.new == 'true'
         name: Publish
         env:

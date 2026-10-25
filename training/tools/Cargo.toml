@@ -1,0 +1,24 @@
+[package]
+name = "smart-commit-training"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+description = "The data tools for training smart-commit's models; not part of the release"
+publish = false
+
+[[bin]]
+name = "sc-training"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+fancy-regex = "0.20"
+glob = "0.3"
+parquet = { version = "60", default-features = false, features = ["snap", "flate2-zlib-rs", "zstd", "lz4", "brotli"] }
+regex = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.10"
+tempfile = "3"
+toml = "0.9"
+unicode-normalization = "0.1"

@@ -1,5 +1,5 @@
 //! What `smart-commit setup` does on a machine: the steps its hardware
-//! needs, and only those, as `scripts/setup.sh` plans them.
+//! needs, and only those, as `smart-commit setup` plans them.
 //!
 //!   always              llama.cpp and the chosen model, no sudo
 //!   per GPU             its system drivers (setup-gpu.sh)

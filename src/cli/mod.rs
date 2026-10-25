@@ -124,6 +124,10 @@ enum Command {
         /// Skip the benchmark.
         #[arg(long)]
         no_bench: bool,
+        /// Only install the llama.cpp build this release pins (what an update
+        /// runs).
+        #[arg(long, hide = true)]
+        llamacpp_only: bool,
     },
     /// The models kept loaded between commits (`model.keep_loaded`).
     #[command(subcommand)]
@@ -215,7 +219,8 @@ pub fn run() -> ExitCode {
             yes,
             no_drivers,
             no_bench,
-        }) => guided_setup::run(yes, no_drivers, no_bench),
+            llamacpp_only,
+        }) => guided_setup::run(yes, no_drivers, no_bench, llamacpp_only),
         Some(Command::Server(command)) => keep_loaded::run(command),
         Some(Command::Update) => install::update(),
         Some(Command::Uninstall { yes, system }) => install::uninstall(yes, system),
