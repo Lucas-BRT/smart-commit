@@ -7,6 +7,13 @@ is the sigmoid DPO loss over the sum of the log-probabilities of the reply.
 Writes the DPO adapter and `run.json` to OUT_DIR; `--merged DIR` also writes
 the merged model, the BASE_DIR of export_gguf.py.
 
+`--val` pairs of other repositories are scored every `--eval-every` steps:
+their loss and accuracy say whether the model learns what holds beyond the
+training pairs. `--sft-weight` adds the per-token loss of the chosen reply
+to the DPO loss, against the chosen reply becoming less likely as the
+rejected one drops. The log keeps the reward of each side (beta times how
+much more likely the model made it than the reference did).
+
     python -I train_dpo.py PAIRS.jsonl BASE_MODEL_DIR SFT_ADAPTER_DIR OUT_DIR [options]
 """
 
@@ -62,11 +69,50 @@ def reply_logps(model, batch: dict) -> torch.Tensor:
 def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tuple[torch.Tensor, dict]:
     """`policy` and `reference` hold the chosen sequences, then the rejected ones."""
     half = policy.shape[0] // 2
-    margin = beta * ((policy[:half] - reference[:half]) - (policy[half:] - reference[half:]))
+    gain = beta * (policy - reference)
+    margin = gain[:half] - gain[half:]
     return -torch.nn.functional.logsigmoid(margin).mean(), {
         "accuracy": (margin > 0).float().mean().item(),
         "margin": margin.mean().item(),
+        "chosen_reward": gain[:half].mean().item(),
+        "rejected_reward": gain[half:].mean().item(),
     }
+
+
+def reply_lengths(batch: dict) -> torch.Tensor:
+    """The number of tokens of each reply."""
+    return (batch["labels"] != -100).sum(-1)
+
+
+def pair_loss(model, batch: dict, beta: float, sft_weight: float, autocast) -> tuple[torch.Tensor, dict]:
+    """The loss of a batch of pairs. The reference is the model without its
+    adapter; it is not differentiated."""
+    with torch.no_grad(), model.disable_adapter(), autocast():
+        reference = reply_logps(model, batch)
+    with autocast():
+        policy = reply_logps(model, batch)
+    loss, stats = dpo_loss(policy, reference, beta)
+    if sft_weight:
+        half = policy.shape[0] // 2
+        nll = -(policy[:half] / reply_lengths(batch)[:half]).mean()
+        loss = loss + sft_weight * nll
+        stats["nll"] = nll.item()
+    return loss, {"loss": loss.item(), **stats}
+
+
+def evaluate(model, pairs: list[dict], collate, args, autocast, device) -> dict:
+    """The mean loss and statistics of `pairs`, weighted by their number."""
+    model.eval()
+    totals: dict[str, float] = {}
+    with torch.no_grad():
+        for at in range(0, len(pairs), args.batch):
+            batch = {k: v.to(device) for k, v in collate(pairs[at : at + args.batch]).items()}
+            _, stats = pair_loss(model, batch, args.beta, args.sft_weight, autocast)
+            n = min(args.batch, len(pairs) - at)
+            for k, v in stats.items():
+                totals[k] = totals.get(k, 0.0) + v * n
+    model.train()
+    return {f"val_{k}": v / len(pairs) for k, v in totals.items()}
 
 
 def learning_rate(step: int, steps: int, peak: float, warmup: float = 0.03) -> float:
@@ -95,6 +141,10 @@ def main() -> None:
     parser.add_argument("--accum", type=int, default=8)
     parser.add_argument("--max-length", type=int, default=1536)
     parser.add_argument("--limit", type=int, default=0, help="first N pairs only")
+    parser.add_argument("--val", type=Path, help="pairs of other repositories, scored along the way")
+    parser.add_argument("--eval-every", type=int, default=10, help="steps between two scores of --val")
+    parser.add_argument("--sft-weight", type=float, default=0.0,
+                        help="weight of the per-token loss of the chosen reply, added to DPO's")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
@@ -110,6 +160,11 @@ def main() -> None:
     data = [e for e in encoded if e is not None]
     skipped = len(encoded) - len(data)
     print(f"{len(data)} pairs, {skipped} longer than {args.max_length} tokens skipped")
+    val = None
+    if args.val:
+        val = [e for e in (encode_pair(tok, json.loads(line), args.max_length)
+                           for line in args.val.read_text().splitlines()) if e is not None]
+        print(f"{len(val)} validation pairs")
 
     model = AutoModelForCausalLM.from_pretrained(args.base, dtype=dtype, device_map={"": 0})
     model = PeftModel.from_pretrained(model, args.sft).merge_and_unload()
@@ -131,6 +186,7 @@ def main() -> None:
     # fp16 gradients of the fp32 adapters need scaling; bf16 does not.
     scaler = torch.amp.GradScaler(enabled=args.dtype == "fp16")
     collate = PairCollator(tok.pad_token_id)
+    autocast = lambda: torch.autocast("cuda", dtype=dtype)  # noqa: E731
     order = random.Random(args.seed)
     log, started = [], time.time()
     for epoch in range(args.epochs):
@@ -139,27 +195,25 @@ def main() -> None:
             number = epoch * (len(data) // per_step) + step
             for group in optimizer.param_groups:
                 group["lr"] = learning_rate(number, steps, args.lr)
-            totals = {"loss": 0.0, "accuracy": 0.0, "margin": 0.0}
+            totals: dict[str, float] = {}
             for micro in range(args.accum):
                 at = (step * args.accum + micro) * args.batch
                 batch = {k: v.to("cuda") for k, v in collate(shuffled[at : at + args.batch]).items()}
-                with torch.no_grad(), model.disable_adapter(), torch.autocast("cuda", dtype=dtype):
-                    reference = reply_logps(model, batch)
-                with torch.autocast("cuda", dtype=dtype):
-                    policy = reply_logps(model, batch)
-                loss, stats = dpo_loss(policy, reference, args.beta)
+                loss, stats = pair_loss(model, batch, args.beta, args.sft_weight, autocast)
                 scaler.scale(loss / args.accum).backward()
-                totals["loss"] += loss.item() / args.accum
                 for k, v in stats.items():
-                    totals[k] += v / args.accum
+                    totals[k] = totals.get(k, 0.0) + v / args.accum
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(params, 1.0)
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad(set_to_none=True)
-            log.append({"step": number + 1, **totals, "lr": optimizer.param_groups[0]["lr"]})
-            if (number + 1) % 5 == 0 or number + 1 == steps:
-                print(json.dumps(log[-1]), flush=True)
+            entry = {"step": number + 1, **totals, "lr": optimizer.param_groups[0]["lr"]}
+            if val and ((number + 1) % args.eval_every == 0 or number + 1 == steps):
+                entry.update(evaluate(model, val, collate, args, autocast, "cuda"))
+            log.append(entry)
+            if (number + 1) % 5 == 0 or number + 1 == steps or "val_loss" in entry:
+                print(json.dumps(entry), flush=True)
 
     model.save_pretrained(args.out / "adapter")
     tok.save_pretrained(args.out / "adapter")
@@ -174,6 +228,8 @@ def main() -> None:
     run = {
         "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         "pairs_sha256": sha256(args.pairs),
+        "val_sha256": sha256(args.val) if args.val else None,
+        "val_pairs": len(val) if val else 0,
         "sft_adapter_sha256": sha256(args.sft / "adapter_model.safetensors"),
         "pairs": len(data),
         "skipped_too_long": skipped,

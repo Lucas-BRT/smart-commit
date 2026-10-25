@@ -3,15 +3,17 @@
     python -I test_train_dpo.py
 """
 
+import contextlib
 import math
 import sys
 from pathlib import Path
 
 import torch
+from peft import LoraConfig, get_peft_model
 from transformers import Qwen2Config, Qwen2ForCausalLM
 
 sys.path.insert(0, str(Path(__file__).parent))
-from train_dpo import PairCollator, dpo_loss, encode_pair, learning_rate, reply_logps  # noqa: E402
+from train_dpo import PairCollator, dpo_loss, encode_pair, evaluate, learning_rate, pair_loss, reply_logps  # noqa: E402
 
 
 class Tok:
@@ -96,6 +98,73 @@ def test_reply_logps_is_the_log_probability_of_the_reply_given_the_prompt() -> N
                 want.append(sum(logps[i - 1, ids[i]].item() for i, label in enumerate(labels) if label != -100))
     assert got.shape == (4,)
     assert torch.allclose(got, torch.tensor(want), atol=1e-4), (got, want)
+
+
+def tiny_policy() -> torch.nn.Module:
+    """A random model with a fresh LoRA, as train_dpo makes: the adapter does
+    nothing yet, so the model is its own reference."""
+    torch.manual_seed(0)
+    config = Qwen2Config(vocab_size=300, hidden_size=16, intermediate_size=32, num_hidden_layers=2,
+                         num_attention_heads=2, num_key_value_heads=2)
+    lora = LoraConfig(r=4, lora_alpha=8, lora_dropout=0.0, target_modules=["q_proj", "v_proj"], task_type="CAUSAL_LM")
+    return get_peft_model(Qwen2ForCausalLM(config), lora)
+
+
+def some_pairs() -> list[dict]:
+    return [
+        encode_pair(Tok(), pair("fix: a", "chore: bb"), 100),
+        encode_pair(Tok(), pair("feat: c", "docs: d"), 100),
+        encode_pair(Tok(), pair("fix: e", "feat: f"), 100),
+        encode_pair(Tok(), pair("docs: g", "fix: h"), 100),
+    ]
+
+
+def test_rewards_are_beta_times_the_gain_over_the_reference() -> None:
+    reference = torch.tensor([-10.0, -20.0, -12.0, -18.0])
+    policy = reference + torch.tensor([4.0, 2.0, -6.0, -2.0])
+    _, stats = dpo_loss(policy, reference, 0.5)
+    assert math.isclose(stats["chosen_reward"], 1.5) and math.isclose(stats["rejected_reward"], -2.0)
+    assert math.isclose(stats["margin"], 3.5)
+
+
+def test_an_untrained_adapter_leaves_the_model_its_own_reference() -> None:
+    model = tiny_policy().eval()
+    batch = PairCollator(0)(some_pairs())
+    loss, stats = pair_loss(model, batch, 0.1, 0.0, contextlib.nullcontext)
+    assert math.isclose(loss.item(), math.log(2), rel_tol=1e-6)
+    assert stats["margin"] == 0.0 and stats["chosen_reward"] == 0.0 and stats["rejected_reward"] == 0.0
+    # The chosen reply's own loss, per token, when asked for.
+    with_sft, with_stats = pair_loss(model, batch, 0.1, 0.5, contextlib.nullcontext)
+    assert with_stats["nll"] > 0 and math.isclose(with_sft.item(), math.log(2) + 0.5 * with_stats["nll"], rel_tol=1e-5)
+
+
+def test_a_few_steps_separate_the_chosen_reply_from_the_rejected_one() -> None:
+    model = tiny_policy()
+    model.train()
+    pairs = some_pairs()
+    batch = PairCollator(0)(pairs)
+    params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = torch.optim.AdamW(params, lr=5e-2)
+    first = None
+    for _ in range(25):
+        loss, stats = pair_loss(model, batch, 0.1, 0.0, contextlib.nullcontext)
+        first = first or stats
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    assert stats["loss"] < first["loss"] - 0.05 and stats["accuracy"] == 1.0
+    assert stats["chosen_reward"] > 0 > stats["rejected_reward"]
+
+
+def test_the_validation_pairs_are_scored_without_training_on_them() -> None:
+    model = tiny_policy()
+    model.train()
+    before = [p.detach().clone() for p in model.parameters()]
+    args = type("Args", (), {"batch": 3, "beta": 0.1, "sft_weight": 0.0})()
+    got = evaluate(model, some_pairs(), PairCollator(0), args, contextlib.nullcontext, "cpu")
+    assert {"val_loss", "val_accuracy", "val_margin", "val_chosen_reward"} <= set(got)
+    assert math.isclose(got["val_loss"], math.log(2), rel_tol=1e-6)
+    assert model.training and all(torch.equal(a, b) for a, b in zip(before, model.parameters()))
 
 
 if __name__ == "__main__":

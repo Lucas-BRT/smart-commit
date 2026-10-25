@@ -279,7 +279,12 @@ sigmoid DPO loss, `-log σ(β · ((πc − πr) − (refc − refr)))` over the 
 the log-probabilities of each reply. With the new adapter disabled the model is
 the SFT one, so that is also the reference, and only one copy is loaded. The
 loss starts at ln 2 (0.693); `accuracy` is the share of pairs whose chosen
-reply gained more than the rejected one. Defaults: β 0.1, learning rate 2e-5,
+reply gained more than the rejected one; `chosen_reward` and `rejected_reward`
+are β times how much more likely the model made each than the reference did
+(the chosen one falling is the sign of the model forgetting how to write it).
+`--val` takes the validation set of `balance`, scored every `--eval-every`
+steps (`val_loss`, `val_accuracy`, ...), and `--sft-weight` adds the chosen
+reply's per-token loss to the DPO loss. Defaults: β 0.1, learning rate 2e-5,
 rank 16, 2 pairs per pass and 8 passes per step, one epoch.
 
 ```bash
