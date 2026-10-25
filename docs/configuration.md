@@ -121,6 +121,13 @@ Two more environment variables have no key: `SMART_COMMIT_MOCK_RESPONSE`
 (a reply of the mock backend) and `SMART_COMMIT_TRACE` (record every
 generation to that file, see [reproducibility](reproducibility.md)).
 
+A few more exist for tests and scripts, not for configuring a machine:
+`SMART_COMMIT_SYSFS`, `SMART_COMMIT_CPUINFO` and `SMART_COMMIT_OPENVINO_DIR`
+point the hardware inventory at a fake tree (`scripts/hardware.sh` reads them
+too), `SMART_COMMIT_HF_BASE` replaces the Hugging Face URL models are
+downloaded from, and `smart-commit setup` sets `SMART_COMMIT_BIN` for the
+scripts it runs.
+
 ## Rules
 
 - **Unknown keys and invalid values are errors**, with the file and the key

@@ -82,7 +82,7 @@ export from scratch (uv, Python, the packages and the source model
 downloaded) took 1 min 47 s and matched the manifest.
 
 The GGUF models for llama.cpp are files on Hugging Face, each pinned in
-`src/models.rs` to a repository commit and to the file's SHA-256 at that
+`src/models/registry.rs` to a repository commit and to the file's SHA-256 at that
 commit: `smart-commit model use` refuses any other file. They are the
 publishers' own files (Qwen's for the `qwen2.5-coder-*` models), or for
 smart-commit's fine-tunes (`smart-commit-*`) the project's own, published

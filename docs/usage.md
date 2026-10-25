@@ -44,6 +44,18 @@ The installer warns if `~/.local/bin` is not on your `PATH`. Running it
 again upgrades in place: it only replaces the binary, the scripts and the
 docs, so the models, llama.cpp and the benchmark stay.
 
+`smart-commit setup` can run again at any time, for example after adding a
+GPU; `smart-commit hardware` only prints the hardware list. `--no-drivers`
+skips everything that needs `sudo`, and `--no-bench` skips the benchmark.
+
+To build from source instead:
+
+```bash
+git clone https://github.com/Lucas-BRT/smart-commit && cd smart-commit
+cargo build --release --locked      # the toolchain comes from rust-toolchain.toml
+target/release/smart-commit setup
+```
+
 ## Update
 
 ```bash
@@ -57,18 +69,6 @@ when llama.cpp is installed it follows the build the new release pins (no
 `sudo`). It runs the `install.sh` that came with the release, so it works
 for installs made by `install.sh`; a release from before 0.8.0 updates once
 with `install.sh` itself, and a build from source with git and cargo.
-`smart-commit setup` can run again at any time, for example after adding a
-GPU; `~/.local/share/smart-commit/scripts/hardware.sh` only prints the
-hardware list. `--no-drivers` skips everything that needs `sudo`, and `--no-bench`
-skips the benchmark.
-
-To build from source instead:
-
-```bash
-git clone https://github.com/Lucas-BRT/smart-commit && cd smart-commit
-cargo build --release --locked      # the toolchain comes from rust-toolchain.toml
-target/release/smart-commit setup
-```
 
 ## Everyday use
 

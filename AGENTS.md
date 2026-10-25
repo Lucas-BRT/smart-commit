@@ -34,7 +34,7 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 
 | Kind | Where |
 |---|---|
-| Unit | `#[cfg(test)] mod tests` in the module, under `src/` |
+| Unit | `tests.rs` beside the `mod.rs` of a module with its own directory, or `#[cfg(test)] mod tests` in a small file, under `src/` |
 | Prompt snapshots | `insta::assert_snapshot!`, files in the `snapshots/` directory beside the module (`src/prompt/snapshots/`); update with `INSTA_UPDATE=always cargo test` and review the diff |
 | Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |
 | CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
@@ -84,7 +84,7 @@ describes what is pinned and how it is checked.
   model, data and its licence, prompt format, evaluation against the base,
   limitations). Their OpenVINO export is to run on users' machines, from
   those safetensors, like other models' (not done for v0.1). A new
-  version is a new name (`-v0.2`), never a replaced file, and is pinned in `src/models.rs` by revision and SHA-256
+  version is a new name (`-v0.2`), never a replaced file, and is pinned in `src/models/registry.rs` by revision and SHA-256
   like any other model.
 
 ## Commits
@@ -97,11 +97,11 @@ and the project builds and passes its checks at every commit.
 ### Same file, different purposes: stage hunks
 
 When a file has changes for different purposes, for example a bug fix and a
-feature in the same `src/diff.rs`, **do not stage the whole file**. Stage the
+feature in the same `src/diff/compact.rs`, **do not stage the whole file**. Stage the
 hunks of one purpose, commit, and repeat:
 
 ```bash
-git add -p src/diff.rs        # y = stage, n = skip, s = split, e = edit
+git add -p src/diff/compact.rs        # y = stage, n = skip, s = split, e = edit
 git diff --staged             # what goes into this commit
 git diff                      # what is left for the next one
 ```
@@ -110,7 +110,7 @@ Without an interactive terminal (agents, scripts), do the same with a partial
 patch:
 
 ```bash
-git diff src/diff.rs > /tmp/partial.patch
+git diff src/diff/compact.rs > /tmp/partial.patch
 # edit the patch, keeping only this purpose's hunks
 git apply --cached /tmp/partial.patch
 git diff --staged
