@@ -19,7 +19,7 @@ Everything except the model is deterministic and tested without hardware.
 | `style` | infers convention, language, types, scopes, ticket style and examples from commit subjects |
 | `context` | `RepoContext`: branch, ticket, subjects, style and staged files, rebuildable from recorded data |
 | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |
-| `annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
+| `diff::annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
 | `prompt` | builds the system and user messages within `max_prompt_tokens` |
 | `message` | sanitizes the model's output; builds the fallback message |
 | `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |

@@ -1,7 +1,7 @@
 use std::fmt::Write as _;
 
+use super::annotate;
 use super::{CompactDiff, FileDiff, FileKind, estimate_tokens};
-use crate::annotate;
 use crate::git::FileChange;
 
 /// Fits `files` into `budget` tokens: the stat first, then hunks.

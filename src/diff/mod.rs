@@ -4,6 +4,7 @@
 //! files) is reduced to a stat line, and the remaining token budget is shared
 //! between files by priority: source first, then config, tests and docs.
 
+pub mod annotate;
 mod classify;
 mod compact;
 mod parse;
