@@ -96,6 +96,38 @@ fn save(report: &Report) -> Result<PathBuf> {
     Ok(path)
 }
 
+/// `bench --prompts`: llama-server timed on prompts from files, with flags of
+/// the caller's choice.
+pub(super) fn time_server(
+    dir: &Path,
+    device: Option<DeviceArg>,
+    label: &str,
+    server_args: &[String],
+) -> Result<()> {
+    let flags = device
+        .map(|d| vec![("model.device", d.name().to_owned())])
+        .unwrap_or_default();
+    let resolved = resolve(None, flags)?;
+    warn_renamed(&resolved);
+    let settings = resolved.settings();
+    let target = match settings.device {
+        DeviceSetting::Fixed(target @ (Target::Vulkan | Target::Cpu)) => target,
+        _ => bail!("--prompts times llama-server: choose --device vulkan or cpu"),
+    };
+    let options = settings
+        .llamacpp_options(target, false)
+        .map_err(|e| anyhow!(e))?;
+    let prompts = bench::server::read_prompts(dir).map_err(|e| anyhow!(e))?;
+    let timing = bench::server::time_server(
+        &options,
+        server_args,
+        &prompts,
+        &settings.generation_config(),
+    )?;
+    print!("{}", timing.render(label));
+    Ok(())
+}
+
 pub(super) fn run_bench(json: bool) -> Result<()> {
     let resolved = resolve(None, Vec::new())?;
     warn_renamed(&resolved);

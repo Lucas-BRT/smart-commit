@@ -106,6 +106,16 @@ impl LlamaCppBackend {
     /// new temporary directory; `dir` is removed when the backend is
     /// dropped, like the temporary one.
     pub fn start_in(options: &LlamaCppOptions, dir: Option<&Path>) -> Result<Self, BackendError> {
+        Self::start_with(options, dir, &[])
+    }
+
+    /// Like [`Self::start_in`], with `extra` llama-server flags after
+    /// smart-commit's own, to try others than it passes (`bench --prompts`).
+    pub fn start_with(
+        options: &LlamaCppOptions,
+        dir: Option<&Path>,
+        extra: &[String],
+    ) -> Result<Self, BackendError> {
         let unavailable = BackendError::Unavailable;
         if !options.model.is_file() {
             return Err(unavailable(format!(
@@ -132,6 +142,7 @@ impl LlamaCppBackend {
         let started = Instant::now();
         let child = Command::new(&options.server)
             .args(server_args(options, &socket))
+            .args(extra)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(log)

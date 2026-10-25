@@ -205,14 +205,19 @@ done
 # The 512 budget: the same loop with XDG_CONFIG_HOME pointing at a config
 # with `[model] max_prompt_tokens = 512`.
 
-M=~/.local/share/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
-CPU="--n-gpu-layers 0 --device none --no-repack --fit off"
-python3 -I training/time-llama-server.py "$M" /tmp/prompts warmup $CPU >/dev/null
-python3 -I training/time-llama-server.py "$M" /tmp/prompts "cpu" $CPU
-python3 -I training/time-llama-server.py "$M" /tmp/prompts "cpu tb" $CPU -tb "$(nproc)" -b 1024 -ub 1024
-python3 -I training/time-llama-server.py "$M" /tmp/prompts "vulkan" \
-  --n-gpu-layers 999 --device Vulkan0 --no-repack --fit off
+# `bench --prompts` starts llama-server as smart-commit does, with the flags
+# after `--` added; the model is `model.gguf` (or SMART_COMMIT_GGUF).
+FAST="--no-repack --fit off"
+smart-commit bench --prompts /tmp/prompts --device cpu --label warmup -- $FAST >/dev/null
+smart-commit bench --prompts /tmp/prompts --device cpu --label "cpu" -- $FAST
+smart-commit bench --prompts /tmp/prompts --device cpu --label "cpu tb" -- $FAST \
+  --threads-batch "$(nproc)" -b 1024 -ub 1024
+smart-commit bench --prompts /tmp/prompts --device vulkan --label "vulkan" -- $FAST
 ```
+
+smart-commit already passes `--threads-batch` (one per physical core) and
+`--ctx-size`, which the first measurements left to llama-server's own
+defaults; a flag after `--` comes last, so it wins.
 
 The prompts depend on the history at each commit (older commits were in
 Portuguese, so those prompts ask for Portuguese).
