@@ -381,3 +381,8 @@ done > SHA256SUMS
 git add SHA256SUMS
 "$BIN" --backend mock --mock-response "chore: add the checksums of the archives" \
   --trace "$OUT/conventional-en-dense.json" >/dev/null
+
+# A fix to a server flag with its test, answered as a test that "traces"
+# something: the type is wrong (the change fixes the RAM use) and the verb is
+# invented.
+real_change conventional-en-server-flag-as-test 80f9ba2 "test(training): trace that llama-server keeps up to 8 GiB of prompts"
