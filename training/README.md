@@ -15,6 +15,8 @@ mise install python@3.12.15
 export UV_PYTHON=$(mise where python@3.12.15)/bin/python3 UV_PYTHON_DOWNLOADS=never
 cd training && uv sync --locked
 uv run --locked python -I test_make_examples.py
+uv run --locked python -I test_mine_pairs.py
+uv run --locked python -I test_train_dpo.py
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
 cargo build --locked && cargo test --locked -p smart-commit-training -- --ignored   # every scenario, built twice
@@ -190,6 +192,28 @@ repositories are dropped. From them `sc-training pairs` made, for the 0.5B,
 1,287 pairs (964 with the real subject chosen; rejected replies by failure:
 ungrounded 619, copied 271, unsupported 258, long 134, format 5) and, for the
 1.5B, 1,255 (916; 597, 275, 239, 139, 5).
+
+### Training on the pairs
+
+`train_dpo.py` starts from a fine-tune: it merges the SFT adapter into the
+base model (as `export_gguf.py` does) and trains a new LoRA on top with the
+sigmoid DPO loss, `-log σ(β · ((πc − πr) − (refc − refr)))` over the sum of
+the log-probabilities of each reply. With the new adapter disabled the model is
+the SFT one, so that is also the reference, and only one copy is loaded. The
+loss starts at ln 2 (0.693); `accuracy` is the share of pairs whose chosen
+reply gained more than the rejected one. Defaults: β 0.1, learning rate 2e-5,
+rank 16, 2 pairs per pass and 8 passes per step, one epoch.
+
+```bash
+M=$C/models/qwen2.5-coder-0.5b-instruct@ea3f2471cf1b1f0db85067f1ef93848e38e88c25
+uv run --locked python -I train_dpo.py data/dpo/pairs-0.5b.jsonl $M \
+  runs/kaggle-v2/c40k-0.5b/adapter runs/dpo-0.5b --merged runs/dpo-0.5b/merged
+uv run --locked python -I export_gguf.py runs/dpo-0.5b/merged runs/dpo-0.5b/model-q4_k_m.gguf \
+  --llama-src $C/llama.cpp-src/llama.cpp-b11381 --llama-bin ~/.local/share/smart-commit/llama.cpp/llama-b11381
+```
+
+The merged model is the `BASE_DIR` of step 5, without `--adapter`. Then step 6
+as for any model.
 
 ## Scenarios
 
