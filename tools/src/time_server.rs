@@ -1,13 +1,13 @@
-//! `smart-commit bench --prompts`: times llama-server on prompts printed by
+//! `sc-tools time-server`: times llama-server on prompts printed by
 //! `smart-commit prompt`, with llama-server flags of the caller's choice, to
 //! see what a setting costs before it is turned into one.
 
 use std::path::Path;
 use std::time::Instant;
 
-use crate::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};
-use crate::backend::{Backend, BackendError, GenerationConfig};
-use crate::prompt::Prompt;
+use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};
+use smart_commit::backend::{Backend, BackendError, GenerationConfig};
+use smart_commit::prompt::Prompt;
 
 const SYSTEM_MARK: &str = "===== system =====\n";
 const USER_MARK: &str = "===== user =====\n";
@@ -139,3 +139,7 @@ impl ServerTiming {
         text
     }
 }
+
+#[cfg(test)]
+#[path = "time_server_tests.rs"]
+mod tests;

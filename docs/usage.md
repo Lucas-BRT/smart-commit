@@ -159,7 +159,6 @@ smart-commit device            # the device in use and the measured times (choos
 smart-commit device use npu    # use the NPU from now on
 smart-commit device use auto   # back to the fastest
 smart-commit bench             # measure again
-smart-commit bench --prompts DIR --device cpu -- --no-repack --fit off   # time llama-server with other flags
 ```
 
 `auto` uses the fastest device of the last benchmark, and falls back to the

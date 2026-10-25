@@ -112,8 +112,8 @@ see [devices](docs/devices.md) for how the device is chosen.
 
 ```bash
 cargo fmt --check
-cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace
 ```
 
 The tests need no hardware. [AGENTS.md](AGENTS.md) describes the rules for

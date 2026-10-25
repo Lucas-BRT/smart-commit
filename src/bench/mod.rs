@@ -11,7 +11,6 @@
 
 mod measure;
 mod report;
-pub mod server;
 #[cfg(test)]
 mod tests;
 

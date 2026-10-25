@@ -15,8 +15,8 @@ CI runs all of these on every push, and they must pass before any commit:
 
 ```bash
 cargo fmt --check
-cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace
 shellcheck install.sh scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh   # 0.11.0, as CI
 for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs Docker
 ```
@@ -121,7 +121,7 @@ Before each commit, check that **what is staged alone** builds and passes:
 
 ```bash
 git stash push --keep-index --include-untracked
-cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked
+cargo fmt --check && cargo clippy --locked --workspace --all-targets -- -D warnings && cargo test --locked --workspace
 git stash pop
 ```
 

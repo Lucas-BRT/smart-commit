@@ -205,14 +205,16 @@ done
 # The 512 budget: the same loop with XDG_CONFIG_HOME pointing at a config
 # with `[model] max_prompt_tokens = 512`.
 
-# `bench --prompts` starts llama-server as smart-commit does, with the flags
-# after `--` added; the model is `model.gguf` (or SMART_COMMIT_GGUF).
+# `sc-tools time-server` (the `tools/` crate, not part of the release) starts
+# llama-server as smart-commit does, with the flags after `--` added; the
+# model is `model.gguf` (or SMART_COMMIT_GGUF).
+T="cargo run --release --locked -q -p smart-commit-tools --"
 FAST="--no-repack --fit off"
-smart-commit bench --prompts /tmp/prompts --device cpu --label warmup -- $FAST >/dev/null
-smart-commit bench --prompts /tmp/prompts --device cpu --label "cpu" -- $FAST
-smart-commit bench --prompts /tmp/prompts --device cpu --label "cpu tb" -- $FAST \
+$T time-server /tmp/prompts --device cpu --label warmup -- $FAST >/dev/null
+$T time-server /tmp/prompts --device cpu --label "cpu" -- $FAST
+$T time-server /tmp/prompts --device cpu --label "cpu tb" -- $FAST \
   --threads-batch "$(nproc)" -b 1024 -ub 1024
-smart-commit bench --prompts /tmp/prompts --device vulkan --label "vulkan" -- $FAST
+$T time-server /tmp/prompts --device vulkan --label "vulkan" -- $FAST
 ```
 
 smart-commit already passes `--threads-batch` (one per physical core) and

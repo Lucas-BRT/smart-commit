@@ -97,22 +97,8 @@ enum Command {
     /// Measure every device of this machine; `auto` then uses the fastest.
     Bench {
         /// Print the full report as JSON.
-        #[arg(long, conflicts_with = "prompts")]
+        #[arg(long)]
         json: bool,
-        /// Time llama-server instead, on the `smart-commit prompt` outputs in
-        /// DIR (`*.txt`), with the llama-server flags after `--`, to see what
-        /// a flag costs; nothing is saved.
-        #[arg(long, value_name = "DIR")]
-        prompts: Option<PathBuf>,
-        /// With `--prompts`: `vulkan` or `cpu` [default: model.device].
-        #[arg(long, value_enum, requires = "prompts")]
-        device: Option<args::DeviceArg>,
-        /// With `--prompts`: the name printed on the result line.
-        #[arg(long, requires = "prompts", default_value = "llama-server")]
-        label: String,
-        /// With `--prompts`: more llama-server flags, after `--`.
-        #[arg(last = true, requires = "prompts")]
-        server_args: Vec<String>,
     },
     /// Show which device runs the model and how fast each one was.
     Device {
@@ -218,14 +204,7 @@ pub fn run() -> ExitCode {
         }) => inspect::eval(&inputs, &backend, &prompt),
         Some(Command::Hook(command)) => git_hook::run(command),
         Some(Command::Config(command)) => configure::run(command),
-        Some(Command::Bench {
-            prompts: Some(dir),
-            device,
-            label,
-            server_args,
-            ..
-        }) => benchmark::time_server(&dir, device, &label, &server_args),
-        Some(Command::Bench { json, .. }) => benchmark::run_bench(json),
+        Some(Command::Bench { json }) => benchmark::run_bench(json),
         Some(Command::Device { command }) => benchmark::run_device(command),
         Some(Command::Model { command }) => model::run(command),
         Some(Command::Hardware) => {
