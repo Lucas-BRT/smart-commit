@@ -1,0 +1,497 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of c617f1d",
+      "refactor(diff): move annotate under diff",
+      "refactor(server): split the module into the supervisor, management and tests",
+      "refactor(hardware): split the module into sysfs reading, fakes and tests",
+      "refactor(bench): split the module into the report, measuring and tests",
+      "refactor(annotate): split the module into comments, rename and tests",
+      "test(fixtures): trace three module splits answered as feat or vaguely"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "src/backend.rs",
+        "src/bench/measure.rs",
+        "src/bench/mod.rs",
+        "src/bench/report.rs",
+        "src/cli/args.rs",
+        "src/cli/benchmark.rs",
+        "src/cli/install.rs",
+        "src/cli/keep_loaded.rs",
+        "src/cli/load.rs",
+        "src/cli/mod.rs",
+        "src/cli/session.rs",
+        "src/cli/settings.rs",
+        "src/config/keys.rs",
+        "src/config/store.rs",
+        "src/config/tests.rs",
+        "src/device.rs",
+        "src/genai.rs",
+        "src/lib.rs",
+        "src/llamacpp/http.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/device.rs",
+        "old_path": "src/device.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/genai.rs",
+        "old_path": "src/genai.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/llamacpp/http.rs",
+        "old_path": "src/llamacpp/http.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": "src/llamacpp/mod.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/llamacpp/tests.rs",
+        "old_path": "src/llamacpp/tests.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/mod.rs",
+        "old_path": "src/backend.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/server/manage.rs",
+        "old_path": "src/server/manage.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/server/mod.rs",
+        "old_path": "src/server/mod.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/server/supervisor.rs",
+        "old_path": "src/server/supervisor.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/backend/server/tests.rs",
+        "old_path": "src/server/tests.rs"
+      },
+      {
+        "status": "modified",
+        "path": "src/bench/measure.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/bench/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/bench/report.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/args.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/benchmark.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/install.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/keep_loaded.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/load.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/session.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/settings.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/keys.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/store.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/lib.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/paths.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/tui/bench.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/bench_cli.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/hardware.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          4,
+          3
+        ],
+        "hunks": "@@ -26,5 +26,6 @@ Everything except the model is deterministic and tested without hardware.\n | `backend` | the `Backend` trait, `GenerationConfig`, `MockBackend` |\n-| `genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |\n-| `llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |\n-| `device` | candidate devices and loading the first that works |\n+| `backend::genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |\n+| `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |\n+| `backend::server` | the `llama-server` kept loaded between commits (`model.keep_loaded`) |\n+| `backend::device` | candidate devices and loading the first that works |\n | `bench` | measures every device on four embedded prompts sized like real ones |\n"
+      },
+      {
+        "path": "src/backend/device.rs",
+        "old_path": "src/device.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/backend/genai.rs",
+        "old_path": "src/genai.rs",
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -38,4 +38,4 @@ impl Device {\n     /// The smart-commit device this is.\n-    pub fn target(self) -> crate::device::Target {\n-        use crate::device::Target;\n+    pub fn target(self) -> crate::backend::device::Target {\n+        use crate::backend::device::Target;\n         match self {\n"
+      },
+      {
+        "path": "src/backend/llamacpp/http.rs",
+        "old_path": "src/llamacpp/http.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": "src/llamacpp/mod.rs",
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -9,3 +9,3 @@\n //! network), and stops it when the backend is dropped; with\n-//! `model.keep_loaded`, [`crate::server`] keeps one running between commits\n+//! `model.keep_loaded`, [`crate::backend::server`] keeps one running between commits\n //! instead. The HTTP client is a\n"
+      },
+      {
+        "path": "src/backend/llamacpp/tests.rs",
+        "old_path": "src/llamacpp/tests.rs",
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -306,3 +306,3 @@ fn description_names_build_device_and_model() {\n fn setup_script_installs_what_the_code_expects() {\n-    let script = include_str!(\"../../scripts/setup-llamacpp.sh\");\n+    let script = include_str!(\"../../../scripts/setup-llamacpp.sh\");\n     assert!(script.contains(&format!(\"\\nLLAMA_BUILD={LLAMA_CPP_BUILD}\\n\")));\n"
+      },
+      {
+        "path": "src/backend/mod.rs",
+        "old_path": "src/backend.rs",
+        "lines": [
+          5,
+          0
+        ],
+        "hunks": "@@ -3,2 +3,7 @@\n \n+pub mod device;\n+pub mod genai;\n+pub mod llamacpp;\n+pub mod server;\n+\n use std::collections::VecDeque;\n"
+      },
+      {
+        "path": "src/backend/server/manage.rs",
+        "old_path": "src/server/manage.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/backend/server/mod.rs",
+        "old_path": "src/server/mod.rs",
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -38,3 +38,3 @@ use sha2::{Digest, Sha256};\n use crate::backend::BackendError;\n-use crate::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};\n+use crate::backend::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};\n \n"
+      },
+      {
+        "path": "src/backend/server/supervisor.rs",
+        "old_path": "src/server/supervisor.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/backend/server/tests.rs",
+        "old_path": "src/server/tests.rs",
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -4,3 +4,3 @@ use std::os::unix::net::UnixListener;\n use super::*;\n-use crate::llamacpp::LlamaDevice;\n+use crate::backend::llamacpp::LlamaDevice;\n \n"
+      },
+      {
+        "path": "src/bench/measure.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -3,4 +3,4 @@ use std::time::Instant;\n use super::*;\n+use crate::backend::device::Target;\n use crate::backend::{Backend, BackendError, GenerationConfig};\n-use crate::device::Target;\n use crate::prompt::Prompt;\n"
+      },
+      {
+        "path": "src/bench/mod.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -21,3 +21,3 @@ use serde::{Deserialize, Serialize};\n \n-use crate::device::Target;\n+use crate::backend::device::Target;\n use crate::prompt::Prompt;\n"
+      },
+      {
+        "path": "src/bench/report.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -3,3 +3,3 @@ use serde::{Deserialize, Serialize};\n use super::*;\n-use crate::device::Target;\n+use crate::backend::device::Target;\n \n"
+      },
+      {
+        "path": "src/cli/args.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -6,3 +6,3 @@ use anyhow::Result;\n use clap::{Args, ValueEnum};\n-use smart_commit::device::Target;\n+use smart_commit::backend::device::Target;\n use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules};\n"
+      },
+      {
+        "path": "src/cli/benchmark.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -10,5 +10,5 @@ use anyhow::{Context as _, Result, anyhow, bail};\n use clap::Subcommand;\n+use smart_commit::backend::device::{DEFAULT_ORDER, Target};\n use smart_commit::bench::{self, Entry, Machine, Report};\n use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};\n-use smart_commit::device::{DEFAULT_ORDER, Target};\n use smart_commit::paths;\n@@ -56,3 +56,3 @@ fn measure_all(\n     if let Some(runtime) = paths::runtime_dir(env) {\n-        smart_commit::server::stop(&runtime);\n+        smart_commit::backend::server::stop(&runtime);\n     }\n"
+      },
+      {
+        "path": "src/cli/install.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -11,3 +11,4 @@ use std::process::Command;\n use anyhow::{Context as _, Result, anyhow, bail};\n-use smart_commit::{paths, server, tui};\n+use smart_commit::backend::server;\n+use smart_commit::{paths, tui};\n \n"
+      },
+      {
+        "path": "src/cli/keep_loaded.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -4,3 +4,4 @@ use anyhow::Result;\n use clap::Subcommand;\n-use smart_commit::{paths, server};\n+use smart_commit::backend::server;\n+use smart_commit::paths;\n \n"
+      },
+      {
+        "path": "src/cli/load.rs",
+        "old_path": null,
+        "lines": [
+          5,
+          4
+        ],
+        "hunks": "@@ -3,8 +3,9 @@\n use anyhow::Result;\n+use smart_commit::backend::device::{self, Target};\n+use smart_commit::backend::genai::{Device, GenaiBackend};\n+use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};\n+use smart_commit::backend::server;\n use smart_commit::backend::{Backend, BackendError};\n use smart_commit::config::{DeviceSetting, Settings};\n-use smart_commit::device::{self, Target};\n-use smart_commit::genai::{Device, GenaiBackend};\n-use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};\n-use smart_commit::{paths, server};\n+use smart_commit::paths;\n \n"
+      },
+      {
+        "path": "src/cli/mod.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          1
+        ],
+        "hunks": "@@ -221,3 +221,5 @@ pub fn run() -> ExitCode {\n         Some(Command::Uninstall { yes, system }) => install::uninstall(yes, system),\n-        Some(Command::KeepServer { dir }) => smart_commit::server::serve(&dir).map_err(Into::into),\n+        Some(Command::KeepServer { dir }) => {\n+            smart_commit::backend::server::serve(&dir).map_err(Into::into)\n+        }\n         None => suggest::run(&cli.generate),\n"
+      },
+      {
+        "path": "src/cli/session.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -6,2 +6,3 @@ use std::path::{Path, PathBuf};\n use anyhow::{Context as _, Result, bail};\n+use smart_commit::backend::device::Target;\n use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};\n@@ -9,3 +10,2 @@ use smart_commit::config::{BackendKind, Origin, Resolved, Value};\n use smart_commit::context::RepoContext;\n-use smart_commit::device::Target;\n use smart_commit::diff::FileDiff;\n"
+      },
+      {
+        "path": "src/cli/settings.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -5,2 +5,3 @@ use std::path::PathBuf;\n \n+use smart_commit::backend::server;\n use smart_commit::config::{self, Resolved, Sources};\n@@ -8,3 +9,3 @@ use smart_commit::git::Repo;\n use smart_commit::hardware;\n-use smart_commit::{paths, server};\n+use smart_commit::paths;\n \n"
+      },
+      {
+        "path": "src/config/keys.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -6,3 +6,3 @@ use toml_edit::Item;\n \n-use crate::device;\n+use crate::backend::device;\n use crate::models;\n"
+      },
+      {
+        "path": "src/config/store.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -10,5 +10,5 @@ use toml_edit::{DocumentMut, Item, Table};\n use crate::backend::GenerationConfig;\n-use crate::device::Target;\n-use crate::genai::{Device, GenaiOptions, NpuTuning};\n-use crate::llamacpp::{LlamaCppOptions, LlamaDevice};\n+use crate::backend::device::Target;\n+use crate::backend::genai::{Device, GenaiOptions, NpuTuning};\n+use crate::backend::llamacpp::{LlamaCppOptions, LlamaDevice};\n use crate::models::{self, Model};\n"
+      },
+      {
+        "path": "src/config/tests.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -5,5 +5,5 @@ use std::path::PathBuf;\n use crate::backend::GenerationConfig;\n-use crate::device::{self, Target};\n-use crate::genai::Device;\n-use crate::llamacpp::LlamaDevice;\n+use crate::backend::device::{self, Target};\n+use crate::backend::genai::Device;\n+use crate::backend::llamacpp::LlamaDevice;\n use crate::models;\n"
+      },
+      {
+        "path": "src/lib.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          4
+        ],
+        "hunks": "@@ -7,5 +7,3 @@ pub mod config;\n pub mod context;\n-pub mod device;\n pub mod diff;\n-pub mod genai;\n pub mod generate;\n@@ -14,3 +12,2 @@ pub mod hardware;\n pub mod hook;\n-pub mod llamacpp;\n pub mod message;\n@@ -19,3 +16,2 @@ pub mod paths;\n pub mod prompt;\n-pub mod server;\n pub mod setup;\n"
+      },
+      {
+        "path": "src/paths.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          1
+        ],
+        "hunks": "@@ -49,3 +49,6 @@ pub fn default_llama_server(env: impl Fn(&str) -> Option<String>) -> Option<Path\n             .join(\"smart-commit/llama.cpp\")\n-            .join(format!(\"llama-{}\", crate::llamacpp::LLAMA_CPP_BUILD))\n+            .join(format!(\n+                \"llama-{}\",\n+                crate::backend::llamacpp::LLAMA_CPP_BUILD\n+            ))\n             .join(\"llama-server\"),\n"
+      },
+      {
+        "path": "src/tui/bench.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -12,4 +12,4 @@ use ratatui::widgets::{Block, Cell, Paragraph, Row, Table, TableState};\n use super::{hints, is_interrupt, theme};\n+use crate::backend::device::Target;\n use crate::bench::{Entry, Report};\n-use crate::device::Target;\n \n"
+      },
+      {
+        "path": "tests/bench_cli.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -7,4 +7,4 @@ use std::process::Output;\n \n+use smart_commit::backend::device::Target;\n use smart_commit::bench::{self, Entry, FastLoadTrial, Machine, Measurement, Report};\n-use smart_commit::device::Target;\n use tempfile::TempDir;\n"
+      },
+      {
+        "path": "tests/hardware.rs",
+        "old_path": null,
+        "lines": [
+          5,
+          4
+        ],
+        "hunks": "@@ -16,6 +16,6 @@ use std::path::{Path, PathBuf};\n \n+use smart_commit::backend::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};\n+use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions, LlamaDevice};\n use smart_commit::backend::{Backend, GenerationConfig};\n use smart_commit::diff::estimate_tokens;\n-use smart_commit::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};\n-use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions, LlamaDevice};\n use smart_commit::paths;\n@@ -137,6 +137,7 @@ fn a_model_kept_loaded_gives_the_same_replies() {\n         // Connects to the same kept server for every prompt but the first.\n-        let kept = smart_commit::server::connect(runtime.path(), &options, keep, exe).unwrap();\n+        let kept =\n+            smart_commit::backend::server::connect(runtime.path(), &options, keep, exe).unwrap();\n         replies.push((name, expected, kept.generate(&prompt, &config).unwrap()));\n     }\n-    assert_eq!(smart_commit::server::stop(runtime.path()), 1);\n+    assert_eq!(smart_commit::backend::server::stop(runtime.path()), 1);\n     for (name, expected, kept) in replies {\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "refactor: split smart_commit into backend",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, test.\n- Scopes used here: annotate, bench, diff, fixtures, hardware, server. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(diff): move annotate under diff\nrefactor(server): split the module into the supervisor, management and tests\nrefactor(hardware): split the module into sysfs reading, fakes and tests\nrefactor(bench): split the module into the report, measuring and tests\nrefactor(annotate): split the module into comments, rename and tests\n",
+          "user": "Files changed:\ndocs/architecture.md | +4 -3\nsrc/{device.rs => backend/device.rs} | renamed, unchanged, +0 -0\nsrc/{genai.rs => backend/genai.rs} | renamed, +2 -2\nsrc/{llamacpp => backend/llamacpp}/ | 3 files renamed, +2 -2\nsrc/{backend.rs => backend/mod.rs} | renamed, +5 -0\nsrc/{server => backend/server}/ | 4 files renamed, +2 -2\nsrc/bench/measure.rs | +1 -1\nsrc/bench/mod.rs | +1 -1\nsrc/bench/report.rs | +1 -1\nsrc/cli/args.rs | +1 -1\nsrc/cli/benchmark.rs | +2 -2\nsrc/cli/install.rs | +2 -1\nsrc/cli/keep_loaded.rs | +2 -1\nsrc/cli/load.rs | +5 -4\nsrc/cli/mod.rs | +3 -1\nsrc/cli/session.rs | +1 -1\nsrc/cli/settings.rs | +2 -1\nsrc/config/keys.rs | +1 -1\nsrc/config/store.rs | +3 -3\nsrc/config/tests.rs | +3 -3\nsrc/lib.rs | +0 -4\nsrc/paths.rs | +4 -1\nsrc/tui/bench.rs | +1 -1\ntests/bench_cli.rs | +1 -1\ntests/hardware.rs | +5 -4\n\nDiff:\n--- src/backend/mod.rs\n@@ -3,2 +3,7 @@\n \n+pub mod device;\n+pub mod genai;\n[... 4 more lines]\n--- src/backend/server/tests.rs\n@@ -4,3 +4,3 @@ use std::os::unix::net::UnixListener;\n use super::*;\n-use crate::llamacpp::LlamaDevice;\n+use crate::backend::llamacpp::LlamaDevice;\n \n--- src/bench/mod.rs\n@@ -21,3 +21,3 @@ use serde::{Deserialize, Serialize};\n \n-use crate::device::Target;\n+use crate::backend::device::Target;\n use crate::prompt::Prompt;\n--- src/bench/report.rs\n@@ -3,3 +3,3 @@ use serde::{Deserialize, Serialize};\n use super::*;\n-use crate::device::Target;\n+use crate::backend::device::Target;\n \n--- src/cli/keep_loaded.rs\n@@ -4,3 +4,4 @@ use anyhow::Result;\n use clap::Subcommand;\n-use smart_commit::{paths, server};\n+use smart_commit::backend::server;\n+use smart_commit::paths;\n \n--- src/cli/settings.rs\n@@ -5,2 +5,3 @@ use std::path::PathBuf;\n \n+use smart_commit::backend::server;\n use smart_commit::config::{self, Resolved, Sources};\n[... 5 more lines]\n--- src/config/keys.rs\n@@ -6,3 +6,3 @@ use toml_edit::Item;\n \n-use crate::device;\n+use crate::backend::device;\n use crate::models;\n\n(21 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "refactor: split smart_commit into backend",
+        "rejected": null
+      }
+    ]
+  }
+}

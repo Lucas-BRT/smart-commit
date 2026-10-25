@@ -1,0 +1,86 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 81315bb",
+      "docs: fix paths of the split modules and two misplaced passages",
+      "refactor: group genai, llamacpp, server and device under backend",
+      "refactor(diff): move annotate under diff",
+      "refactor(server): split the module into the supervisor, management and tests",
+      "refactor(hardware): split the module into sysfs reading, fakes and tests",
+      "refactor(bench): split the module into the report, measuring and tests"
+    ],
+    "history_files": [
+      [
+        "AGENTS.md"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "AGENTS.md",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tests/docs.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "AGENTS.md",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -41,2 +41,3 @@ for test in tests/scripts/test-*.sh; do \"$test\"; done   # test-install.sh needs\n | Trace fixtures | `tests/replay_fixtures.rs` |\n+| Docs | `tests/docs.rs`: the paths the pages name exist, every command is in `docs/usage.md` |\n | Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |\n"
+      },
+      {
+        "path": "tests/docs.rs",
+        "old_path": null,
+        "lines": [
+          110,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,110 @@\n+//! The Markdown pages describe the repository as it is: the paths they name\n+//! exist and every command is in the usage guide.\n+\n+mod common;\n+\n+use std::fs;\n+use std::path::{Path, PathBuf};\n+use std::process::Command;\n+\n+const ROOT: &str = env!(\"CARGO_MANIFEST_DIR\");\n+\n+/// Directories that are not documentation: build output, ignored data and\n+/// the synthetic repositories of the training scenarios.\n+const SKIPPED: &[&str] = &[\n+    \"target\",\n+    \".git\",\n+    \"training/data\",\n+    \"training/runs\",\n+    \"training/scenarios/repos\",\n+    \"training/.venv\",\n+];\n+\n+/// The first directory of a path that a page may name from the root.\n+const ROOT_DIRS: &[&str] = &[\"src/\", \"tests/\", \"scripts/\", \"docs/\", \".github/\"];\n+\n+fn pages(dir: &Path, found: &mut Vec<PathBuf>) {\n+    let mut entries: Vec<_> = fs::read_dir(dir).unwrap().flatten().collect();\n+    entries.sort_by_key(|e| e.path());\n+    for entry in entries {\n+        let path = entry.path();\n+        let relative = path.strip_prefix(ROOT).unwrap().to_string_lossy();\n+        if SKIPPED.iter().any(|s| relative == *s) {\n+            continue;\n+        }\n+        if path.is_dir() {\n+            pages(&path, found);\n+        } else if path.extension().is_some_and(|e| e == \"md\") {\n+            found.push(path);\n+        }\n+    }\n+}\n+\n+fn all_pages() -> Vec<PathBuf> {\n+    let mut found = Vec::new();\n+    pages(Path::new(ROOT), &mut found);\n+    assert!(!found.is_empty());\n+    found\n+}\n+\n+/// The inline `code` spans of a page, outside fenced blocks (which hold\n+/// examples, not references).\n+fn inline_code(text: &str) -> Vec<String> {\n+    let mut spans = Vec::new();\n+    let mut fenced = false;\n+    for line in text.lines() {\n+        if line.trim_start().starts_with(\"```\") {\n+            fenced = !fenced;\n+            continue;\n+        }\n+        if fenced {\n+            continue;\n+        }\n+        spans.extend(line.split('`').skip(1).step_by(2).map(str::to_owned));\n+    }\n+    spans\n+}\n+\n+#[test]\n+fn paths_named_in_the_pages_exist() {\n+    let mut missing = Vec::new();\n+    for page in all_pages() {\n+        let text = fs::read_to_string(&page).unwrap();\n+        for span in inline_code(&text) {\n+            let named = span.trim_end_matches('/');\n+            let checkable = ROOT_DIRS.iter().any(|d| named.starts_with(d))\n+                && !named.contains(['*', '<', '{', '$', ' ', '(', ':']);\n+            if checkable && !Path::new(ROOT).join(named).exists() {\n+                let page = page.strip_prefix(ROOT).unwrap().display();\n+                missing.push(format!(\"{page}: `{span}`\"));\n+            }\n+        }\n+    }\n+    assert!(missing.is_empty(), \"missing paths:\\n{}\", missing.join(\"\\n\"));\n+}\n+\n+#[test]\n+fn every_command_is_in_the_usage_guide() {\n+    let mut command = Command::new(env!(\"CARGO_BIN_EXE_smart-commit\"));\n+    let output = common::isolate(command.arg(\"--help\")).output().unwrap();\n+    let help = String::from_utf8(output.stdout).unwrap();\n+    let commands: Vec<&str> = help\n+        .lines()\n+        .skip_while(|l| *l != \"Commands:\")\n+        .skip(1)\n+        .take_while(|l| l.starts_with(\"  \"))\n+        .filter_map(|l| l.split_whitespace().next())\n+        .filter(|name| *name != \"help\")\n+        .collect();\n+    assert!(commands.len() > 10, \"no commands found in:\\n{help}\");\n+\n+    let usage = fs::read_to_string(Path::new(ROOT).join(\"docs/usage.md\")).unwrap();\n+    let missing: Vec<&&str> = commands\n+        .iter()\n+        .filter(|name| !usage.contains(&format!(\"smart-commit {name}\")))\n+        .collect();\n+    assert!(\n+        missing.is_empty(),\n+        \"docs/usage.md does not mention: {missing:?}\"\n+    );\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs: add a test for the markdown pages",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, docs.\n- Scopes used here: bench, diff, hardware, server. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs: fix paths of the split modules and two misplaced passages\nrefactor: group genai, llamacpp, server and device under backend\nrefactor(diff): move annotate under diff\nrefactor(server): split the module into the supervisor, management and tests\nrefactor(hardware): split the module into sysfs reading, fakes and tests\n",
+          "user": "Files changed:\nAGENTS.md | +1 -0\ntests/docs.rs | new, +110 -0\n\nDiff:\n--- tests/docs.rs\n@@ -0,0 +1,110 @@\n+//! The Markdown pages describe the repository as it is: the paths they name\n+//! exist and every command is in the usage guide.\n+\n+mod common;\n+\n+use std::fs;\n+use std::path::{Path, PathBuf};\n+use std::process::Command;\n+\n+const ROOT: &str = env!(\"CARGO_MANIFEST_DIR\");\n+\n+/// Directories that are not documentation: build output, ignored data and\n+/// the synthetic repositories of the training scenarios.\n+const SKIPPED: &[&str] = &[\n+    \"target\",\n+    \".git\",\n+    \"training/data\",\n+    \"training/runs\",\n+    \"training/scenarios/repos\",\n+    \"training/.venv\",\n+];\n+\n+/// The first directory of a path that a page may name from the root.\n+const ROOT_DIRS: &[&str] = &[\"src/\", \"tests/\", \"scripts/\", \"docs/\", \".github/\"];\n+\n+fn pages(dir: &Path, found: &mut Vec<PathBuf>) {\n+    let mut entries: Vec<_> = fs::read_dir(dir).unwrap().flatten().collect();\n+    entries.sort_by_key(|e| e.path());\n+    for entry in entries {\n+        let path = entry.path();\n+        let relative = path.strip_prefix(ROOT).unwrap().to_string_lossy();\n+        if SKIPPED.iter().any(|s| relative == *s) {\n+            continue;\n+        }\n+        if path.is_dir() {\n+            pages(&path, found);\n+        } else if path.extension().is_some_and(|e| e == \"md\") {\n+            found.push(path);\n+        }\n+    }\n+}\n+\n+fn all_pages() -> Vec<PathBuf> {\n+    let mut found = Vec::new();\n+    pages(Path::new(ROOT), &mut found);\n+    assert!(!found.is_empty());\n+    found\n+}\n+\n+/// The inline `code` spans of a page, outside fenced blocks (which hold\n+/// examples, not references).\n+fn inline_code(text: &str) -> Vec<String> {\n+    let mut spans = Vec::new();\n+    let mut fenced = false;\n[... 56 more lines]\n\n(2 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs: add a test for the markdown pages",
+        "rejected": null
+      }
+    ]
+  }
+}

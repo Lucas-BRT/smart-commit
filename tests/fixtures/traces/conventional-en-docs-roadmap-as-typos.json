@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of a6768df",
+      "test(docs): check that the pages name real paths and list every command",
+      "docs: fix paths of the split modules and two misplaced passages",
+      "refactor: group genai, llamacpp, server and device under backend",
+      "refactor(diff): move annotate under diff",
+      "refactor(server): split the module into the supervisor, management and tests",
+      "refactor(hardware): split the module into sysfs reading, fakes and tests"
+    ],
+    "history_files": [
+      [
+        "docs/roadmap.md",
+        "docs/training.md",
+        "training/HYPOTHESES.md"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/roadmap.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/training.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/HYPOTHESES.md",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/roadmap.md",
+        "old_path": null,
+        "lines": [
+          14,
+          2
+        ],
+        "hunks": "@@ -33,2 +33,14 @@\n   between training and evaluation.\n+- Messages that keep to git's own: the message of a merge, revert or\n+  cherry-pick in progress, a subject cut where it still reads\n+  (`style.subject_max`), a retry for a reply in the wrong language or nearly\n+  a copy, and never a message the user turned down.\n+- A file list with what the line counts do not say (status, renames,\n+  whitespace-only and comment-only changes), on by default.\n+- `smart-commit update` and `smart-commit uninstall`.\n+- The binary in modules (`cli/`, and the library's `backend/`, `diff/`,\n+  `models/`...), with `anyhow` and `tracing`, and `-v` for debug output.\n+- The v0.2 fine-tunes, `smart-commit-0.5b-v0.2` and `smart-commit-1.5b-v0.2`,\n+  trained without the rules in the prompt and evaluated. They are on\n+  Hugging Face, private.\n \n@@ -41,5 +53,5 @@ then the largest gains for their cost.\n |---|---|---|\n-| 1 | **Fine-tune v0.2** | The next `smart-commit-<size>-v0.2`: the rules in the weights (training H6, a `PromptOptions` switch that follows the model in `models::REGISTRY`), young repositories (H5: the 0.5B falls back on 9% of them, the 1.5B on 3%) and the scope map (H4b, shown only to the model trained with it), in one bundle of about 20k examples, where the v0.1 learning curve flattens. Without the rules, prompts are 17–21% shorter on eval-v1 and eval-short (`--rules omitted`, already in `prompt` and `eval`); the speed is to be measured with the trained model. See [training](training.md). |\n+| 1 | **Publish v0.2, then train v0.3** | v0.2 is trained and evaluated (training H5, H6, H7's release bumps, no type cap): the 0.5B keeps its quality, is about 15% faster on the CPU and copies half as often in young repositories; the 1.5B gives the same gains but trades a little type quality and leans on the rules more (see [training](../training/HYPOTHESES.md), v0.2). Both repositories on Hugging Face are private (`smart-commit-0.5b-v0.2` at `bdb93a5`, `smart-commit-1.5b-v0.2` at `4bca5dc`). The 0.5B is registered on the `feat/model-v0.2` branch, which cannot be merged until its repository is public, since users download from it. v0.3 is next: the scope map (H4b), which v0.2 did not have, and 40k examples for the 1.5B. Without the rules, prompts are 17–21% shorter on eval-v1 and eval-short (`--rules omitted`, already in `prompt` and `eval`). See [training](training.md). |\n | 2 | **A model server that stays up** (started: `model.keep_loaded`, off by default) | Load is paid at every commit: 0.3–0.6 s on the CPU, about 2.2 s on Vulkan (weights to the GPU, shaders compiled). Keeping `llama-server` running after a message, and stopping it after some idle minutes (say 10), makes every later commit pay only prefill and decoding. It also gives prefix caching for free: llama-server keeps the KV cache of the prompt's unchanged beginning in memory. Costs: 0.5–1.2 GB of RAM or VRAM while it is up, and its lifecycle (restart when the settings or the model change, two commits at once, a stale socket). The commit nudges would need a loaded model at hand too. Check that replies stay identical with the cache on, against the trace fixtures and `eval`, before turning it on: a restored cache can change float results. Next: measure it on both machines, then decide whether it is on by default, then try the prompt cache. |\n-| 3 | **A fine-tune as the default** | On eval-v1 the v0.1 fine-tunes pick the real type 64% of the time against 46% for the default `qwen2.5-coder-1.5b`. Making one `validated` and the default (on `vulkan` and `cpu`, which need no OpenVINO export) needs the fixture prompts and the hardware tests; after v0.2's evaluation. |\n+| 3 | **A fine-tune as the default** | v0.2's evaluation is done, and `smart-commit-1.5b-v0.1` is still the best at the type (type_match 0.656 on eval-v1, against 0.452 for the default `qwen2.5-coder-1.5b`); the 0.5B v0.2 is the fastest. Making one `validated` and the default (on `vulkan` and `cpu`, which need no OpenVINO export) needs the fixture prompts and the hardware tests. |\n | 4 | **Fine-tunes and more models on the OpenVINO devices** | The NPU and the Intel GPU run only `qwen2.5-coder-1.5b`, the one model with a pinned export. Export the fine-tunes' published safetensors, and other [recommended models](models.md), with the pinned pipeline: two identical exports, `MANIFEST.sha256` and the **Model** workflow for each. |\n"
+      },
+      {
+        "path": "docs/training.md",
+        "old_path": null,
+        "lines": [
+          9,
+          5
+        ],
+        "hunks": "@@ -318,6 +318,10 @@ What is published is one model per size smart-commit offers, named\n    experimental models in `src/models/registry.rs`.\n-6. The next version, v0.2: H5 (young repositories), H6 (the rules in the\n-   weights) and H4b (the scope map) in one bundle on about 20k examples,\n-   with H7's cheap data changes (release bumps kept when the diff shows\n-   the version) and H8's type cap, tested first on its own. The order and\n-   the work outside training are in the [roadmap](roadmap.md).\n+6. ~~v0.2: H5 (young repositories), H6 (the rules in the weights), H7's\n+   release bumps and no type cap (H8) in one bundle of about 20k examples\n+   (b3).~~ Done: `smart-commit-0.5b-v0.2` and `smart-commit-1.5b-v0.2`,\n+   trained and evaluated, on Hugging Face and private (results in\n+   [HYPOTHESES.md](../training/HYPOTHESES.md), v0.2). The scope map (H4b)\n+   was not in the bundle.\n+7. The next version: H4b, and more data for the 1.5B, which leans on the\n+   rules more than the 0.5B. What to publish, register and make the default\n+   is in the [roadmap](roadmap.md).\n"
+      },
+      {
+        "path": "training/HYPOTHESES.md",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -230,3 +230,3 @@ even rewards that: `training` is a known scope, just the wrong one.\n \n-### H5. Training on young repositories stops the copying — planned\n+### H5. Training on young repositories stops the copying — confirmed in v0.2\n \n@@ -273,3 +273,3 @@ example and \"follow their style\", repeating it is the easy answer.\n \n-### H6. The rules can live in the weights instead of the prompt — switch implemented, training planned\n+### H6. The rules can live in the weights instead of the prompt — confirmed in v0.2\n \n@@ -314,3 +314,3 @@ for moves into the weights; the prompt shrinks.\n \n-### H7. The lists in the prompt are read as closed because the data rarely leaves them — planned\n+### H7. The lists in the prompt are read as closed because the data rarely leaves them — release bumps in v0.2's data; the rest planned\n \n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs: fix some typos and add a few new points to the roadmap",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, docs, test.\n- Scopes used here: diff, docs, hardware, server. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(docs): check that the pages name real paths and list every command\ndocs: fix paths of the split modules and two misplaced passages\nrefactor: group genai, llamacpp, server and device under backend\nrefactor(diff): move annotate under diff\nrefactor(server): split the module into the supervisor, management and tests\n",
+          "user": "Files changed:\ndocs/roadmap.md | +14 -2\ndocs/training.md | +9 -5\ntraining/HYPOTHESES.md | +3 -3\n\nDiff:\n--- docs/roadmap.md\n@@ -33,2 +33,14 @@\n   between training and evaluation.\n+- Messages that keep to git's own: the message of a merge, revert or\n+  cherry-pick in progress, a subject cut where it still reads\n+  (`style.subject_max`), a retry for a reply in the wrong language or nearly\n+  a copy, and never a message the user turned down.\n+- A file list with what the line counts do not say (status, renames,\n+  whitespace-only and comment-only changes), on by default.\n+- `smart-commit update` and `smart-commit uninstall`.\n[... 14 more lines]\n--- docs/training.md\n@@ -318,6 +318,10 @@ What is published is one model per size smart-commit offers, named\n    experimental models in `src/models/registry.rs`.\n-6. The next version, v0.2: H5 (young repositories), H6 (the rules in the\n-   weights) and H4b (the scope map) in one bundle on about 20k examples,\n-   with H7's cheap data changes (release bumps kept when the diff shows\n-   the version) and H8's type cap, tested first on its own. The order and\n-   the work outside training are in the [roadmap](roadmap.md).\n[... 9 more lines]\n--- training/HYPOTHESES.md\n@@ -230,3 +230,3 @@ even rewards that: `training` is a known scope, just the wrong one.\n \n-### H5. Training on young repositories stops the copying — planned\n+### H5. Training on young repositories stops the copying — confirmed in v0.2\n \n@@ -273,3 +273,3 @@ example and \"follow their style\", repeating it is the easy answer.\n \n-### H6. The rules can live in the weights instead of the prompt — switch implemented, training planned\n+### H6. The rules can live in the weights instead of the prompt — confirmed in v0.2\n \n[... 5 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs: fix some typos and add a few new points to the roadmap",
+        "rejected": null
+      }
+    ]
+  }
+}

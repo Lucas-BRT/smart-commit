@@ -284,6 +284,35 @@ real_change conventional-en-split-diff d1ba19d "refactor(diff): split diff into 
 # And for models.rs, answered `feat` and as if the module had moved to a new
 # directory, which says nothing of what the split separated.
 real_change conventional-en-split-models 00f23be "feat(models): move models to a new directory"
+# The rest of the module split and the docs work around it, answered by
+# smart-commit-1.5b-v0.2 on the commit's own change.
+# A split of annotate.rs into comments, rename and tests: the reply names
+# `annotate` and `comments` as the parts, and drops the rest.
+real_change conventional-en-split-annotate 3bb320e "refactor(annotate): split the module into annotate, comments"
+# A split of bench.rs into report, measure and tests: the reply says it
+# split into "the backend", which is not in the change.
+real_change conventional-en-split-bench 7a625f3 "refactor(bench): split the module into the backend"
+# Splits of hardware.rs and server.rs: both replies end in "tests and docs",
+# and no docs changed.
+real_change conventional-en-split-hardware ecfbe91 "refactor(hardware): split the module into the hardware, tests and docs"
+real_change conventional-en-split-server d38a34c "refactor(server): split the module into the server, tests and docs"
+# Moving annotate under diff, answered as a split of diff.
+real_change conventional-en-move-annotate ce9645e "refactor(diff): split the module into the diff and tests"
+# Grouping four modules under backend, answered as splitting the whole
+# crate into one.
+real_change conventional-en-group-backend c617f1d "refactor: split smart_commit into backend"
+# Docs commits: path fixes, answered as typos and "more info"; a test
+# answered as docs; the roadmap brought up to v0.2, answered as typos; the
+# timings gathered in measurements.md, answered as a roadmap change; a test
+# of the links, answered as one about commands.
+real_change conventional-en-docs-paths-as-typos fa03c17 "docs: fix some typos and add some more info"
+real_change conventional-en-docs-test-as-docs 81315bb "docs: add a test for the markdown pages"
+real_change conventional-en-docs-roadmap-as-typos a6768df "docs: fix some typos and add a few new points to the roadmap"
+real_change conventional-en-docs-measurements 'a01c646' "docs: add measurements to the roadmap"
+real_change conventional-en-docs-links-test 64e7f02 "test(docs): check that every command is linked to its usage guide"
+# Fixtures of the module splits, answered as new traces without saying
+# which cases they document.
+real_change conventional-en-fixtures-of-splits 646b4d1 "test(fixtures): add a few more traces for split modules"
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
