@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::Output;
 
 mod common;
-use common::TestRepo;
+use common::{FakeMachine, TestRepo};
 
 fn smart_commit(args: &[&str], dir: &Path) -> Output {
     smart_commit_with(args, dir, &[])
@@ -573,10 +573,19 @@ fn generate_uses_the_second_reply_when_the_first_is_rejected() {
     assert_eq!(stderr(&output), "");
 }
 
+/// Runs on `machine`, whatever the one running the tests has: `auto` tries
+/// the devices of the hardware.
+fn on_machine(machine: &FakeMachine, args: &[&str], dir: &Path) -> Output {
+    let env = machine.env();
+    let env: Vec<(&str, &str)> = env.iter().map(|(n, v)| (*n, v.as_str())).collect();
+    smart_commit_with(args, dir, &env)
+}
+
 #[test]
 fn auto_without_any_model_lists_every_device() {
     let repo = staged_repo();
-    let output = smart_commit(&[], repo.path());
+    let machine = FakeMachine::all_intel();
+    let output = on_machine(&machine, &[], repo.path());
     assert_eq!(output.status.code(), Some(1));
     let env = |name: &str| (name == "XDG_DATA_HOME").then(|| common::DATA_HOME.to_owned());
     let ir = smart_commit::paths::default_model_dir(env)
@@ -646,6 +655,10 @@ fn model_dir_can_be_given() {
         (vec!["--model-dir", dir], vec![]),
         (vec![], vec![("SMART_COMMIT_MODEL_DIR", dir)]),
     ] {
+        let machine = FakeMachine::all_intel();
+        let mut env = env;
+        let pinned = machine.env();
+        env.extend(pinned.iter().map(|(name, value)| (*name, value.as_str())));
         let output = smart_commit_with(&args, repo.path(), &env);
         assert_eq!(output.status.code(), Some(1));
         assert!(
@@ -672,7 +685,8 @@ fn replay_with_model_needs_the_model() {
         ],
         repo.path(),
     );
-    let output = smart_commit(&["replay", path, "--with-model"], repo.path());
+    let machine = FakeMachine::all_intel();
+    let output = on_machine(&machine, &["replay", path, "--with-model"], repo.path());
     assert_eq!(output.status.code(), Some(1));
     assert!(
         stderr(&output).contains("no model in"),
