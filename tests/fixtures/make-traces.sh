@@ -313,6 +313,30 @@ real_change conventional-en-docs-links-test 64e7f02 "test(docs): check that ever
 # Fixtures of the module splits, answered as new traces without saying
 # which cases they document.
 real_change conventional-en-fixtures-of-splits 646b4d1 "test(fixtures): add a few more traces for split modules"
+# The move of the tools out of the binary and into crates of their own, and
+# the setup in Rust, answered by smart-commit-1.5b-v0.2 on each commit's own
+# change.
+# Three experiment scripts removed: not documentation, and not "all".
+real_change conventional-en-remove-experiments 3da2923 "docs: remove all experiments scripts"
+# A new `bench --prompts` that times llama-server on prompt files, answered
+# as a server added to the benchmarks.
+real_change conventional-en-bench-prompts 9b13c12 "chore(bench): add a server for benchmarks"
+# The same code moved to a tools crate in a workspace: a refactor, with the
+# crate and the workspace named.
+real_change conventional-en-move-to-tools-crate 95b3281 "chore: move tools to a separate crate"
+# release-notes.sh rewritten in Rust: nothing is added, it replaces a script.
+real_change conventional-en-release-notes-in-rust 536804f "feat(release): add \`sc-tools release-notes\`"
+# A crate and its dependencies added to the workspace, answered as a tool
+# added to the release, which it must not be.
+real_change conventional-en-training-tools-deps 66a9288 "feat(training): add sc-training tool to the release"
+# build_inputs.py in Rust: a new subcommand, not a crate named build_inputs.
+real_change conventional-en-build-inputs-in-rust c2c2305 "feat(training): add \`build_inputs\` crate"
+real_change conventional-en-scenarios-in-rust 812abde "feat(training): build commit scenarios with sc-training build-scenarios"
+# The Python tools removed once their Rust version exists.
+real_change conventional-en-remove-python-tools d82042f "chore(training): remove the training tools"
+# Three setup scripts replaced by the binary, answered as a dependency
+# added for a llama.cpp backend that already exists.
+real_change conventional-en-setup-in-rust 1dd70cd "feat(deps): add the LLaMA-CPP backend"
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,

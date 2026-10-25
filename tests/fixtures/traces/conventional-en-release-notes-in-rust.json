@@ -1,0 +1,190 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 536804f",
+      "refactor: move the llama-server timing out of the binary into sc-tools",
+      "feat(bench): time llama-server on prompt files with `bench --prompts`",
+      "chore: remove scripts/experiments",
+      "test(fixtures): trace twelve messages from the module splits and the docs",
+      "test(docs): check that links between the pages and their headings resolve",
+      "docs: gather every timing in one page, measurements.md"
+    ],
+    "history_files": [
+      [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+        "AGENTS.md",
+        "docs/architecture.md",
+        "scripts/release-notes.sh",
+        "tests/scripts/test-release-notes.sh",
+        "tools/src/main.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": ".github/workflows/ci.yml",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": ".github/workflows/release.yml",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "AGENTS.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "scripts/release-notes.sh",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "tests/scripts/test-release-notes.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tools/src/main.rs",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tools/src/release_notes.rs",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tools/src/release_notes_tests.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/ci.yml",
+        "old_path": null,
+        "lines": [
+          0,
+          1
+        ],
+        "hunks": "@@ -40,3 +40,2 @@ jobs:\n       - run: tests/scripts/test-normalize-ir.sh\n-      - run: tests/scripts/test-release-notes.sh\n \n"
+      },
+      {
+        "path": ".github/workflows/release.yml",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -46,3 +46,3 @@ jobs:\n       - if: steps.version.outputs.new == 'true'\n-        run: scripts/release-notes.sh \"v${{ steps.version.outputs.version }}\" >notes.md\n+        run: cargo run --release --locked -q -p smart-commit-tools -- release-notes \"v${{ steps.version.outputs.version }}\" >notes.md\n       - if: steps.version.outputs.new == 'true'\n"
+      },
+      {
+        "path": "AGENTS.md",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -155,3 +155,3 @@ is not obvious. Release notes are generated from these subjects.\n   packages and publishes the release, with notes from the commits\n-  (`scripts/release-notes.sh`). Never create tags or releases by hand.\n+  (`sc-tools release-notes`). Never create tags or releases by hand.\n - The tarball must stay reproducible: `tests/scripts/test-install.sh`\n"
+      },
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -47,4 +47,4 @@ installed in `share/smart-commit/scripts`.\n \n-Tools for working on smart-commit (timing llama-server on prompt files, for\n-now) are crates of their own in the workspace (`tools/`, the binary\n+Tools for working on smart-commit (timing llama-server on prompt files, the\n+release notes) are crates of their own in the workspace (`tools/`, the binary\n `sc-tools`), outside `default-members`: what they need never reaches the\n"
+      },
+      {
+        "path": "scripts/release-notes.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          52
+        ],
+        "hunks": "@@ -1,52 +0,0 @@\n-#!/usr/bin/env bash\n-# Prints the release notes of TAG: the commits since the previous v* tag,\n-# grouped by their Conventional Commits type, plus how to install.\n-#\n-#   scripts/release-notes.sh v0.2.0 [REV]   (REV defaults to HEAD)\n-set -euo pipefail\n-\n-TAG=${1:?usage: release-notes.sh TAG [REV]}\n-REV=${2:-HEAD}\n-previous=$(git describe --tags --match 'v*' --abbrev=0 \"$REV^\" 2>/dev/null || true)\n-range=${previous:+$previous..}$REV\n-\n-subjects=$(git log --no-merges --format=%s \"$range\")\n-\n-section() {\n-    local title=$1 pattern=$2 lines\n-    lines=$(grep -E \"^($pattern)(\\([^)]*\\))?!?: \" <<<\"$subjects\" || true)\n-    if [ -n \"$lines\" ]; then\n-        printf '### %s\\n\\n' \"$title\"\n-        sed -E 's/^[a-z]+(\\(([^)]*)\\))?!?: /- **\\2** /; s/^- \\*\\*\\*\\* /- /' <<<\"$lines\"\n-        printf '\\n'\n-    fi\n-}\n-\n-echo \"## smart-commit ${TAG#v}\"\n-echo\n-if [ -n \"$previous\" ]; then\n-    echo \"Changes since $previous.\"\n-else\n-    echo \"First release.\"\n-fi\n-echo\n-section \"Features\" feat\n-section \"Fixes\" fix\n-section \"Performance\" perf\n-section \"Documentation\" docs\n-others=$(grep -vE \"^(feat|fix|perf|docs)(\\([^)]*\\))?!?: \" <<<\"$subjects\" || true)\n-if [ -n \"$others\" ]; then\n-    printf '### Other\\n\\n'\n-    sed -E 's/^[a-z]+(\\(([^)]*)\\))?!?: /- **\\2** /; t; s/^/- /' <<<\"$others\" | sed 's/^- \\*\\*\\*\\* /- /'\n-    printf '\\n'\n-fi\n-cat <<'EOF'\n-### Install\n-\n-```bash\n-curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash\n-```\n-\n-The tarball is reproducible: `scripts/package.sh` on this tag gives the bytes\n-in `SHA256SUMS`, on any machine with Docker.\n-EOF\n"
+      },
+      {
+        "path": "tests/scripts/test-release-notes.sh",
+        "old_path": null,
+        "lines": [
+          0,
+          60
+        ],
+        "hunks": "@@ -1,60 +0,0 @@\n-#!/usr/bin/env bash\n-# scripts/release-notes.sh on a throwaway repository: only commits since the\n-# previous v* tag, grouped by Conventional Commits type.\n-#\n-#   tests/scripts/test-release-notes.sh\n-set -euo pipefail\n-\n-ROOT=$(cd \"$(dirname \"$0\")/../..\" && pwd)\n-work=$(mktemp -d)\n-trap 'rm -rf \"$work\"' EXIT\n-export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1\n-export GIT_AUTHOR_NAME=T GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=T GIT_COMMITTER_EMAIL=t@t\n-\n-git init -q --initial-branch=main \"$work/repo\"\n-cd \"$work/repo\"\n-commit() { git commit -q --allow-empty -m \"$1\"; }\n-commit \"feat: before the tag\"\n-git tag v0.1.0\n-commit \"feat(cli): adiciona o comando bench\"\n-commit \"fix: corrige o parse\"\n-commit \"docs: atualiza o guia\"\n-commit \"build: fixa o toolchain\"\n-commit \"Mensagem livre\"\n-\n-notes=$(\"$ROOT/scripts/release-notes.sh\" v0.2.0)\n-failures=0\n-expect() {\n-    if grep -qF -- \"$1\" <<<\"$notes\"; then echo \"ok    $1\"; else\n-        echo \"FAIL  expected: $1\"\n-        failures=$((failures + 1))\n-    fi\n-}\n-refute() {\n-    if grep -qF -- \"$1\" <<<\"$notes\"; then\n-        echo \"FAIL  unexpected: $1\"\n-        failures=$((failures + 1))\n-    else echo \"ok    no $1\"; fi\n-}\n-expect \"## smart-commit 0.2.0\"\n-expect \"Changes since v0.1.0.\"\n-expect \"### Features\"\n-expect \"- **cli** adiciona o comando bench\"\n-expect \"### Fixes\"\n-expect \"- corrige o parse\"\n-expect \"### Documentation\"\n-refute \"- **** \"\n-expect \"### Other\"\n-expect \"- fixa o toolchain\"\n-expect \"- Mensagem livre\"\n-refute \"before the tag\"\n-expect \"install.sh | bash\"\n-\n-first=$(\"$ROOT/scripts/release-notes.sh\" v0.1.0 v0.1.0)\n-if grep -q \"First release.\" <<<\"$first\"; then\n-    echo \"ok    first release\"\n-else\n-    echo \"FAIL  first release\"\n-    failures=$((failures + 1))\n-fi\n-[ \"$failures\" = 0 ]\n"
+      },
+      {
+        "path": "tools/src/main.rs",
+        "old_path": null,
+        "lines": [
+          15,
+          0
+        ],
+        "hunks": "@@ -3,2 +3,3 @@\n \n+mod release_notes;\n mod time_server;\n@@ -22,2 +23,9 @@ struct Cli {\n enum Command {\n+    /// The notes of release TAG: the commits since the previous `v*` tag,\n+    /// grouped by type, plus how to install (`REV` defaults to HEAD).\n+    ReleaseNotes {\n+        tag: String,\n+        #[arg(default_value = \"HEAD\")]\n+        rev: String,\n+    },\n     /// Time llama-server on the `smart-commit prompt` outputs in DIR\n@@ -48,2 +56,9 @@ fn run(cli: Cli) -> Result<()> {\n     match cli.command {\n+        Command::ReleaseNotes { tag, rev } => {\n+            print!(\n+                \"{}\",\n+                release_notes::notes(std::path::Path::new(\".\"), &tag, &rev)?\n+            );\n+            Ok(())\n+        }\n         Command::TimeServer {\n"
+      },
+      {
+        "path": "tools/src/release_notes.rs",
+        "old_path": null,
+        "lines": [
+          126,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,126 @@\n+//! `sc-tools release-notes TAG [REV]`: the notes of a release, from the\n+//! commits since the previous `v*` tag, grouped by their Conventional\n+//! Commits type, plus how to install. The release workflow publishes them.\n+\n+use std::path::Path;\n+use std::process::Command;\n+\n+use anyhow::{Context as _, Result, bail};\n+\n+/// The `v*` tag before `rev`, if any.\n+fn previous_tag(repo: &Path, rev: &str) -> Option<String> {\n+    let output = Command::new(\"git\")\n+        .current_dir(repo)\n+        .args([\"describe\", \"--tags\", \"--match\", \"v*\", \"--abbrev=0\"])\n+        .arg(format!(\"{rev}^\"))\n+        .output()\n+        .ok()?;\n+    let tag = String::from_utf8(output.stdout).ok()?;\n+    (output.status.success() && !tag.trim().is_empty()).then(|| tag.trim().to_owned())\n+}\n+\n+/// The subjects of the commits in `range`, merges excluded.\n+fn subjects(repo: &Path, range: &str) -> Result<Vec<String>> {\n+    let output = Command::new(\"git\")\n+        .current_dir(repo)\n+        .args([\"log\", \"--no-merges\", \"--format=%s\", range])\n+        .output()\n+        .context(\"cannot run git\")?;\n+    if !output.status.success() {\n+        bail!(\n+            \"git log {range} failed: {}\",\n+            String::from_utf8_lossy(&output.stderr).trim()\n+        );\n+    }\n+    Ok(String::from_utf8(output.stdout)?\n+        .lines()\n+        .map(str::to_owned)\n+        .collect())\n+}\n+\n+/// `type(scope)!: description` as (type, scope, description), when it is.\n+fn conventional(subject: &str) -> Option<(&str, &str, &str)> {\n+    let (head, description) = subject.split_once(\": \")?;\n+    let head = head.strip_suffix('!').unwrap_or(head);\n+    let (kind, scope) = match head.split_once('(') {\n+        Some((kind, rest)) => (kind, rest.strip_suffix(')').filter(|s| !s.contains(')'))?),\n+        None => (head, \"\"),\n+    };\n+    (!kind.is_empty() && kind.bytes().all(|b| b.is_ascii_lowercase())).then_some((\n+        kind,\n+        scope,\n+        description,\n+    ))\n+}\n+\n+/// A list line: the scope in bold before the description, if it has one.\n+fn line(scope: &str, description: &str) -> String {\n+    if scope.is_empty() {\n+        format!(\"- {description}\\n\")\n+    } else {\n+        format!(\"- **{scope}** {description}\\n\")\n+    }\n+}\n+\n+const SECTIONS: [(&str, &str); 4] = [\n+    (\"Features\", \"feat\"),\n+    (\"Fixes\", \"fix\"),\n+    (\"Performance\", \"perf\"),\n+    (\"Documentation\", \"docs\"),\n+];\n+\n+/// The notes of `tag`, given the previous tag and the subjects since it.\n+pub fn render(tag: &str, previous: Option<&str>, subjects: &[String]) -> String {\n+    let mut text = format!(\n+        \"## smart-commit {}\\n\\n\",\n+        tag.strip_prefix('v').unwrap_or(tag)\n+    );\n+    match previous {\n+        Some(previous) => text.push_str(&format!(\"Changes since {previous}.\\n\\n\")),\n+        None => text.push_str(\"First release.\\n\\n\"),\n+    }\n+    for (title, kind) in SECTIONS {\n+        let lines: Vec<String> = subjects\n+            .iter()\n+            .filter_map(|s| conventional(s))\n+            .filter(|(k, _, _)| *k == kind)\n+            .map(|(_, scope, description)| line(scope, description))\n+            .collect();\n+        if !lines.is_empty() {\n+            text.push_str(&format!(\"### {title}\\n\\n{}\\n\", lines.concat()));\n+        }\n+    }\n+    let others: Vec<String> = subjects\n+        .iter()\n+        .filter(|s| !matches!(conventional(s), Some((k, _, _)) if SECTIONS.iter().any(|(_, t)| *t == k)))\n+        .map(|s| match conventional(s) {\n+            Some((_, scope, description)) => line(scope, description),\n+            None => format!(\"- {s}\\n\"),\n+        })\n+        .collect();\n+    if !others.is_empty() {\n+        text.push_str(&format!(\"### Other\\n\\n{}\\n\", others.concat()));\n+    }\n+    text.push_str(\n+        \"### Install\\n\\n```bash\\n\\\n+         curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash\\n\\\n+         ```\\n\\n\\\n+         The tarball is reproducible: `scripts/package.sh` on this tag gives the bytes\\n\\\n+         in `SHA256SUMS`, on any machine with Docker.\\n\",\n+    );\n+    text\n+}\n+\n+/// The notes of `tag`, from the repository at `repo`, up to `rev`.\n+pub fn notes(repo: &Path, tag: &str, rev: &str) -> Result<String> {\n+    let previous = previous_tag(repo, rev);\n+    let range = match &previous {\n+        Some(previous) => format!(\"{previous}..{rev}\"),\n+        None => rev.to_owned(),\n+    };\n+    Ok(render(tag, previous.as_deref(), &subjects(repo, &range)?))\n+}\n+\n+#[cfg(test)]\n+#[path = \"release_notes_tests.rs\"]\n+mod tests;\n"
+      },
+      {
+        "path": "tools/src/release_notes_tests.rs",
+        "old_path": null,
+        "lines": [
+          128,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,128 @@\n+use std::path::Path;\n+use std::process::Command;\n+\n+use super::*;\n+\n+fn subjects(list: &[&str]) -> Vec<String> {\n+    list.iter().map(|s| (*s).to_owned()).collect()\n+}\n+\n+#[test]\n+fn subjects_are_grouped_by_type_and_the_scope_is_bold() {\n+    let notes = render(\n+        \"v0.2.0\",\n+        Some(\"v0.1.0\"),\n+        &subjects(&[\n+            \"feat(cli): adiciona o comando bench\",\n+            \"fix: corrige o parse\",\n+            \"docs: atualiza o guia\",\n+            \"perf(diff)!: corta menos\",\n+        ]),\n+    );\n+    assert!(notes.starts_with(\"## smart-commit 0.2.0\\n\\nChanges since v0.1.0.\\n\\n\"));\n+    assert!(notes.contains(\"### Features\\n\\n- **cli** adiciona o comando bench\\n\\n\"));\n+    assert!(notes.contains(\"### Fixes\\n\\n- corrige o parse\\n\\n\"));\n+    assert!(notes.contains(\"### Performance\\n\\n- **diff** corta menos\\n\\n\"));\n+    assert!(notes.contains(\"### Documentation\\n\\n- atualiza o guia\\n\\n\"));\n+    assert!(!notes.contains(\"- **** \"));\n+    assert!(!notes.contains(\"### Other\"));\n+}\n+\n+#[test]\n+fn other_types_and_free_text_go_under_other() {\n+    let notes = render(\n+        \"v0.2.0\",\n+        Some(\"v0.1.0\"),\n+        &subjects(&[\n+            \"build: fixa o toolchain\",\n+            \"chore(deps): sobe o clap\",\n+            \"Mensagem livre\",\n+            \"feat\",\n+        ]),\n+    );\n+    assert!(notes.contains(\n+        \"### Other\\n\\n- fixa o toolchain\\n- **deps** sobe o clap\\n- Mensagem livre\\n- feat\\n\\n\"\n+    ));\n+    assert!(!notes.contains(\"### Features\"));\n+}\n+\n+#[test]\n+fn what_looks_like_a_type_but_is_not_one_is_free_text() {\n+    assert_eq!(conventional(\"Feat: x\"), None);\n+    assert_eq!(conventional(\"feat(a)b: x\"), None);\n+    assert_eq!(conventional(\": x\"), None);\n+    assert_eq!(conventional(\"feat(a: b)\"), None);\n+    assert_eq!(conventional(\"fix(a)!: x\"), Some((\"fix\", \"a\", \"x\")));\n+}\n+\n+#[test]\n+fn the_first_release_says_so_and_every_release_says_how_to_install() {\n+    let notes = render(\"v0.1.0\", None, &[]);\n+    assert!(notes.contains(\"First release.\\n\"));\n+    assert!(notes.contains(\"install.sh | bash\"));\n+    assert!(notes.ends_with(\"on any machine with Docker.\\n\"));\n+}\n+\n+fn git(repo: &Path, args: &[&str]) {\n+    let status = Command::new(\"git\")\n+        .current_dir(repo)\n+        .args(args)\n+        .env(\"GIT_CONFIG_GLOBAL\", \"/dev/null\")\n+        .env(\"GIT_CONFIG_NOSYSTEM\", \"1\")\n+        .env(\"GIT_AUTHOR_NAME\", \"T\")\n+        .env(\"GIT_AUTHOR_EMAIL\", \"t@t\")\n+        .env(\"GIT_COMMITTER_NAME\", \"T\")\n+        .env(\"GIT_COMMITTER_EMAIL\", \"t@t\")\n+        .status()\n+        .unwrap();\n+    assert!(status.success(), \"git {args:?}\");\n+}\n+\n+#[test]\n+fn only_the_commits_since_the_previous_tag_count() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let repo = dir.path();\n+    git(repo, &[\"init\", \"-q\", \"--initial-branch=main\"]);\n+    let commit = |subject: &str| git(repo, &[\"commit\", \"-q\", \"--allow-empty\", \"-m\", subject]);\n+    commit(\"feat: before the tag\");\n+    git(repo, &[\"tag\", \"v0.1.0\"]);\n+    commit(\"feat(cli): adiciona o comando bench\");\n+    commit(\"fix: corrige o parse\");\n+    commit(\"Mensagem livre\");\n+\n+    let text = notes(repo, \"v0.2.0\", \"HEAD\").unwrap();\n+    assert!(text.contains(\"Changes since v0.1.0.\"));\n+    assert!(text.contains(\"- **cli** adiciona o comando bench\"));\n+    assert!(text.contains(\"- Mensagem livre\"));\n+    assert!(!text.contains(\"before the tag\"));\n+\n+    let first = notes(repo, \"v0.1.0\", \"v0.1.0\").unwrap();\n+    assert!(first.contains(\"First release.\"));\n+    assert!(first.contains(\"- before the tag\"));\n+}\n+\n+#[test]\n+fn merges_are_left_out() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let repo = dir.path();\n+    git(repo, &[\"init\", \"-q\", \"--initial-branch=main\"]);\n+    git(repo, &[\"commit\", \"-q\", \"--allow-empty\", \"-m\", \"feat: base\"]);\n+    git(repo, &[\"tag\", \"v0.1.0\"]);\n+    git(repo, &[\"switch\", \"-q\", \"-c\", \"side\"]);\n+    git(\n+        repo,\n+        &[\"commit\", \"-q\", \"--allow-empty\", \"-m\", \"fix: on the side\"],\n+    );\n+    git(repo, &[\"switch\", \"-q\", \"main\"]);\n+    git(\n+        repo,\n+        &[\"commit\", \"-q\", \"--allow-empty\", \"-m\", \"feat: on main\"],\n+    );\n+    git(\n+        repo,\n+        &[\"merge\", \"-q\", \"--no-ff\", \"-m\", \"Merge branch side\", \"side\"],\n+    );\n+    let text = notes(repo, \"v0.2.0\", \"HEAD\").unwrap();\n+    assert!(text.contains(\"on the side\") && text.contains(\"on main\"));\n+    assert!(!text.contains(\"Merge branch\"));\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(release): add `sc-tools release-notes`",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: test, chore, docs, feat, refactor.\n- Scopes used here: bench, docs, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor: move the llama-server timing out of the binary into sc-tools\nfeat(bench): time llama-server on prompt files with `bench --prompts`\nchore: remove scripts/experiments\ntest(fixtures): trace twelve messages from the module splits and the docs\ntest(docs): check that links between the pages and their headings resolve\n",
+          "user": "Files changed:\n.github/workflows/ci.yml | +0 -1\n.github/workflows/release.yml | +1 -1\nAGENTS.md | +1 -1\ndocs/architecture.md | +2 -2\nscripts/release-notes.sh | deleted, +0 -52\ntests/scripts/test-release-notes.sh | deleted, +0 -60\ntools/src/main.rs | +15 -0\ntools/src/release_notes.rs | new, +126 -0\ntools/src/release_notes_tests.rs | new, +128 -0\n\nDiff:\n--- scripts/release-notes.sh\n@@ -1,52 +0,0 @@\n-#!/usr/bin/env bash\n-# Prints the release notes of TAG: the commits since the previous v* tag,\n-# grouped by their Conventional Commits type, plus how to install.\n-#\n-#   scripts/release-notes.sh v0.2.0 [REV]   (REV defaults to HEAD)\n-set -euo pipefail\n-\n-TAG=${1:?usage: release-notes.sh TAG [REV]}\n[... 44 more lines]\n--- tools/src/main.rs\n@@ -3,2 +3,3 @@\n \n+mod release_notes;\n mod time_server;\n@@ -22,2 +23,9 @@ struct Cli {\n enum Command {\n+    /// The notes of release TAG: the commits since the previous `v*` tag,\n+    /// grouped by type, plus how to install (`REV` defaults to HEAD).\n+    ReleaseNotes {\n+        tag: String,\n+        #[arg(default_value = \"HEAD\")]\n[... 13 more lines]\n--- tools/src/release_notes.rs\n@@ -0,0 +1,126 @@\n+//! `sc-tools release-notes TAG [REV]`: the notes of a release, from the\n+//! commits since the previous `v*` tag, grouped by their Conventional\n+//! Commits type, plus how to install. The release workflow publishes them.\n+\n+use std::path::Path;\n+use std::process::Command;\n+\n[... 119 more lines]\n--- tools/src/release_notes_tests.rs\n@@ -0,0 +1,128 @@\n+use std::path::Path;\n+use std::process::Command;\n+\n+use super::*;\n+\n+fn subjects(list: &[&str]) -> Vec<String> {\n+    list.iter().map(|s| (*s).to_owned()).collect()\n+}\n+\n+#[test]\n+fn subjects_are_grouped_by_type_and_the_scope_is_bold() {\n+    let notes = render(\n+        \"v0.2.0\",\n[... 115 more lines]\n\n(9 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(release): add `sc-tools release-notes`",
+        "rejected": null
+      }
+    ]
+  }
+}

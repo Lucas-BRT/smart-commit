@@ -1,0 +1,309 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 95b3281",
+      "feat(bench): time llama-server on prompt files with `bench --prompts`",
+      "chore: remove scripts/experiments",
+      "test(fixtures): trace twelve messages from the module splits and the docs",
+      "test(docs): check that links between the pages and their headings resolve",
+      "docs: gather every timing in one page, measurements.md",
+      "docs: bring the roadmap and the training pages up to v0.2"
+    ],
+    "history_files": [
+      [
+        ".github/workflows/ci.yml",
+        "AGENTS.md",
+        "Cargo.lock",
+        "Cargo.toml",
+        "README.md",
+        "docs/architecture.md",
+        "docs/measurements.md",
+        "docs/usage.md",
+        "src/bench/mod.rs",
+        "src/bench/server.rs",
+        "src/bench/tests.rs",
+        "src/cli/benchmark.rs",
+        "src/cli/mod.rs",
+        "tests/bench_cli.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": ".github/workflows/ci.yml",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "AGENTS.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "Cargo.lock",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "Cargo.toml",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "README.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/measurements.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/usage.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/bench/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/bench/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/benchmark.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/bench_cli.rs",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tools/Cargo.toml",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tools/src/main.rs",
+        "old_path": null
+      },
+      {
+        "status": "renamed",
+        "path": "tools/src/time_server.rs",
+        "old_path": "src/bench/server.rs"
+      },
+      {
+        "status": "added",
+        "path": "tools/src/time_server_tests.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/ci.yml",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -19,4 +19,4 @@ jobs:\n       - run: cargo fmt --check\n-      - run: cargo clippy --locked --all-targets -- -D warnings\n-      - run: cargo test --locked\n+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings\n+      - run: cargo test --locked --workspace\n       # The runner's shellcheck changes with its image, and a newer one\n"
+      },
+      {
+        "path": "AGENTS.md",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -17,4 +17,4 @@ CI runs all of these on every push, and they must pass before any commit:\n cargo fmt --check\n-cargo clippy --locked --all-targets -- -D warnings\n-cargo test --locked\n+cargo clippy --locked --workspace --all-targets -- -D warnings\n+cargo test --locked --workspace\n shellcheck install.sh scripts/*.sh tests/fixtures/make-traces.sh tests/scripts/*.sh   # 0.11.0, as CI\n@@ -123,3 +123,3 @@ Before each commit, check that **what is staged alone** builds and passes:\n git stash push --keep-index --include-untracked\n-cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked\n+cargo fmt --check && cargo clippy --locked --workspace --all-targets -- -D warnings && cargo test --locked --workspace\n git stash pop\n"
+      },
+      {
+        "path": "Cargo.lock",
+        "old_path": null,
+        "lines": [
+          10,
+          0
+        ],
+        "hunks": "@@ -1159,2 +1159,12 @@ dependencies = [\n \n+[[package]]\n+name = \"smart-commit-tools\"\n+version = \"0.0.0\"\n+dependencies = [\n+ \"anyhow\",\n+ \"clap\",\n+ \"smart-commit\",\n+ \"tempfile\",\n+]\n+\n [[package]]\n"
+      },
+      {
+        "path": "Cargo.toml",
+        "old_path": null,
+        "lines": [
+          6,
+          0
+        ],
+        "hunks": "@@ -1 +1,7 @@\n+[workspace]\n+members = [\".\", \"tools\"]\n+# What `cargo build` and the release build make: the tools stay out of it.\n+default-members = [\".\"]\n+resolver = \"3\"\n+\n [package]\n"
+      },
+      {
+        "path": "README.md",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -114,4 +114,4 @@ see [devices](docs/devices.md) for how the device is chosen.\n cargo fmt --check\n-cargo clippy --locked --all-targets -- -D warnings\n-cargo test --locked\n+cargo clippy --locked --workspace --all-targets -- -D warnings\n+cargo test --locked --workspace\n ```\n"
+      },
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          5,
+          0
+        ],
+        "hunks": "@@ -47,2 +47,7 @@ installed in `share/smart-commit/scripts`.\n \n+Tools for working on smart-commit (timing llama-server on prompt files, for\n+now) are crates of their own in the workspace (`tools/`, the binary\n+`sc-tools`), outside `default-members`: what they need never reaches the\n+binary users install, and the release build does not compile them.\n+\n Errors: the library returns typed errors (`thiserror`: `GitError`,\n"
+      },
+      {
+        "path": "docs/measurements.md",
+        "old_path": null,
+        "lines": [
+          8,
+          6
+        ],
+        "hunks": "@@ -207,10 +207,12 @@ done\n \n-# `bench --prompts` starts llama-server as smart-commit does, with the flags\n-# after `--` added; the model is `model.gguf` (or SMART_COMMIT_GGUF).\n+# `sc-tools time-server` (the `tools/` crate, not part of the release) starts\n+# llama-server as smart-commit does, with the flags after `--` added; the\n+# model is `model.gguf` (or SMART_COMMIT_GGUF).\n+T=\"cargo run --release --locked -q -p smart-commit-tools --\"\n FAST=\"--no-repack --fit off\"\n-smart-commit bench --prompts /tmp/prompts --device cpu --label warmup -- $FAST >/dev/null\n-smart-commit bench --prompts /tmp/prompts --device cpu --label \"cpu\" -- $FAST\n-smart-commit bench --prompts /tmp/prompts --device cpu --label \"cpu tb\" -- $FAST \\\n+$T time-server /tmp/prompts --device cpu --label warmup -- $FAST >/dev/null\n+$T time-server /tmp/prompts --device cpu --label \"cpu\" -- $FAST\n+$T time-server /tmp/prompts --device cpu --label \"cpu tb\" -- $FAST \\\n   --threads-batch \"$(nproc)\" -b 1024 -ub 1024\n-smart-commit bench --prompts /tmp/prompts --device vulkan --label \"vulkan\" -- $FAST\n+$T time-server /tmp/prompts --device vulkan --label \"vulkan\" -- $FAST\n ```\n"
+      },
+      {
+        "path": "docs/usage.md",
+        "old_path": null,
+        "lines": [
+          0,
+          1
+        ],
+        "hunks": "@@ -161,3 +161,2 @@ smart-commit device use auto   # back to the fastest\n smart-commit bench             # measure again\n-smart-commit bench --prompts DIR --device cpu -- --no-repack --fit off   # time llama-server with other flags\n ```\n"
+      },
+      {
+        "path": "src/bench/mod.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          1
+        ],
+        "hunks": "@@ -13,3 +13,2 @@ mod measure;\n mod report;\n-pub mod server;\n #[cfg(test)]\n"
+      },
+      {
+        "path": "src/bench/tests.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          136
+        ],
+        "hunks": "@@ -255,137 +255 @@ fn cpu_time_grows_with_work() {\n }\n-\n-mod server {\n-    use std::sync::Mutex;\n-\n-    use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};\n-    use crate::bench::server::{ServerTiming, parse_prompt_file, read_prompts, time_prompts};\n-    use crate::prompt::Prompt;\n-\n-    const PRINTED: &str = \"===== system =====\\nRules.\\n\\n===== user =====\\nfile | +1 -0\\n\\n--- file\\n+x\\n===== ~12 of 1024 tokens =====\\n\";\n-\n-    fn prompt() -> Prompt {\n-        Prompt {\n-            system: \"Rules.\\n\".into(),\n-            user: \"file | +1 -0\\n\\n--- file\\n+x\".into(),\n-        }\n-    }\n-\n-    #[test]\n-    fn a_printed_prompt_is_read_back() {\n-        assert_eq!(parse_prompt_file(PRINTED), Some(prompt()));\n-    }\n-\n-    #[test]\n-    fn text_that_is_not_a_printed_prompt_is_refused() {\n-        assert_eq!(parse_prompt_file(\"\"), None);\n-        assert_eq!(parse_prompt_file(\"===== system =====\\nonly\\n\"), None);\n-    }\n-\n-    #[test]\n-    fn prompts_are_read_in_name_order_from_txt_files() {\n-        let dir = tempfile::TempDir::new().unwrap();\n-        std::fs::write(dir.path().join(\"b.txt\"), PRINTED).unwrap();\n-        std::fs::write(dir.path().join(\"a.txt\"), PRINTED).unwrap();\n-        std::fs::write(dir.path().join(\"c.md\"), \"ignored\").unwrap();\n-        let prompts = read_prompts(dir.path()).unwrap();\n-        let names: Vec<&str> = prompts.iter().map(|(n, _)| n.as_str()).collect();\n-        assert_eq!(names, [\"a.txt\", \"b.txt\"]);\n-    }\n-\n-    #[test]\n-    fn a_directory_without_prompts_or_with_other_text_is_an_error() {\n-        let dir = tempfile::TempDir::new().unwrap();\n-        assert!(read_prompts(dir.path()).unwrap_err().contains(\"no *.txt\"));\n-        std::fs::write(dir.path().join(\"x.txt\"), \"hello\").unwrap();\n-        assert!(\n-            read_prompts(dir.path())\n-                .unwrap_err()\n-                .contains(\"not the output of\")\n-        );\n-        assert!(read_prompts(&dir.path().join(\"missing\")).is_err());\n-    }\n-\n-    /// Replies with the nth timing, as llama-server reports them.\n-    struct Timed {\n-        replies: Mutex<Vec<(&'static str, Metrics)>>,\n-        last: Mutex<Option<Metrics>>,\n-    }\n-\n-    fn metrics(input: usize, prefill: f32, output: usize, decode: f32) -> Metrics {\n-        Metrics {\n-            input_tokens: input,\n-            output_tokens: output,\n-            load_ms: 0.0,\n-            time_to_first_token_ms: prefill,\n-            time_per_output_token_ms: 0.0,\n-            generate_ms: prefill + decode,\n-        }\n-    }\n-\n-    impl Backend for Timed {\n-        fn describe(&self) -> String {\n-            \"timed\".into()\n-        }\n-\n-        fn generate(&self, _: &Prompt, _: &GenerationConfig) -> Result<String, BackendError> {\n-            let (reply, metrics) = self.replies.lock().unwrap().remove(0);\n-            *self.last.lock().unwrap() = Some(metrics);\n-            Ok(reply.to_owned())\n-        }\n-\n-        fn last_metrics(&self) -> Option<Metrics> {\n-            self.last.lock().unwrap().clone()\n-        }\n-    }\n-\n-    fn timed(replies: Vec<(&'static str, Metrics)>) -> Timed {\n-        Timed {\n-            replies: Mutex::new(replies),\n-            last: Mutex::new(None),\n-        }\n-    }\n-\n-    #[test]\n-    fn prefill_and_decode_are_told_apart() {\n-        let backend = timed(vec![(\n-            \"  feat: add x\\nbody\\n\",\n-            metrics(300, 1000.0, 12, 500.0),\n-        )]);\n-        let prompts = [(\"a.txt\".to_owned(), prompt())];\n-        let timings = time_prompts(&backend, &prompts, &GenerationConfig::default()).unwrap();\n-        assert_eq!(timings[0].input_tokens, 300);\n-        assert_eq!(timings[0].prefill_ms, 1000.0);\n-        assert_eq!(timings[0].decode_ms, 500.0);\n-        assert_eq!(timings[0].first_line, \"feat: add x\");\n-    }\n-\n-    #[test]\n-    fn a_backend_without_timings_is_an_error() {\n-        let backend = crate::backend::MockBackend::new([\"feat: x\"]);\n-        let prompts = [(\"a.txt\".to_owned(), prompt())];\n-        assert!(time_prompts(&backend, &prompts, &GenerationConfig::default()).is_err());\n-    }\n-\n-    #[test]\n-    fn the_report_has_the_mean_and_a_line_per_prompt() {\n-        let backend = timed(vec![\n-            (\"feat: a\", metrics(300, 1000.0, 12, 400.0)),\n-            (\"fix: b\", metrics(500, 3000.0, 10, 600.0)),\n-        ]);\n-        let prompts = [\n-            (\"a.txt\".to_owned(), prompt()),\n-            (\"b.txt\".to_owned(), prompt()),\n-        ];\n-        let timing = ServerTiming {\n-            load_ms: 300.0,\n-            prompts: time_prompts(&backend, &prompts, &GenerationConfig::default()).unwrap(),\n-        };\n-        let text = timing.render(\"cpu\");\n-        assert_eq!(\n-            text.lines().next().unwrap(),\n-            \"== cpu: load 300 ms, prefill 2000 ms, decode 500 ms, total/msg 2800 ms\"\n-        );\n-        assert!(text.contains(\"a.txt          in= 300   1000ms out= 12    400ms  feat: a\"));\n-        assert!(text.contains(\"b.txt          in= 500   3000ms out= 10    600ms  fix: b\"));\n-    }\n-}\n"
+      },
+      {
+        "path": "src/cli/benchmark.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          32
+        ],
+        "hunks": "@@ -98,34 +98,2 @@ fn save(report: &Report) -> Result<PathBuf> {\n \n-/// `bench --prompts`: llama-server timed on prompts from files, with flags of\n-/// the caller's choice.\n-pub(super) fn time_server(\n-    dir: &Path,\n-    device: Option<DeviceArg>,\n-    label: &str,\n-    server_args: &[String],\n-) -> Result<()> {\n-    let flags = device\n-        .map(|d| vec![(\"model.device\", d.name().to_owned())])\n-        .unwrap_or_default();\n-    let resolved = resolve(None, flags)?;\n-    warn_renamed(&resolved);\n-    let settings = resolved.settings();\n-    let target = match settings.device {\n-        DeviceSetting::Fixed(target @ (Target::Vulkan | Target::Cpu)) => target,\n-        _ => bail!(\"--prompts times llama-server: choose --device vulkan or cpu\"),\n-    };\n-    let options = settings\n-        .llamacpp_options(target, false)\n-        .map_err(|e| anyhow!(e))?;\n-    let prompts = bench::server::read_prompts(dir).map_err(|e| anyhow!(e))?;\n-    let timing = bench::server::time_server(\n-        &options,\n-        server_args,\n-        &prompts,\n-        &settings.generation_config(),\n-    )?;\n-    print!(\"{}\", timing.render(label));\n-    Ok(())\n-}\n-\n pub(super) fn run_bench(json: bool) -> Result<()> {\n"
+      },
+      {
+        "path": "src/cli/mod.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          23
+        ],
+        "hunks": "@@ -99,18 +99,4 @@ enum Command {\n         /// Print the full report as JSON.\n-        #[arg(long, conflicts_with = \"prompts\")]\n+        #[arg(long)]\n         json: bool,\n-        /// Time llama-server instead, on the `smart-commit prompt` outputs in\n-        /// DIR (`*.txt`), with the llama-server flags after `--`, to see what\n-        /// a flag costs; nothing is saved.\n-        #[arg(long, value_name = \"DIR\")]\n-        prompts: Option<PathBuf>,\n-        /// With `--prompts`: `vulkan` or `cpu` [default: model.device].\n-        #[arg(long, value_enum, requires = \"prompts\")]\n-        device: Option<args::DeviceArg>,\n-        /// With `--prompts`: the name printed on the result line.\n-        #[arg(long, requires = \"prompts\", default_value = \"llama-server\")]\n-        label: String,\n-        /// With `--prompts`: more llama-server flags, after `--`.\n-        #[arg(last = true, requires = \"prompts\")]\n-        server_args: Vec<String>,\n     },\n@@ -220,10 +206,3 @@ pub fn run() -> ExitCode {\n         Some(Command::Config(command)) => configure::run(command),\n-        Some(Command::Bench {\n-            prompts: Some(dir),\n-            device,\n-            label,\n-            server_args,\n-            ..\n-        }) => benchmark::time_server(&dir, device, &label, &server_args),\n-        Some(Command::Bench { json, .. }) => benchmark::run_bench(json),\n+        Some(Command::Bench { json }) => benchmark::run_bench(json),\n         Some(Command::Device { command }) => benchmark::run_device(command),\n"
+      },
+      {
+        "path": "tests/bench_cli.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          47
+        ],
+        "hunks": "@@ -282,48 +282 @@ fn device_says_where_the_benchmark_turned_fast_load_on() {\n }\n-\n-#[test]\n-fn prompts_need_a_llama_cpp_device() {\n-    let home = Home::new();\n-    let dir = TempDir::new().unwrap();\n-    let output = home.run(\n-        &[\"bench\", \"--prompts\", dir.path().to_str().unwrap()],\n-        dir.path(),\n-    );\n-    assert!(!output.status.success());\n-    assert!(\n-        String::from_utf8_lossy(&output.stderr).contains(\"--device vulkan or cpu\"),\n-        \"{}\",\n-        String::from_utf8_lossy(&output.stderr)\n-    );\n-}\n-\n-#[test]\n-fn prompts_without_prompt_files_are_reported() {\n-    let home = Home::new();\n-    let dir = TempDir::new().unwrap();\n-    let output = home.run(\n-        &[\n-            \"bench\",\n-            \"--prompts\",\n-            dir.path().to_str().unwrap(),\n-            \"--device\",\n-            \"cpu\",\n-        ],\n-        dir.path(),\n-    );\n-    assert!(!output.status.success());\n-    assert!(String::from_utf8_lossy(&output.stderr).contains(\"no *.txt prompts\"));\n-}\n-\n-#[test]\n-fn the_options_of_prompts_need_prompts_and_json_conflicts_with_it() {\n-    let home = Home::new();\n-    let dir = TempDir::new().unwrap();\n-    for args in [\n-        vec![\"bench\", \"--label\", \"x\"],\n-        vec![\"bench\", \"--json\", \"--prompts\", \".\"],\n-    ] {\n-        let output = home.run(&args, dir.path());\n-        assert_eq!(output.status.code(), Some(2), \"{args:?}\");\n-    }\n-}\n"
+      },
+      {
+        "path": "tools/Cargo.toml",
+        "old_path": null,
+        "lines": [
+          19,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,19 @@\n+[package]\n+name = \"smart-commit-tools\"\n+version = \"0.0.0\"\n+edition = \"2024\"\n+rust-version = \"1.99\"\n+description = \"Tools for working on smart-commit; not part of the release\"\n+publish = false\n+\n+[[bin]]\n+name = \"sc-tools\"\n+path = \"src/main.rs\"\n+\n+[dependencies]\n+anyhow = \"1\"\n+clap = { version = \"4\", features = [\"derive\"] }\n+smart-commit = { path = \"..\" }\n+\n+[dev-dependencies]\n+tempfile = \"3\"\n"
+      },
+      {
+        "path": "tools/src/main.rs",
+        "old_path": null,
+        "lines": [
+          88,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,88 @@\n+//! Tools for working on smart-commit. They are a crate of their own so that\n+//! what they need never reaches the binary users install.\n+\n+mod time_server;\n+\n+use std::path::PathBuf;\n+\n+use anyhow::{Result, anyhow, bail};\n+use clap::{Parser, Subcommand};\n+use smart_commit::backend::device::Target;\n+use smart_commit::config::{DeviceSetting, Resolved, Sources};\n+use smart_commit::paths;\n+\n+#[derive(Debug, Parser)]\n+#[command(name = \"sc-tools\", about = \"Tools for working on smart-commit\")]\n+struct Cli {\n+    #[command(subcommand)]\n+    command: Command,\n+}\n+\n+#[derive(Debug, Subcommand)]\n+enum Command {\n+    /// Time llama-server on the `smart-commit prompt` outputs in DIR\n+    /// (`*.txt`), with the llama-server flags after `--`, to see what a flag\n+    /// costs. The model, server and budgets come from smart-commit's settings.\n+    TimeServer {\n+        dir: PathBuf,\n+        /// `vulkan` or `cpu` [default: model.device].\n+        #[arg(long)]\n+        device: Option<String>,\n+        /// The name printed on the result line.\n+        #[arg(long, default_value = \"llama-server\")]\n+        label: String,\n+        /// More llama-server flags, after smart-commit's own.\n+        #[arg(last = true)]\n+        server_args: Vec<String>,\n+    },\n+}\n+\n+fn main() {\n+    if let Err(error) = run(Cli::parse()) {\n+        eprintln!(\"error: {error:#}\");\n+        std::process::exit(1);\n+    }\n+}\n+\n+fn run(cli: Cli) -> Result<()> {\n+    match cli.command {\n+        Command::TimeServer {\n+            dir,\n+            device,\n+            label,\n+            server_args,\n+        } => time_server(&dir, device, &label, &server_args),\n+    }\n+}\n+\n+fn time_server(\n+    dir: &std::path::Path,\n+    device: Option<String>,\n+    label: &str,\n+    server_args: &[String],\n+) -> Result<()> {\n+    let env = |name: &str| std::env::var(name).ok();\n+    let resolved = Resolved::resolve(&Sources {\n+        global: paths::default_config_file(env),\n+        repo: None,\n+        env: &env,\n+        flags: device.map(|d| (\"model.device\", d)).into_iter().collect(),\n+    })?;\n+    let settings = resolved.settings();\n+    let target = match settings.device {\n+        DeviceSetting::Fixed(target @ (Target::Vulkan | Target::Cpu)) => target,\n+        _ => bail!(\"time-server times llama-server: choose --device vulkan or cpu\"),\n+    };\n+    let options = settings\n+        .llamacpp_options(target, false)\n+        .map_err(|e| anyhow!(e))?;\n+    let prompts = time_server::read_prompts(dir).map_err(|e| anyhow!(e))?;\n+    let timing = time_server::time_server(\n+        &options,\n+        server_args,\n+        &prompts,\n+        &settings.generation_config(),\n+    )?;\n+    print!(\"{}\", timing.render(label));\n+    Ok(())\n+}\n"
+      },
+      {
+        "path": "tools/src/time_server.rs",
+        "old_path": "src/bench/server.rs",
+        "lines": [
+          8,
+          4
+        ],
+        "hunks": "@@ -1,2 +1,2 @@\n-//! `smart-commit bench --prompts`: times llama-server on prompts printed by\n+//! `sc-tools time-server`: times llama-server on prompts printed by\n //! `smart-commit prompt`, with llama-server flags of the caller's choice, to\n@@ -7,5 +7,5 @@ use std::time::Instant;\n \n-use crate::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};\n-use crate::backend::{Backend, BackendError, GenerationConfig};\n-use crate::prompt::Prompt;\n+use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};\n+use smart_commit::backend::{Backend, BackendError, GenerationConfig};\n+use smart_commit::prompt::Prompt;\n \n@@ -141 +141,5 @@ impl ServerTiming {\n }\n+\n+#[cfg(test)]\n+#[path = \"time_server_tests.rs\"]\n+mod tests;\n"
+      },
+      {
+        "path": "tools/src/time_server_tests.rs",
+        "old_path": null,
+        "lines": [
+          133,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,133 @@\n+use std::sync::Mutex;\n+\n+use super::{ServerTiming, parse_prompt_file, read_prompts, time_prompts};\n+use smart_commit::backend::{Backend, BackendError, GenerationConfig, Metrics};\n+use smart_commit::prompt::Prompt;\n+\n+const PRINTED: &str = \"===== system =====\\nRules.\\n\\n===== user =====\\nfile | +1 -0\\n\\n--- file\\n+x\\n===== ~12 of 1024 tokens =====\\n\";\n+\n+fn prompt() -> Prompt {\n+    Prompt {\n+        system: \"Rules.\\n\".into(),\n+        user: \"file | +1 -0\\n\\n--- file\\n+x\".into(),\n+    }\n+}\n+\n+#[test]\n+fn a_printed_prompt_is_read_back() {\n+    assert_eq!(parse_prompt_file(PRINTED), Some(prompt()));\n+}\n+\n+#[test]\n+fn text_that_is_not_a_printed_prompt_is_refused() {\n+    assert_eq!(parse_prompt_file(\"\"), None);\n+    assert_eq!(parse_prompt_file(\"===== system =====\\nonly\\n\"), None);\n+}\n+\n+#[test]\n+fn prompts_are_read_in_name_order_from_txt_files() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    std::fs::write(dir.path().join(\"b.txt\"), PRINTED).unwrap();\n+    std::fs::write(dir.path().join(\"a.txt\"), PRINTED).unwrap();\n+    std::fs::write(dir.path().join(\"c.md\"), \"ignored\").unwrap();\n+    let prompts = read_prompts(dir.path()).unwrap();\n+    let names: Vec<&str> = prompts.iter().map(|(n, _)| n.as_str()).collect();\n+    assert_eq!(names, [\"a.txt\", \"b.txt\"]);\n+}\n+\n+#[test]\n+fn a_directory_without_prompts_or_with_other_text_is_an_error() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    assert!(read_prompts(dir.path()).unwrap_err().contains(\"no *.txt\"));\n+    std::fs::write(dir.path().join(\"x.txt\"), \"hello\").unwrap();\n+    assert!(\n+        read_prompts(dir.path())\n+            .unwrap_err()\n+            .contains(\"not the output of\")\n+    );\n+    assert!(read_prompts(&dir.path().join(\"missing\")).is_err());\n+}\n+\n+/// Replies with the nth timing, as llama-server reports them.\n+struct Timed {\n+    replies: Mutex<Vec<(&'static str, Metrics)>>,\n+    last: Mutex<Option<Metrics>>,\n+}\n+\n+fn metrics(input: usize, prefill: f32, output: usize, decode: f32) -> Metrics {\n+    Metrics {\n+        input_tokens: input,\n+        output_tokens: output,\n+        load_ms: 0.0,\n+        time_to_first_token_ms: prefill,\n+        time_per_output_token_ms: 0.0,\n+        generate_ms: prefill + decode,\n+    }\n+}\n+\n+impl Backend for Timed {\n+    fn describe(&self) -> String {\n+        \"timed\".into()\n+    }\n+\n+    fn generate(&self, _: &Prompt, _: &GenerationConfig) -> Result<String, BackendError> {\n+        let (reply, metrics) = self.replies.lock().unwrap().remove(0);\n+        *self.last.lock().unwrap() = Some(metrics);\n+        Ok(reply.to_owned())\n+    }\n+\n+    fn last_metrics(&self) -> Option<Metrics> {\n+        self.last.lock().unwrap().clone()\n+    }\n+}\n+\n+fn timed(replies: Vec<(&'static str, Metrics)>) -> Timed {\n+    Timed {\n+        replies: Mutex::new(replies),\n+        last: Mutex::new(None),\n+    }\n+}\n+\n+#[test]\n+fn prefill_and_decode_are_told_apart() {\n+    let backend = timed(vec![(\n+        \"  feat: add x\\nbody\\n\",\n+        metrics(300, 1000.0, 12, 500.0),\n+    )]);\n+    let prompts = [(\"a.txt\".to_owned(), prompt())];\n+    let timings = time_prompts(&backend, &prompts, &GenerationConfig::default()).unwrap();\n+    assert_eq!(timings[0].input_tokens, 300);\n+    assert_eq!(timings[0].prefill_ms, 1000.0);\n+    assert_eq!(timings[0].decode_ms, 500.0);\n+    assert_eq!(timings[0].first_line, \"feat: add x\");\n+}\n+\n+#[test]\n+fn a_backend_without_timings_is_an_error() {\n+    let backend = smart_commit::backend::MockBackend::new([\"feat: x\"]);\n+    let prompts = [(\"a.txt\".to_owned(), prompt())];\n+    assert!(time_prompts(&backend, &prompts, &GenerationConfig::default()).is_err());\n+}\n+\n+#[test]\n+fn the_report_has_the_mean_and_a_line_per_prompt() {\n+    let backend = timed(vec![\n+        (\"feat: a\", metrics(300, 1000.0, 12, 400.0)),\n+        (\"fix: b\", metrics(500, 3000.0, 10, 600.0)),\n+    ]);\n+    let prompts = [\n+        (\"a.txt\".to_owned(), prompt()),\n+        (\"b.txt\".to_owned(), prompt()),\n+    ];\n+    let timing = ServerTiming {\n+        load_ms: 300.0,\n+        prompts: time_prompts(&backend, &prompts, &GenerationConfig::default()).unwrap(),\n+    };\n+    let text = timing.render(\"cpu\");\n+    assert_eq!(\n+        text.lines().next().unwrap(),\n+        \"== cpu: load 300 ms, prefill 2000 ms, decode 500 ms, total/msg 2800 ms\"\n+    );\n+    assert!(text.contains(\"a.txt          in= 300   1000ms out= 12    400ms  feat: a\"));\n+    assert!(text.contains(\"b.txt          in= 500   3000ms out= 10    600ms  fix: b\"));\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "chore: move tools to a separate crate",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, test, chore, feat, refactor.\n- Scopes used here: bench, docs, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(bench): time llama-server on prompt files with `bench --prompts`\nchore: remove scripts/experiments\ntest(fixtures): trace twelve messages from the module splits and the docs\ntest(docs): check that links between the pages and their headings resolve\ndocs: gather every timing in one page, measurements.md\n",
+          "user": "Files changed:\n.github/workflows/ci.yml | +2 -2\nAGENTS.md | +3 -3\nCargo.lock | +10 -0\nCargo.toml | +6 -0\nREADME.md | +2 -2\ndocs/architecture.md | +5 -0\ndocs/measurements.md | +8 -6\ndocs/usage.md | +0 -1\nsrc/bench/mod.rs | +0 -1\nsrc/bench/tests.rs | +0 -136\nsrc/cli/benchmark.rs | +0 -32\nsrc/cli/mod.rs | +2 -23\ntests/bench_cli.rs | +0 -47\ntools/Cargo.toml | new, +19 -0\ntools/src/main.rs | new, +88 -0\n{src/bench/server.rs => tools/src/time_server.rs} | renamed, +8 -4\ntools/src/time_server_tests.rs | new, +133 -0\n\nDiff:\n--- src/bench/mod.rs\n@@ -13,3 +13,2 @@ mod measure;\n mod report;\n-pub mod server;\n #[cfg(test)]\n--- src/bench/tests.rs\n@@ -255,137 +255 @@ fn cpu_time_grows_with_work() {\n }\n-\n-mod server {\n-    use std::sync::Mutex;\n-\n[... 132 more lines]\n--- src/cli/benchmark.rs\n@@ -98,34 +98,2 @@ fn save(report: &Report) -> Result<PathBuf> {\n \n-/// `bench --prompts`: llama-server timed on prompts from files, with flags of\n-/// the caller's choice.\n[... 31 more lines]\n--- src/cli/mod.rs\n@@ -99,18 +99,4 @@ enum Command {\n         /// Print the full report as JSON.\n-        #[arg(long, conflicts_with = \"prompts\")]\n+        #[arg(long)]\n[... 28 more lines]\n--- tools/src/main.rs\n@@ -0,0 +1,88 @@\n+//! Tools for working on smart-commit. They are a crate of their own so that\n+//! what they need never reaches the binary users install.\n+\n[... 85 more lines]\n--- tools/src/time_server.rs\n@@ -1,2 +1,2 @@\n-//! `smart-commit bench --prompts`: times llama-server on prompts printed by\n+//! `sc-tools time-server`: times llama-server on prompts printed by\n //! `smart-commit prompt`, with llama-server flags of the caller's choice, to\n[... 15 more lines]\n--- tools/src/time_server_tests.rs\n@@ -0,0 +1,133 @@\n+use std::sync::Mutex;\n+\n+use super::{ServerTiming, parse_prompt_file, read_prompts, time_prompts};\n[... 130 more lines]\n\n(15 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "chore: move tools to a separate crate",
+        "rejected": null
+      }
+    ]
+  }
+}
