@@ -147,7 +147,7 @@ pub fn unsupported(subject: &str, known: &str) -> bool {
         .any(|s| !known.contains(&s.to_lowercase()))
 }
 
-fn ungrounded(subject: &str, diff: &str) -> bool {
+pub fn ungrounded(subject: &str, diff: &str) -> bool {
     let stop: BTreeSet<&str> = STOP.split_whitespace().collect();
     let content: Vec<String> = words(&description(subject))
         .into_iter()

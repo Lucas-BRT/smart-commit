@@ -5,6 +5,7 @@
 mod build_inputs;
 mod build_scenarios;
 mod mt;
+mod pairs;
 mod pyjson;
 mod pytext;
 mod scenarios;
@@ -70,6 +71,15 @@ enum Command {
     },
     /// Drops from a selection the commits a cleaner label set leaves out.
     FilterSupported { src: PathBuf, out: PathBuf },
+    /// Preference pairs for DPO from the replies `mine_pairs.py` sampled.
+    Pairs {
+        /// A line per input: `system`, `user` and the sampled `replies`.
+        candidates: PathBuf,
+        /// The `inputs.jsonl` and `meta.jsonl` of those inputs.
+        data: PathBuf,
+        /// Where the pairs go, one JSON object a line.
+        out: PathBuf,
+    },
     /// Scores `smart-commit eval` traces against the real subjects.
     Score {
         eval_dir: PathBuf,
@@ -166,6 +176,23 @@ fn run(cli: Cli) -> Result<()> {
             releases,
         }),
         Command::FilterSupported { src, out } => select::filter_supported(&src, &out),
+        Command::Pairs {
+            candidates,
+            data,
+            out,
+        } => {
+            let summary = pairs::write(
+                &candidates,
+                &data.join("inputs.jsonl"),
+                &data.join("meta.jsonl"),
+                &out,
+            )?;
+            eprintln!(
+                "{} pairs from {} inputs ({} with the real subject chosen); by failure: {:?}",
+                summary.pairs, summary.inputs, summary.real_chosen, summary.by_failure
+            );
+            Ok(())
+        }
         Command::Score {
             eval_dir,
             traces,
