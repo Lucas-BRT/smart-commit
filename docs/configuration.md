@@ -86,9 +86,9 @@ value, for example when an environment variable is set.
   threads that read the prompt on the `cpu` device, which is most of the
   time per message there. 0 means one per physical core, from the CPU
   topology in sysfs. llama.cpp's own default already does that on some
-  processors and not on others (2 threads on a 14-core Core Ultra 5 225H);
-  see [devices](devices.md#threads-on-the-cpu). Decoding keeps llama.cpp's
-  default thread count.
+  processors and not on others; see
+  [measurements](measurements.md#threads-on-the-cpu). Decoding keeps
+  llama.cpp's default thread count.
 - `model.keep_loaded` keeps the model loaded on `vulkan` and `cpu` for that
   many minutes after a message, so the next commit skips loading it, which
   is most of a commit on a GPU. It costs the model's memory (RAM or VRAM)
@@ -103,7 +103,7 @@ value, for example when an environment variable is set.
   smaller than 512 fail to compile with NPU driver 1.38.
 - `model.max_prompt_tokens` is also the prompt length the NPU compiles for.
   Shorter prompts are faster on the NPU but see less of the diff; changing it
-  recompiles the model once (about 10 s).
+  recompiles the model once (see [measurements](measurements.md#the-npu)).
 - `style.convention` and `style.language` other than `auto` override what
   the history says. With a forced convention, history examples that
   contradict it are left out of the prompt.

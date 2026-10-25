@@ -77,9 +77,8 @@ everywhere. It needs
 about 10 GB of disk while it runs; the Python environment and the source
 model are removed afterwards (`--keep` keeps them). The **Model** workflow
 (`.github/workflows/model.yml`) runs the export on CI after any change to
-it, to check that it reproduces on another machine. On a Ryzen 5 5500 the
-export from scratch (uv, Python, the packages and the source model
-downloaded) took 1 min 47 s and matched the manifest.
+it, to check that it reproduces on another machine. How long it takes
+is in [measurements](measurements.md#model-export).
 
 The GGUF models for llama.cpp are files on Hugging Face, each pinned in
 `src/models/registry.rs` to a repository commit and to the file's SHA-256 at that

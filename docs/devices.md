@@ -91,43 +91,34 @@ model; `smart-commit setup` runs it at the end.
 
 ## Fast load
 
-Each commit starts `llama-server`, and most of a commit is that start.
-On the Ryzen 5 5500 below, two of its steps took a large share of it and
-are rarely needed for a 1 GB model with a fixed context:
+Each commit starts `llama-server`, and most of a commit is that start. Two
+of its steps take a large share of it and are rarely needed for a 1 GB model
+with a fixed context:
 
-- **Repacking** (CPU): the weights are copied (600 MiB) and reordered for
-  the CPU's vector instructions, about 0.66 s. `--no-repack` uses them
-  straight from the memory-mapped file. On this AVX2 CPU generation was
-  not slower without it; CPUs with AVX-512 or AMX may gain more from it.
+- **Repacking** (CPU): the weights are copied and reordered for the CPU's
+  vector instructions. `--no-repack` uses them straight from the
+  memory-mapped file. CPUs with AVX-512 or AMX may gain more from repacking
+  than the AVX2 generation it was measured on.
 - **Fitting** (CPU and Vulkan): every GPU is asked for its free memory, and
-  the layers and context adjusted to fit, 0.3–0.4 s, even with
-  `--device none`. `--fit off` skips it; a GPU short of memory then fails
-  to load instead of loading fewer layers, so smart-commit loads it again
-  normally.
+  the layers and context adjusted to fit, even with `--device none`.
+  `--fit off` skips it; a GPU short of memory then fails to load instead of
+  loading fewer layers, so smart-commit loads it again normally.
 
 Since the gain depends on the processor, `smart-commit bench` measures
 each llama.cpp device in both modes, and fast load is used where it saved
 at least 5% per message (more than the noise between runs).
 `model.fast_load = on` or `off` overrides that. The backend's description,
-which traces record, ends in `load=fast` when it is on. On the Ryzen 5 5500
-the replies were the same in both modes, on the short prompts the benchmark
-used before.
+which traces record, ends in `load=fast` when it is on. What each step
+costs, and that the replies are the same in both modes, is in
+[measurements](measurements.md#fast-load).
 
 ## Keeping the model loaded
 
 Most of a commit on a GPU is loading the model. `model.keep_loaded`
 ([configuration](configuration.md)) keeps it loaded for some idle minutes,
-so only the first commit pays for it. Measured end to end with
-`smart-commit` on one staged file (the release binary, fast load on), on
-the Ryzen 5 5500 with the RTX 3050; the replies were the same either way:
-
-| Model and device | Load every commit | Kept loaded, from the second commit |
-|---|---|---|
-| `qwen2.5-coder-1.5b`, `vulkan` | 2.8 s | 0.20 s |
-| `qwen2.5-coder-1.5b`, `cpu` | 2.6 s | 2.0 s |
-| `smart-commit-0.5b-v0.1`, `vulkan` | 1.4 s | 0.14 s |
-| `smart-commit-0.5b-v0.1`, `cpu` | 1.3 s | 0.8 s |
-| `qwen2.5-coder-7b`, `vulkan` | 7.5 s | 0.57 s |
+so only the first commit pays for it; the replies are the same either way.
+What it saves, per model and device, is in
+[measurements](measurements.md#keeping-the-model-loaded).
 
 One model is kept at a time: a commit with another model or device stops
 the one kept, and so do `smart-commit bench` before measuring and any
@@ -142,19 +133,9 @@ and it scales with the threads doing it. llama.cpp picks that count itself,
 and the pick depends on the processor, so smart-commit passes
 `--threads-batch` explicitly: one thread per physical core
 (`model.threads_batch` overrides it). The backend's description, which
-traces record, says `threads-batch=N` on the CPU.
-
-Measured with Qwen2.5-Coder-1.5B Q4_K_M and real prompts (llama.cpp b11381):
-
-| Machine | llama.cpp's default | One per physical core | Replies |
-|---|---|---|---|
-| Core Ultra 5 225H (14 cores, no SMT), 6 prompts | 2 threads, prefill 6992 ms | 14 threads, prefill 3369 ms | identical |
-| Ryzen 5 5500 (6 cores, 12 threads), 50 prompts | 2.92 s per message | 6 threads, 2.93 s per message | identical |
-
-On the Ryzen, llama.cpp's default was already one per core; counting the
-SMT threads too (12) made it slower, 3.24 s per message, with identical
-replies. Changing the decoding threads (`--threads`) changed replies on the
-Core Ultra, so that one keeps llama.cpp's default.
+traces record, says `threads-batch=N` on the CPU. Decoding keeps llama.cpp's
+default thread count, since changing it changed replies. The measurements
+are in [measurements](measurements.md#threads-on-the-cpu).
 
 ## Setting up the hardware
 
@@ -231,68 +212,21 @@ misleading `CL_OUT_OF_HOST_MEMORY`.
 ## The NPU
 
 The NPU compiles the model for fixed shapes: a prompt of
-`model.max_prompt_tokens` (1024) and a reply of `model.max_new_tokens` (128).
+`model.max_prompt_tokens` and a reply of `model.max_new_tokens`.
 
-- **Cache.** The first load compiles the graph (11.7 s); later loads read it
-  from `$XDG_CACHE_HOME/smart-commit/openvino` (1.7 s, 246 MB).
+- **Cache.** The first load compiles the graph; later loads read it from
+  `$XDG_CACHE_HOME/smart-commit/openvino`.
 - **Chunked prefill.** The NPU processes the prompt in chunks of
   `NPUW_LLM_PREFILL_CHUNK_SIZE`, but only when `MAX_PROMPT_LEN` is larger
-  than a chunk. With the library's default chunk (1024, the same as our
-  prompt length) every prompt cost 1024 tokens. With chunks of 512
-  (`model.npu_prefill_chunk`) the time to first token fell from 2.37 s to
-  1.05 s.
+  than a chunk. With the library's default chunk (the same as our prompt
+  length) every prompt cost a whole chunk. `model.npu_prefill_chunk` sets
+  smaller chunks; ones below 512 fail to compile with driver 1.38
+  (`UnrollPermuteDMA`).
 - **`GENERATE_HINT=BEST_PERF`** (`model.npu_generate_hint`) compiles slower,
-  once, for about 10% faster tokens (82 to 74 ms).
-- Both settings give identical replies (a hardware test checks it). Chunks of
-  256 and 128 fail to compile with driver 1.38 (`UnrollPermuteDMA`).
+  once, for faster tokens.
+- Both settings give identical replies (a hardware test checks it).
 
-## Measurements
-
-Core Ultra 5 225H (Arrow Lake-H: Arc iGPU, NPU 37xx), 15 GiB RAM,
-Pop!_OS 24.04, kernel 7.2. The prompts are the trace fixtures. These
-measurements predate the llama.cpp `cpu` device; `openvino-cpu` is what
-was then called `cpu`.
-
-End to end through the CLI (release build, warm caches, one staged file,
-mean of 3 runs; the same message on every device):
-
-| Device | Time | CPU time used | Memory |
-|---|---|---|---|
-| intel-gpu | **1.8 s** | 2.1 s | 0.49 GB |
-| vulkan (iGPU through Mesa ANV) | 2.5 s | 1.5 s | — |
-| openvino-cpu | 4.0 s | 11.1 s (2.75 cores) | 2.0 GB |
-| npu | 5.1 s | 4.1 s | 2.0 GB |
-
-Per prompt:
-
-| Device | Time to first token | Per token |
-|---|---|---|
-| intel-gpu | 60–360 ms | 35 ms |
-| vulkan | 270–390 ms | 58 ms |
-| openvino-cpu | 100–540 ms | 30 ms |
-| npu (tuned) | ~1.07 s | 74 ms |
-
-Ryzen 5 5500 (6 cores), GeForce RTX 3050 8 GB with the proprietary driver
-595.104, 23 GiB RAM, Pop!_OS 24.04, kernel 7.2; `smart-commit bench` on
-the four prompts sized like real ones (fast load on for both devices):
-
-| Device | Per message | Load | Generate | CPU | Per message without fast load |
-|---|---|---|---|---|---|
-| vulkan (RTX 3050) | **2.4 s** | 2.1 s | 0.3 s | 0.4 cores | 2.7 s |
-| cpu (llama.cpp) | 4.0 s | 0.7 s | 3.3 s | 5.7 cores | 5.1 s |
-
-On the ~250-token prompts the benchmark used before, the CPU took 1.9 s and
-was chosen; on prompts the size of real ones Vulkan is the faster.
-
-Most of the Vulkan load left is copying the weights to the GPU (935 MiB in
-1.5 s), which no load mode avoids.
-
-- On this machine the integrated GPU is the fastest and the lightest
-  device. The NPU is the slowest for a 1.5B model, but uses far less CPU than
-  the CPU backend. Energy was not measured: reading RAPL needs root.
-- `estimate_tokens` (characters / 3) stays above the tokenizer's count, as
-  the prompt budget requires: real prompts are 3.4 to 3.75 characters per
-  token. A hardware test checks it.
+What they gain is in [measurements](measurements.md#the-npu).
 
 ## Same prompt, same reply?
 

@@ -51,71 +51,10 @@ Two expected gains:
 ## Where the time goes today
 
 Prefill (reading the prompt) dominates: on the CPU it is about 90% of the
-time per message. Anything that does not shorten the prompt or speed up
-prefill barely matters, because replies are ~12 tokens.
-
-Measured on an Intel Core Ultra 5 225H (14 cores), llama.cpp b11381,
-Qwen2.5-Coder-1.5B-Instruct Q4_K_M, means over 6 real prompts of 581–853
-tokens, in milliseconds per message (load + one generation):
-
-| Configuration | Load | Prefill | Decode | Total |
-|---|---|---|---|---|
-| `cpu` as shipped (`--no-repack --fit off`) | 369 | 6992 | 512 | **7873** |
-| + `-tb 14` | 369 | 3369 | 517 | **4255** |
-| + `-tb 14 -b 1024 -ub 1024` | 389 | 2998 | 518 | **3905** |
-| + the above, `model.max_prompt_tokens = 512` | 369 | 1664 | 577 | **2610** |
-| `vulkan` as shipped (Intel Arc iGPU) | 658 | 1095 | 735 | **2487** |
-| `vulkan`, `model.max_prompt_tokens = 512` | 650 | 534 | 739 | **1923** |
-| 0.5B, `cpu -tb 14 -b 1024 -ub 1024` | 311 | 1916 | 1966 | **4193** |
-
-End to end with `smart-commit --device ...` on three of the same commits:
-`intel-gpu` (OpenVINO) about 2.0 s, `npu` about 6.3 s.
-
-Findings:
-
-- `llama-server` was started without `--threads`/`--threads-batch`, so it
-  used its own default, which on this hybrid CPU was 2 threads. Setting
-  `--threads-batch` to the core count halves prefill and gave **identical
-  replies** on all 6 prompts; smart-commit now passes it
-  ([devices](devices.md#threads-on-the-cpu)). Changing `--threads` (decode)
-  changed the replies and made decode slower, so it keeps the default.
-- `smart-commit bench` used the trace fixtures, whose prompts are ~250
-  tokens, so it underestimated prefill: it reported ~2.6 s per message for
-  `cpu` on this machine, against ~7.9 s with real prompts. It now uses
-  prompts sized like real ones ([devices](devices.md#choosing-a-device)).
-- Prefill scales about linearly with prompt tokens: halving the budget
-  halves it, at a cost in quality (with 512 some scopes became file paths,
-  like `fix(src/bench.rs)`).
-- The untrained 0.5B is not faster end to end: it copied history subjects
-  verbatim as its answer and ran to the 128-token limit on 4 of 6 prompts.
-- No gain: flash attention (`-fa on`), weight repacking (slower; confirms
-  fast load), speculative decoding (replies are too short).
-
-### Reproducing the measurements
-
-```bash
-# Prompts from real commits of this repository, rebuilt in a scratch clone:
-git clone -q . /tmp/sc && cd /tmp/sc
-mkdir -p /tmp/prompts
-for c in 8bc78c6 3df6503 badc90d de0dfed c4687aa 8314005; do
-  git checkout -q -f "$c^" && git cherry-pick -n "$c" >/dev/null
-  smart-commit prompt > "/tmp/prompts/$c.txt"
-  git reset -q --hard
-done
-# The 512 budget: the same loop with XDG_CONFIG_HOME pointing at a config
-# with `[model] max_prompt_tokens = 512`.
-
-M=~/.local/share/smart-commit/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
-CPU="--n-gpu-layers 0 --device none --no-repack --fit off"
-python3 -I training/time-llama-server.py "$M" /tmp/prompts warmup $CPU >/dev/null
-python3 -I training/time-llama-server.py "$M" /tmp/prompts "cpu" $CPU
-python3 -I training/time-llama-server.py "$M" /tmp/prompts "cpu tb" $CPU -tb "$(nproc)" -b 1024 -ub 1024
-python3 -I training/time-llama-server.py "$M" /tmp/prompts "vulkan" \
-  --n-gpu-layers 999 --device Vulkan0 --no-repack --fit off
-```
-
-The prompts depend on the history at each commit (older commits were in
-Portuguese, so those prompts ask for Portuguese).
+time per message, and replies are ~12 tokens, so anything that does not
+shorten the prompt or speed up prefill barely matters. The measurements
+(configurations, findings, how to repeat them) are in
+[measurements](measurements.md#where-the-time-goes-on-the-cpu-and-vulkan).
 
 ## Options considered
 

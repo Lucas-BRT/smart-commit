@@ -173,4 +173,6 @@ Docs describe the current state, in English. A change updates the pages it
 affects in the same commit (usage, configuration, devices, architecture,
 reproducibility); [docs/roadmap.md](docs/roadmap.md) tracks what is done and
 what is next. Numbers in the docs (timings, counts) come from measurements
-that can be repeated, never from memory.
+that can be repeated, never from memory. Timings live in
+[docs/measurements.md](docs/measurements.md) only: other pages link to it
+instead of repeating them (console output they show is a run recorded there).
