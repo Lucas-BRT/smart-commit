@@ -398,3 +398,7 @@ real_change conventional-en-mining-bundle-as-pairs adfe47e "feat(training): make
 # Validation pairs, a loss term and the log of each reply's reward added to a
 # DPO script that already had its loss, answered as adding the loss.
 real_change conventional-en-dpo-validation-as-loss a8cf80a "feat(training): add a DPO loss to train_dpo.py"
+
+# A fix to the notebook's install cell and a new check on its runs, with a test
+# that pins both, answered as a test that fails when torchao is used.
+real_change conventional-en-notebook-fix-as-test 5635f71 "test(training): add a test that fails when Kaggle's torchao is used"

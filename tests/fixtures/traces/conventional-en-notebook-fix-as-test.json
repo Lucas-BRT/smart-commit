@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 5635f71",
+      "feat(training): compare models on an evaluation set against a baseline",
+      "docs(training): record the first DPO run and what the second must show",
+      "feat(training): add Kaggle DPO training",
+      "test(fixtures): trace validation added to a DPO script answered as its loss",
+      "feat(training): score validation pairs and log each side's reward in train_dpo",
+      "feat(training): balance and split pairs"
+    ],
+    "history_files": [
+      [
+        "training/kaggle_dpo.ipynb",
+        "training/test_kaggle_dpo_bundle.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/kaggle_dpo.ipynb",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_kaggle_dpo_bundle.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/kaggle_dpo.ipynb",
+        "old_path": null,
+        "lines": [
+          7,
+          2
+        ],
+        "hunks": "@@ -50,3 +50,5 @@\n    \"source\": [\n-    \"# Our locked versions; Kaggle's torch (and its CUDA) is kept.\\n\",\n+    \"# Our locked versions; Kaggle's torch (and its CUDA) is kept. Kaggle's torchao is too old\\n\",\n+    \"# for this peft, which looks for it on every 16-bit layer, and nothing here uses it.\\n\",\n+    \"!pip uninstall -y -q torchao\\n\",\n     \"!pip install -q -r {bundle}/requirements.txt\\n\",\n@@ -117,3 +119,6 @@\n     \"                                f'{name}/adapter', f'{name}/run.json', '-C', str(work), f'{name}.log'],\\n\",\n-    \"                               check=True)\\n\"\n+    \"                               check=True)\\n\",\n+    \"\\n\",\n+    \"failed = [r['name'] for r in spec['runs'] if not (work / f\\\"{r['name']}.tar.gz\\\").exists()]\\n\",\n+    \"assert not failed, f'runs without an archive: {failed}'\\n\"\n    ],\n"
+      },
+      {
+        "path": "training/test_kaggle_dpo_bundle.py",
+        "old_path": null,
+        "lines": [
+          11,
+          0
+        ],
+        "hunks": "@@ -57,2 +57,13 @@ def test_an_unknown_base_model_is_refused() -> None:\n \n+def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> None:\n+    \"\"\"Kaggle's torchao 0.10 made peft 0.21 refuse every 16-bit layer, all six runs\n+    exited with 1, and the kernel still said COMPLETE.\"\"\"\n+    cells = json.loads((HERE / \"kaggle_dpo.ipynb\").read_text())[\"cells\"]\n+    code = [\"\".join(c[\"source\"]) for c in cells if c[\"cell_type\"] == \"code\"]\n+    install = next(c for c in code if \"pip install\" in c)\n+    assert install.index(\"pip uninstall -y -q torchao\") < install.index(\"pip install -q -r\")\n+    scheduler = next(c for c in code if \"pending, running\" in c)\n+    assert \"assert not failed\" in scheduler.splitlines()[-1]\n+\n+\n if __name__ == \"__main__\":\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "test(training): add a test that fails when Kaggle's torchao is used",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, test, refactor.\n- Scopes used here: training, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(training): compare models on an evaluation set against a baseline\ndocs(training): record the first DPO run and what the second must show\nfeat(training): add Kaggle DPO training\ntest(fixtures): trace validation added to a DPO script answered as its loss\nfeat(training): score validation pairs and log each side's reward in train_dpo\n",
+          "user": "Files changed:\ntraining/kaggle_dpo.ipynb | +7 -2\ntraining/test_kaggle_dpo_bundle.py | +11 -0\n\nDiff:\n--- training/kaggle_dpo.ipynb\n@@ -50,3 +50,5 @@\n    \"source\": [\n-    \"# Our locked versions; Kaggle's torch (and its CUDA) is kept.\\n\",\n+    \"# Our locked versions; Kaggle's torch (and its CUDA) is kept. Kaggle's torchao is too old\\n\",\n+    \"# for this peft, which looks for it on every 16-bit layer, and nothing here uses it.\\n\",\n+    \"!pip uninstall -y -q torchao\\n\",\n     \"!pip install -q -r {bundle}/requirements.txt\\n\",\n@@ -117,3 +119,6 @@\n     \"                                f'{name}/adapter', f'{name}/run.json', '-C', str(work), f'{name}.log'],\\n\",\n-    \"                               check=True)\\n\"\n+    \"                               check=True)\\n\",\n+    \"\\n\",\n+    \"failed = [r['name'] for r in spec['runs'] if not (work / f\\\"{r['name']}.tar.gz\\\").exists()]\\n\",\n+    \"assert not failed, f'runs without an archive: {failed}'\\n\"\n    ],\n--- training/test_kaggle_dpo_bundle.py\n@@ -57,2 +57,13 @@ def test_an_unknown_base_model_is_refused() -> None:\n \n+def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> None:\n+    \"\"\"Kaggle's torchao 0.10 made peft 0.21 refuse every 16-bit layer, all six runs\n+    exited with 1, and the kernel still said COMPLETE.\"\"\"\n+    cells = json.loads((HERE / \"kaggle_dpo.ipynb\").read_text())[\"cells\"]\n+    code = [\"\".join(c[\"source\"]) for c in cells if c[\"cell_type\"] == \"code\"]\n+    install = next(c for c in code if \"pip install\" in c)\n+    assert install.index(\"pip uninstall -y -q torchao\") < install.index(\"pip install -q -r\")\n+    scheduler = next(c for c in code if \"pending, running\" in c)\n+    assert \"assert not failed\" in scheduler.splitlines()[-1]\n+\n+\n if __name__ == \"__main__\":\n"
+        },
+        "raw": "test(training): add a test that fails when Kaggle's torchao is used",
+        "rejected": null
+      }
+    ]
+  }
+}
