@@ -5,11 +5,11 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
 use smart_commit::backend::device::Target;
-use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};
-use smart_commit::config::{BackendKind, Origin, Resolved, Value};
+use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel, TypeChoice};
+use smart_commit::config::{AskType, BackendKind, Origin, Resolved, Value};
 use smart_commit::context::RepoContext;
 use smart_commit::diff::FileDiff;
-use smart_commit::generate::{self, Generation};
+use smart_commit::generate::{self, Generation, TypeAsk};
 use smart_commit::git::Repo;
 use smart_commit::prompt::PromptOptions;
 use smart_commit::trace::Trace;
@@ -72,8 +72,39 @@ impl Session {
         }
     }
 
+    /// The types to offer a person before the message is written, when
+    /// `model.ask_type` asks and the model is unsure of the type (see
+    /// [`generate::offer_types`]).
+    pub(super) fn type_offer(&self) -> Result<Option<Vec<TypeChoice>>> {
+        let settings = self.resolved.settings();
+        if settings.ask_type == AskType::Off
+            || !generate::needs_model(&self.context, &self.files, &[])
+        {
+            return Ok(None);
+        }
+        let backend = self.backend()?.0.as_ref();
+        let options = generate::budgeted(&self.options, backend);
+        Ok(generate::offer_types(
+            &self.context,
+            &self.files,
+            backend,
+            &options,
+            settings.ask_type_below(),
+        ))
+    }
+
     /// A message other than those in `avoid`, writing the trace if asked.
     pub(super) fn generate(&self, avoid: &[String]) -> Result<Generation> {
+        self.generate_asked(avoid, None)
+    }
+
+    /// Like [`Self::generate`], with the message begun by the type a person
+    /// chose, which the trace records.
+    pub(super) fn generate_asked(
+        &self,
+        avoid: &[String],
+        asked: Option<&TypeAsk>,
+    ) -> Result<Generation> {
         let backend: &dyn Backend = if generate::needs_model(&self.context, &self.files, avoid) {
             self.backend()?.0.as_ref()
         } else {
@@ -81,13 +112,14 @@ impl Session {
         };
         // The budget this backend can take, which a trace records.
         let options = generate::budgeted(&self.options, backend);
-        let generation = generate::generate_avoiding(
+        let generation = generate::generate_asked(
             &self.context,
             &self.files,
             backend,
             &options,
             &self.config,
             avoid,
+            asked,
         )?;
         if let Some(path) = &self.trace {
             let trace = Trace::new(

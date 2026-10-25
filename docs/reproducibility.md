@@ -135,7 +135,9 @@ A trace holds what git reported (branch, subjects and the paths each one
 touched, staged files and diff),
 the prompt options, the generation config, the backend's description (device,
 model identity, NPU shapes) and every attempt: prompt, raw reply and why it
-was rejected. It leaves out the repository's path. `replay` rebuilds
+was rejected, and, when `model.ask_type` made a person choose the type, what
+was offered with its probabilities and what was chosen (the replies begin
+with it). It leaves out the repository's path. `replay` rebuilds
 everything from it and reports any difference in prompts, rejections or
 message.
 

@@ -1,0 +1,13 @@
+---
+source: src/tui/type_choice.rs
+expression: "draw(60, 10, |f| view().render(f))"
+---
+ Which type is this change?
+ The model is not sure: it would write feat (46%).
+┌──────────────────────────────────────────────────────────┐
+│ 1 feat        46%                                        │
+│ 2 fix         38%                                        │
+│ 3 refactor    16%                                        │
+│ 4 let the model decide                                   │
+└──────────────────────────────────────────────────────────┘
+[Enter] choose  [1-9] pick  [↑/↓] move  [q] cancel

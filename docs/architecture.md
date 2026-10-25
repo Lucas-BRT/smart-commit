@@ -22,10 +22,10 @@ Everything except the model is deterministic and tested without hardware.
 | `diff::annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
 | `prompt` | builds the system and user messages within `max_prompt_tokens` |
 | `message` | sanitizes the model's output; builds the fallback message |
-| `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |
+| `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt; and which types to offer when the model is unsure of the type (`generate::ask`) |
 | `backend` | the `Backend` trait, `GenerationConfig`, `MockBackend` |
 | `backend::genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
-| `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
+| `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket; the only one that tells how likely each type is (`backend::choices`) and can start a reply with a chosen one |
 | `backend::server` | the `llama-server` kept loaded between commits (`model.keep_loaded`) |
 | `backend::device` | candidate devices and loading the first that works |
 | `bench` | measures every device the machine has on four embedded prompts sized like real ones |
