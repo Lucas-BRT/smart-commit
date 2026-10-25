@@ -1,0 +1,221 @@
+//! The set of pairs for DPO, balanced and split: what `pairs` writes is as
+//! lopsided as the inputs, and a model trained on it learns the repositories
+//! that have the most failures.
+//!
+//! - The validation set is every pair of about a tenth of the repositories
+//!   (by a hash of the repository, so it does not depend on the order or on
+//!   the other files): the training loss says nothing about repositories the
+//!   model has not seen.
+//! - The training set has at most `max_per_repo` pairs per repository, at
+//!   most `max_type_share` of a bucket in one real type, and at most a
+//!   quota of pairs per bucket: Conventional commits, young repositories
+//!   (fewer than ten commits of history) and the free set. Within a bucket
+//!   the pairs are taken in the order of a hash of the commit.
+//! - A repeated pair is dropped. So is, if asked, a pair whose replies
+//!   differ in length by more than `max_length_ratio`, unless the reply was
+//!   rejected for being too long. It is off by default: the pairs of the
+//!   first run were already even (chosen longer in 51%, 37.7 columns against
+//!   38.2), and a ratio of 1.6 left the chosen 4.6 columns shorter, since a
+//!   vague reply is shorter than the specific one it loses to. The summary
+//!   says how even the set is.
+
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::path::PathBuf;
+
+use anyhow::{Context as _, Result};
+use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
+
+pub struct Options {
+    pub pairs: Vec<PathBuf>,
+    pub out: PathBuf,
+    /// The share of the repositories whose pairs are the validation set.
+    pub val_share: f64,
+    pub max_per_repo: usize,
+    pub max_type_share: f64,
+    pub max_length_ratio: f64,
+    pub conventional: usize,
+    pub young: usize,
+    pub free: usize,
+}
+
+/// Fewer commits of history than this is a young repository.
+const YOUNG: u64 = 10;
+
+fn digest(text: &str) -> Vec<u8> {
+    Sha256::digest(text.as_bytes()).to_vec()
+}
+
+fn text<'a>(pair: &'a Value, key: &str) -> &'a str {
+    pair[key].as_str().unwrap_or("")
+}
+
+/// `conventional`, `young` or `free`.
+fn bucket(pair: &Value) -> &'static str {
+    if pair["history"].as_u64().unwrap_or(YOUNG) < YOUNG {
+        "young"
+    } else if text(pair, "set") == "conventional" {
+        "conventional"
+    } else {
+        "free"
+    }
+}
+
+fn in_validation(pair: &Value, share: f64) -> bool {
+    let byte = digest(&format!("val:{}", text(pair, "repo")))[0];
+    f64::from(byte) < share * 256.0
+}
+
+fn balanced_length(pair: &Value, ratio: f64) -> bool {
+    if text(pair, "failure") == "long" {
+        return true;
+    }
+    let (a, b) = (
+        text(pair, "chosen").chars().count() as f64,
+        text(pair, "rejected").chars().count() as f64,
+    );
+    a.max(b) <= ratio * a.min(b).max(1.0)
+}
+
+/// What [`balance`] wrote.
+#[derive(Debug, Default)]
+pub struct Summary {
+    pub read: usize,
+    pub dropped_length: usize,
+    pub dropped_repeated: usize,
+    pub validation: usize,
+    pub train: usize,
+    pub train_repos: usize,
+    pub by_bucket: BTreeMap<&'static str, usize>,
+    pub by_type: BTreeMap<String, usize>,
+    pub by_failure: BTreeMap<String, usize>,
+    pub real_chosen: usize,
+    pub chosen_chars: usize,
+    pub rejected_chars: usize,
+    pub chosen_longer: usize,
+}
+
+pub fn balance(options: &Options) -> Result<Summary> {
+    let mut summary = Summary::default();
+    let mut seen = HashSet::new();
+    let mut pairs = Vec::new();
+    for path in &options.pairs {
+        let content = std::fs::read_to_string(path)
+            .with_context(|| format!("cannot read {}", path.display()))?;
+        for line in content.lines() {
+            let pair: Value = serde_json::from_str(line)
+                .with_context(|| format!("{}: bad JSON line", path.display()))?;
+            summary.read += 1;
+            if !balanced_length(&pair, options.max_length_ratio) {
+                summary.dropped_length += 1;
+            } else if !seen.insert((
+                text(&pair, "chosen").to_owned(),
+                text(&pair, "rejected").to_owned(),
+            )) {
+                summary.dropped_repeated += 1;
+            } else {
+                pairs.push(pair);
+            }
+        }
+    }
+    // The order of the files and of the lines must not matter.
+    pairs.sort_by_cached_key(|p| digest(&format!("{}:{}", text(p, "hash"), text(p, "rejected"))));
+
+    let mut pool: BTreeMap<&str, usize> = BTreeMap::new();
+    for pair in pairs
+        .iter()
+        .filter(|p| !in_validation(p, options.val_share))
+    {
+        *pool.entry(bucket(pair)).or_default() += 1;
+    }
+    let quota = |name: &str| match name {
+        "conventional" => options.conventional,
+        "young" => options.young,
+        _ => options.free,
+    };
+    let mut per_repo: BTreeMap<String, usize> = BTreeMap::new();
+    let mut per_bucket_type: BTreeMap<(&str, String), usize> = BTreeMap::new();
+    let mut taken: BTreeMap<&str, usize> = BTreeMap::new();
+    let (mut train, mut validation) = (String::new(), String::new());
+    let mut repos = BTreeSet::new();
+    for pair in &pairs {
+        let line = format!("{pair}\n");
+        if in_validation(pair, options.val_share) {
+            validation.push_str(&line);
+            summary.validation += 1;
+            continue;
+        }
+        let name = bucket(pair);
+        let kind = pair["type"].as_str().unwrap_or("").to_owned();
+        // Of what the bucket will hold: its quota, or all it has.
+        let size = quota(name).min(pool[name]);
+        let type_cap = (options.max_type_share * size as f64).ceil() as usize;
+        let repo = text(pair, "repo").to_owned();
+        if taken.get(name).copied().unwrap_or(0) >= quota(name)
+            || per_repo.get(&repo).copied().unwrap_or(0) >= options.max_per_repo
+            || (!kind.is_empty()
+                && per_bucket_type
+                    .get(&(name, kind.clone()))
+                    .copied()
+                    .unwrap_or(0)
+                    >= type_cap)
+        {
+            continue;
+        }
+        *per_repo.entry(repo.clone()).or_default() += 1;
+        *per_bucket_type.entry((name, kind.clone())).or_default() += 1;
+        *taken.entry(name).or_default() += 1;
+        *summary.by_bucket.entry(name).or_default() += 1;
+        *summary
+            .by_failure
+            .entry(text(pair, "failure").to_owned())
+            .or_default() += 1;
+        if !kind.is_empty() {
+            *summary.by_type.entry(kind).or_default() += 1;
+        }
+        summary.real_chosen += usize::from(text(pair, "source") == "real");
+        let (chosen, rejected) = (
+            text(pair, "chosen").chars().count(),
+            text(pair, "rejected").chars().count(),
+        );
+        summary.chosen_chars += chosen;
+        summary.rejected_chars += rejected;
+        summary.chosen_longer += usize::from(chosen > rejected);
+        summary.train += 1;
+        repos.insert(repo);
+        train.push_str(&line);
+    }
+    summary.train_repos = repos.len();
+    std::fs::create_dir_all(&options.out)?;
+    std::fs::write(options.out.join("train.jsonl"), train)?;
+    std::fs::write(options.out.join("val.jsonl"), validation)?;
+    Ok(summary)
+}
+
+fn round1(x: f64) -> f64 {
+    (x * 10.0).round() / 10.0
+}
+
+impl Summary {
+    pub fn json(&self) -> Value {
+        json!({
+            "read": self.read,
+            "dropped_length": self.dropped_length,
+            "dropped_repeated": self.dropped_repeated,
+            "validation": self.validation,
+            "train": self.train,
+            "train_repos": self.train_repos,
+            "by_bucket": self.by_bucket,
+            "by_type": self.by_type,
+            "by_failure": self.by_failure,
+            "real_chosen": self.real_chosen,
+            "mean_chosen_chars": round1(self.chosen_chars as f64 / self.train.max(1) as f64),
+            "mean_rejected_chars": round1(self.rejected_chars as f64 / self.train.max(1) as f64),
+            "chosen_longer_share": round1(100.0 * self.chosen_longer as f64 / self.train.max(1) as f64) / 100.0,
+        })
+    }
+}
+
+#[cfg(test)]
+#[path = "balance_tests.rs"]
+mod tests;

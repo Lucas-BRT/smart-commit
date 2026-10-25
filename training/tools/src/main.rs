@@ -2,6 +2,7 @@
 //! their own so that what they need (parquet, above all) never reaches the
 //! binary users install.
 
+mod balance;
 mod build_inputs;
 mod build_scenarios;
 mod mt;
@@ -88,6 +89,38 @@ enum Command {
         /// What to prefer when the real subject and samples both pass.
         #[arg(long, value_enum, default_value_t = pairs::Prefer::Sample)]
         prefer: pairs::Prefer,
+    },
+    /// Balances and splits the pairs `pairs` made: a validation set of whole
+    /// repositories, and caps per repository, type and bucket.
+    Balance {
+        /// One or more files of pairs.
+        #[arg(required = true)]
+        pairs: Vec<PathBuf>,
+        /// Where `train.jsonl` and `val.jsonl` go.
+        #[arg(long)]
+        out: PathBuf,
+        /// The share of the repositories kept apart for validation.
+        #[arg(long, default_value_t = 0.1)]
+        val_share: f64,
+        #[arg(long, default_value_t = usize::MAX)]
+        max_per_repo: usize,
+        /// At most this share of a bucket in one real type.
+        #[arg(long, default_value_t = 1.0)]
+        max_type_share: f64,
+        /// Drop pairs whose replies differ in length by more than this
+        /// factor, but those rejected for being too long. Off by default:
+        /// it leaves the chosen replies shorter than the rejected.
+        #[arg(long, default_value_t = f64::MAX)]
+        max_length_ratio: f64,
+        /// At most this many pairs of Conventional repositories.
+        #[arg(long, default_value_t = usize::MAX)]
+        conventional: usize,
+        /// At most this many of young repositories (under ten commits).
+        #[arg(long, default_value_t = usize::MAX)]
+        young: usize,
+        /// At most this many of the free set.
+        #[arg(long, default_value_t = usize::MAX)]
+        free: usize,
     },
     /// Scores `smart-commit eval` traces against the real subjects.
     Score {
@@ -206,6 +239,31 @@ fn run(cli: Cli) -> Result<()> {
                 "{} pairs from {} inputs ({} with the real subject chosen); by failure: {:?}",
                 summary.pairs, summary.inputs, summary.real_chosen, summary.by_failure
             );
+            Ok(())
+        }
+        Command::Balance {
+            pairs,
+            out,
+            val_share,
+            max_per_repo,
+            max_type_share,
+            max_length_ratio,
+            conventional,
+            young,
+            free,
+        } => {
+            let summary = balance::balance(&balance::Options {
+                pairs,
+                out,
+                val_share,
+                max_per_repo,
+                max_type_share,
+                max_length_ratio,
+                conventional,
+                young,
+                free,
+            })?;
+            eprintln!("{}", summary.json());
             Ok(())
         }
         Command::Score {

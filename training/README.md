@@ -251,6 +251,26 @@ The notebook checks each download against its SHA-256, samples four inputs of
 each model first (so a CUDA build that does not fit the image fails in a
 minute, not after an hour), and packs a job as soon as it ends.
 
+### Balancing the pairs
+
+`sc-training balance` turns the pairs of the models' shards into the training
+and validation sets. The validation set is every pair of about a tenth of the
+repositories (chosen by a hash of the repository, so it does not depend on the
+order of the files); the training set takes at most `--max-per-repo` pairs per
+repository, at most `--max-type-share` of a bucket in one real type, and at
+most a quota of pairs per bucket (`--conventional`, `--young` for repositories
+with fewer than ten commits of history, `--free`), in the order of a hash of
+the commit. Repeated pairs are dropped. It prints how the training set came
+out: pairs by bucket, type and failure, repositories, and how even the lengths
+are (the chosen reply longer in about half the pairs, as in the first run).
+`--max-length-ratio` drops pairs of very different length but is off, since a
+ratio of 1.6 left the chosen replies 4.6 columns shorter than the rejected.
+
+```bash
+$SCT balance data/dpo2/pairs-0.5b.jsonl --out data/dpo2/balanced-0.5b \
+  --max-per-repo 12 --max-type-share 0.3 --conventional 2400 --young 400 --free 1200
+```
+
 ### Training on the pairs
 
 `train_dpo.py` starts from a fine-tune: it merges the SFT adapter into the
