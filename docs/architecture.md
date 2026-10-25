@@ -45,8 +45,8 @@ The binary (`src/main.rs` and the `src/cli/` modules: `args`, `suggest`,
 arguments and wires these together; `update` and `uninstall` run the `install.sh` the release
 installed in `share/smart-commit/scripts`.
 
-Tools for working on smart-commit (timing llama-server on prompt files, for
-now) are crates of their own in the workspace (`tools/`, the binary
+Tools for working on smart-commit (timing llama-server on prompt files, the
+release notes) are crates of their own in the workspace (`tools/`, the binary
 `sc-tools`), outside `default-members`: what they need never reaches the
 binary users install, and the release build does not compile them.
 

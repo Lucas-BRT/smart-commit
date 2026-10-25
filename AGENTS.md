@@ -153,7 +153,7 @@ is not obvious. Release notes are generated from these subjects.
 - **To release, bump `version` in `Cargo.toml`** (semver) in a commit
   `chore: release X.Y.Z` on `main`. `.github/workflows/release.yml` tests,
   packages and publishes the release, with notes from the commits
-  (`scripts/release-notes.sh`). Never create tags or releases by hand.
+  (`sc-tools release-notes`). Never create tags or releases by hand.
 - The tarball must stay reproducible: `tests/scripts/test-install.sh`
   packages twice and requires identical bytes, and CI prints the hash of
   every commit.

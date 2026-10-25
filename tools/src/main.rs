@@ -1,6 +1,7 @@
 //! Tools for working on smart-commit. They are a crate of their own so that
 //! what they need never reaches the binary users install.
 
+mod release_notes;
 mod time_server;
 
 use std::path::PathBuf;
@@ -20,6 +21,13 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// The notes of release TAG: the commits since the previous `v*` tag,
+    /// grouped by type, plus how to install (`REV` defaults to HEAD).
+    ReleaseNotes {
+        tag: String,
+        #[arg(default_value = "HEAD")]
+        rev: String,
+    },
     /// Time llama-server on the `smart-commit prompt` outputs in DIR
     /// (`*.txt`), with the llama-server flags after `--`, to see what a flag
     /// costs. The model, server and budgets come from smart-commit's settings.
@@ -46,6 +54,13 @@ fn main() {
 
 fn run(cli: Cli) -> Result<()> {
     match cli.command {
+        Command::ReleaseNotes { tag, rev } => {
+            print!(
+                "{}",
+                release_notes::notes(std::path::Path::new("."), &tag, &rev)?
+            );
+            Ok(())
+        }
         Command::TimeServer {
             dir,
             device,
