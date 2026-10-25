@@ -179,8 +179,17 @@ done
 temperature 0.7 with seeds fixed by the input and the sample, so the same
 model, server and inputs give the same candidates. On the Intel GPU of a
 laptop, two servers at once, the 0.5B model sampled 24 inputs a minute and the
-1.5B 14. Both sizes can run at once, or one after the other with `--device`
-set to the GPU's name in `llama-server --list-devices`.
+1.5B 14; on an RTX 3050 (Vulkan), also two at once, about 150 and 70. Both
+sizes can run at once, or one after the other with `--device` set to the GPU's
+name in `llama-server --list-devices`. The servers run with `--cache-ram 0`:
+every prompt is new, and the default prompt cache (8 GiB each) filled a
+24 GiB machine.
+
+The selection above leaves 5,688 inputs, 3,551 after the evaluation sets'
+repositories are dropped. From them `sc-training pairs` made, for the 0.5B,
+1,287 pairs (964 with the real subject chosen; rejected replies by failure:
+ungrounded 619, copied 271, unsupported 258, long 134, format 5) and, for the
+1.5B, 1,255 (916; 597, 275, 239, 139, 5).
 
 ## Scenarios
 
