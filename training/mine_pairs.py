@@ -156,6 +156,8 @@ def serve(server: str, gguf: str, device: str, workers: int) -> tuple[subprocess
         "--device", "none" if device == "cpu" else device,
         "--ctx-size", str(CONTEXT_PER_SLOT * workers), "--parallel", str(workers),
         "--no-webui", "--offline",
+        # Every prompt is new, so the prompt cache would only fill the RAM (8 GiB by default).
+        "--cache-ram", "0",
     ]
     process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     url = f"http://127.0.0.1:{port}"

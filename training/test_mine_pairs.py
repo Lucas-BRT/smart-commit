@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from mine_pairs import mine, repos_of, select  # noqa: E402
+from mine_pairs import serve as serve_llama  # noqa: E402
 
 
 def write_set(d: Path, repos: list[str]) -> None:
@@ -112,6 +113,35 @@ def test_a_stopped_run_resumes_after_the_inputs_it_finished() -> None:
         # Nothing left to do.
         assert mine(d / "out", binary, url, "full", "plain", 1, 0.7, 0.95, 0, workers=1) == 0
     server.shutdown()
+
+
+def test_the_server_keeps_no_prompt_cache_in_ram() -> None:
+    """llama-server keeps up to 8 GiB of prompts in RAM by default, and every
+    prompt here is new: that filled the RAM of a 24 GiB machine."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        fake = d / "llama-server"
+        fake.write_text(
+            f"#!{sys.executable}\n"
+            "import sys\n"
+            "from http.server import BaseHTTPRequestHandler, HTTPServer\n"
+            f"open({str(d / 'args')!r}, 'w').write(' '.join(sys.argv[1:]))\n"
+            "class H(BaseHTTPRequestHandler):\n"
+            "    def do_GET(self):\n"
+            "        self.send_response(200); self.end_headers()\n"
+            "    def log_message(self, *a): pass\n"
+            "port = int(sys.argv[sys.argv.index('--port') + 1])\n"
+            "HTTPServer(('127.0.0.1', port), H).serve_forever()\n"
+        )
+        fake.chmod(0o755)
+        process, _ = serve_llama(str(fake), "model.gguf", "Vulkan0", 2)
+        try:
+            args = (d / "args").read_text().split()
+        finally:
+            process.terminate()
+            process.wait()
+        assert args[args.index("--cache-ram") + 1] == "0"
+        assert args[args.index("--parallel") + 1] == "2"
 
 
 if __name__ == "__main__":
