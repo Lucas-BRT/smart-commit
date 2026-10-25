@@ -170,9 +170,9 @@ cat data/dpo/pool/meta.jsonl   data/dpo/young/meta.jsonl   > data/dpo/mix/meta.j
 # 2. Four samples per input from each model, with the prompt it was trained on
 #    (v0.1: `--rules full --diff plain`). Stopped, it resumes where it was.
 for size in 0.5b 1.5b; do
-  python -I mine_pairs.py data/dpo/mix data/dpo/mined-$size $SC \
+  python -I mine_pairs.py data/dpo/mix data/dpo/mined-$size \
     ~/.local/share/smart-commit/models/smart-commit-$size-v0.1-q4_k_m.gguf \
-    --server $LLAMA --device Vulkan0 --rules full --diff plain --samples 4 --workers 2 \
+    --binary $SC --server $LLAMA --device Vulkan0 --rules full --diff plain --samples 4 --workers 2 \
     --exclude-repos-of data/eval-v1 data/eval-short
 done
 
@@ -181,6 +181,10 @@ for size in 0.5b 1.5b; do
   $SCT pairs data/dpo/mined-$size/candidates.jsonl data/dpo/mined-$size data/dpo/pairs-$size.jsonl
 done
 ```
+
+With `--prompts-only` (no model, no GPU) `mine_pairs.py` only writes
+`prompts.jsonl` beside the inputs it keeps; `--prompts FILE` then samples from
+those prompts without the binary, which is how the mining runs on Kaggle.
 
 `mine_pairs.py` is greedy only in its prompts: the replies are sampled at
 temperature 0.7 with seeds fixed by the input and the sample, so the same

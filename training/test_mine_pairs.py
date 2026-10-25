@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from mine_pairs import mine, repos_of, select  # noqa: E402
+from mine_pairs import mine, read_prompts, repos_of, select, write_prompts  # noqa: E402
 from mine_pairs import serve as serve_llama  # noqa: E402
 
 
@@ -112,6 +112,31 @@ def test_a_stopped_run_resumes_after_the_inputs_it_finished() -> None:
         assert sorted(Llama.seeds) == [1000, 2000]
         # Nothing left to do.
         assert mine(d / "out", binary, url, "full", "plain", 1, 0.7, 0.95, 0, workers=1) == 0
+    server.shutdown()
+
+
+def test_prompts_built_beforehand_replace_the_binary() -> None:
+    server, url = serve()
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        write_set(d / "src", ["a/x", "b/y"])
+        select(d / "src", d / "out", set(), 0)
+        assert write_prompts(d / "out", fake_smart_commit(d), "full", "plain") == 2
+        written = (d / "out/prompts.jsonl").read_text().splitlines()
+        assert [json.loads(line)["user"] for line in written] == ["u0", "u1"]
+        # Somewhere else, with no binary: the same prompts, the same candidates.
+        select(d / "out", d / "far", set(), 0)
+        assert mine(d / "far", None, url, "full", "plain", 1, 0.7, 0.95, 0, workers=1,
+                    prompts_file=d / "out/prompts.jsonl") == 2
+        rows = [json.loads(line) for line in (d / "far/candidates.jsonl").read_text().splitlines()]
+        assert [(r["system"], r["user"]) for r in rows] == [("S", "u0"), ("S", "u1")]
+        # A prompts file of another selection is refused, not misaligned.
+        try:
+            read_prompts(d / "out/prompts.jsonl", 3)
+        except ValueError as e:
+            assert "2 prompts for 3 inputs" in str(e)
+        else:
+            raise AssertionError("a prompts file of the wrong length was accepted")
     server.shutdown()
 
 

@@ -2,15 +2,19 @@
 preference pairs (`sc-training pairs` judges them).
 
 Builds the prompts with `smart-commit prompt --inputs` (empty
-XDG_CONFIG_HOME, as `make_examples.py`), drops the commits of the
+XDG_CONFIG_HOME, as `make_examples.py`), or reads them from `--prompts`,
+the `prompts.jsonl` that `--prompts-only` wrote: a machine without the
+binary (Kaggle) samples from the prompts of another. Drops the commits of the
 repositories of the evaluation sets, and samples SAMPLES replies per input
 from a llama-server with fixed seeds, so the same model, server and inputs
 give the same candidates. Writes to OUT `inputs.jsonl` and `meta.jsonl` (what
 is left of SRC) and `candidates.jsonl`: `{"system", "user", "replies"}` per
 line, in the same order. Stopped, it resumes where it was.
 
-    python -I mine_pairs.py SRC OUT SMART_COMMIT GGUF --server LLAMA_SERVER [options]
-    python -I mine_pairs.py SRC OUT SMART_COMMIT GGUF --url http://127.0.0.1:8080
+    python -I mine_pairs.py SRC OUT GGUF --binary SMART_COMMIT --server LLAMA_SERVER [options]
+    python -I mine_pairs.py SRC OUT GGUF --binary SMART_COMMIT --url http://127.0.0.1:8080
+    python -I mine_pairs.py SRC OUT --binary SMART_COMMIT --prompts-only [options]
+    python -I mine_pairs.py SRC OUT GGUF --prompts SRC/prompts.jsonl --server LLAMA_SERVER
 
 `--rules` and `--diff` are those the model was trained on: `full` and
 `plain` for v0.1.
@@ -69,6 +73,20 @@ def prompts(binary: str, inputs: Path, rules: str, diff: str) -> list[dict]:
     return [json.loads(line) for line in lines]
 
 
+def write_prompts(out: Path, binary: str, rules: str, diff: str) -> int:
+    """Writes `prompts.jsonl` for the inputs in `out`: a line per input."""
+    built = prompts(binary, out / "inputs.jsonl", rules, diff)
+    (out / "prompts.jsonl").write_text("".join(json.dumps(p, ensure_ascii=False) + "\n" for p in built))
+    return len(built)
+
+
+def read_prompts(path: Path, count: int) -> list[dict]:
+    built = [json.loads(line) for line in read_lines(path)]
+    if len(built) != count:
+        raise ValueError(f"{path} has {len(built)} prompts for {count} inputs")
+    return [{"system": p["system"], "user": p["user"]} for p in built]
+
+
 def sample(url: str, prompt: dict, samples: int, temperature: float, top_p: float,
            seed: int) -> list[str]:
     """`samples` replies to `prompt`, with seeds SEED, SEED + 1, ..."""
@@ -95,10 +113,15 @@ def sample(url: str, prompt: dict, samples: int, temperature: float, top_p: floa
     return replies
 
 
-def mine(out: Path, binary: str, url: str, rules: str, diff: str, samples: int,
-         temperature: float, top_p: float, seed: int, workers: int) -> int:
-    """Samples the replies for the inputs in `out` not done yet; how many."""
-    built = prompts(binary, out / "inputs.jsonl", rules, diff)
+def mine(out: Path, binary: str | None, url: str, rules: str, diff: str, samples: int,
+         temperature: float, top_p: float, seed: int, workers: int,
+         prompts_file: Path | None = None) -> int:
+    """Samples the replies for the inputs in `out` not done yet; how many.
+    The prompts are those of `prompts_file`, else built with `binary`."""
+    if prompts_file:
+        built = read_prompts(prompts_file, len(read_lines(out / "inputs.jsonl")))
+    else:
+        built = prompts(binary, out / "inputs.jsonl", rules, diff)
     done = len(read_lines(out / "candidates.jsonl"))
     todo: queue.Queue = queue.Queue()
     for n in range(done, len(built)):
@@ -177,9 +200,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("src", type=Path)
     parser.add_argument("out", type=Path)
-    parser.add_argument("binary", help="smart-commit, to build the prompts")
-    parser.add_argument("gguf", help="the model to sample from")
-    group = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument("gguf", nargs="?", help="the model to sample from")
+    parser.add_argument("--binary", help="smart-commit, to build the prompts")
+    parser.add_argument("--prompts", type=Path, help="the prompts.jsonl of --prompts-only")
+    parser.add_argument("--prompts-only", action="store_true",
+                        help="write OUT/prompts.jsonl and stop, without a model")
+    group = parser.add_mutually_exclusive_group()
     group.add_argument("--server", help="llama-server to start for GGUF")
     group.add_argument("--url", help="a llama-server already running")
     parser.add_argument("--device", default="Vulkan0",
@@ -195,15 +221,25 @@ def main() -> None:
     parser.add_argument("--exclude-repos-of", type=Path, nargs="*", default=[],
                         metavar="DIR", help="evaluation sets whose repositories are left out")
     args = parser.parse_args()
+    if args.prompts_only:
+        if not args.binary:
+            parser.error("--prompts-only needs --binary")
+    elif not (args.gguf or args.url) or not (args.server or args.url):
+        parser.error("sampling needs GGUF and --server, or --url")
+    elif not (args.binary or args.prompts):
+        parser.error("sampling needs --binary or --prompts")
     kept = select(args.src, args.out, repos_of(args.exclude_repos_of), args.limit)
     print(f"{kept} inputs from {args.src}")
+    if args.prompts_only:
+        print(f"{write_prompts(args.out, args.binary, args.rules, args.diff)} prompts in {args.out}")
+        return
     process = None
     url = args.url
     try:
         if args.server:
             process, url = serve(args.server, args.gguf, args.device, args.workers)
         new = mine(args.out, args.binary, url, args.rules, args.diff, args.samples,
-                   args.temperature, args.top_p, args.seed, args.workers)
+                   args.temperature, args.top_p, args.seed, args.workers, args.prompts)
         print(f"{new} inputs sampled, {kept - new} were done")
     finally:
         if process:
