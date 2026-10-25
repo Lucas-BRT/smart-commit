@@ -45,6 +45,13 @@ pub(super) fn stop_kept_after(key: &str) -> Option<String> {
     (stopped > 0).then(|| format!("stopped the model kept loaded, since {key} changed"))
 }
 
+/// Where the RAM is read from: `/proc/meminfo`, or the file tests point
+/// `SMART_COMMIT_MEMINFO` at.
+pub(super) fn meminfo_path() -> PathBuf {
+    std::env::var_os("SMART_COMMIT_MEMINFO")
+        .map_or_else(|| PathBuf::from("/proc/meminfo"), PathBuf::from)
+}
+
 /// The real machine, or the fake one tests point at (`SMART_COMMIT_SYSFS`
 /// is read by `scripts/setup-gpu.sh` too).
 pub(super) fn hardware_sources() -> hardware::Sources {

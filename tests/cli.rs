@@ -1085,3 +1085,69 @@ fn the_type_is_only_asked_in_a_terminal() {
         assert!(!stderr(&output).contains("type"), "{}", stderr(&output));
     }
 }
+
+/// `--device cpu` with a model of 3 GB (a sparse file) on a machine of 16 GiB
+/// (19% with the server's overhead), a llama-server that fails at once and
+/// the given environment: stderr, and whether anything was kept loaded.
+fn cpu_with_a_large_model(extra: &[(&str, &str)]) -> (String, bool) {
+    let repo = staged_repo();
+    let dir = tempfile::TempDir::new().unwrap();
+    let model = dir.path().join("model.gguf");
+    std::fs::File::create(&model)
+        .unwrap()
+        .set_len(3_000_000_000)
+        .unwrap();
+    let meminfo = dir.path().join("meminfo");
+    std::fs::write(
+        &meminfo,
+        "MemTotal: 16777216 kB\nMemFree: 1 kB\nMemAvailable: 12582912 kB\n",
+    )
+    .unwrap();
+    let runtime = dir.path().join("run");
+    std::fs::create_dir(&runtime).unwrap();
+    let mut env = vec![
+        ("SMART_COMMIT_GGUF", model.to_str().unwrap()),
+        ("SMART_COMMIT_LLAMA_SERVER", "/bin/false"),
+        ("SMART_COMMIT_MEMINFO", meminfo.to_str().unwrap()),
+        ("XDG_RUNTIME_DIR", runtime.to_str().unwrap()),
+    ];
+    env.extend_from_slice(extra);
+    let output = smart_commit_with(&["--device", "cpu"], repo.path(), &env);
+    assert!(!output.status.success());
+    // A kept server is a directory (its lock file is only a file).
+    let kept = runtime
+        .join("smart-commit")
+        .read_dir()
+        .is_ok_and(|entries| entries.flatten().any(|entry| entry.path().is_dir()));
+    (stderr(&output), kept)
+}
+
+#[test]
+fn a_model_too_large_for_the_ram_is_not_kept_loaded_and_whoever_asked_is_told() {
+    let (err, kept) = cpu_with_a_large_model(&[("SMART_COMMIT_KEEP_LOADED", "10")]);
+    assert!(
+        err.contains(
+            "note: not keeping the model loaded (it would take 19% of the RAM; \
+             model.keep_loaded_max_ram is 15%); loading it for this commit"
+        ),
+        "{err}"
+    );
+    assert!(!kept, "nothing is left loaded");
+    // A larger share keeps it: the supervisor then fails to start, which is a
+    // different note.
+    let (err, _) = cpu_with_a_large_model(&[
+        ("SMART_COMMIT_KEEP_LOADED", "10"),
+        ("SMART_COMMIT_KEEP_LOADED_MAX_RAM", "30"),
+    ]);
+    assert!(err.contains("cannot keep the model loaded"), "{err}");
+    assert!(!err.contains("not keeping"), "{err}");
+}
+
+#[test]
+fn the_default_keeps_quiet_about_a_model_it_does_not_keep() {
+    let (err, kept) = cpu_with_a_large_model(&[]);
+    assert!(!err.contains("keeping the model loaded"), "{err}");
+    assert!(!err.contains("cannot keep"), "{err}");
+    assert!(err.contains("llama-server exited"), "{err}");
+    assert!(!kept);
+}

@@ -4,14 +4,14 @@ use anyhow::Result;
 use smart_commit::backend::device::{self, Target};
 use smart_commit::backend::genai::{Device, GenaiBackend};
 use smart_commit::backend::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};
-use smart_commit::backend::server;
+use smart_commit::backend::server::{self, ConnectError};
 use smart_commit::backend::{Backend, BackendError};
 use smart_commit::config::{DeviceSetting, Settings};
 use smart_commit::hardware::Hardware;
 use smart_commit::paths;
 
 use super::benchmark;
-use super::settings::{env, hardware_sources};
+use super::settings::{env, hardware_sources, meminfo_path};
 use super::ui::note;
 
 /// Loads the model on the configured device, or picks one for `auto`.
@@ -95,15 +95,41 @@ fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCp
     if settings.keep_loaded.is_zero() || llamacpp::missing_file(options).is_some() {
         return None;
     }
-    let result = match (paths::runtime_dir(env), std::env::current_exe()) {
-        (Some(runtime), Ok(exe)) => server::connect(&runtime, options, settings.keep_loaded, &exe)
-            .map_err(|e| e.to_string()),
-        (None, _) => Err("$XDG_RUNTIME_DIR is not set".to_owned()),
-        (_, Err(err)) => Err(err.to_string()),
+    let share = server::Share {
+        max_percent: settings.keep_loaded_max_ram as u64,
+        meminfo: meminfo_path(),
     };
-    result
-        .map_err(|err| note!("cannot keep the model loaded ({err}); loading it for this commit"))
-        .ok()
+    let result = match (paths::runtime_dir(env), std::env::current_exe()) {
+        (Some(runtime), Ok(exe)) => {
+            server::connect(&runtime, options, settings.keep_loaded, &share, &exe)
+        }
+        (None, _) => {
+            Err(BackendError::Unavailable("$XDG_RUNTIME_DIR is not set".to_owned()).into())
+        }
+        (_, Err(err)) => Err(BackendError::Unavailable(err.to_string()).into()),
+    };
+    match result {
+        Ok(backend) => Some(backend),
+        // Not a failure: the machine is too small for this model to stay in
+        // memory. Said to whoever asked for it to be kept; the default is
+        // for the machines that can.
+        Err(ConnectError::NotKept(refusal)) if !settings.keep_loaded_explicit => {
+            tracing::debug!("not keeping the model loaded: {refusal}");
+            None
+        }
+        Err(err @ ConnectError::NotKept(_)) => {
+            note!(
+                "not keeping the model loaded ({err}; model.keep_loaded_max_ram is {}%); \
+                 loading it for this commit",
+                share.max_percent
+            );
+            None
+        }
+        Err(err) => {
+            note!("cannot keep the model loaded ({err}); loading it for this commit");
+            None
+        }
+    }
 }
 
 /// A model kept loaded may hold the memory a load needed: the error says so,

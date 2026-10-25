@@ -165,8 +165,14 @@ fn a_model_kept_loaded_gives_the_same_replies() {
         let expected = fresh.generate(&prompt, &config).unwrap();
         drop(fresh);
         // Connects to the same kept server for every prompt but the first.
-        let kept =
-            smart_commit::backend::server::connect(runtime.path(), &options, keep, exe).unwrap();
+        let kept = smart_commit::backend::server::connect(
+            runtime.path(),
+            &options,
+            keep,
+            &smart_commit::backend::server::Share::default(),
+            exe,
+        )
+        .unwrap();
         replies.push((name, expected, kept.generate(&prompt, &config).unwrap()));
     }
     assert_eq!(smart_commit::backend::server::stop(runtime.path()), 1);

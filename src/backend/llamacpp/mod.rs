@@ -229,6 +229,13 @@ impl LlamaCppBackend {
         }
     }
 
+    /// The server's process id, if this backend started it.
+    pub fn pid(&self) -> Option<u32> {
+        self.server
+            .as_ref()
+            .map(|server| server.lock().expect("server lock").id())
+    }
+
     /// Whether the server this backend started is still running; a backend
     /// that only connected cannot tell, and says yes.
     pub fn is_running(&self) -> bool {

@@ -5,6 +5,7 @@
 //! is a lot, so a model is kept only if it fits with room to spare, and a
 //! kept one stops when the machine runs short or it grows past its share.
 
+use std::fmt;
 use std::path::Path;
 
 /// What a llama-server takes over its model file, beyond the weights:
@@ -64,6 +65,20 @@ pub enum Refusal {
     MachineBusy { left_percent: u64 },
 }
 
+impl fmt::Display for Refusal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TooBig { percent } => write!(f, "it would take {percent}% of the RAM"),
+            Self::MachineBusy { left_percent } => {
+                write!(
+                    f,
+                    "loading it would leave {left_percent}% of the RAM available"
+                )
+            }
+        }
+    }
+}
+
 /// Whether a model that takes `expected` bytes may be kept loaded on
 /// `memory`: at most `max_percent` of the total, and loading it leaves
 /// [`HEADROOM_PERCENT`] of the total available.
@@ -90,6 +105,17 @@ pub enum Pressure {
     Low { available_percent: u64 },
     /// The server's own memory passed `max_percent` of the total.
     Grown { percent: u64 },
+}
+
+impl fmt::Display for Pressure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Low { available_percent } => {
+                write!(f, "only {available_percent}% of the RAM is available")
+            }
+            Self::Grown { percent } => write!(f, "the server takes {percent}% of the RAM"),
+        }
+    }
 }
 
 /// Whether a kept server using `resident` bytes should stop: the machine
