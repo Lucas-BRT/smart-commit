@@ -23,7 +23,7 @@ use crate::prompt::PromptOptions;
 /// Bumped on incompatible changes to the trace layout.
 pub const FORMAT: u32 = 1;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Trace {
     pub format: u32,
     /// Version of smart-commit that wrote the trace.
@@ -82,7 +82,7 @@ pub enum TraceError {
 }
 
 /// The outcome of replaying a trace.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Replay {
     pub generation: Generation,
     /// Human-readable differences from the recorded generation; empty when
@@ -154,12 +154,14 @@ impl Trace {
     /// Like [`Self::replay`] with any backend, e.g. a real model to check
     /// that it still answers the same way.
     pub fn replay_with(&self, backend: &dyn Backend) -> Result<Replay, BackendError> {
-        let generation = generate::generate(
+        let generation = generate::generate_asked(
             &self.context(),
             &self.inputs.files,
             backend,
             &self.options,
             &self.config,
+            &[],
+            self.generation.asked.as_ref(),
         )?;
         let differences = compare(&self.generation, &generation);
         Ok(Replay {
@@ -347,5 +349,59 @@ mod tests {
             Err(TraceError::UnsupportedFormat { found: 99 })
         ));
         assert!(matches!(Trace::from_json("{"), Err(TraceError::Json(_))));
+    }
+
+    #[test]
+    fn a_chosen_type_is_recorded_and_replays() {
+        let ctx = RepoContext::new(
+            PathBuf::from("/home/someone/repo"),
+            Some("main".into()),
+            vec!["feat(git): add history".into(), "fix(git): crash".into()],
+            vec![FileChange {
+                status: ChangeStatus::Modified,
+                path: "src/git.rs".into(),
+                old_path: None,
+            }],
+        );
+        let files = vec![FileDiff {
+            path: "src/git.rs".into(),
+            old_path: None,
+            lines: Some((1, 1)),
+            hunks: "@@ -1 +1 @@\n-old\n+new\n".into(),
+        }];
+        let asked = generate::TypeAsk {
+            choices: vec![
+                crate::backend::TypeChoice {
+                    name: "feat".into(),
+                    probability: 0.6,
+                },
+                crate::backend::TypeChoice {
+                    name: "fix".into(),
+                    probability: 0.4,
+                },
+            ],
+            chosen: "fix".into(),
+        };
+        let backend = MockBackend::new(["fix(git): read the branch"]);
+        let (options, config) = (PromptOptions::default(), GenerationConfig::default());
+        let generation =
+            generate::generate_asked(&ctx, &files, &backend, &options, &config, &[], Some(&asked))
+                .unwrap();
+        let trace = Trace::new(&ctx, &files, &backend, &options, &config, &generation);
+
+        let json = trace.to_json();
+        assert!(json.contains("\"chosen\": \"fix\""), "{json}");
+        let read = Trace::from_json(&json).unwrap();
+        assert_eq!(read, trace);
+        let replay = read.replay().unwrap();
+        assert!(replay.differences.is_empty(), "{:?}", replay.differences);
+        assert_eq!(replay.generation.asked, Some(asked));
+    }
+
+    #[test]
+    fn a_trace_without_a_chosen_type_has_no_such_field() {
+        let trace = recorded(&["fix(git): read the branch"]);
+        assert!(!trace.to_json().contains("asked"));
+        assert_eq!(trace.generation.asked, None);
     }
 }

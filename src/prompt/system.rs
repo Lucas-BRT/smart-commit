@@ -20,6 +20,26 @@ fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &
         })
 }
 
+/// The types the system message lists as used in the repository: the most
+/// used, and `refactor`, which small models forget; none when the history
+/// has none.
+pub fn listed_types(style: &Style) -> Vec<String> {
+    if style.types.is_empty() {
+        return Vec::new();
+    }
+    let mut types: Vec<String> = style
+        .types
+        .iter()
+        .take(MAX_LISTED)
+        .map(|(name, _)| name.clone())
+        .collect();
+    if !types.iter().any(|t| t == "refactor") {
+        types.push("refactor".to_string());
+    }
+    types.truncate(MAX_LISTED);
+    types
+}
+
 pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
     let style = &ctx.style;
     let (convention, language) = effective_style(style, options);
@@ -56,19 +76,8 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri
             } else {
                 "Use Conventional Commits."
             });
-            if !style.types.is_empty() {
-                let mut types: Vec<String> = style
-                    .types
-                    .iter()
-                    .take(MAX_LISTED)
-                    .map(|(name, _)| name.clone())
-                    .collect();
-                if !types.iter().any(|t| t == "refactor") {
-                    types.push("refactor".to_string());
-                }
-                if types.len() > MAX_LISTED {
-                    types.truncate(MAX_LISTED);
-                }
+            let types = listed_types(style);
+            if !types.is_empty() {
                 rule(&format!("Types used here: {}.", types.join(", ")));
             } else if full {
                 rule("Types: feat, fix, docs, refactor, test, chore.");

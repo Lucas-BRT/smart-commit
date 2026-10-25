@@ -218,6 +218,7 @@ mod tests {
                 body: body.map(str::to_owned),
             },
             source,
+            asked: None,
             attempts: vec![
                 crate::generate::Attempt {
                     prompt: crate::prompt::Prompt {

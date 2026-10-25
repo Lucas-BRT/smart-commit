@@ -569,4 +569,84 @@ mod tests {
              Reply again with only the commit message."
         );
     }
+
+    fn asked(chosen: &str) -> generate::TypeAsk {
+        generate::TypeAsk {
+            choices: vec![
+                crate::backend::TypeChoice {
+                    name: "feat".into(),
+                    probability: 0.55,
+                },
+                crate::backend::TypeChoice {
+                    name: "fix".into(),
+                    probability: 0.45,
+                },
+            ],
+            chosen: chosen.to_owned(),
+        }
+    }
+
+    fn run_asked(mock: &MockBackend, asked: Option<&generate::TypeAsk>) -> Generation {
+        generate::generate_asked(
+            &context(CONVENTIONAL),
+            &files(),
+            mock,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &[],
+            asked,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn a_chosen_type_begins_the_reply_and_is_recorded() {
+        let mock = MockBackend::new(["fix(git): read the branch name"]);
+        let generation = run_asked(&mock, Some(&asked("fix")));
+        assert_eq!(generation.message.subject, "fix(git): read the branch name");
+        assert_eq!(mock.starts(), ["fix"]);
+        assert_eq!(generation.asked, Some(asked("fix")));
+    }
+
+    #[test]
+    fn the_retry_begins_with_the_chosen_type_too() {
+        let mock = MockBackend::new(["Read the branch name", "fix(git): read the branch name"]);
+        let generation = run_asked(&mock, Some(&asked("fix")));
+        assert_eq!(generation.attempts.len(), 2);
+        assert_eq!(mock.starts(), ["fix", "fix"]);
+        assert_eq!(generation.asked, Some(asked("fix")));
+    }
+
+    #[test]
+    fn the_fallback_records_the_chosen_type_too() {
+        let mock = MockBackend::new(["", ""]);
+        let generation = run_asked(&mock, Some(&asked("docs")));
+        assert_eq!(generation.source, Source::Fallback);
+        assert_eq!(generation.asked, Some(asked("docs")));
+    }
+
+    #[test]
+    fn without_a_chosen_type_nothing_is_started_or_recorded() {
+        let mock = MockBackend::new(["fix(git): read the branch name"]);
+        let generation = run_asked(&mock, None);
+        assert!(mock.starts().is_empty());
+        assert_eq!(generation.asked, None);
+        let json = serde_json::to_string(&generation).unwrap();
+        assert!(!json.contains("asked"), "{json}");
+    }
+
+    #[test]
+    fn a_backend_that_cannot_start_a_reply_is_an_error_not_a_silent_other_type() {
+        let err = generate::generate_asked(
+            &context(CONVENTIONAL),
+            &files(),
+            &crate::backend::NoModel,
+            &PromptOptions::default(),
+            &GenerationConfig::default(),
+            &[],
+            Some(&asked("fix")),
+        )
+        .unwrap_err();
+        assert!(matches!(err, BackendError::Unavailable(_)), "{err}");
+    }
 }
