@@ -18,6 +18,7 @@ uv run --locked python -I test_make_examples.py
 uv run --locked python -I test_mine_pairs.py
 uv run --locked python -I test_train_dpo.py
 uv run --locked python -I test_kaggle_mine_bundle.py
+uv run --locked python -I test_kaggle_dpo_bundle.py
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
 cargo build --locked && cargo test --locked -p smart-commit-training -- --ignored   # every scenario, built twice
@@ -297,6 +298,25 @@ uv run --locked python -I export_gguf.py runs/dpo-0.5b/merged runs/dpo-0.5b/mode
 
 The merged model is the `BASE_DIR` of step 5, without `--adapter`. Then step 6
 as for any model.
+
+On Kaggle (a T4 has no bf16, so `--dtype fp16`) `kaggle_dpo_bundle.py` packs
+the runs, each with its adapter's two files, its pairs and its validation
+pairs, and `kaggle_dpo.ipynb` runs them, one per GPU, packing each as soon as
+it ends. A run is `NAME=MODEL:SFT_ADAPTER:TRAIN:VAL[:ARGS]`:
+
+```bash
+python -I kaggle_dpo_bundle.py data/kaggle/dpo2-train \
+  "b01-0.5b=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:data/dpo2/balanced-0.5b/train.jsonl:data/dpo2/balanced-0.5b/val.jsonl:--beta 0.1" \
+  "b03-0.5b=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:data/dpo2/balanced-0.5b/train.jsonl:data/dpo2/balanced-0.5b/val.jsonl:--beta 0.3 --sft-weight 0.1"
+# upload it, run kaggle_dpo.ipynb on it, and unpack the archives in runs/kaggle-dpo2/;
+# the adapter is trained on the merged SFT model, so both are merged, in that order:
+uv run --locked python -I export_gguf.py $M runs/kaggle-dpo2/b01-0.5b/model-q4_k_m.gguf \
+  --adapter runs/kaggle-v2/c40k-0.5b/adapter --adapter runs/kaggle-dpo2/b01-0.5b/adapter \
+  --llama-src $C/llama.cpp-src/llama.cpp-b11381 --llama-bin ~/.local/share/smart-commit/llama.cpp/llama-b11381
+```
+
+Merging the two adapters one after the other gives the very weights `--merged`
+wrote (checked: the largest difference is 0.0).
 
 ## Scenarios
 
