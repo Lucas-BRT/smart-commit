@@ -477,3 +477,63 @@ fn templates_parse_to_the_defaults_and_list_every_key() {
         }
     }
 }
+
+#[test]
+fn the_type_is_never_asked_unless_set_and_below_half() {
+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();
+    assert_eq!(settings.ask_type, AskType::Off);
+    assert_eq!(settings.ask_type_below, 50);
+    assert!((settings.ask_type_below() - 0.5).abs() < f64::EPSILON);
+}
+
+#[test]
+fn asking_for_the_type_is_set_by_file_or_environment() {
+    let file = "[model]\nask_type = \"low_confidence\"\nask_type_below = 65\n";
+    let settings = resolve(Some(file), None, HOME, vec![]).unwrap().settings();
+    assert_eq!(settings.ask_type, AskType::LowConfidence);
+    assert!((settings.ask_type_below() - 0.65).abs() < 1e-9);
+
+    let vars = [
+        ("HOME", "/home/me"),
+        ("SMART_COMMIT_ASK_TYPE", "low_confidence"),
+        ("SMART_COMMIT_ASK_TYPE_BELOW", "30"),
+    ];
+    let settings = resolve(Some("[model]\nask_type_below = 90\n"), None, &vars, vec![])
+        .unwrap()
+        .settings();
+    assert_eq!(settings.ask_type, AskType::LowConfidence);
+    assert_eq!(settings.ask_type_below, 30, "the environment wins");
+}
+
+#[test]
+fn the_confidence_to_ask_below_is_a_percentage_between_the_extremes() {
+    for value in ["0", "100"] {
+        let file = format!("[model]\nask_type_below = {value}\n");
+        let err = resolve(Some(&file), None, HOME, vec![]).unwrap_err();
+        assert!(
+            err.to_string().contains("a whole number from 1 to 99"),
+            "{value}: {err}"
+        );
+    }
+    let err = resolve(Some("[model]\nask_type = \"always\"\n"), None, HOME, vec![]).unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("expected one of off, low_confidence"),
+        "{err}"
+    );
+}
+
+#[test]
+fn asking_for_the_type_is_a_personal_setting_not_the_repositorys() {
+    let err = resolve(
+        None,
+        Some("[model]\nask_type = \"low_confidence\"\n"),
+        HOME,
+        vec![],
+    )
+    .unwrap_err();
+    assert!(
+        matches!(&err, ConfigError::UserOnly { key, .. } if key == "model.ask_type"),
+        "{err}"
+    );
+}

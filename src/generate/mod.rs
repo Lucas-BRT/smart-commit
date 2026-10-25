@@ -3,6 +3,7 @@
 //! only lockfiles and generated files are staged, the file list says it all
 //! and the model is not asked.
 
+mod ask;
 mod notes;
 mod retry;
 mod rules;
@@ -18,6 +19,7 @@ use crate::message::{self, CommitMessage, SanitizeError};
 use crate::prompt::{self, PromptOptions};
 use crate::style::Language;
 
+pub use ask::{MAX_OFFERED, TypeAsk, offer_types, types_to_offer};
 pub use notes::{avoid_note, retry_note};
 pub use retry::{copied_from, in_other_language, prepared_message};
 pub use rules::by_rules;
@@ -48,11 +50,16 @@ pub enum Source {
     Git,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Generation {
     pub message: CommitMessage,
     pub source: Source,
     pub attempts: Vec<Attempt>,
+    /// The type a person chose when the model was unsure, which the replies
+    /// were made to begin with. Left out of traces when there was none, so
+    /// older traces read the same.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asked: Option<TypeAsk>,
 }
 
 /// `options` with the budget `backend` can take: what to build the prompts
@@ -85,6 +92,20 @@ pub fn generate_avoiding(
     config: &GenerationConfig,
     avoid: &[String],
 ) -> Result<Generation, BackendError> {
+    generate_asked(ctx, files, backend, options, config, avoid, None)
+}
+
+/// Like [`generate_avoiding`], with every reply made to begin with the type
+/// a person chose in `asked`, if any (see [`types_to_offer`]).
+pub fn generate_asked(
+    ctx: &RepoContext,
+    files: &[FileDiff],
+    backend: &dyn Backend,
+    options: &PromptOptions,
+    config: &GenerationConfig,
+    avoid: &[String],
+    asked: Option<&TypeAsk>,
+) -> Result<Generation, BackendError> {
     let (convention, language) = prompt::effective_style(&ctx.style, options);
     // Turned down, git's or the file list's message goes to the model for
     // another.
@@ -94,6 +115,7 @@ pub fn generate_avoiding(
             message: retry::prepared_message(&prepared.message),
             source: Source::Git,
             attempts: Vec::new(),
+            asked: None,
         });
     }
     if avoid.is_empty() && rules::by_rules(ctx, files) {
@@ -108,6 +130,7 @@ pub fn generate_avoiding(
             ),
             source: Source::Rules,
             attempts: Vec::new(),
+            asked: None,
         });
     }
     let turned_down: Vec<String> = avoid
@@ -126,7 +149,10 @@ pub fn generate_avoiding(
             (avoid, retry) => retry.or_else(|| avoid.clone()),
         };
         let prompt = prompt::build_with_note(ctx, files, options, note.as_deref());
-        let raw = backend.generate(&prompt, config)?;
+        let raw = match asked {
+            Some(asked) => backend.generate_starting_with(&prompt, &asked.chosen, config)?,
+            None => backend.generate(&prompt, config)?,
+        };
         let checked =
             message::sanitize_within(&raw, convention, options.subject_max).and_then(|message| {
                 if let Some(subject) = retry::copied_from(&message.subject, &ctx.subjects) {
@@ -153,6 +179,7 @@ pub fn generate_avoiding(
                     message,
                     source: Source::Model,
                     attempts,
+                    asked: asked.cloned(),
                 });
             }
             Err(error) => {
@@ -191,6 +218,7 @@ pub fn generate_avoiding(
         ),
         source: Source::Fallback,
         attempts,
+        asked: asked.cloned(),
     })
 }
 

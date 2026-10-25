@@ -1,6 +1,7 @@
 //! The model that writes the message, behind a trait so everything around
 //! it can be tested without an NPU.
 
+pub mod choices;
 pub mod device;
 pub mod genai;
 pub mod llamacpp;
@@ -12,6 +13,8 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 
 use crate::prompt::Prompt;
+
+pub use choices::TypeChoice;
 
 /// Everything that affects what the model generates, made explicit so a
 /// generation can be reproduced: no library defaults are relied upon.
@@ -65,6 +68,27 @@ pub trait Backend {
         requested
     }
 
+    /// The Conventional Commits types the reply to `prompt` may start with,
+    /// most likely first, with their probabilities. Empty when the backend
+    /// cannot tell (only llama.cpp's devices can).
+    fn type_choices(&self, _prompt: &Prompt) -> Result<Vec<TypeChoice>, BackendError> {
+        Ok(Vec::new())
+    }
+
+    /// Like [`Backend::generate`], with the reply made to begin with
+    /// `start`, which is part of what it returns: the type a person chose.
+    /// Only a backend whose [`Backend::type_choices`] is not empty has it.
+    fn generate_starting_with(
+        &self,
+        _prompt: &Prompt,
+        _start: &str,
+        _config: &GenerationConfig,
+    ) -> Result<String, BackendError> {
+        Err(BackendError::Unavailable(
+            "this backend cannot start a reply with a chosen type".to_owned(),
+        ))
+    }
+
     /// Timings of the last successful [`Backend::generate`], when the
     /// backend measures them.
     fn last_metrics(&self) -> Option<Metrics> {
@@ -92,6 +116,8 @@ impl Backend for NoModel {
 pub struct MockBackend {
     responses: Mutex<VecDeque<String>>,
     prompts: Mutex<Vec<Prompt>>,
+    choices: Vec<TypeChoice>,
+    starts: Mutex<Vec<String>>,
 }
 
 impl MockBackend {
@@ -99,7 +125,30 @@ impl MockBackend {
         Self {
             responses: Mutex::new(responses.into_iter().map(Into::into).collect()),
             prompts: Mutex::default(),
+            choices: Vec::new(),
+            starts: Mutex::default(),
         }
+    }
+
+    /// Makes it answer [`Backend::type_choices`] with `choices`, and take a
+    /// reply start: the scripted replies are then the whole reply.
+    pub fn with_type_choices(
+        mut self,
+        choices: impl IntoIterator<Item = (&'static str, f64)>,
+    ) -> Self {
+        self.choices = choices
+            .into_iter()
+            .map(|(name, probability)| TypeChoice {
+                name: name.to_owned(),
+                probability,
+            })
+            .collect();
+        self
+    }
+
+    /// The reply starts it was asked for, oldest first.
+    pub fn starts(&self) -> Vec<String> {
+        self.starts.lock().expect("mock lock").clone()
     }
 
     /// The prompts received so far, oldest first.
@@ -121,6 +170,24 @@ impl Backend for MockBackend {
             .expect("mock lock")
             .pop_front()
             .unwrap_or_default())
+    }
+
+    fn type_choices(&self, _: &Prompt) -> Result<Vec<TypeChoice>, BackendError> {
+        Ok(self.choices.clone())
+    }
+
+    /// The scripted reply as it is: it already begins with the start.
+    fn generate_starting_with(
+        &self,
+        prompt: &Prompt,
+        start: &str,
+        config: &GenerationConfig,
+    ) -> Result<String, BackendError> {
+        self.starts
+            .lock()
+            .expect("mock lock")
+            .push(start.to_owned());
+        self.generate(prompt, config)
     }
 }
 
@@ -153,5 +220,33 @@ mod tests {
         mock.generate(&prompt("b"), &config).unwrap();
         assert_eq!(mock.prompts(), [prompt("a"), prompt("b")]);
         assert_eq!(mock.describe(), "mock");
+    }
+
+    #[test]
+    fn a_backend_without_choices_says_so_and_cannot_start_a_reply() {
+        let mock = MockBackend::new(["fix: x"]);
+        assert!(mock.type_choices(&prompt("a")).unwrap().is_empty());
+        assert!(NoModel.type_choices(&prompt("a")).unwrap().is_empty());
+        let config = GenerationConfig::default();
+        let err = NoModel
+            .generate_starting_with(&prompt("a"), "fix", &config)
+            .unwrap_err();
+        assert!(err.to_string().contains("cannot start a reply"), "{err}");
+    }
+
+    #[test]
+    fn mock_offers_its_choices_and_records_the_starts() {
+        let mock = MockBackend::new(["fix(core): stop the crash"])
+            .with_type_choices([("feat", 0.55), ("fix", 0.45)]);
+        let choices = mock.type_choices(&prompt("a")).unwrap();
+        assert_eq!(choices.len(), 2);
+        assert_eq!(choices[1].name, "fix");
+        let config = GenerationConfig::default();
+        let reply = mock
+            .generate_starting_with(&prompt("a"), "fix", &config)
+            .unwrap();
+        assert_eq!(reply, "fix(core): stop the crash");
+        assert_eq!(mock.starts(), ["fix"]);
+        assert_eq!(mock.prompts(), [prompt("a")]);
     }
 }

@@ -135,6 +135,25 @@ pub const KEYS: &[Key] = &[
                       do not depend on it.",
     },
     Key {
+        name: "model.ask_type",
+        kind: Kind::Choice(&["off", "low_confidence"]),
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_ASK_TYPE"),
+        description: "`smart-commit --commit` in a terminal, on llama.cpp devices: with \
+                      `low_confidence`, ask which type the message should have when the model \
+                      is unsure of it (see model.ask_type_below), offering its likeliest ones, \
+                      and write the message for the one chosen. `off`: never ask.",
+    },
+    Key {
+        name: "model.ask_type_below",
+        kind: Kind::Count { min: 1, max: 99 },
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_ASK_TYPE_BELOW"),
+        description: "With model.ask_type on low_confidence: ask when the model's confidence in \
+                      the type it would pick is below this percentage. On eval-v1, 50 asks \
+                      about a quarter of the commits.",
+    },
+    Key {
         name: "model.npu_prefill_chunk",
         kind: Kind::Count {
             min: 512,

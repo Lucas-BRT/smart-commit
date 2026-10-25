@@ -28,7 +28,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};
+use crate::backend::{Backend, BackendError, GenerationConfig, Metrics, TypeChoice, choices};
 use crate::prompt::Prompt;
 
 /// The llama.cpp release `smart-commit setup` installs.
@@ -263,6 +263,26 @@ impl LlamaCppBackend {
     }
 }
 
+impl LlamaCppBackend {
+    /// Posts `request` to the chat endpoint; the body of the answer.
+    fn post_chat(&self, request: &Value) -> Result<String, BackendError> {
+        let (status, response) = http(
+            &self.socket,
+            "POST",
+            "/v1/chat/completions",
+            Some(&request.to_string()),
+        )
+        .map_err(|e| BackendError::Generation(format!("llama-server request failed: {e}")))?;
+        if status != 200 {
+            return Err(BackendError::Generation(format!(
+                "llama-server answered {status}: {}",
+                response.trim()
+            )));
+        }
+        Ok(response)
+    }
+}
+
 impl Drop for LlamaCppBackend {
     fn drop(&mut self) {
         if let Some(server) = &self.server {
@@ -282,16 +302,25 @@ impl Backend for LlamaCppBackend {
     }
 
     fn generate(&self, prompt: &Prompt, config: &GenerationConfig) -> Result<String, BackendError> {
-        let body = chat_request(prompt, config).to_string();
-        let (status, response) = http(&self.socket, "POST", "/v1/chat/completions", Some(&body))
-            .map_err(|e| BackendError::Generation(format!("llama-server request failed: {e}")))?;
-        if status != 200 {
-            return Err(BackendError::Generation(format!(
-                "llama-server answered {status}: {}",
-                response.trim()
-            )));
-        }
-        let (text, mut metrics) = parse_chat_response(&response)?;
+        let (text, mut metrics) =
+            parse_chat_response(&self.post_chat(&chat_request(prompt, config))?)?;
+        metrics.load_ms = self.load_ms;
+        *self.last_metrics.lock().expect("metrics lock") = Some(metrics);
+        Ok(text)
+    }
+
+    fn type_choices(&self, prompt: &Prompt) -> Result<Vec<TypeChoice>, BackendError> {
+        parse_type_choices(&self.post_chat(&type_request(prompt))?)
+    }
+
+    fn generate_starting_with(
+        &self,
+        prompt: &Prompt,
+        start: &str,
+        config: &GenerationConfig,
+    ) -> Result<String, BackendError> {
+        let request = chat_request_starting_with(prompt, config, start);
+        let (text, mut metrics) = parse_chat_response(&self.post_chat(&request)?)?;
         metrics.load_ms = self.load_ms;
         *self.last_metrics.lock().expect("metrics lock") = Some(metrics);
         Ok(text)
@@ -364,6 +393,55 @@ pub fn chat_request(prompt: &Prompt, config: &GenerationConfig) -> Value {
         "seed": 0,
         "cache_prompt": false,
     })
+}
+
+/// [`chat_request`] with the reply begun by `start`: llama-server continues
+/// a last message from the assistant, and answers with the whole reply,
+/// `start` included.
+pub fn chat_request_starting_with(
+    prompt: &Prompt,
+    config: &GenerationConfig,
+    start: &str,
+) -> Value {
+    let mut request = chat_request(prompt, config);
+    if let Some(messages) = request["messages"].as_array_mut() {
+        messages.push(json!({"role": "assistant", "content": start}));
+    }
+    request
+}
+
+/// Candidates for the first token of the reply, with their probabilities.
+const TOP_LOGPROBS: usize = 12;
+
+/// A request for the first token of the reply and the likeliest others,
+/// which is where the model picks the type.
+pub fn type_request(prompt: &Prompt) -> Value {
+    let mut request = chat_request(prompt, &GenerationConfig { max_new_tokens: 1 });
+    request["logprobs"] = json!(true);
+    request["top_logprobs"] = json!(TOP_LOGPROBS);
+    request
+}
+
+/// The types among the candidates for the reply's first token, from the
+/// answer to [`type_request`].
+pub fn parse_type_choices(body: &str) -> Result<Vec<TypeChoice>, BackendError> {
+    let invalid =
+        |what: &str| BackendError::Generation(format!("unexpected llama-server reply: {what}"));
+    let value: Value = serde_json::from_str(body).map_err(|e| invalid(&e.to_string()))?;
+    let top = value
+        .pointer("/choices/0/logprobs/content/0/top_logprobs")
+        .and_then(Value::as_array)
+        .ok_or_else(|| invalid("no log probabilities"))?;
+    let candidates: Vec<(String, f64)> = top
+        .iter()
+        .filter_map(|entry| {
+            Some((
+                entry.get("token")?.as_str()?.to_owned(),
+                entry.get("logprob")?.as_f64()?,
+            ))
+        })
+        .collect();
+    Ok(choices::from_logprobs(&candidates))
 }
 
 pub fn parse_chat_response(body: &str) -> Result<(String, Metrics), BackendError> {

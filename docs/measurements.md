@@ -238,6 +238,62 @@ which covers it; the NPU, which cannot be compiled with spare length, gets
 a fifth less budget (1 / 1.25). A hardware test checks that the estimate
 stays within that room.
 
+## Asking for the type
+
+`model.ask_type` is built on three measurements of `smart-commit-1.5b-v0.1`
+(`vulkan`) on the 250 Conventional commits of eval-v1, from the probabilities
+of the reply's first token (`logprobs` of llama-server on the prompts of
+`smart-commit prompt --inputs`).
+
+**How sure it is tells how often it is right.** The type the model picks
+matched the author's 0.700 of the time, the author's type was among its two
+likeliest 0.904 and among its three likeliest 0.948 (AUROC of the confidence
+for being right: 0.720):
+
+| Confidence in the type it picks | Commits | Right |
+|---|---|---|
+| below 50% | 67 | 0.493 |
+| 50 to 70% | 68 | 0.632 |
+| 70 to 90% | 80 | 0.825 |
+| 90% or more | 35 | 0.943 |
+
+**Asking below a confidence** (the person chooses among the three likeliest;
+the last column is for a person who always picks the author's type):
+
+| Ask below | Commits asked | Type right | At most |
+|---|---|---|---|
+| 0.50 | 26.8% | 0.808 | 0.836 |
+| 0.60 | 42.0% | 0.860 | 0.892 |
+| 0.70 | 54.0% | 0.900 | 0.936 |
+
+**Writing for a chosen type does not make the description worse.** The reply
+begun with a type (llama-server continues a last message from the assistant),
+on the same 250 commits, with the type of the author as a person who knows
+what they meant would choose:
+
+| Reply | `type_match` | `word_f1` | `ungrounded` | `unsupported` |
+|---|---|---|---|---|
+| begun by nothing | 0.692 | 0.376 | 0.108 | 0.008 |
+| begun by the type the model picks | 0.700 | 0.379 | 0.112 | 0.008 |
+| begun by the author's type | 1.000 | 0.430 | 0.096 | 0.012 |
+| begun by the author's type if it is one of the two likeliest | 0.904 | 0.416 | 0.092 | 0.012 |
+
+Why ask at all: the type is where readers disagree, not where the model is
+weak. Two language models read only the file list and diff of 200 of these
+commits and chose the type: they agree with each other 0.880 of the time
+(Cohen's kappa 0.85) and with the author 0.640 and 0.675 (the model of
+smart-commit: 0.715 on the same commits); where the two agree, the author
+matches them 0.693. The `fix`, `feat` and `refactor` boundary is the author's
+intent, which the diff does not show, and a person can say it. These labels
+come from language models run once, so they are not reproducible byte for
+byte.
+
+Limits: one model, one set (7 repositories, standard error about 0.03), and a
+person who is assumed to pick the author's type. The probabilities come from
+llama-server only; the OpenVINO devices do not give them. Asking costs one
+more reading of the prompt on every commit it is on for (the reply is one
+token), whether it ends up asking or not.
+
 ## Model export
 
 On a Ryzen 5 5500 the export from scratch (uv, Python, the packages and the

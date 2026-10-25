@@ -47,6 +47,8 @@ value, for example when an environment variable is set.
 | `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
 | `model.threads_batch` | 0–1024 | 0 (one per physical core) | | global |
 | `model.keep_loaded` | 0–1440 | 10 | `SMART_COMMIT_KEEP_LOADED` | global |
+| `model.ask_type` | `off`, `low_confidence` | `off` | `SMART_COMMIT_ASK_TYPE` | global |
+| `model.ask_type_below` | 1–99 | 50 | `SMART_COMMIT_ASK_TYPE_BELOW` | global |
 | `model.npu_prefill_chunk` | 512–8192 | 512 | | global |
 | `model.npu_generate_hint` | `best_perf`, `fast_compile` | `best_perf` | | global |
 | `model.max_prompt_tokens` | 256–8192 | 1024 | | global |
@@ -99,6 +101,18 @@ value, for example when an environment variable is set.
   `model.*` setting with smart-commit (`config set` or `unset`, `model use`,
   `device use`) stops it too, since it runs the old settings; a load that
   fails while a model is kept says so.
+- `model.ask_type` set to `low_confidence` makes `smart-commit --commit` in a
+  terminal ask which type the message should have when the model is unsure:
+  the model's first token is where it picks the type, and its probability
+  tells how sure it is. Below `model.ask_type_below` percent (50 by default)
+  it offers its likeliest types (at most four, only the ones the repository
+  uses, as the prompt lists them) and `other`, which leaves the choice to the
+  model; the message is then written for the type chosen. It is only on the
+  `vulkan` and `cpu` devices (llama.cpp), only for Conventional Commits and
+  only with a terminal: the `prepare-commit-msg` hook, a pipe and the OpenVINO
+  devices keep the model's own choice. The offer and the choice are in the
+  trace. What it gains is in
+  [measurements](measurements.md#asking-for-the-type).
 - `model.npu_prefill_chunk` must divide `model.max_prompt_tokens`. Chunks
   smaller than 512 fail to compile with NPU driver 1.38.
 - `model.max_prompt_tokens` is also the prompt length the NPU compiles for;

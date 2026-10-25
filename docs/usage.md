@@ -112,6 +112,31 @@ The model stays loaded, so each new message costs only the generation.
 Outside a terminal (scripts, pipes), `--commit` opens the editor with the
 message, as before.
 
+**Asking for the type.** The type is where the message is least certain:
+two readers of the same diff pick the author's type about 70% of the time.
+With `smart-commit config set model.ask_type low_confidence`, `--commit`
+asks which type the message should have when the model is unsure of it,
+offering its likeliest ones:
+
+```text
+ Which type is this change?
+ The model is not sure: it would write feat (46%).
+┌──────────────────────────────────────────────────────────┐
+│ 1 feat        46%                                        │
+│ 2 fix         38%                                        │
+│ 3 refactor    16%                                        │
+│ 4 let the model decide                                   │
+└──────────────────────────────────────────────────────────┘
+[Enter] choose  [1-9] pick  [↑/↓] move  [q] cancel
+```
+
+The message is then written for the type chosen. It asks on about a quarter
+of the commits at the default `model.ask_type_below` of 50 (percent), and
+costs one more reading of the prompt on every commit it is on for. It is
+off by default, and only for Conventional Commits on `vulkan` and `cpu`;
+see [configuration](configuration.md) and
+[measurements](measurements.md#asking-for-the-type) for what it gains.
+
 The message follows the repository's style: its convention (Conventional
 Commits, gitmoji or free), its language (English or Portuguese), the scopes
 it uses, and the ticket in the branch name (`ABC-123`) when the history cites

@@ -1,5 +1,5 @@
 //! Full-screen terminal interfaces, with ratatui: reviewing a message before
-//! committing it, choosing a model, the benchmark, the device and the setup.
+//! committing it, choosing the type, choosing a model, the benchmark, the device and the setup.
 //!
 //! Every screen is a state with `render` and `on_key`, so tests draw it on a
 //! `TestBackend` and press keys without a terminal. They are only shown
@@ -10,6 +10,7 @@ pub mod bench;
 pub mod models;
 pub mod review;
 pub mod setup;
+pub mod type_choice;
 
 use std::io::{self, IsTerminal};
 use std::time::Duration;
