@@ -19,8 +19,6 @@ parquet = { version = "60", default-features = false, features = ["snap", "flate
 regex = "1"
 serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.10"
+tempfile = "3"
 toml = "0.9"
 unicode-normalization = "0.1"
-
-[dev-dependencies]
-tempfile = "3"
