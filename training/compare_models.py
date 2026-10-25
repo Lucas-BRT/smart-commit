@@ -1,0 +1,112 @@
+"""Runs models on evaluation sets with `smart-commit eval` and compares them
+with a baseline using `sc-training score`: the metrics of each, and for each
+metric how many cases a model gains and loses against the baseline (paired,
+with McNemar's p).
+
+    python -I compare_models.py OUT SMART_COMMIT SC_TRAINING --sets DIR... \\
+        --baseline NAME=GGUF CANDIDATE=GGUF ...
+
+The traces of a model on a set are kept in OUT/SET/NAME.jsonl and not made
+again, so adding a candidate costs only that candidate. `--rules` and `--diff`
+are those the models were trained on (v0.1: `full` and `plain`). The summary
+goes to OUT/summary.json.
+"""
+
+import argparse
+import json
+import os
+import statistics
+import subprocess
+import tempfile
+from pathlib import Path
+
+# Metrics where a case flagged is a case right, and where it is a case wrong.
+GOOD = ["first_try", "type_match", "scope_known", "scope_fits", "exact"]
+BAD = ["ungrounded", "unsupported", "fallback", "first_copied", "copied"]
+SHOWN = ["type_match", "type_macro_f1", "scope_known", "ungrounded", "first_copied", "first_try",
+         "fallback", "word_f1", "exact"]
+
+
+def better(metric: str, gained: int, lost: int) -> int:
+    """Cases a model improves over the baseline, net: a flag gained is better
+    for `GOOD` metrics and worse for `BAD` ones."""
+    return gained - lost if metric in GOOD else lost - gained if metric in BAD else 0
+
+
+def mean_subject_length(traces: Path) -> float:
+    lengths = [len(json.loads(line)["generation"]["message"]["subject"])
+               for line in traces.read_text().splitlines()]
+    return round(statistics.mean(lengths), 1) if lengths else 0.0
+
+
+def line_count(path: Path) -> int:
+    return len(path.read_text().splitlines()) if path.exists() else 0
+
+
+def run_eval(binary: str, gguf: str, inputs: Path, out: Path, rules: str, diff: str, device: str) -> bool:
+    """Writes the traces of `gguf` on `inputs` to `out` unless they are all
+    there; whether it ran."""
+    if line_count(out) == line_count(inputs) > 0:
+        return False
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as config_home, open(out, "w") as f:
+        env = {**os.environ, "XDG_CONFIG_HOME": config_home, "SMART_COMMIT_GGUF": gguf}
+        subprocess.run([binary, "eval", str(inputs), "--device", device, "--rules", rules, "--diff", diff],
+                       env=env, stdout=f, stderr=subprocess.DEVNULL, check=True)
+    return True
+
+
+def score(sct: str, directory: Path, traces: Path, against: Path | None = None) -> dict:
+    command = [sct, "score", str(directory), str(traces), "--json"]
+    if against:
+        command += ["--against", str(against)]
+    return json.loads(subprocess.run(command, capture_output=True, text=True, check=True).stdout)
+
+
+def table(rows: list[list[str]]) -> str:
+    widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
+    return "\n".join("  ".join(c.ljust(w) if i == 0 else c.rjust(w) for i, (c, w) in enumerate(zip(r, widths)))
+                     for r in rows)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("out", type=Path)
+    parser.add_argument("binary", help="smart-commit")
+    parser.add_argument("sct", help="sc-training")
+    parser.add_argument("--sets", type=Path, nargs="+", required=True, metavar="DIR")
+    parser.add_argument("--baseline", required=True, metavar="NAME=GGUF")
+    parser.add_argument("candidates", nargs="*", metavar="NAME=GGUF")
+    parser.add_argument("--rules", choices=["full", "omitted"], default="full")
+    parser.add_argument("--diff", choices=["plain", "annotated"], default="plain")
+    parser.add_argument("--device", default="vulkan")
+    args = parser.parse_args()
+    models = dict(m.split("=", 1) for m in [args.baseline, *args.candidates])
+    base = args.baseline.split("=", 1)[0]
+    summary: dict = {}
+    for directory in args.sets:
+        traces = {name: args.out / directory.name / f"{name}.jsonl" for name in models}
+        for name, gguf in models.items():
+            if run_eval(args.binary, gguf, directory / "inputs.jsonl", traces[name], args.rules, args.diff, args.device):
+                print(f"{directory.name}: {name} evaluated", flush=True)
+        for name in models:
+            scored = score(args.sct, directory, traces[name])
+            paired = score(args.sct, directory, traces[name], traces[base]) if name != base else {}
+            summary.setdefault(directory.name, {})[name] = {
+                "scores": scored, "against_baseline": paired, "mean_subject_chars": mean_subject_length(traces[name])}
+        for group in ("conventional", "free"):
+            rows = [["model", *SHOWN, "chars", "net vs baseline (* p < 0.05)"]]
+            for name in models:
+                entry = summary[directory.name][name]
+                scores = entry["scores"].get(group, {})
+                paired = entry["against_baseline"].get(group, {})
+                nets = " ".join(f"{m}{better(m, p['gained'], p['lost']):+d}{'*' if p['p'] < 0.05 else ''}"
+                                for m, p in paired.items() if m in SHOWN and better(m, p["gained"], p["lost"]))
+                rows.append([name, *[f"{scores[m]:.3f}" if m in scores else "-" for m in SHOWN],
+                             f"{entry['mean_subject_chars']}", nets or "-"])
+            print(f"\n== {directory.name} / {group}\n{table(rows)}")
+    (args.out / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
+
+
+if __name__ == "__main__":
+    main()
