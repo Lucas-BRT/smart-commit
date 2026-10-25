@@ -26,9 +26,10 @@ use manage::{kept_dirs, stop_dir};
 pub use manage::{Kept, status, stop};
 pub use supervisor::{Stop, serve, watch};
 
+use std::fmt;
 use std::fs::File;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -37,9 +38,29 @@ use sha2::{Digest, Sha256};
 
 use crate::backend::BackendError;
 use crate::backend::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};
+use crate::memory::{self, Memory, Refusal};
 
 /// The hidden subcommand that runs the supervisor.
 pub const SUBCOMMAND: &str = "keep-server";
+
+/// How much of the RAM a kept server may take (see [`crate::memory`]).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Share {
+    /// Percent of the total RAM: the model is not kept if it would take more,
+    /// and the server stops if it grows past it.
+    pub max_percent: u64,
+    /// Where the RAM is read from: `/proc/meminfo`, or a file in tests.
+    pub meminfo: PathBuf,
+}
+
+impl Default for Share {
+    fn default() -> Self {
+        Self {
+            max_percent: 15,
+            meminfo: PathBuf::from("/proc/meminfo"),
+        }
+    }
+}
 
 /// What the supervisor runs, written by the commit that starts it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -47,6 +68,33 @@ pub struct Spec {
     pub options: LlamaCppOptions,
     /// Idle time after which the server stops.
     pub keep: Duration,
+    /// Left out of specs written before it existed.
+    #[serde(default)]
+    pub share: Share,
+}
+
+/// Why [`connect`] gave no kept server.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ConnectError {
+    /// The model would take too much of the machine's RAM to be kept; the
+    /// commit loads it for itself and that is all.
+    NotKept(Refusal),
+    Failed(BackendError),
+}
+
+impl fmt::Display for ConnectError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotKept(refusal) => write!(f, "{refusal}"),
+            Self::Failed(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl From<BackendError> for ConnectError {
+    fn from(err: BackendError) -> Self {
+        Self::Failed(err)
+    }
 }
 
 /// The name of the server for `options`: a hash of every option but the
@@ -81,13 +129,16 @@ fn identity(file: &Path) -> String {
 
 /// Connects to the server kept for `options` in `runtime`, or starts it
 /// (with `exe`, this binary, as its supervisor) and waits until it has
-/// loaded the model.
+/// loaded the model, unless that would take more of the RAM than `share`
+/// allows: a server already running is connected to either way, and
+/// stops by itself if the machine runs short.
 pub fn connect(
     runtime: &Path,
     options: &LlamaCppOptions,
     keep: Duration,
+    share: &Share,
     exe: &Path,
-) -> Result<LlamaCppBackend, BackendError> {
+) -> Result<LlamaCppBackend, ConnectError> {
     let fail = |what: &str, err: io::Error| BackendError::Unavailable(format!("{what}: {err}"));
     create_private(runtime).map_err(|e| fail("cannot create the runtime directory", e))?;
     let key = key(options);
@@ -98,6 +149,11 @@ pub fn connect(
     let dir = runtime.join(&key);
     let socket = dir.join("server.sock");
     if !healthy(&socket) {
+        if let Some(machine) = Memory::read(&share.meminfo) {
+            let model = std::fs::metadata(&options.model).map_or(0, |m| m.len());
+            memory::may_keep(memory::expected_use(model), &machine, share.max_percent)
+                .map_err(ConnectError::NotKept)?;
+        }
         // One model kept at a time: another model or device in memory too
         // could leave the new one without room on the GPU.
         for other in kept_dirs(runtime).into_iter().filter(|d| *d != dir) {
@@ -108,6 +164,7 @@ pub fn connect(
             &Spec {
                 options: options.clone(),
                 keep,
+                share: share.clone(),
             },
             exe,
         )?;

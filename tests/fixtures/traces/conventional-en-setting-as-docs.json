@@ -1,0 +1,117 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of a8dafca",
+      "feat(memory): decide how much of the RAM a model kept loaded may take",
+      "Merge branch 'main' into feat/keep-loaded-default",
+      "Merge branch 'feat/ask-type'",
+      "test(fixtures): trace a read of the first token answered as a choice of it",
+      "feat(cli): ask which type a message should have when the model is unsure",
+      "feat(config): add model.ask_type and model.ask_type_below"
+    ],
+    "history_files": [
+      [
+        "docs/configuration.md",
+        "src/config/keys.rs",
+        "src/config/store.rs",
+        "src/config/tests.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/configuration.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/keys.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/store.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/tests.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/configuration.md",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -49,2 +49,3 @@ value, for example when an environment variable is set.\n | `model.keep_loaded` | 0–1440 | 10 | `SMART_COMMIT_KEEP_LOADED` | global |\n+| `model.keep_loaded_max_ram` | 1–100 | 15 | `SMART_COMMIT_KEEP_LOADED_MAX_RAM` | global |\n | `model.ask_type` | `off`, `low_confidence` | `off` | `SMART_COMMIT_ASK_TYPE` | global |\n"
+      },
+      {
+        "path": "src/config/keys.rs",
+        "old_path": null,
+        "lines": [
+          11,
+          0
+        ],
+        "hunks": "@@ -136,2 +136,13 @@ pub const KEYS: &[Key] = &[\n     },\n+    Key {\n+        name: \"model.keep_loaded_max_ram\",\n+        kind: Kind::Count { min: 1, max: 100 },\n+        scope: Scope::User,\n+        env: Some(\"SMART_COMMIT_KEEP_LOADED_MAX_RAM\"),\n+        description: \"The share of the machine's RAM, in percent, a model kept loaded may take: \\\n+                      the model file and about 256 MB. A model that would take more is loaded \\\n+                      for the commit only, one kept stops when it passes the share, and a \\\n+                      machine with less than a tenth of its RAM available keeps none. 100 \\\n+                      removes the share (not the tenth that stays available).\",\n+    },\n     Key {\n"
+      },
+      {
+        "path": "src/config/store.rs",
+        "old_path": null,
+        "lines": [
+          12,
+          0
+        ],
+        "hunks": "@@ -238,2 +238,7 @@ impl Resolved {\n             keep_loaded: Duration::from_secs(60 * self.count(\"model.keep_loaded\") as u64),\n+            keep_loaded_explicit: matches!(\n+                self.values.get(\"model.keep_loaded\"),\n+                Some((_, origin)) if *origin != Origin::Default\n+            ),\n+            keep_loaded_max_ram: self.count(\"model.keep_loaded_max_ram\"),\n             ask_type: match choice(\"model.ask_type\") {\n@@ -292,2 +297,3 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)>\n         (\"model.fast_load\", text(\"auto\")),\n+        (\"model.keep_loaded_max_ram\", Value::Count(15)),\n         (\"model.ask_type\", text(\"off\")),\n@@ -387,2 +393,8 @@ pub struct Settings {\n     pub keep_loaded: Duration,\n+    /// Whether `model.keep_loaded` was set by someone (a file, the\n+    /// environment or a flag) and not left at its default: only they are told\n+    /// when a model is not kept.\n+    pub keep_loaded_explicit: bool,\n+    /// `model.keep_loaded_max_ram`, a percentage of the RAM.\n+    pub keep_loaded_max_ram: usize,\n     pub ask_type: AskType,\n"
+      },
+      {
+        "path": "src/config/tests.rs",
+        "old_path": null,
+        "lines": [
+          47,
+          0
+        ],
+        "hunks": "@@ -539 +539,48 @@ fn asking_for_the_type_is_a_personal_setting_not_the_repositorys() {\n }\n+\n+#[test]\n+fn a_kept_model_may_take_a_sixth_of_the_ram_unless_set() {\n+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();\n+    assert_eq!(settings.keep_loaded_max_ram, 15);\n+    let file = \"[model]\\nkeep_loaded_max_ram = 40\\n\";\n+    let settings = resolve(Some(file), None, HOME, vec![]).unwrap().settings();\n+    assert_eq!(settings.keep_loaded_max_ram, 40);\n+    let vars = [\n+        (\"HOME\", \"/home/me\"),\n+        (\"SMART_COMMIT_KEEP_LOADED_MAX_RAM\", \"25\"),\n+    ];\n+    let settings = resolve(Some(file), None, &vars, vec![]).unwrap().settings();\n+    assert_eq!(settings.keep_loaded_max_ram, 25, \"the environment wins\");\n+}\n+\n+#[test]\n+fn the_share_of_ram_is_a_percentage_from_one_to_a_hundred() {\n+    for value in [\"0\", \"101\"] {\n+        let file = format!(\"[model]\\nkeep_loaded_max_ram = {value}\\n\");\n+        let err = resolve(Some(&file), None, HOME, vec![]).unwrap_err();\n+        assert!(\n+            err.to_string().contains(\"a whole number from 1 to 100\"),\n+            \"{value}: {err}\"\n+        );\n+    }\n+    let repo = \"[model]\\nkeep_loaded_max_ram = 90\\n\";\n+    let err = resolve(None, Some(repo), HOME, vec![]).unwrap_err();\n+    assert!(\n+        matches!(&err, ConfigError::UserOnly { key, .. } if key == \"model.keep_loaded_max_ram\"),\n+        \"{err}\"\n+    );\n+}\n+\n+#[test]\n+fn only_a_keep_loaded_someone_set_counts_as_asked_for() {\n+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();\n+    assert!(!settings.keep_loaded_explicit);\n+    assert_eq!(settings.keep_loaded, std::time::Duration::from_secs(600));\n+    let file = \"[model]\\nkeep_loaded = 10\\n\";\n+    let settings = resolve(Some(file), None, HOME, vec![]).unwrap().settings();\n+    assert!(settings.keep_loaded_explicit, \"even to the default's value\");\n+    let vars = [(\"HOME\", \"/home/me\"), (\"SMART_COMMIT_KEEP_LOADED\", \"0\")];\n+    let settings = resolve(None, None, &vars, vec![]).unwrap().settings();\n+    assert!(settings.keep_loaded_explicit);\n+    assert!(settings.keep_loaded.is_zero());\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs(config): add keep_loaded_max_ram to config docs",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nparent of a8dafca\nfeat(memory): decide how much of the RAM a model kept loaded may take\nMerge branch 'main' into feat/keep-loaded-default\nMerge branch 'feat/ask-type'\ntest(fixtures): trace a read of the first token answered as a choice of it\n",
+          "user": "Files changed:\ndocs/configuration.md | +1 -0\nsrc/config/keys.rs | +11 -0\nsrc/config/store.rs | +12 -0\nsrc/config/tests.rs | +47 -0\n\nDiff:\n--- src/config/keys.rs\n@@ -136,2 +136,13 @@ pub const KEYS: &[Key] = &[\n     },\n+    Key {\n+        name: \"model.keep_loaded_max_ram\",\n+        kind: Kind::Count { min: 1, max: 100 },\n+        scope: Scope::User,\n+        env: Some(\"SMART_COMMIT_KEEP_LOADED_MAX_RAM\"),\n+        description: \"The share of the machine's RAM, in percent, a model kept loaded may take: \\\n+                      the model file and about 256 MB. A model that would take more is loaded \\\n+                      for the commit only, one kept stops when it passes the share, and a \\\n[... 4 more lines]\n--- src/config/store.rs\n@@ -238,2 +238,7 @@ impl Resolved {\n             keep_loaded: Duration::from_secs(60 * self.count(\"model.keep_loaded\") as u64),\n+            keep_loaded_explicit: matches!(\n+                self.values.get(\"model.keep_loaded\"),\n+                Some((_, origin)) if *origin != Origin::Default\n+            ),\n+            keep_loaded_max_ram: self.count(\"model.keep_loaded_max_ram\"),\n             ask_type: match choice(\"model.ask_type\") {\n@@ -292,2 +297,3 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)>\n[... 12 more lines]\n--- src/config/tests.rs\n@@ -539 +539,48 @@ fn asking_for_the_type_is_a_personal_setting_not_the_repositorys() {\n }\n+\n+#[test]\n+fn a_kept_model_may_take_a_sixth_of_the_ram_unless_set() {\n+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();\n+    assert_eq!(settings.keep_loaded_max_ram, 15);\n+    let file = \"[model]\\nkeep_loaded_max_ram = 40\\n\";\n+    let settings = resolve(Some(file), None, HOME, vec![]).unwrap().settings();\n+    assert_eq!(settings.keep_loaded_max_ram, 40);\n+    let vars = [\n+        (\"HOME\", \"/home/me\"),\n[... 37 more lines]\n\n(4 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs(config): add keep_loaded_max_ram to config docs",
+        "rejected": null
+      }
+    ]
+  }
+}

@@ -46,7 +46,8 @@ value, for example when an environment variable is set.
 | `model.vulkan_device` | 0–15 | 0 | | global |
 | `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
 | `model.threads_batch` | 0–1024 | 0 (one per physical core) | | global |
-| `model.keep_loaded` | 0–1440 | 0 | `SMART_COMMIT_KEEP_LOADED` | global |
+| `model.keep_loaded` | 0–1440 | 10 | `SMART_COMMIT_KEEP_LOADED` | global |
+| `model.keep_loaded_max_ram` | 1–100 | 15 | `SMART_COMMIT_KEEP_LOADED_MAX_RAM` | global |
 | `model.ask_type` | `off`, `low_confidence` | `off` | `SMART_COMMIT_ASK_TYPE` | global |
 | `model.ask_type_below` | 1–99 | 50 | `SMART_COMMIT_ASK_TYPE_BELOW` | global |
 | `model.npu_prefill_chunk` | 512–8192 | 512 | | global |
@@ -92,15 +93,31 @@ value, for example when an environment variable is set.
   [measurements](measurements.md#threads-on-the-cpu). Decoding keeps
   llama.cpp's default thread count.
 - `model.keep_loaded` keeps the model loaded on `vulkan` and `cpu` for that
-  many minutes after a message, so the next commit skips loading it, which
+  many minutes after a message (10 by default; 0 stops it after each command), so the next commit skips loading it, which
   is most of a commit on a GPU. It costs the model's memory (RAM or VRAM)
-  while it stays loaded. The server listens in `$XDG_RUNTIME_DIR`; without
+  while it stays loaded, so it is limited by `model.keep_loaded_max_ram`
+  (below). The server listens in `$XDG_RUNTIME_DIR`; without
   that variable, or if it cannot start, the model is loaded for the commit
   only, with a note. Replies are the same. `smart-commit server status`
   lists what is kept loaded, `smart-commit server stop` stops it. Changing a
   `model.*` setting with smart-commit (`config set` or `unset`, `model use`,
   `device use`) stops it too, since it runs the old settings; a load that
   fails while a model is kept says so.
+- `model.keep_loaded_max_ram` is the share of the machine's RAM, in percent
+  (15 by default), a model kept loaded may take. smart-commit estimates what
+  the server takes (the model file and about 256 MB, see
+  [measurements](measurements.md#keeping-the-model-loaded)) and does not keep
+  a model that would take more of the total RAM than that, or whose loading
+  would leave less than a tenth of the RAM available: it is loaded for the
+  commit only, which is said only if `model.keep_loaded` was set by someone
+  (a model that is too large for the machine is the default's business, not
+  an error). A kept server is checked every few seconds and stops, however
+  idle or busy, when its resident memory passes the share or when less than a
+  tenth of the RAM is available. On 16 GiB the default keeps the 0.5B and
+  the 1.5B models (4% and 7%) and not the 7B (30%); on a machine of 4 GiB it
+  keeps none (16% and 31%), and 20 would keep the 0.5B. 100 removes the share,
+  not the tenth that stays available. Without a readable `/proc/meminfo` nothing stops a
+  model from being kept.
 - `model.ask_type` set to `low_confidence` makes `smart-commit --commit` in a
   terminal ask which type the message should have when the model is unsure:
   the model's first token is where it picks the type, and its probability

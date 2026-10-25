@@ -236,6 +236,11 @@ impl Resolved {
             vulkan_device: self.count("model.vulkan_device"),
             threads_batch: self.count("model.threads_batch"),
             keep_loaded: Duration::from_secs(60 * self.count("model.keep_loaded") as u64),
+            keep_loaded_explicit: matches!(
+                self.values.get("model.keep_loaded"),
+                Some((_, origin)) if *origin != Origin::Default
+            ),
+            keep_loaded_max_ram: self.count("model.keep_loaded_max_ram"),
             ask_type: match choice("model.ask_type") {
                 "low_confidence" => AskType::LowConfidence,
                 _ => AskType::Off,
@@ -290,10 +295,11 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("model.name", text(models::DEFAULT)),
         ("model.vulkan_device", Value::Count(0)),
         ("model.fast_load", text("auto")),
+        ("model.keep_loaded_max_ram", Value::Count(15)),
         ("model.ask_type", text("off")),
         ("model.ask_type_below", Value::Count(50)),
         ("model.threads_batch", Value::Count(0)),
-        ("model.keep_loaded", Value::Count(0)),
+        ("model.keep_loaded", Value::Count(10)),
         (
             "model.npu_prefill_chunk",
             Value::Count(NpuTuning::default().prefill_chunk),
@@ -385,6 +391,12 @@ pub struct Settings {
     pub threads_batch: usize,
     /// `model.keep_loaded`; zero to stop the server after each command.
     pub keep_loaded: Duration,
+    /// Whether `model.keep_loaded` was set by someone (a file, the
+    /// environment or a flag) and not left at its default: only they are told
+    /// when a model is not kept.
+    pub keep_loaded_explicit: bool,
+    /// `model.keep_loaded_max_ram`, a percentage of the RAM.
+    pub keep_loaded_max_ram: usize,
     pub ask_type: AskType,
     /// `model.ask_type_below`, a percentage.
     pub ask_type_below: usize,

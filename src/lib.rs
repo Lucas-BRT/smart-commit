@@ -10,6 +10,7 @@ pub mod generate;
 pub mod git;
 pub mod hardware;
 pub mod hook;
+pub mod memory;
 pub mod message;
 pub mod models;
 pub mod paths;

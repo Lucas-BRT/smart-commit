@@ -1,6 +1,7 @@
 use std::time::{Duration, SystemTime};
 
 use super::*;
+use crate::memory::Pressure;
 
 /// The supervisor: runs the server of `dir/spec.json` until it has been
 /// idle for its `keep` time or it exits, then stops it and removes `dir`.
@@ -25,6 +26,14 @@ pub fn serve(dir: &Path) -> Result<(), BackendError> {
         spec.keep,
         || backend.is_running(),
         || std::fs::metadata(&used).and_then(|m| m.modified()).ok(),
+        || {
+            let machine = Memory::read(&spec.share.meminfo)?;
+            let resident = backend
+                .pid()
+                .and_then(|pid| std::fs::read_to_string(format!("/proc/{pid}/status")).ok())
+                .and_then(|status| memory::resident(&status));
+            memory::pressure(resident, &machine, spec.share.max_percent)
+        },
         SystemTime::now,
         std::thread::sleep,
     );
@@ -38,15 +47,19 @@ pub fn serve(dir: &Path) -> Result<(), BackendError> {
 pub enum Stop {
     Idle,
     ServerExited,
+    /// The machine ran short of RAM, or the server grew past its share.
+    Memory(Pressure),
 }
 
 /// Waits until the server has been idle for `keep` (no `used` time newer
-/// than that, or none at all) or is no longer `running`. The clock and the
-/// sleep are passed in, so tests need neither.
+/// than that, or none at all), is no longer `running` or `pressure` says
+/// the memory is short. The clock and the sleep are passed in, so tests
+/// need neither.
 pub fn watch(
     keep: Duration,
     mut running: impl FnMut() -> bool,
     used: impl Fn() -> Option<SystemTime>,
+    mut pressure: impl FnMut() -> Option<Pressure>,
     now: impl Fn() -> SystemTime,
     sleep: impl Fn(Duration),
 ) -> Stop {
@@ -55,6 +68,9 @@ pub fn watch(
         sleep(poll);
         if !running() {
             return Stop::ServerExited;
+        }
+        if let Some(pressure) = pressure() {
+            return Stop::Memory(pressure);
         }
         let idle = used().map_or(keep, |t| now().duration_since(t).unwrap_or_default());
         if idle >= keep {
