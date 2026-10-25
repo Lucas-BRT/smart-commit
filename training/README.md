@@ -14,8 +14,10 @@ outside the repository, in `~/.cache/smart-commit-training/`, and in
 mise install python@3.12.15
 export UV_PYTHON=$(mise where python@3.12.15)/bin/python3 UV_PYTHON_DOWNLOADS=never
 cd training && uv sync --locked
-uv run --locked python -I test_build_inputs.py   # checks -U1 trimming against git
-uv run --locked python -I test_scenarios.py ../target/release/smart-commit   # the scenarios
+uv run --locked python -I test_make_examples.py
+cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
+cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
+cargo build --locked && cargo test --locked -p smart-commit-training -- --ignored   # every scenario, built twice
 ```
 
 ## Inputs
@@ -32,31 +34,32 @@ uv run --locked python -I test_scenarios.py ../target/release/smart-commit   # t
 C=~/.cache/smart-commit-training
 M=$C/models/qwen2.5-coder-1.5b-instruct@2e1fd397ee46e1388853d2af2c993145b0f1098a
 SC=../target/release/smart-commit        # cargo build --locked --release
+SCT=../target/release/sc-training        # cargo build --locked --release -p smart-commit-training
 
 # 1. Commits -> trace inputs + targets (one directory per set of shards).
-uv run --locked python -I build_inputs.py data/train12 $C/commit-chronicle/5fd076e/train-000*.parquet
-uv run --locked python -I build_inputs.py data/test0 $C/commit-chronicle/5fd076e/test-00000.parquet
+$SCT build-inputs data/train12 $C/commit-chronicle/5fd076e/train-000*.parquet
+$SCT build-inputs data/test0 $C/commit-chronicle/5fd076e/test-00000.parquet
 
 # 2. Deterministic selections. eval-v1 comes from the test split, whose
 #    repositories never appear in train.
-uv run --locked python -I select.py data/test0 data/eval-v1 --conventional 250 --free 250
-uv run --locked python -I select.py data/train12 data/h1 --conventional 6000 --free 4000 \
+$SCT select data/test0 data/eval-v1 --conventional 250 --free 250
+$SCT select data/train12 data/h1 --conventional 6000 --free 4000 \
   --max-type-share 0.3 --per-repo 100
 # The learning-curve set of H3 (data/curve; curve-h4 is the same with the
 # history paths), and H8's variant without the type cap:
-uv run --locked python -I select.py data/train-all data/curve --conventional 24000 --free 16000 \
+$SCT select data/train-all data/curve --conventional 24000 --free 16000 \
   --max-type-share 0.3 --per-repo 150 --supported-only
-uv run --locked python -I select.py data/train-all data/h8 --conventional 24000 --free 16000 \
+$SCT select data/train-all data/h8 --conventional 24000 --free 16000 \
   --per-repo 150 --supported-only
 # v0.2's extra slices: young repositories (H5) and release bumps whose version
 # the diff adds (H7), which the target filters otherwise drop.
-uv run --locked python -I select.py data/train-all data/h5 --conventional 1600 --free 2400 \
+$SCT select data/train-all data/h5 --conventional 1600 --free 2400 \
   --min-history 0 --max-history 9 --per-repo 5 --supported-only
-uv run --locked python -I build_inputs.py data/releases $C/commit-chronicle/5fd076e/train-*.parquet --releases
-uv run --locked python -I select.py data/releases data/h7 --conventional 400 --free 200 \
+$SCT build-inputs data/releases $C/commit-chronicle/5fd076e/train-*.parquet --releases
+$SCT select data/releases data/h7 --conventional 400 --free 200 \
   --min-history 0 --per-repo 5 --supported-only --releases
 # h3a (H3): the same commits without the targets the label filters reject.
-uv run --locked python -I filter_supported.py data/h1 data/h3a
+$SCT filter-supported data/h1 data/h3a
 
 # 3. Prompts built by smart-commit, joined with the targets (`--rules omitted`
 #    for a model trained without the fixed instructions, H6). The file list
@@ -85,12 +88,12 @@ uv run --locked python -I export_lora.py $M runs/h1/adapter runs/h1/adapter.gguf
 # 6. Evaluate with smart-commit itself, then score.
 XDG_CONFIG_HOME=$C/empty-config SMART_COMMIT_GGUF=$PWD/runs/h1/model-q4_k_m.gguf \
   $SC eval data/eval-v1/inputs.jsonl --device vulkan > data/eval-v1/h1.jsonl
-uv run --locked python -I score.py data/eval-v1 data/eval-v1/h1.jsonl
+$SCT score data/eval-v1 data/eval-v1/h1.jsonl
 ```
 
 `data/eval-v1` is frozen: it was built and selected with the
 `build_inputs.py` and `select.py` of commit 35a1ae8, before the version-only
-filter, which today's scripts apply; today's `select.py` alone gives other
+filter, which today's scripts apply; today's `sc-training select` alone gives other
 hashes. It is identified by its hashes, `inputs.jsonl` sha256 `6d275f0d92c607e5f80cc3be204d5a8a4444391e029abc907eb311b3f29e428c`,
 `meta.jsonl` sha256 `9b8d53df9863d6b214c53d2de2839ce18f26fc088d9a3e8a2f84202a44e0faaf`.
 To rebuild it:
@@ -105,8 +108,8 @@ sha256sum data/eval-v1/*.jsonl
 ```
 
 `data/eval-short` (young repositories, see H5 in HYPOTHESES.md):
-`select.py data/test2to5h data/eval-short --conventional 100 --free 150
---min-history 1 --max-history 5 --per-repo 5`, from `build_inputs.py` over
+`sc-training select data/test2to5h data/eval-short --conventional 100 --free 150
+--min-history 1 --max-history 5 --per-repo 5`, from `sc-training build-inputs` over
 `test-00002`…`test-00005`; `inputs.jsonl` sha256 starts `42d212c0d2687dad`,
 `meta.jsonl` `867c9faf4c5e80bd`.
 
@@ -123,16 +126,16 @@ the validation set's `f6350a3c5cb71b58` (b2's).
 `513484be87384cf5`; `data/h7` `4c6a2cad2087a047` and `a35b23326e894b96`.
 
 `data/val1` (the validation set of b2) is
-`select.py data/test1 data/val1 --conventional 250 --free 250 --max-type-share 0.3 --supported-only`
+`sc-training select data/test1 data/val1 --conventional 250 --free 250 --max-type-share 0.3 --supported-only`
 (`meta.jsonl` sha256 starts `2fb1dedba6e20939`; `val1-h4` is the same with
-the history paths, as `select.py` writes it today).
+the history paths, as `sc-training select` writes it today).
 
 ## Scenarios
 
 Hand-written cases from `scenarios/`, in the same layout as a selection:
-`build_scenarios.py build data/scenarios-eval $SC --split eval` (or
+`sc-training scenarios build data/scenarios-eval $SC --split eval` (or
 `--split train`) writes `inputs.jsonl` and `meta.jsonl`, which step 3
-(`make_examples.py`) and step 6 (`smart-commit eval`, `score.py`) take
+(`make_examples.py`) and step 6 (`smart-commit eval`, `sc-training score`) take
 unchanged. How to write a case: [scenarios/README.md](scenarios/README.md).
 
 ## Bundle b3 (v0.2)
@@ -145,14 +148,15 @@ directory under `data/b3/`, since `make_examples.py` writes there:
 
 ```bash
 py() { uv run --locked python -I "$@"; }
-py select.py data/test1 data/b3/val --conventional 250 --free 250 --max-type-share 0.3 --supported-only
-py select.py data/train-all data/b3/main-cap30 --conventional 24000 --free 16000 \
+SCT=../target/release/sc-training
+$SCT select data/test1 data/b3/val --conventional 250 --free 250 --max-type-share 0.3 --supported-only
+$SCT select data/train-all data/b3/main-cap30 --conventional 24000 --free 16000 \
   --max-type-share 0.3 --per-repo 150 --supported-only
-py select.py data/train-all data/b3/main-nocap --conventional 24000 --free 16000 \
+$SCT select data/train-all data/b3/main-nocap --conventional 24000 --free 16000 \
   --per-repo 150 --supported-only
-py select.py data/train-all data/b3/h5 --conventional 1600 --free 2400 \
+$SCT select data/train-all data/b3/h5 --conventional 1600 --free 2400 \
   --min-history 0 --max-history 9 --per-repo 5 --supported-only
-py select.py data/releases data/b3/h7 --conventional 400 --free 200 \
+$SCT select data/releases data/b3/h7 --conventional 400 --free 200 \
   --min-history 0 --per-repo 5 --supported-only --releases
 for d in val main-cap30 main-nocap h5 h7; do py make_examples.py data/b3/$d $SC --rules omitted --diff plain; done
 for cap in cap30 nocap; do

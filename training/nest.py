@@ -16,7 +16,7 @@ from pathlib import Path
 def main() -> None:
     src, prefix, sizes = Path(sys.argv[1]), sys.argv[2], [int(n) for n in sys.argv[3:]]
     lines = src.read_text().splitlines()
-    # Salted: select.py already ranked by the plain hash, and took the lowest
+    # Salted: sc-training select already ranked by the plain hash, and took the lowest
     # of pools of very different sizes, so the plain ranking would put one
     # pool first.
     ranked = sorted(

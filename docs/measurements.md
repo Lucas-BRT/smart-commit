@@ -2,7 +2,7 @@
 
 Every timing in the documentation comes from this page; the other pages link
 here instead of repeating numbers. How well the fine-tuned models write
-(type match, copies, fallbacks) is measured differently, with `score.py` on
+(type match, copies, fallbacks) is measured differently, with `sc-training score` on
 eval-v1, and lives in [training/HYPOTHESES.md](../training/HYPOTHESES.md).
 Console output shown in other pages is a run recorded here.
 
