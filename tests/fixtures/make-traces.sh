@@ -142,6 +142,21 @@ printf '[tools]\nrust = "1.99"\n' > mise.toml; git add mise.toml
 "$BIN" --backend mock --mock-response "docs(mise): add rust to tools" \
   --trace "$OUT/conventional-en-file-scope.json" >/dev/null
 
+# Found in real use: a pure move in a repository whose history never used
+# `refactor`; the model kept to the listed types and answered `feat`.
+fresh refactor-as-feat
+mkdir -p src
+printf 'pub fn build() -> String {\n    "rules".to_owned()\n}\n' > src/prompt.rs
+git add .; commit "feat(prompt): build the system message"
+printf 'x\n' > src/prompt.rs; git add .; commit "fix(prompt): keep the subject limit"
+printf 'y\n' > src/prompt.rs; git add .; commit "docs(prompt): describe the rules"
+mkdir -p src/prompt
+git mv src/prompt.rs src/prompt/mod.rs
+printf 'pub struct PromptOptions {\n    pub max_prompt_tokens: usize,\n}\n' > src/prompt/types.rs
+git add .
+"$BIN" --backend mock --mock-response "refactor(prompt): move the prompt into its own module" \
+  --trace "$OUT/conventional-en-refactor-as-feat.json" >/dev/null
+
 # Found in real use, with smart-commit-0.5b-v0.1: a release's version bump;
 # the model answered `feat` and took a model name from the last subject for
 # the version.
@@ -220,6 +235,84 @@ git checkout -q main; printf 'main\n' > f; git commit -q -am "feat: change f on 
 git merge -q side >/dev/null 2>&1 || true
 git checkout -q --ours f; git add f
 "$BIN" --backend mock --trace "$OUT/conventional-en-merge.json" >/dev/null
+
+# Changes of this repository, from pinned commits, answered as the model
+# answered them in real use (smart-commit-1.5b-v0.2): the history is the six
+# subjects before the commit, and the staged change is the commit's own, so
+# the prompt has what the model saw. The fixtures record the replies as the
+# pipeline handles them today, wrong or not; the comments say what the commit
+# message is.
+real_change() {  # NAME COMMIT REPLY
+    fresh "$1"
+    git -C "$ROOT" log --reverse -n 6 --format=%s "$2^" | while IFS= read -r s; do commit "$s"; done
+    git -C "$ROOT" diff-tree -r -M --name-status --no-commit-id "$2^" "$2" > "$WORK/$1.changes"
+    # The parent's files, committed; then the commit's, staged.
+    while IFS=$'\t' read -r status old new; do
+        case $status in A) ;; *) mkdir -p "$(dirname "$old")"; git -C "$ROOT" show "$2^:$old" > "$old" ;; esac
+    done < "$WORK/$1.changes"
+    git add -A; commit "parent of $2"
+    while IFS=$'\t' read -r status old new; do
+        case $status in
+            D) rm "$old" ;;
+            R*) git rm -q "$old"; mkdir -p "$(dirname "$new")"; git -C "$ROOT" show "$2:$new" > "$new" ;;
+            *) mkdir -p "$(dirname "$old")"; git -C "$ROOT" show "$2:$old" > "$old" ;;
+        esac
+    done < "$WORK/$1.changes"
+    git add -A
+    "$BIN" --backend mock --mock-response "$3" --trace "$OUT/$1.json" >/dev/null
+}
+# Three dependencies added, and the reply named one and invented a reason:
+# `chore(deps): add anyhow, tracing and tracing-subscriber`.
+real_change conventional-en-deps-incomplete 7a3e69d "chore(deps): add tracing for better error reporting"
+# A pure split of main.rs into modules, answered `feat`: it is a `refactor`.
+real_change conventional-en-split-as-feat af61366 "feat(cli): split the module by commands"
+# anyhow in the binary and a typed DeviceError: the reply says nothing of
+# either (`refactor: use anyhow in the binary and a typed DeviceError in the
+# library`).
+real_change conventional-en-vague-refactor 9fc1e92 "refactor(cli): add error handling to cli commands"
+# A new `-v` flag and tracing, answered `refactor` and about the wrong thing:
+# `feat(cli): report with tracing and add -v for debug output`.
+real_change conventional-en-feat-as-refactor 6cabc49 "refactor(cli): split the module by ui and notes"
+# A pure split of llamacpp.rs into a backend, an HTTP client and tests,
+# answered `feat` and as if an HTTP server had been added: it is a
+# `refactor`, and nothing new was added.
+real_change conventional-en-split-llamacpp 1f4cd5a "feat(llamacpp): add http server and client"
+# The same kind of split for diff.rs, answered `refactor` but with a subject
+# that names no file or purpose: `split the module into parse, classify,
+# compact and tests`.
+real_change conventional-en-split-diff d1ba19d "refactor(diff): split diff into its components"
+# And for models.rs, answered `feat` and as if the module had moved to a new
+# directory, which says nothing of what the split separated.
+real_change conventional-en-split-models 00f23be "feat(models): move models to a new directory"
+# The rest of the module split and the docs work around it, answered by
+# smart-commit-1.5b-v0.2 on the commit's own change.
+# A split of annotate.rs into comments, rename and tests: the reply names
+# `annotate` and `comments` as the parts, and drops the rest.
+real_change conventional-en-split-annotate 3bb320e "refactor(annotate): split the module into annotate, comments"
+# A split of bench.rs into report, measure and tests: the reply says it
+# split into "the backend", which is not in the change.
+real_change conventional-en-split-bench 7a625f3 "refactor(bench): split the module into the backend"
+# Splits of hardware.rs and server.rs: both replies end in "tests and docs",
+# and no docs changed.
+real_change conventional-en-split-hardware ecfbe91 "refactor(hardware): split the module into the hardware, tests and docs"
+real_change conventional-en-split-server d38a34c "refactor(server): split the module into the server, tests and docs"
+# Moving annotate under diff, answered as a split of diff.
+real_change conventional-en-move-annotate ce9645e "refactor(diff): split the module into the diff and tests"
+# Grouping four modules under backend, answered as splitting the whole
+# crate into one.
+real_change conventional-en-group-backend c617f1d "refactor: split smart_commit into backend"
+# Docs commits: path fixes, answered as typos and "more info"; a test
+# answered as docs; the roadmap brought up to v0.2, answered as typos; the
+# timings gathered in measurements.md, answered as a roadmap change; a test
+# of the links, answered as one about commands.
+real_change conventional-en-docs-paths-as-typos fa03c17 "docs: fix some typos and add some more info"
+real_change conventional-en-docs-test-as-docs 81315bb "docs: add a test for the markdown pages"
+real_change conventional-en-docs-roadmap-as-typos a6768df "docs: fix some typos and add a few new points to the roadmap"
+real_change conventional-en-docs-measurements 'a01c646' "docs: add measurements to the roadmap"
+real_change conventional-en-docs-links-test 64e7f02 "test(docs): check that every command is linked to its usage guide"
+# Fixtures of the module splits, answered as new traces without saying
+# which cases they document.
+real_change conventional-en-fixtures-of-splits 646b4d1 "test(fixtures): add a few more traces for split modules"
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,

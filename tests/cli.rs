@@ -33,6 +33,64 @@ fn stderr(output: &Output) -> String {
 }
 
 #[test]
+fn verbose_shows_why_a_reply_was_rejected_and_quiet_runs_do_not() {
+    let repo = staged_repo();
+    let args = |verbose: bool| {
+        let mut args = vec!["--backend", "mock", "--mock-response", "not a message"];
+        if verbose {
+            args.insert(0, "-v");
+        }
+        args
+    };
+    let quiet = smart_commit(&args(false), repo.path());
+    assert!(!stderr(&quiet).contains("debug:"), "{}", stderr(&quiet));
+
+    let verbose = smart_commit(&args(true), repo.path());
+    assert!(verbose.status.success(), "{}", stderr(&verbose));
+    let err = stderr(&verbose);
+    assert!(
+        err.contains("debug: smart_commit::generate: reply rejected attempt=1"),
+        "{err}"
+    );
+    assert!(
+        err.contains("warning: the model's output was unusable"),
+        "{err}"
+    );
+    // The message on stdout is the same either way.
+    assert_eq!(stdout(&verbose), stdout(&quiet));
+}
+
+#[test]
+fn verbose_works_before_and_after_a_subcommand() {
+    let repo = staged_repo();
+    for args in [&["-v", "context"][..], &["context", "-v"]] {
+        let output = smart_commit(args, repo.path());
+        assert!(output.status.success(), "{args:?}: {}", stderr(&output));
+        assert!(stdout(&output).starts_with("repository:"), "{args:?}");
+    }
+}
+
+#[test]
+fn options_of_the_default_command_conflict_with_a_subcommand() {
+    let repo = staged_repo();
+    for (args, option) in [
+        (&["--commit", "context"][..], "--commit"),
+        (&["-C", ".", "context"], "--path"),
+        (&["--backend", "mock", "context"], "--backend"),
+    ] {
+        let output = smart_commit(args, repo.path());
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        assert!(
+            stderr(&output).starts_with(&format!(
+                "error: the argument '{option}' cannot be used with the subcommand 'context'"
+            )),
+            "{args:?}: {}",
+            stderr(&output)
+        );
+    }
+}
+
+#[test]
 fn invalid_arguments_are_usage_errors() {
     let repo = TestRepo::new();
     for args in [

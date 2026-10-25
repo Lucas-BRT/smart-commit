@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 7a3e69d",
+      "refactor(generate): split the module by notes, retry and rules",
+      "refactor(message): split the module by parsing, format and fallback",
+      "refactor(style): split the module by parsing, gitmoji, language and tickets",
+      "test(fixtures): regenerate traces for refactor type list change",
+      "test(prompt): update snapshots for refactor type",
+      "fix(prompt): add refactor to the listed types when missing"
+    ],
+    "history_files": [
+      [
+        "Cargo.lock",
+        "Cargo.toml"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "Cargo.lock",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "Cargo.toml",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "old_path": null,
+        "lines": [
+          81,
+          0
+        ],
+        "hunks": "@@ -69,2 +69,8 @@ dependencies = [\n \n+[[package]]\n+name = \"anyhow\"\n+version = \"1.0.104\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470\"\n+\n [[package]]\n@@ -590,2 +596,8 @@ dependencies = [\n \n+[[package]]\n+name = \"lazy_static\"\n+version = \"1.5.1\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb\"\n+\n [[package]]\n@@ -810,2 +822,8 @@ dependencies = [\n \n+[[package]]\n+name = \"pin-project-lite\"\n+version = \"0.2.17\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd\"\n+\n [[package]]\n@@ -1069,2 +1087,11 @@ dependencies = [\n \n+[[package]]\n+name = \"sharded-slab\"\n+version = \"0.1.7\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6\"\n+dependencies = [\n+ \"lazy_static\",\n+]\n+\n [[package]]\n@@ -1116,2 +1143,3 @@ version = \"0.7.0\"\n dependencies = [\n+ \"anyhow\",\n  \"clap\",\n@@ -1127,2 +1155,4 @@ dependencies = [\n  \"toml_edit\",\n+ \"tracing\",\n+ \"tracing-subscriber\",\n ]\n@@ -1217,2 +1247,11 @@ dependencies = [\n \n+[[package]]\n+name = \"thread_local\"\n+version = \"1.1.10\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"1ad99c4c6d32803332c548b1af0540b357b3f5fc0be8f6c6bfe8b2e6ae784070\"\n+dependencies = [\n+ \"cfg-if\",\n+]\n+\n [[package]]\n@@ -1290,2 +1329,44 @@ checksum = \"06bdbd8cfc056b8d2e2e85f29b56a3bdbecb527cef81eb39e3e7b98af4652770\"\n \n+[[package]]\n+name = \"tracing\"\n+version = \"0.1.44\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100\"\n+dependencies = [\n+ \"pin-project-lite\",\n+ \"tracing-attributes\",\n+ \"tracing-core\",\n+]\n+\n+[[package]]\n+name = \"tracing-attributes\"\n+version = \"0.1.31\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da\"\n+dependencies = [\n+ \"proc-macro2\",\n+ \"quote\",\n+ \"syn 2.0.119\",\n+]\n+\n+[[package]]\n+name = \"tracing-core\"\n+version = \"0.1.36\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a\"\n+dependencies = [\n+ \"once_cell\",\n+]\n+\n+[[package]]\n+name = \"tracing-subscriber\"\n+version = \"0.3.23\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319\"\n+dependencies = [\n+ \"sharded-slab\",\n+ \"thread_local\",\n+ \"tracing-core\",\n+]\n+\n [[package]]\n"
+      },
+      {
+        "path": "Cargo.toml",
+        "old_path": null,
+        "lines": [
+          3,
+          0
+        ],
+        "hunks": "@@ -13,2 +13,3 @@ categories = [\"command-line-utilities\", \"development-tools\"]\n [dependencies]\n+anyhow = \"1\"\n clap = { version = \"4\", features = [\"derive\", \"env\"] }\n@@ -22,2 +23,4 @@ toml = \"0.9\"\n toml_edit = \"0.23\"\n+tracing = \"0.1\"\n+tracing-subscriber = { version = \"0.3\", default-features = false, features = [\"fmt\", \"std\"] }\n \n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "chore(deps): add tracing for better error reporting",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, test, fix.\n- Scopes used here: prompt, fixtures, generate, message, style. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(generate): split the module by notes, retry and rules\nrefactor(message): split the module by parsing, format and fallback\nrefactor(style): split the module by parsing, gitmoji, language and tickets\ntest(fixtures): regenerate traces for refactor type list change\ntest(prompt): update snapshots for refactor type\n",
+          "user": "Files changed:\nCargo.lock | +81 -0\nCargo.toml | +3 -0\n\nDiff:\n--- Cargo.toml\n@@ -13,2 +13,3 @@ categories = [\"command-line-utilities\", \"development-tools\"]\n [dependencies]\n+anyhow = \"1\"\n clap = { version = \"4\", features = [\"derive\", \"env\"] }\n@@ -22,2 +23,4 @@ toml = \"0.9\"\n toml_edit = \"0.23\"\n+tracing = \"0.1\"\n+tracing-subscriber = { version = \"0.3\", default-features = false, features = [\"fmt\", \"std\"] }\n \n"
+        },
+        "raw": "chore(deps): add tracing for better error reporting",
+        "rejected": null
+      }
+    ]
+  }
+}

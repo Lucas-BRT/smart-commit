@@ -11,6 +11,7 @@ keywords = ["git", "commit", "llm", "npu", "openvino"]
 categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
+anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
 openvino-genai = { version = "=0.11.1", features = ["runtime-linking"] }
 ratatui = { version = "0.30.2", default-features = false, features = ["crossterm", "layout-cache"] }
@@ -20,6 +21,8 @@ sha2 = "0.10"
 thiserror = "2"
 toml = "0.9"
 toml_edit = "0.23"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "std"] }
 
 [dev-dependencies]
 insta = "1.49.0"

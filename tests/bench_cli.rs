@@ -5,8 +5,8 @@ use std::fs;
 use std::path::Path;
 use std::process::Output;
 
+use smart_commit::backend::device::Target;
 use smart_commit::bench::{self, Entry, FastLoadTrial, Machine, Measurement, Report};
-use smart_commit::device::Target;
 use tempfile::TempDir;
 
 mod common;

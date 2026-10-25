@@ -45,20 +45,15 @@ The last benchmark measured the previous model: run `smart-commit bench` again.
 
 ## Recommended models
 
-| Model | Size | Status | Devices | Per message, Ryzen 5 5500 (`cpu` / `vulkan` on an RTX 3050) | Per message, Core Ultra 5 225H (`cpu` / `vulkan` on its Arc iGPU) |
-|---|---|---|---|---|---|
-| `qwen2.5-coder-1.5b` (default) | 1.1 GB | validated | all | 4.0 s / 2.4 s | — |
-| `qwen2.5-coder-0.5b` | 491 MB | experimental | `vulkan`, `cpu` | 3.1 s / 1.5 s | — |
-| `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` | — | — |
-| `smart-commit-1.5b-v0.1` | 986 MB | experimental | `vulkan`, `cpu` | 3.8 s / 2.3 s | — |
-| `smart-commit-0.5b-v0.1` | 397 MB | experimental | `vulkan`, `cpu` | 1.9 s / 1.2 s | — |
+| Model | Size | Status | Devices |
+|---|---|---|---|
+| `qwen2.5-coder-1.5b` (default) | 1.1 GB | validated | all |
+| `qwen2.5-coder-0.5b` | 491 MB | experimental | `vulkan`, `cpu` |
+| `qwen2.5-coder-7b` | 4.7 GB | experimental | `vulkan`, `cpu` |
+| `smart-commit-1.5b-v0.1` | 986 MB | experimental | `vulkan`, `cpu` |
+| `smart-commit-0.5b-v0.1` | 397 MB | experimental | `vulkan`, `cpu` |
 
-Times are `smart-commit bench` with fast load, on its four prompts sized
-like real ones; a dash is a pair not measured on them yet. The fine-tunes
-are faster than their base models mostly because their replies are
-shorter. Earlier measurements, on prompts of about 250 tokens, gave the
-Core Ultra 5 225H 1.3–1.7 s on `cpu` and 0.8–1.6 s on `vulkan`, and the 7B
-model 6.7 s / 8.3 s on the Ryzen.
+How long each takes is in [measurements](measurements.md#per-message-by-model).
 
 - **Validated** models are the ones the prompt was tuned on, checked on the
   fixture prompts and the hardware tests.
@@ -67,24 +62,25 @@ model 6.7 s / 8.3 s on the Ryzen.
   (`type(diff): …`), broke the gitmoji style and copied history examples
   more often than the 1.5B model; the retry and the fallback still apply.
   The 7B model wrote the most fitting messages, but most of its time is
-  loading: on the RTX 3050, 7.8 s of 8.3 s is copying 4.4 GB to the GPU,
-  and generating takes 0.45 s.
+  loading the weights onto the GPU (see
+  [measurements](measurements.md#per-message-by-model)).
 - The `qwen2.5-coder-*` models are Qwen's official GGUF files (Q4_K_M),
   Apache-2.0. Models with restrictive licences are not recommended (see the
   [roadmap](roadmap.md#model-candidates)).
 - The `smart-commit-*` models are Qwen2.5-Coder fine-tuned on
   smart-commit's own prompt with commits from CommitChronicle, merged and
   quantized to Q4_K_M, Apache-2.0 like their base. On eval-v1 (500 held-out
-  commits) both pick the Conventional type of the real commit about 64% of
-  the time, against 46% for `qwen2.5-coder-1.5b`, which answers `fix` to
-  most changes; the 0.5B falls back to the file list more often on young
-  repositories (9% against 3%). Their model cards on Hugging Face list
+  commits) they pick the Conventional type of the real commit much more
+  often than `qwen2.5-coder-1.5b`, which answers `fix` to most changes, and
+  the 0.5B falls back to the file list more often on young repositories; the
+  numbers are in [training/HYPOTHESES.md](../training/HYPOTHESES.md).
+  Their model cards on Hugging Face list
   the evaluation, the training and the limitations. Versions are new ids
   (`-v0.2`), never replaced files.
 
 ## Where they come from
 
-Each recommended model is pinned in `src/models.rs` to a Hugging Face
+Each recommended model is pinned in `src/models/registry.rs` to a Hugging Face
 repository, a commit of it (never a branch) and the SHA-256 and size of the
 file at that commit. `smart-commit model use` downloads it with `curl`
 into `$XDG_DATA_HOME/smart-commit/models/`, resumes an interrupted
@@ -146,6 +142,6 @@ and `auto` uses `vulkan` or `cpu`.
    "Where models come from").
 2. Its repository commit, file size and SHA-256 (the Hugging Face API lists
    them: `https://huggingface.co/api/models/<repo>?blobs=true`), in
-   `src/models.rs`.
+   `src/models/registry.rs`.
 3. `smart-commit model use <id>` and `smart-commit bench` on real hardware,
    with the numbers above updated from the benchmark.

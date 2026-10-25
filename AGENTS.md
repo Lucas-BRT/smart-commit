@@ -34,11 +34,12 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 
 | Kind | Where |
 |---|---|
-| Unit | `#[cfg(test)] mod tests` in the module, under `src/` |
-| Prompt snapshots | `insta::assert_snapshot!`, files in `src/snapshots/`; update with `INSTA_UPDATE=always cargo test` and review the diff |
+| Unit | `tests.rs` beside the `mod.rs` of a module with its own directory, or `#[cfg(test)] mod tests` in a small file, under `src/` |
+| Prompt snapshots | `insta::assert_snapshot!`, files in the `snapshots/` directory beside the module (`src/prompt/snapshots/`); update with `INSTA_UPDATE=always cargo test` and review the diff |
 | Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |
 | CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
 | Trace fixtures | `tests/replay_fixtures.rs` |
+| Docs | `tests/docs.rs`: the paths the pages name exist, every command is in `docs/usage.md` |
 | Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |
 | Hardware | `tests/hardware.rs`, ignored by default: `cargo test --test hardware -- --ignored --test-threads 1`, with `SMART_COMMIT_TEST_DEVICE=npu\|intel-gpu\|vulkan\|cpu\|openvino-cpu`; use the fixture prompts, never ad hoc inputs |
 
@@ -84,7 +85,7 @@ describes what is pinned and how it is checked.
   model, data and its licence, prompt format, evaluation against the base,
   limitations). Their OpenVINO export is to run on users' machines, from
   those safetensors, like other models' (not done for v0.1). A new
-  version is a new name (`-v0.2`), never a replaced file, and is pinned in `src/models.rs` by revision and SHA-256
+  version is a new name (`-v0.2`), never a replaced file, and is pinned in `src/models/registry.rs` by revision and SHA-256
   like any other model.
 
 ## Commits
@@ -97,11 +98,11 @@ and the project builds and passes its checks at every commit.
 ### Same file, different purposes: stage hunks
 
 When a file has changes for different purposes, for example a bug fix and a
-feature in the same `src/diff.rs`, **do not stage the whole file**. Stage the
+feature in the same `src/diff/compact.rs`, **do not stage the whole file**. Stage the
 hunks of one purpose, commit, and repeat:
 
 ```bash
-git add -p src/diff.rs        # y = stage, n = skip, s = split, e = edit
+git add -p src/diff/compact.rs        # y = stage, n = skip, s = split, e = edit
 git diff --staged             # what goes into this commit
 git diff                      # what is left for the next one
 ```
@@ -110,7 +111,7 @@ Without an interactive terminal (agents, scripts), do the same with a partial
 patch:
 
 ```bash
-git diff src/diff.rs > /tmp/partial.patch
+git diff src/diff/compact.rs > /tmp/partial.patch
 # edit the patch, keeping only this purpose's hunks
 git apply --cached /tmp/partial.patch
 git diff --staged
@@ -172,4 +173,6 @@ Docs describe the current state, in English. A change updates the pages it
 affects in the same commit (usage, configuration, devices, architecture,
 reproducibility); [docs/roadmap.md](docs/roadmap.md) tracks what is done and
 what is next. Numbers in the docs (timings, counts) come from measurements
-that can be repeated, never from memory.
+that can be repeated, never from memory. Timings live in
+[docs/measurements.md](docs/measurements.md) only: other pages link to it
+instead of repeating them (console output they show is a run recorded there).

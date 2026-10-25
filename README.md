@@ -92,19 +92,16 @@ downloaded, after listing it.
 | `cpu` | llama.cpp | any x86_64 CPU, Intel or AMD |
 | `openvino-cpu` | OpenVINO GenAI | any x86_64 CPU, where OpenVINO is installed |
 
-The default model is Qwen2.5-Coder-1.5B-Instruct. On a Ryzen 5 5500 with an
-RTX 3050 a message takes 2.4 s through Vulkan and 4.0 s on the CPU through
-llama.cpp, on prompts the size of real ones, with the fast load the
-benchmark turned on. On a Core Ultra 5 225H, with the shorter prompts of
-earlier measurements, 1.8 s end to end on the integrated GPU, 2.5 s through
-Vulkan, 4.0 s on the CPU through OpenVINO and 5.1 s on the NPU. See
-[devices](docs/devices.md) for the measurements.
+The default model is Qwen2.5-Coder-1.5B-Instruct. How long a message takes
+on each device, model and machine is in [measurements](docs/measurements.md);
+see [devices](docs/devices.md) for how the device is chosen.
 
 ## Documentation
 
 - [Usage](docs/usage.md): install, everyday use, hook, devices, troubleshooting
 - [Configuration](docs/configuration.md): every setting and its layers
-- [Devices](docs/devices.md): backends, device selection, hardware setup, measurements
+- [Devices](docs/devices.md): backends, device selection, hardware setup
+- [Measurements](docs/measurements.md): how long a message takes, by device, model and machine
 - [Models](docs/models.md): the recommended models, where they come from, using your own
 - [Architecture](docs/architecture.md): how a message is made
 - [Reproducibility](docs/reproducibility.md): what is pinned and how it is checked

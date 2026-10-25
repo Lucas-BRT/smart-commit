@@ -12,7 +12,7 @@ use crate::diff::{self, FileDiff};
 
 #[derive(Debug, thiserror::Error)]
 pub enum GitError {
-    #[error("failed to run git: {0}")]
+    #[error("failed to run git")]
     Spawn(#[from] std::io::Error),
     #[error("not a git repository: {0}")]
     NotARepository(PathBuf),
@@ -362,7 +362,17 @@ fn parse_name_status_z(out: &str) -> Vec<FileChange> {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error as _;
+
     use super::*;
+
+    #[test]
+    fn a_wrapped_error_is_the_source_not_part_of_the_message() {
+        let io = std::io::Error::new(std::io::ErrorKind::NotFound, "no such file");
+        let err = GitError::from(io);
+        assert_eq!(err.to_string(), "failed to run git");
+        assert_eq!(err.source().unwrap().to_string(), "no such file");
+    }
 
     fn change(status: ChangeStatus, path: &str, old_path: Option<&str>) -> FileChange {
         FileChange {

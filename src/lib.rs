@@ -1,24 +1,19 @@
 //! Generate commit messages in the style of the current repository using a
 //! small LLM running locally on an Intel NPU.
 
-pub mod annotate;
 pub mod backend;
 pub mod bench;
 pub mod config;
 pub mod context;
-pub mod device;
 pub mod diff;
-pub mod genai;
 pub mod generate;
 pub mod git;
 pub mod hardware;
 pub mod hook;
-pub mod llamacpp;
 pub mod message;
 pub mod models;
 pub mod paths;
 pub mod prompt;
-pub mod server;
 pub mod setup;
 pub mod style;
 pub mod trace;

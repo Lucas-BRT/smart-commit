@@ -14,10 +14,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use smart_commit::backend::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};
+use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions, LlamaDevice};
 use smart_commit::backend::{Backend, GenerationConfig};
 use smart_commit::diff::estimate_tokens;
-use smart_commit::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};
-use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions, LlamaDevice};
 use smart_commit::paths;
 use smart_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};
 use smart_commit::trace::Trace;
@@ -135,10 +135,11 @@ fn a_model_kept_loaded_gives_the_same_replies() {
         let expected = fresh.generate(&prompt, &config).unwrap();
         drop(fresh);
         // Connects to the same kept server for every prompt but the first.
-        let kept = smart_commit::server::connect(runtime.path(), &options, keep, exe).unwrap();
+        let kept =
+            smart_commit::backend::server::connect(runtime.path(), &options, keep, exe).unwrap();
         replies.push((name, expected, kept.generate(&prompt, &config).unwrap()));
     }
-    assert_eq!(smart_commit::server::stop(runtime.path()), 1);
+    assert_eq!(smart_commit::backend::server::stop(runtime.path()), 1);
     for (name, expected, kept) in replies {
         assert_eq!(kept, expected, "{name}");
     }

@@ -19,14 +19,15 @@ Everything except the model is deterministic and tested without hardware.
 | `style` | infers convention, language, types, scopes, ticket style and examples from commit subjects |
 | `context` | `RepoContext`: branch, ticket, subjects, style and staged files, rebuildable from recorded data |
 | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |
-| `annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
+| `diff::annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
 | `prompt` | builds the system and user messages within `max_prompt_tokens` |
 | `message` | sanitizes the model's output; builds the fallback message |
 | `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |
 | `backend` | the `Backend` trait, `GenerationConfig`, `MockBackend` |
-| `genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
-| `llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
-| `device` | candidate devices and loading the first that works |
+| `backend::genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
+| `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
+| `backend::server` | the `llama-server` kept loaded between commits (`model.keep_loaded`) |
+| `backend::device` | candidate devices and loading the first that works |
 | `bench` | measures every device on four embedded prompts sized like real ones |
 | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |
 | `setup` | the steps the hardware needs, for the setup screen |
@@ -37,10 +38,21 @@ Everything except the model is deterministic and tested without hardware.
 | `hook` | the `prepare-commit-msg` script and how it fills the message file |
 | `paths` | XDG locations of config, models, caches and the benchmark |
 
-The binary (`src/main.rs`, `config_cmd.rs`, `bench_cmd.rs`, `model_cmd.rs`,
-`setup_cmd.rs`, `install_cmd.rs`) only parses arguments and wires these
-together; `update` and `uninstall` run the `install.sh` the release
+The binary (`src/main.rs` and the `src/cli/` modules: `args`, `suggest`,
+`inspect`, `git_hook`, `configure`, `benchmark`, `model`, `guided_setup`,
+`keep_loaded` and `install` for the commands, and `session`, `load`,
+`logging` and `settings`, which they share) only parses
+arguments and wires these together; `update` and `uninstall` run the `install.sh` the release
 installed in `share/smart-commit/scripts`.
+
+Errors: the library returns typed errors (`thiserror`: `GitError`,
+`ConfigError`, `BackendError`, `DeviceError`, ...); the binary collects them
+in `anyhow::Result`, adding context (`with_context`) where the cause alone
+would not say what failed, and prints the whole chain after `error:`. Problems and
+diagnostics use `tracing` (`warn!`, `debug!` in the pipeline); the binary
+prints them as `warning:` and, with `-v`, `debug:` lines on stderr. Notes (what
+a command chose, what overrides what) are part of its result, not logs: they
+are printed with `note!` (`cli/ui.rs`).
 
 ## Repository style
 
@@ -67,12 +79,12 @@ From the last `style.history_depth` (30) subjects, merges excluded:
 ## Fitting the diff
 
 The NPU has a fixed prompt length, so the diff is reduced to a budget, in
-tokens estimated as characters / 3. That is pessimistic for most prompts
-(3.4–3.75 characters per token), not for all: hashes, base64 and long
-numbers take more tokens (Qwen's tokenizer splits every digit), and on
-eval-v1 the estimate was up to 1.45 times short for 2–3% of the prompts.
-llama.cpp starts its server with half the budget again as room, so such a
-prompt is read a little longer instead of failing.
+tokens estimated as characters / 3. That is pessimistic for most prompts,
+not for all: hashes, base64 and long numbers take more tokens (Qwen's
+tokenizer splits every digit). llama.cpp starts its server with half the
+budget again as room, so such a prompt is read a little longer instead of
+failing. How far the estimate is off is in
+[measurements](measurements.md#token-estimate).
 
 1. The patch has one line of context (`-U1`), without external diff tools
    or colours. Patch sections are paired with `--numstat` entries by order;

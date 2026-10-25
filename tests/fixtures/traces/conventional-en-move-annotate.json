@@ -1,0 +1,177 @@
+{
+  "format": 1,
+  "tool_version": "0.7.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of ce9645e",
+      "refactor(server): split the module into the supervisor, management and tests",
+      "refactor(hardware): split the module into sysfs reading, fakes and tests",
+      "refactor(bench): split the module into the report, measuring and tests",
+      "refactor(annotate): split the module into comments, rename and tests",
+      "test(fixtures): trace three module splits answered as feat or vaguely",
+      "refactor(models): split the module into the registry, installing and tests"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "src/annotate/comments.rs",
+        "src/annotate/mod.rs",
+        "src/annotate/rename.rs",
+        "src/annotate/tests.rs",
+        "src/diff/compact.rs",
+        "src/diff/mod.rs",
+        "src/lib.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "renamed",
+        "path": "src/diff/annotate/comments.rs",
+        "old_path": "src/annotate/comments.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/diff/annotate/mod.rs",
+        "old_path": "src/annotate/mod.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/diff/annotate/rename.rs",
+        "old_path": "src/annotate/rename.rs"
+      },
+      {
+        "status": "renamed",
+        "path": "src/diff/annotate/tests.rs",
+        "old_path": "src/annotate/tests.rs"
+      },
+      {
+        "status": "modified",
+        "path": "src/diff/compact.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/diff/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/lib.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -21,3 +21,3 @@ Everything except the model is deterministic and tested without hardware.\n | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |\n-| `annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |\n+| `diff::annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |\n | `prompt` | builds the system and user messages within `max_prompt_tokens` |\n"
+      },
+      {
+        "path": "src/diff/annotate/comments.rs",
+        "old_path": "src/annotate/comments.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/diff/annotate/mod.rs",
+        "old_path": "src/annotate/mod.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/diff/annotate/rename.rs",
+        "old_path": "src/annotate/rename.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/diff/annotate/tests.rs",
+        "old_path": "src/annotate/tests.rs",
+        "lines": [
+          0,
+          0
+        ],
+        "hunks": ""
+      },
+      {
+        "path": "src/diff/compact.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,4 +2,4 @@ use std::fmt::Write as _;\n \n+use super::annotate;\n use super::{CompactDiff, FileDiff, FileKind, estimate_tokens};\n-use crate::annotate;\n use crate::git::FileChange;\n"
+      },
+      {
+        "path": "src/diff/mod.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -6,2 +6,3 @@\n \n+pub mod annotate;\n mod classify;\n"
+      },
+      {
+        "path": "src/lib.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          1
+        ],
+        "hunks": "@@ -3,3 +3,2 @@\n \n-pub mod annotate;\n pub mod backend;\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "refactor(diff): split the module into the diff and tests",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, test.\n- Scopes used here: annotate, bench, fixtures, hardware, models, server. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(server): split the module into the supervisor, management and tests\nrefactor(hardware): split the module into sysfs reading, fakes and tests\nrefactor(bench): split the module into the report, measuring and tests\nrefactor(annotate): split the module into comments, rename and tests\ntest(fixtures): trace three module splits answered as feat or vaguely\n",
+          "user": "Files changed:\ndocs/architecture.md | +1 -1\nsrc/{annotate => diff/annotate}/ | 4 files renamed, +0 -0\nsrc/diff/compact.rs | +1 -1\nsrc/diff/mod.rs | +1 -0\nsrc/lib.rs | +0 -1\n\nDiff:\n--- docs/architecture.md\n@@ -21,3 +21,3 @@ Everything except the model is deterministic and tested without hardware.\n | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |\n-| `annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |\n+| `diff::annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |\n | `prompt` | builds the system and user messages within `max_prompt_tokens` |\n--- src/diff/compact.rs\n@@ -2,4 +2,4 @@ use std::fmt::Write as _;\n \n+use super::annotate;\n use super::{CompactDiff, FileDiff, FileKind, estimate_tokens};\n-use crate::annotate;\n use crate::git::FileChange;\n--- src/diff/mod.rs\n@@ -6,2 +6,3 @@\n \n+pub mod annotate;\n mod classify;\n--- src/lib.rs\n@@ -3,3 +3,2 @@\n \n-pub mod annotate;\n pub mod backend;\n"
+        },
+        "raw": "refactor(diff): split the module into the diff and tests",
+        "rejected": null
+      }
+    ]
+  }
+}
