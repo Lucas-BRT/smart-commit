@@ -31,6 +31,18 @@
 - Commit scenarios (`training/scenarios/`): hand-written cases of git
   operations by level of complexity on synthetic repositories, split
   between training and evaluation.
+- Messages that keep to git's own: the message of a merge, revert or
+  cherry-pick in progress, a subject cut where it still reads
+  (`style.subject_max`), a retry for a reply in the wrong language or nearly
+  a copy, and never a message the user turned down.
+- A file list with what the line counts do not say (status, renames,
+  whitespace-only and comment-only changes), on by default.
+- `smart-commit update` and `smart-commit uninstall`.
+- The binary in modules (`cli/`, and the library's `backend/`, `diff/`,
+  `models/`...), with `anyhow` and `tracing`, and `-v` for debug output.
+- The v0.2 fine-tunes, `smart-commit-0.5b-v0.2` and `smart-commit-1.5b-v0.2`,
+  trained without the rules in the prompt and evaluated. They are on
+  Hugging Face, private.
 
 ## Next
 
@@ -39,9 +51,9 @@ then the largest gains for their cost.
 
 | # | Item | Why |
 |---|---|---|
-| 1 | **Fine-tune v0.2** | The next `smart-commit-<size>-v0.2`: the rules in the weights (training H6, a `PromptOptions` switch that follows the model in `models::REGISTRY`), young repositories (H5: the 0.5B falls back on 9% of them, the 1.5B on 3%) and the scope map (H4b, shown only to the model trained with it), in one bundle of about 20k examples, where the v0.1 learning curve flattens. Without the rules, prompts are 17–21% shorter on eval-v1 and eval-short (`--rules omitted`, already in `prompt` and `eval`); the speed is to be measured with the trained model. See [training](training.md). |
+| 1 | **Publish v0.2, then train v0.3** | v0.2 is trained and evaluated (training H5, H6, H7's release bumps, no type cap): the 0.5B keeps its quality, is about 15% faster on the CPU and copies half as often in young repositories; the 1.5B gives the same gains but trades a little type quality and leans on the rules more (see [training](../training/HYPOTHESES.md), v0.2). Both repositories on Hugging Face are private (`smart-commit-0.5b-v0.2` at `bdb93a5`, `smart-commit-1.5b-v0.2` at `4bca5dc`). The 0.5B is registered on the `feat/model-v0.2` branch, which cannot be merged until its repository is public, since users download from it. v0.3 is next: the scope map (H4b), which v0.2 did not have, and 40k examples for the 1.5B. Without the rules, prompts are 17–21% shorter on eval-v1 and eval-short (`--rules omitted`, already in `prompt` and `eval`). See [training](training.md). |
 | 2 | **A model server that stays up** (started: `model.keep_loaded`, off by default) | Load is paid at every commit: 0.3–0.6 s on the CPU, about 2.2 s on Vulkan (weights to the GPU, shaders compiled). Keeping `llama-server` running after a message, and stopping it after some idle minutes (say 10), makes every later commit pay only prefill and decoding. It also gives prefix caching for free: llama-server keeps the KV cache of the prompt's unchanged beginning in memory. Costs: 0.5–1.2 GB of RAM or VRAM while it is up, and its lifecycle (restart when the settings or the model change, two commits at once, a stale socket). The commit nudges would need a loaded model at hand too. Check that replies stay identical with the cache on, against the trace fixtures and `eval`, before turning it on: a restored cache can change float results. Next: measure it on both machines, then decide whether it is on by default, then try the prompt cache. |
-| 3 | **A fine-tune as the default** | On eval-v1 the v0.1 fine-tunes pick the real type 64% of the time against 46% for the default `qwen2.5-coder-1.5b`. Making one `validated` and the default (on `vulkan` and `cpu`, which need no OpenVINO export) needs the fixture prompts and the hardware tests; after v0.2's evaluation. |
+| 3 | **A fine-tune as the default** | v0.2's evaluation is done, and `smart-commit-1.5b-v0.1` is still the best at the type (type_match 0.656 on eval-v1, against 0.452 for the default `qwen2.5-coder-1.5b`); the 0.5B v0.2 is the fastest. Making one `validated` and the default (on `vulkan` and `cpu`, which need no OpenVINO export) needs the fixture prompts and the hardware tests. |
 | 4 | **Fine-tunes and more models on the OpenVINO devices** | The NPU and the Intel GPU run only `qwen2.5-coder-1.5b`, the one model with a pinned export. Export the fine-tunes' published safetensors, and other [recommended models](models.md), with the pinned pipeline: two identical exports, `MANIFEST.sha256` and the **Model** workflow for each. |
 | 5 | **Evaluation coverage** | eval-v1 and eval-short are English, Conventional or free; the scenarios add Portuguese and git states, by hand. Add gitmoji and Portuguese cases from permissively licensed repositories, pinned by commit, and an LLM judge for faithfulness with a pinned prompt, validated against a sample rated by hand (`score.py` has only cheap checks). |
 | 6 | **GBNF grammar for the conventions** | A grammar in the request makes `type(scope): description` (or a gitmoji) the only possible shape, so the format retry, which doubles the time when it happens, goes away for every model. Less pressing with the fine-tunes, whose first reply passes 95–98% of the time on eval-v1 (91–93% for the base 1.5B). |

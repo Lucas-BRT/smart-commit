@@ -228,7 +228,7 @@ even rewards that: `training` is a known scope, just the wrong one.
   leave out places shared by most scopes, the way idf discounts common
   words.
 
-### H5. Training on young repositories stops the copying — planned
+### H5. Training on young repositories stops the copying — confirmed in v0.2
 
 Found in real use: a new repository with one commit (`feat: Add a simple
 hello world program`) and a one-line change adding a `println!` with a sum.
@@ -271,7 +271,7 @@ example and "follow their style", repeating it is the easy answer.
 - **Expectation.** first reply copied and fallback on eval-short down to
   H1's level for the 0.5B, eval-v1 unchanged.
 
-### H6. The rules can live in the weights instead of the prompt — switch implemented, training planned
+### H6. The rules can live in the weights instead of the prompt — confirmed in v0.2
 
 Context distillation: train the model on prompts without the fixed rules
 (reply with the message only, 72 columns, the imperative, the Conventional
@@ -312,7 +312,7 @@ for moves into the weights; the prompt shrinks.
   the format; an untrained model with the switch on would fall apart, so
   the switch must follow the model, never be a free setting.
 
-### H7. The lists in the prompt are read as closed because the data rarely leaves them — planned
+### H7. The lists in the prompt are read as closed because the data rarely leaves them — release bumps in v0.2's data; the rest planned
 
 Found in real use with v0.1 (smart-commit 0.5.0, Vulkan), each with a
 trace fixture:
