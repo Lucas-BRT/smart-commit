@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "tools"]
+members = [".", "tools", "training/tools"]
 # What `cargo build` and the release build make: the tools stay out of it.
 default-members = ["."]
 resolver = "3"
