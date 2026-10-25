@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::backend::{Backend, BackendError};
 use crate::config::{BackendKind, DeviceSetting};
+use crate::hardware::{Hardware, Npu};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -95,6 +96,53 @@ fn list_failures(failures: &[(Target, BackendError)]) -> String {
         .collect()
 }
 
+impl Target {
+    /// Whether `hardware` has what this device runs on: an Intel NPU, an
+    /// Intel GPU with its kernel driver, a GPU with a Vulkan driver, an
+    /// x86_64 CPU (OpenVINO's also needs OpenVINO installed). The runtime
+    /// may still be missing: that is for loading to say.
+    pub fn is_present(self, hardware: &Hardware) -> bool {
+        let x86_64 = hardware.arch == "x86_64";
+        match self {
+            Self::Npu => hardware.npu == Npu::Intel,
+            Self::IntelGpu => hardware
+                .gpus
+                .iter()
+                .any(|gpu| gpu.is_intel() && matches!(gpu.driver.as_str(), "i915" | "xe")),
+            Self::Vulkan => hardware.gpus.iter().any(|gpu| {
+                matches!(
+                    (gpu.vendor.as_str(), gpu.driver.as_str()),
+                    ("0x8086", "i915" | "xe")
+                        | ("0x1002", "amdgpu")
+                        | ("0x10de", "nvidia" | "nouveau")
+                )
+            }),
+            Self::Cpu => x86_64,
+            Self::OpenvinoCpu => x86_64 && hardware.openvino_installed,
+        }
+    }
+}
+
+/// The devices `hardware` has, in [`DEFAULT_ORDER`].
+pub fn present(hardware: &Hardware) -> Vec<Target> {
+    DEFAULT_ORDER
+        .into_iter()
+        .filter(|target| target.is_present(hardware))
+        .collect()
+}
+
+/// `order` without the devices `hardware` lacks, so `auto` does not try an
+/// NPU on a machine without one. If that leaves nothing (hardware that is
+/// not recognised), `order` as it is: a load can still work.
+pub fn only_present(order: Vec<Target>, hardware: &Hardware) -> Vec<Target> {
+    let kept: Vec<Target> = order
+        .iter()
+        .copied()
+        .filter(|target| target.is_present(hardware))
+        .collect();
+    if kept.is_empty() { order } else { kept }
+}
+
 /// The devices to try, in order. `preferred` (from a benchmark, fastest
 /// first) goes before the default order. Not for the mock backend.
 pub fn candidates(
@@ -174,6 +222,88 @@ pub fn load_first(
 mod tests {
     use super::*;
     use crate::backend::MockBackend;
+
+    fn machine(gpus: &[(&str, &str)], npu: Npu, openvino: bool) -> Hardware {
+        Hardware {
+            cpu_vendor: crate::hardware::CpuVendor::Other,
+            cpu_model: "Test CPU".into(),
+            arch: "x86_64".into(),
+            gpus: gpus
+                .iter()
+                .map(|(vendor, driver)| crate::hardware::Gpu {
+                    vendor: (*vendor).into(),
+                    device: "0x0000".into(),
+                    driver: (*driver).into(),
+                    slot: "0000:00:02.0".into(),
+                    name: None,
+                    nvidia_version: None,
+                })
+                .collect(),
+            npu,
+            openvino_installed: openvino,
+        }
+    }
+
+    #[test]
+    fn a_machine_has_the_devices_its_hardware_gives() {
+        let all = machine(&[("0x8086", "xe")], Npu::Intel, true);
+        assert_eq!(present(&all), DEFAULT_ORDER);
+        let amd = machine(&[("0x1002", "amdgpu")], Npu::None, false);
+        assert_eq!(present(&amd), [Target::Vulkan, Target::Cpu]);
+        let nvidia = machine(&[("0x10de", "nvidia")], Npu::None, false);
+        assert_eq!(present(&nvidia), [Target::Vulkan, Target::Cpu]);
+        let nouveau = machine(&[("0x10de", "nouveau")], Npu::None, false);
+        assert_eq!(present(&nouveau), [Target::Vulkan, Target::Cpu]);
+        let bare = machine(&[], Npu::None, false);
+        assert_eq!(present(&bare), [Target::Cpu]);
+    }
+
+    #[test]
+    fn a_gpu_needs_its_kernel_driver() {
+        let unbound = machine(&[("0x8086", "none"), ("0x10de", "none")], Npu::None, false);
+        assert_eq!(present(&unbound), [Target::Cpu]);
+        let old = machine(&[("0x1002", "radeon")], Npu::None, false);
+        assert_eq!(present(&old), [Target::Cpu]);
+    }
+
+    #[test]
+    fn the_openvino_devices_of_an_intel_machine_wait_for_openvino_but_the_npu_does_not() {
+        // The NPU is listed so that loading can say what is missing.
+        let hardware = machine(&[("0x8086", "i915")], Npu::Intel, false);
+        assert_eq!(
+            present(&hardware),
+            [Target::IntelGpu, Target::Npu, Target::Vulkan, Target::Cpu]
+        );
+    }
+
+    #[test]
+    fn the_ryzen_ai_npu_is_not_one_of_ours() {
+        let hardware = machine(&[], Npu::AmdXdna, true);
+        assert_eq!(present(&hardware), [Target::Cpu, Target::OpenvinoCpu]);
+    }
+
+    #[test]
+    fn only_x86_64_has_the_cpu_devices() {
+        let mut arm = machine(&[("0x10de", "nvidia")], Npu::None, true);
+        arm.arch = "aarch64".into();
+        assert_eq!(present(&arm), [Target::Vulkan]);
+    }
+
+    #[test]
+    fn auto_keeps_its_order_without_the_devices_a_machine_lacks() {
+        let amd = machine(&[("0x1002", "amdgpu")], Npu::None, false);
+        let order = vec![Target::Npu, Target::Cpu, Target::Vulkan, Target::IntelGpu];
+        assert_eq!(only_present(order, &amd), [Target::Cpu, Target::Vulkan]);
+    }
+
+    #[test]
+    fn auto_keeps_every_candidate_when_none_is_recognised() {
+        let arm = Hardware {
+            arch: "riscv64".into(),
+            ..machine(&[], Npu::None, false)
+        };
+        assert_eq!(only_present(DEFAULT_ORDER.to_vec(), &arm), DEFAULT_ORDER);
+    }
 
     #[test]
     fn names_round_trip_and_the_old_gpu_name_still_works() {

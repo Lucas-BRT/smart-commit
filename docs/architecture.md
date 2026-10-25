@@ -28,7 +28,7 @@ Everything except the model is deterministic and tested without hardware.
 | `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
 | `backend::server` | the `llama-server` kept loaded between commits (`model.keep_loaded`) |
 | `backend::device` | candidate devices and loading the first that works |
-| `bench` | measures every device on four embedded prompts sized like real ones |
+| `bench` | measures every device the machine has on four embedded prompts sized like real ones |
 | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |
 | `setup` | the steps the hardware needs, for the setup screen |
 | `models` | the recommended models, pinned on Hugging Face, and installing them |
