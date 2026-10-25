@@ -390,3 +390,7 @@ real_change conventional-en-server-flag-as-test 80f9ba2 "test(training): trace t
 # A new training script with its tests and documentation, answered as the
 # mining of pairs, which an earlier commit added.
 real_change conventional-en-training-as-mining 534d7d9 "feat(training): add DPO mining to training"
+
+# A bundle and a notebook that sample replies on Kaggle, answered as a dataset
+# made from mined pairs: the bundle holds the inputs, the pairs come after.
+real_change conventional-en-mining-bundle-as-pairs adfe47e "feat(training): make a Kaggle dataset from mined pairs"
