@@ -40,6 +40,10 @@
 - `smart-commit update` and `smart-commit uninstall`.
 - The binary in modules (`cli/`, and the library's `backend/`, `diff/`,
   `models/`...), with `anyhow` and `tracing`, and `-v` for debug output.
+- The setup, the hardware inventory and the llama.cpp install in the binary
+  (no shell twin of the plan), and the developer tools in crates of their own
+  that the release does not build: `sc-tools` (llama-server timing, release
+  notes) and `sc-training` (training inputs, selection, scoring, scenarios).
 - The v0.2 fine-tunes, `smart-commit-0.5b-v0.2` and `smart-commit-1.5b-v0.2`,
   trained without the rules in the prompt and evaluated. They are on
   Hugging Face, private.

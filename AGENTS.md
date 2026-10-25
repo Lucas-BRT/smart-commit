@@ -40,6 +40,7 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 | CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, `tests/setup_cli.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
 | Trace fixtures | `tests/replay_fixtures.rs` |
 | Docs | `tests/docs.rs`: the paths the pages name exist, every command is in `docs/usage.md` |
+| Tools | tests inside `tools/` and `training/tools/` (workspace members outside `default-members`; `cargo test --workspace` runs them); the scenarios built twice need `cargo test -- --ignored` after `cargo build` |
 | Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |
 | Hardware | `tests/hardware.rs`, ignored by default: `cargo test --test hardware -- --ignored --test-threads 1`, with `SMART_COMMIT_TEST_DEVICE=npu\|intel-gpu\|vulkan\|cpu\|openvino-cpu`; use the fixture prompts, never ad hoc inputs |
 
