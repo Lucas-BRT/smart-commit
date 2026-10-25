@@ -340,6 +340,8 @@ real_change conventional-en-setup-in-rust 1dd70cd "feat(deps): add the LLaMA-CPP
 # A fix to the token estimate and the NPU budget, answered as a feature that
 # adds prompt budgeting (the estimator is not mentioned).
 real_change conventional-en-fix-as-feat-budget ae339ad "feat(generate): add prompt budgeting"
+# Devices limited to the machine's hardware, answered as a new backend.
+real_change conventional-en-invented-backend 87533ac "feat: add a device backend that can run benchmarks on NPU and GPU"
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
