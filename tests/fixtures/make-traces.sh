@@ -337,6 +337,9 @@ real_change conventional-en-remove-python-tools d82042f "chore(training): remove
 # Three setup scripts replaced by the binary, answered as a dependency
 # added for a llama.cpp backend that already exists.
 real_change conventional-en-setup-in-rust 1dd70cd "feat(deps): add the LLaMA-CPP backend"
+# A fix to the token estimate and the NPU budget, answered as a feature that
+# adds prompt budgeting (the estimator is not mentioned).
+real_change conventional-en-fix-as-feat-budget ae339ad "feat(generate): add prompt budgeting"
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
