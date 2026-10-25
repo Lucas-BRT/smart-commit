@@ -386,3 +386,7 @@ git add SHA256SUMS
 # something: the type is wrong (the change fixes the RAM use) and the verb is
 # invented.
 real_change conventional-en-server-flag-as-test 80f9ba2 "test(training): trace that llama-server keeps up to 8 GiB of prompts"
+
+# A new training script with its tests and documentation, answered as the
+# mining of pairs, which an earlier commit added.
+real_change conventional-en-training-as-mining 534d7d9 "feat(training): add DPO mining to training"
