@@ -130,6 +130,58 @@ the validation set's `f6350a3c5cb71b58` (b2's).
 (`meta.jsonl` sha256 starts `2fb1dedba6e20939`; `val1-h4` is the same with
 the history paths, as `sc-training select` writes it today).
 
+## Preference pairs (DPO)
+
+What SFT never shows the model is what not to write: a history subject copied,
+a vague description, an invented detail. The pairs for DPO come from the
+model's own samples, judged by the checks of `sc-training score` that need
+no reference (a Conventional header, 72 columns, a history subject copied or
+nearly, a specific found nowhere in the diff, a description sharing no word
+with it). For each input with a reply that fails, the pair is that reply
+against the real subject if it passes the same checks, else a sampled reply
+that does.
+
+Mine from inputs the model was not trained on (`data/test1`,
+`data/test2to5h`, a split of `data/train-all` it did not see): on its own
+training data it fails less, and the pairs would be fewer and easier.
+`mine_pairs.py` drops the commits of the evaluation sets' repositories
+(`data/eval-v1`, `data/eval-short`), so none of them reaches the pairs.
+
+```bash
+SCT=../target/release/sc-training
+SC=../target/release/smart-commit
+LLAMA=~/.local/share/smart-commit/llama.cpp/llama-b11381/llama-server
+SRC=data/test2to5h                      # or another split the model did not see
+mkdir -p data/dpo/mix
+# 1. Inputs: young repositories apart, since the prompt has their short history.
+$SCT select $SRC data/dpo/pool  --conventional 6000 --free 4000 --per-repo 10 --supported-only
+$SCT select $SRC data/dpo/young --conventional 1600 --free 3000 --per-repo 5 \
+  --min-history 0 --max-history 9 --supported-only
+cat data/dpo/pool/inputs.jsonl data/dpo/young/inputs.jsonl > data/dpo/mix/inputs.jsonl
+cat data/dpo/pool/meta.jsonl   data/dpo/young/meta.jsonl   > data/dpo/mix/meta.jsonl
+
+# 2. Four samples per input from each model, with the prompt it was trained on
+#    (v0.1: `--rules full --diff plain`). Stopped, it resumes where it was.
+for size in 0.5b 1.5b; do
+  python -I mine_pairs.py data/dpo/mix data/dpo/mined-$size $SC \
+    ~/.local/share/smart-commit/models/smart-commit-$size-v0.1-q4_k_m.gguf \
+    --server $LLAMA --device Vulkan0 --rules full --diff plain --samples 4 --workers 2 \
+    --exclude-repos-of data/eval-v1 data/eval-short
+done
+
+# 3. The pairs, with how many there are by failure.
+for size in 0.5b 1.5b; do
+  $SCT pairs data/dpo/mined-$size/candidates.jsonl data/dpo/mined-$size data/dpo/pairs-$size.jsonl
+done
+```
+
+`mine_pairs.py` is greedy only in its prompts: the replies are sampled at
+temperature 0.7 with seeds fixed by the input and the sample, so the same
+model, server and inputs give the same candidates. On the Intel GPU of a
+laptop, two servers at once, the 0.5B model sampled 24 inputs a minute and the
+1.5B 14. Both sizes can run at once, or one after the other with `--device`
+set to the GPU's name in `llama-server --list-devices`.
+
 ## Scenarios
 
 Hand-written cases from `scenarios/`, in the same layout as a selection:
