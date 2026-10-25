@@ -1056,3 +1056,32 @@ fn a_failed_load_points_at_the_model_kept_loaded() {
         stderr(&output)
     );
 }
+
+#[test]
+fn the_type_is_only_asked_in_a_terminal() {
+    // With the question turned on, a script (no terminal) gets the message
+    // as always, without waiting for anyone.
+    let repo = staged_repo();
+    for args in [
+        vec!["--backend", "mock", "--mock-response", "fix: stop it"],
+        vec![
+            "--backend",
+            "mock",
+            "--mock-response",
+            "fix: stop it",
+            "--commit",
+        ],
+    ] {
+        let output = smart_commit_with(
+            &args,
+            repo.path(),
+            &[
+                ("SMART_COMMIT_ASK_TYPE", "low_confidence"),
+                ("SMART_COMMIT_ASK_TYPE_BELOW", "99"),
+                ("GIT_EDITOR", "true"),
+            ],
+        );
+        assert!(output.status.success(), "{}", stderr(&output));
+        assert!(!stderr(&output).contains("type"), "{}", stderr(&output));
+    }
+}

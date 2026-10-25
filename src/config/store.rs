@@ -236,6 +236,11 @@ impl Resolved {
             vulkan_device: self.count("model.vulkan_device"),
             threads_batch: self.count("model.threads_batch"),
             keep_loaded: Duration::from_secs(60 * self.count("model.keep_loaded") as u64),
+            ask_type: match choice("model.ask_type") {
+                "low_confidence" => AskType::LowConfidence,
+                _ => AskType::Off,
+            },
+            ask_type_below: self.count("model.ask_type_below"),
             fast_load: match choice("model.fast_load") {
                 "on" => FastLoad::On,
                 "off" => FastLoad::Off,
@@ -285,6 +290,8 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("model.name", text(models::DEFAULT)),
         ("model.vulkan_device", Value::Count(0)),
         ("model.fast_load", text("auto")),
+        ("model.ask_type", text("off")),
+        ("model.ask_type_below", Value::Count(50)),
         ("model.threads_batch", Value::Count(0)),
         ("model.keep_loaded", Value::Count(0)),
         (
@@ -336,6 +343,14 @@ pub enum DeviceSetting {
     Fixed(Target),
 }
 
+/// `model.ask_type`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AskType {
+    Off,
+    /// When the model is unsure of the type.
+    LowConfidence,
+}
+
 /// `model.fast_load`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FastLoad {
@@ -370,6 +385,9 @@ pub struct Settings {
     pub threads_batch: usize,
     /// `model.keep_loaded`; zero to stop the server after each command.
     pub keep_loaded: Duration,
+    pub ask_type: AskType,
+    /// `model.ask_type_below`, a percentage.
+    pub ask_type_below: usize,
     pub fast_load: FastLoad,
     pub npu: NpuTuning,
     pub cache_dir: Option<PathBuf>,
@@ -384,6 +402,11 @@ pub struct Settings {
 }
 
 impl Settings {
+    /// The confidence (0 to 1) below which the type is asked, when it is.
+    pub fn ask_type_below(&self) -> f64 {
+        self.ask_type_below as f64 / 100.0
+    }
+
     pub fn prompt_options(&self) -> PromptOptions {
         PromptOptions {
             max_prompt_tokens: self.max_prompt_tokens,

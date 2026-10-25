@@ -4,10 +4,11 @@
 use std::time::Instant;
 
 use anyhow::Result;
-use smart_commit::generate::Source;
+use smart_commit::generate::{Source, TypeAsk};
 use smart_commit::git::Repo;
 use smart_commit::message::{CommitMessage, SanitizeError};
 use smart_commit::tui::review::{self, Review};
+use smart_commit::tui::type_choice::{Outcome, TypeChoiceView};
 use smart_commit::tui::{self, Screen};
 
 use super::args::{BackendArgs, GenerateArgs};
@@ -27,12 +28,53 @@ pub(super) fn run(args: &GenerateArgs) -> Result<()> {
     Ok(())
 }
 
+/// What was asked about the type, in a terminal.
+enum Typed {
+    /// A type was chosen, or the model is sure enough or left to decide.
+    Go(Option<TypeAsk>),
+    Cancel,
+}
+
+/// Asks which type the message should have, if `model.ask_type` wants it
+/// and the model is unsure.
+fn ask_type(session: &Session) -> Result<Typed> {
+    let Some(offered) = session.type_offer()? else {
+        return Ok(Typed::Go(None));
+    };
+    let mut view = TypeChoiceView::new(offered.clone());
+    let mut screen = Screen::new()?;
+    let outcome = loop {
+        screen.draw(|frame| view.render(frame))?;
+        match view.on_key(screen.key()?) {
+            Outcome::None => {}
+            outcome => break outcome,
+        }
+    };
+    drop(screen);
+    Ok(match outcome {
+        Outcome::Chosen(chosen) => Typed::Go(Some(TypeAsk {
+            choices: offered,
+            chosen,
+        })),
+        Outcome::ModelDecides => Typed::Go(None),
+        _ => Typed::Cancel,
+    })
+}
+
 /// `--commit` in a terminal: shows the message, then commits it, opens the
 /// editor, asks the model for another one or gives up.
 fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<()> {
-    let started = Instant::now();
     let session = Session::start(repo, args)?;
-    let generation = session.generate(&[])?;
+    let asked = match ask_type(&session)? {
+        Typed::Go(asked) => asked,
+        Typed::Cancel => {
+            eprintln!("Cancelled: nothing was committed.");
+            return Ok(());
+        }
+    };
+    // Counted from here: the time a person takes to choose is not the model's.
+    let started = Instant::now();
+    let generation = session.generate_asked(&[], asked.as_ref())?;
     let mut review = Review::new(
         &generation,
         session.running(),
@@ -48,7 +90,7 @@ fn review_and_commit(repo: &Repo, args: &BackendArgs) -> Result<()> {
                 review.working();
                 screen.draw(|frame| review.render(frame))?;
                 let started = Instant::now();
-                let generation = session.generate(&review.turned_down)?;
+                let generation = session.generate_asked(&review.turned_down, asked.as_ref())?;
                 review.replace(&generation, started.elapsed().as_secs_f32());
             }
             action => break action,

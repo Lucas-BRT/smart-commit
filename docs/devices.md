@@ -127,6 +127,14 @@ change of a `model.*` setting, since it holds memory the GPU may need (two
 7B models do not fit in 8 GB). A hardware test checks that a kept model
 gives the same replies as a fresh one.
 
+## Asking for the type
+
+Only `vulkan` and `cpu` can tell how likely each type is and start a reply
+with a chosen one, so `model.ask_type` ([configuration](configuration.md))
+does nothing on `npu`, `intel-gpu` and `openvino-cpu`: the C API of OpenVINO
+GenAI that smart-commit uses shows no log probabilities. What it gains is in
+[measurements](measurements.md#asking-for-the-type).
+
 ## Threads on the CPU
 
 Reading the prompt (prefill) is most of the time per message on the CPU,

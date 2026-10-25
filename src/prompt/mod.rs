@@ -10,6 +10,7 @@ mod user;
 #[cfg(test)]
 mod tests;
 
+pub use system::listed_types;
 pub use types::{DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptOptions, PromptRules};
 
 use crate::context::RepoContext;

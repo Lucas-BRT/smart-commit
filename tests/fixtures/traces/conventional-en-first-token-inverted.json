@@ -1,0 +1,131 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 4b6ddd2",
+      "Merge branch 'fix/npu-prompt-headroom'",
+      "test: isolate the tests from the machine's hardware",
+      "test(cli): run the tests of auto on a fake machine",
+      "test(fixtures): trace a device filter answered as a new backend",
+      "feat(device): use only the devices the machine has",
+      "test(fixtures): trace a budget fix answered as a feature"
+    ],
+    "history_files": [
+      [
+        "src/backend/llamacpp/mod.rs",
+        "src/backend/llamacpp/tests.rs",
+        "src/backend/mod.rs",
+        "tests/hardware.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "added",
+        "path": "src/backend/choices.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/llamacpp/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/hardware.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "src/backend/choices.rs",
+        "old_path": null,
+        "lines": [
+          138,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,138 @@\n+//! The Conventional Commits type a reply starts with, as the probability a\n+//! model gives each candidate for its first token.\n+\n+use serde::{Deserialize, Serialize};\n+\n+/// The types a reply may start with.\n+pub const TYPES: [&str; 11] = [\n+    \"feat\", \"fix\", \"docs\", \"chore\", \"refactor\", \"test\", \"perf\", \"build\", \"ci\", \"style\", \"revert\",\n+];\n+\n+/// A type the reply may start with, and how likely the model finds it.\n+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]\n+pub struct TypeChoice {\n+    pub name: String,\n+    pub probability: f64,\n+}\n+\n+/// The type a token begins: the type itself (in any case), `tests` for\n+/// `test`, or the only type that starts with it, since a tokenizer may split\n+/// `refactor` into `ref` and `actor`. Two types sharing the start (`re`)\n+/// give none.\n+fn type_of(token: &str) -> Option<&'static str> {\n+    let token = token.trim().to_lowercase();\n+    if token == \"tests\" {\n+        return Some(\"test\");\n+    }\n+    if let Some(known) = TYPES.iter().find(|t| **t == token) {\n+        return Some(known);\n+    }\n+    if token.chars().count() < 2 {\n+        return None;\n+    }\n+    let mut starts = TYPES.iter().filter(|t| t.starts_with(&token));\n+    match (starts.next(), starts.next()) {\n+        (Some(only), None) => Some(only),\n+        _ => None,\n+    }\n+}\n+\n+/// The types among `candidates` (a token and its log probability, as a\n+/// server lists them), most likely first, with probabilities adding up to 1\n+/// over the types found. Tokens of one type add up; the rest are ignored.\n+pub fn from_logprobs(candidates: &[(String, f64)]) -> Vec<TypeChoice> {\n+    let mut choices: Vec<TypeChoice> = Vec::new();\n+    for (token, logprob) in candidates {\n+        let Some(name) = type_of(token) else { continue };\n+        let probability = logprob.exp();\n+        match choices.iter_mut().find(|c| c.name == name) {\n+            Some(known) => known.probability += probability,\n+            None => choices.push(TypeChoice {\n+                name: name.to_owned(),\n+                probability,\n+            }),\n+        }\n+    }\n+    let total: f64 = choices.iter().map(|c| c.probability).sum();\n+    if total <= 0.0 {\n+        return Vec::new();\n+    }\n+    for choice in &mut choices {\n+        choice.probability /= total;\n+    }\n+    // Ties by name, so the order never depends on the server's.\n+    choices.sort_by(|a, b| {\n+        b.probability\n+            .total_cmp(&a.probability)\n+            .then_with(|| a.name.cmp(&b.name))\n+    });\n+    choices\n+}\n+\n+#[cfg(test)]\n+mod tests {\n+    use super::*;\n+\n+    fn tokens(list: &[(&str, f64)]) -> Vec<(String, f64)> {\n+        list.iter()\n+            .map(|(t, p)| ((*t).to_owned(), p.ln()))\n+            .collect()\n+    }\n+\n+    #[test]\n+    fn types_are_found_among_other_tokens_and_normalised() {\n+        let choices = from_logprobs(&tokens(&[\n+            (\"feat\", 0.5),\n+            (\"fix\", 0.3),\n+            (\"(\", 0.1),\n+            (\"chore\", 0.1),\n+        ]));\n+        let names: Vec<&str> = choices.iter().map(|c| c.name.as_str()).collect();\n+        assert_eq!(names, [\"feat\", \"fix\", \"chore\"]);\n+        let total: f64 = choices.iter().map(|c| c.probability).sum();\n+        assert!((total - 1.0).abs() < 1e-9);\n+        assert!((choices[0].probability - 0.5 / 0.9).abs() < 1e-9);\n+    }\n+\n+    #[test]\n+    fn split_and_differently_spelt_tokens_count_for_their_type() {\n+        let choices = from_logprobs(&tokens(&[\n+            (\"ref\", 0.2),\n+            (\"Fix\", 0.3),\n+            (\"fix\", 0.1),\n+            (\"ch\", 0.1),\n+            (\"tests\", 0.05),\n+        ]));\n+        let find = |name: &str| {\n+            choices\n+                .iter()\n+                .find(|c| c.name == name)\n+                .map(|c| c.probability)\n+        };\n+        let total = 0.2 + 0.4 + 0.1 + 0.05;\n+        assert!((find(\"fix\").unwrap() - 0.4 / total).abs() < 1e-9);\n+        assert!((find(\"refactor\").unwrap() - 0.2 / total).abs() < 1e-9);\n+        assert!((find(\"chore\").unwrap() - 0.1 / total).abs() < 1e-9);\n+        assert!((find(\"test\").unwrap() - 0.05 / total).abs() < 1e-9);\n+    }\n+\n+    #[test]\n+    fn a_start_two_types_share_or_a_single_letter_is_no_type() {\n+        assert_eq!(type_of(\"re\"), None);\n+        assert_eq!(type_of(\"f\"), None);\n+        assert_eq!(type_of(\"hello\"), None);\n+        assert!(from_logprobs(&tokens(&[(\"re\", 0.5), (\"(\", 0.5)])).is_empty());\n+    }\n+\n+    #[test]\n+    fn equal_probabilities_are_ordered_by_name() {\n+        let choices = from_logprobs(&tokens(&[(\"fix\", 0.4), (\"docs\", 0.4), (\"feat\", 0.2)]));\n+        let names: Vec<&str> = choices.iter().map(|c| c.name.as_str()).collect();\n+        assert_eq!(names, [\"docs\", \"fix\", \"feat\"]);\n+    }\n+\n+    #[test]\n+    fn nothing_found_gives_nothing() {\n+        assert!(from_logprobs(&[]).is_empty());\n+    }\n+}\n"
+      },
+      {
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": null,
+        "lines": [
+          89,
+          11
+        ],
+        "hunks": "@@ -30,3 +30,3 @@ use serde_json::{Value, json};\n \n-use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};\n+use crate::backend::{Backend, BackendError, GenerationConfig, Metrics, TypeChoice, choices};\n use crate::prompt::Prompt;\n@@ -256,2 +256,22 @@ impl LlamaCppBackend {\n \n+impl LlamaCppBackend {\n+    /// Posts `request` to the chat endpoint; the body of the answer.\n+    fn post_chat(&self, request: &Value) -> Result<String, BackendError> {\n+        let (status, response) = http(\n+            &self.socket,\n+            \"POST\",\n+            \"/v1/chat/completions\",\n+            Some(&request.to_string()),\n+        )\n+        .map_err(|e| BackendError::Generation(format!(\"llama-server request failed: {e}\")))?;\n+        if status != 200 {\n+            return Err(BackendError::Generation(format!(\n+                \"llama-server answered {status}: {}\",\n+                response.trim()\n+            )));\n+        }\n+        Ok(response)\n+    }\n+}\n+\n impl Drop for LlamaCppBackend {\n@@ -275,12 +295,21 @@ impl Backend for LlamaCppBackend {\n     fn generate(&self, prompt: &Prompt, config: &GenerationConfig) -> Result<String, BackendError> {\n-        let body = chat_request(prompt, config).to_string();\n-        let (status, response) = http(&self.socket, \"POST\", \"/v1/chat/completions\", Some(&body))\n-            .map_err(|e| BackendError::Generation(format!(\"llama-server request failed: {e}\")))?;\n-        if status != 200 {\n-            return Err(BackendError::Generation(format!(\n-                \"llama-server answered {status}: {}\",\n-                response.trim()\n-            )));\n-        }\n-        let (text, mut metrics) = parse_chat_response(&response)?;\n+        let (text, mut metrics) =\n+            parse_chat_response(&self.post_chat(&chat_request(prompt, config))?)?;\n+        metrics.load_ms = self.load_ms;\n+        *self.last_metrics.lock().expect(\"metrics lock\") = Some(metrics);\n+        Ok(text)\n+    }\n+\n+    fn type_choices(&self, prompt: &Prompt) -> Result<Vec<TypeChoice>, BackendError> {\n+        parse_type_choices(&self.post_chat(&type_request(prompt))?)\n+    }\n+\n+    fn generate_starting_with(\n+        &self,\n+        prompt: &Prompt,\n+        start: &str,\n+        config: &GenerationConfig,\n+    ) -> Result<String, BackendError> {\n+        let request = chat_request_starting_with(prompt, config, start);\n+        let (text, mut metrics) = parse_chat_response(&self.post_chat(&request)?)?;\n         metrics.load_ms = self.load_ms;\n@@ -359,2 +388,51 @@ pub fn chat_request(prompt: &Prompt, config: &GenerationConfig) -> Value {\n \n+/// [`chat_request`] with the reply begun by `start`: llama-server continues\n+/// a last message from the assistant, and answers with the whole reply,\n+/// `start` included.\n+pub fn chat_request_starting_with(\n+    prompt: &Prompt,\n+    config: &GenerationConfig,\n+    start: &str,\n+) -> Value {\n+    let mut request = chat_request(prompt, config);\n+    if let Some(messages) = request[\"messages\"].as_array_mut() {\n+        messages.push(json!({\"role\": \"assistant\", \"content\": start}));\n+    }\n+    request\n+}\n+\n+/// Candidates for the first token of the reply, with their probabilities.\n+const TOP_LOGPROBS: usize = 12;\n+\n+/// A request for the first token of the reply and the likeliest others,\n+/// which is where the model picks the type.\n+pub fn type_request(prompt: &Prompt) -> Value {\n+    let mut request = chat_request(prompt, &GenerationConfig { max_new_tokens: 1 });\n+    request[\"logprobs\"] = json!(true);\n+    request[\"top_logprobs\"] = json!(TOP_LOGPROBS);\n+    request\n+}\n+\n+/// The types among the candidates for the reply's first token, from the\n+/// answer to [`type_request`].\n+pub fn parse_type_choices(body: &str) -> Result<Vec<TypeChoice>, BackendError> {\n+    let invalid =\n+        |what: &str| BackendError::Generation(format!(\"unexpected llama-server reply: {what}\"));\n+    let value: Value = serde_json::from_str(body).map_err(|e| invalid(&e.to_string()))?;\n+    let top = value\n+        .pointer(\"/choices/0/logprobs/content/0/top_logprobs\")\n+        .and_then(Value::as_array)\n+        .ok_or_else(|| invalid(\"no log probabilities\"))?;\n+    let candidates: Vec<(String, f64)> = top\n+        .iter()\n+        .filter_map(|entry| {\n+            Some((\n+                entry.get(\"token\")?.as_str()?.to_owned(),\n+                entry.get(\"logprob\")?.as_f64()?,\n+            ))\n+        })\n+        .collect();\n+    Ok(choices::from_logprobs(&candidates))\n+}\n+\n pub fn parse_chat_response(body: &str) -> Result<(String, Metrics), BackendError> {\n"
+      },
+      {
+        "path": "src/backend/llamacpp/tests.rs",
+        "old_path": null,
+        "lines": [
+          79,
+          0
+        ],
+        "hunks": "@@ -337 +337,80 @@ fn socket_dirs_are_private_and_short() {\n }\n+\n+#[test]\n+fn a_reply_can_be_begun_for_the_model() {\n+    let request =\n+        chat_request_starting_with(&prompt(), &GenerationConfig { max_new_tokens: 96 }, \"fix\");\n+    let messages = request[\"messages\"].as_array().unwrap();\n+    assert_eq!(messages.len(), 3);\n+    assert_eq!(messages[2][\"role\"], \"assistant\");\n+    assert_eq!(messages[2][\"content\"], \"fix\");\n+    // Everything else is as greedy and seeded as a plain request.\n+    assert_eq!(request[\"temperature\"], 0);\n+    assert_eq!(request[\"max_tokens\"], 96);\n+    assert_eq!(request[\"cache_prompt\"], false);\n+}\n+\n+#[test]\n+fn the_type_is_asked_with_one_token_and_its_alternatives() {\n+    let request = type_request(&prompt());\n+    assert_eq!(request[\"max_tokens\"], 1);\n+    assert_eq!(request[\"logprobs\"], true);\n+    assert_eq!(request[\"top_logprobs\"], 12);\n+    assert_eq!(request[\"temperature\"], 0);\n+    assert_eq!(request[\"messages\"].as_array().unwrap().len(), 2);\n+}\n+\n+#[test]\n+fn types_are_read_from_the_first_tokens_candidates() {\n+    let body = r#\"{\"choices\":[{\"logprobs\":{\"content\":[{\"token\":\"feat\",\"logprob\":-0.654,\n+        \"top_logprobs\":[\n+          {\"token\":\"feat\",\"logprob\":-0.654},{\"token\":\"fix\",\"logprob\":-0.894},\n+          {\"token\":\"ch\",\"logprob\":-3.453},{\"token\":\"ref\",\"logprob\":-3.697},\n+          {\"token\":\"Fix\",\"logprob\":-6.878},{\"token\":\"(\",\"logprob\":-9.0}]}]}}]}\"#;\n+    let choices = parse_type_choices(body).unwrap();\n+    let names: Vec<&str> = choices.iter().map(|c| c.name.as_str()).collect();\n+    assert_eq!(names, [\"feat\", \"fix\", \"chore\", \"refactor\"]);\n+    let total: f64 = choices.iter().map(|c| c.probability).sum();\n+    assert!((total - 1.0).abs() < 1e-9);\n+    assert!(choices[0].probability > choices[1].probability);\n+\n+    let err = parse_type_choices(r#\"{\"choices\":[{\"message\":{\"content\":\"feat\"}}]}\"#).unwrap_err();\n+    assert!(err.to_string().contains(\"no log probabilities\"), \"{err}\");\n+    assert!(parse_type_choices(\"not json\").is_err());\n+}\n+\n+#[test]\n+fn types_and_a_chosen_start_go_through_the_socket() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let socket = dir.path().join(\"server.sock\");\n+    let choices = r#\"{\"choices\":[{\"logprobs\":{\"content\":[{\"token\":\"feat\",\"logprob\":-0.7,\n+        \"top_logprobs\":[{\"token\":\"feat\",\"logprob\":-0.7},{\"token\":\"fix\",\"logprob\":-0.9}]}]}}]}\"#;\n+    let reply_body = r#\"{\"choices\":[{\"message\":{\"content\":\"fix(core): stop the crash\"}}],\n+        \"timings\":{\"prompt_n\":10,\"predicted_n\":6}}\"#;\n+    let server = fake_server(\n+        &socket,\n+        vec![reply(\"200 OK\", choices), reply(\"200 OK\", reply_body)],\n+    );\n+    let backend = LlamaCppBackend::connect(socket, \"fake\".into());\n+\n+    let types = backend.type_choices(&prompt()).unwrap();\n+    assert_eq!(types[0].name, \"feat\");\n+    assert_eq!(types[1].name, \"fix\");\n+    let text = backend\n+        .generate_starting_with(&prompt(), \"fix\", &GenerationConfig::default())\n+        .unwrap();\n+    assert_eq!(text, \"fix(core): stop the crash\");\n+    assert_eq!(backend.last_metrics().unwrap().output_tokens, 6);\n+\n+    let requests = server.join().unwrap();\n+    assert!(\n+        requests[0].contains(r#\"\"logprobs\":true\"#),\n+        \"{}\",\n+        requests[0]\n+    );\n+    // The last message is the assistant's, begun with the type (the order\n+    // of an object's keys depends on the features serde_json is built with).\n+    let body: Value = serde_json::from_str(requests[1].split(\"\\r\\n\\r\\n\").nth(1).unwrap()).unwrap();\n+    let last = body[\"messages\"].as_array().unwrap().last().unwrap().clone();\n+    assert_eq!(last, json!({\"role\": \"assistant\", \"content\": \"fix\"}));\n+}\n"
+      },
+      {
+        "path": "src/backend/mod.rs",
+        "old_path": null,
+        "lines": [
+          95,
+          0
+        ],
+        "hunks": "@@ -3,2 +3,3 @@\n \n+pub mod choices;\n pub mod device;\n@@ -15,2 +16,4 @@ use crate::prompt::Prompt;\n \n+pub use choices::TypeChoice;\n+\n /// Everything that affects what the model generates, made explicit so a\n@@ -67,2 +70,23 @@ pub trait Backend {\n \n+    /// The Conventional Commits types the reply to `prompt` may start with,\n+    /// most likely first, with their probabilities. Empty when the backend\n+    /// cannot tell (only llama.cpp's devices can).\n+    fn type_choices(&self, _prompt: &Prompt) -> Result<Vec<TypeChoice>, BackendError> {\n+        Ok(Vec::new())\n+    }\n+\n+    /// Like [`Backend::generate`], with the reply made to begin with\n+    /// `start`, which is part of what it returns: the type a person chose.\n+    /// Only a backend whose [`Backend::type_choices`] is not empty has it.\n+    fn generate_starting_with(\n+        &self,\n+        _prompt: &Prompt,\n+        _start: &str,\n+        _config: &GenerationConfig,\n+    ) -> Result<String, BackendError> {\n+        Err(BackendError::Unavailable(\n+            \"this backend cannot start a reply with a chosen type\".to_owned(),\n+        ))\n+    }\n+\n     /// Timings of the last successful [`Backend::generate`], when the\n@@ -94,2 +118,4 @@ pub struct MockBackend {\n     prompts: Mutex<Vec<Prompt>>,\n+    choices: Vec<TypeChoice>,\n+    starts: Mutex<Vec<String>>,\n }\n@@ -101,2 +127,4 @@ impl MockBackend {\n             prompts: Mutex::default(),\n+            choices: Vec::new(),\n+            starts: Mutex::default(),\n         }\n@@ -104,2 +132,23 @@ impl MockBackend {\n \n+    /// Makes it answer [`Backend::type_choices`] with `choices`, and take a\n+    /// reply start: the scripted replies are then the whole reply.\n+    pub fn with_type_choices(\n+        mut self,\n+        choices: impl IntoIterator<Item = (&'static str, f64)>,\n+    ) -> Self {\n+        self.choices = choices\n+            .into_iter()\n+            .map(|(name, probability)| TypeChoice {\n+                name: name.to_owned(),\n+                probability,\n+            })\n+            .collect();\n+        self\n+    }\n+\n+    /// The reply starts it was asked for, oldest first.\n+    pub fn starts(&self) -> Vec<String> {\n+        self.starts.lock().expect(\"mock lock\").clone()\n+    }\n+\n     /// The prompts received so far, oldest first.\n@@ -124,2 +173,20 @@ impl Backend for MockBackend {\n     }\n+\n+    fn type_choices(&self, _: &Prompt) -> Result<Vec<TypeChoice>, BackendError> {\n+        Ok(self.choices.clone())\n+    }\n+\n+    /// The scripted reply as it is: it already begins with the start.\n+    fn generate_starting_with(\n+        &self,\n+        prompt: &Prompt,\n+        start: &str,\n+        config: &GenerationConfig,\n+    ) -> Result<String, BackendError> {\n+        self.starts\n+            .lock()\n+            .expect(\"mock lock\")\n+            .push(start.to_owned());\n+        self.generate(prompt, config)\n+    }\n }\n@@ -156,2 +223,30 @@ mod tests {\n     }\n+\n+    #[test]\n+    fn a_backend_without_choices_says_so_and_cannot_start_a_reply() {\n+        let mock = MockBackend::new([\"fix: x\"]);\n+        assert!(mock.type_choices(&prompt(\"a\")).unwrap().is_empty());\n+        assert!(NoModel.type_choices(&prompt(\"a\")).unwrap().is_empty());\n+        let config = GenerationConfig::default();\n+        let err = NoModel\n+            .generate_starting_with(&prompt(\"a\"), \"fix\", &config)\n+            .unwrap_err();\n+        assert!(err.to_string().contains(\"cannot start a reply\"), \"{err}\");\n+    }\n+\n+    #[test]\n+    fn mock_offers_its_choices_and_records_the_starts() {\n+        let mock = MockBackend::new([\"fix(core): stop the crash\"])\n+            .with_type_choices([(\"feat\", 0.55), (\"fix\", 0.45)]);\n+        let choices = mock.type_choices(&prompt(\"a\")).unwrap();\n+        assert_eq!(choices.len(), 2);\n+        assert_eq!(choices[1].name, \"fix\");\n+        let config = GenerationConfig::default();\n+        let reply = mock\n+            .generate_starting_with(&prompt(\"a\"), \"fix\", &config)\n+            .unwrap();\n+        assert_eq!(reply, \"fix(core): stop the crash\");\n+        assert_eq!(mock.starts(), [\"fix\"]);\n+        assert_eq!(mock.prompts(), [prompt(\"a\")]);\n+    }\n }\n"
+      },
+      {
+        "path": "tests/hardware.rs",
+        "old_path": null,
+        "lines": [
+          38,
+          0
+        ],
+        "hunks": "@@ -177,2 +177,40 @@ fn a_model_kept_loaded_gives_the_same_replies() {\n \n+#[test]\n+#[ignore = \"needs OpenVINO GenAI and an exported model\"]\n+fn llamacpp_tells_the_type_and_writes_for_a_chosen_one() {\n+    if llamacpp_options().is_none() {\n+        println!(\"only the llama.cpp devices tell the type and start a reply\");\n+        return;\n+    }\n+    let backend = backend();\n+    let config = GenerationConfig::default();\n+    // The first prompt of ten fixtures: enough to see it works, quick on the CPU.\n+    for (name, prompt) in fixture_prompts().into_iter().step_by(5).take(10) {\n+        let choices = backend.type_choices(&prompt).unwrap();\n+        assert!(!choices.is_empty(), \"{name}: no type among the candidates\");\n+        let total: f64 = choices.iter().map(|c| c.probability).sum();\n+        assert!((total - 1.0).abs() < 1e-6, \"{name}: {choices:?}\");\n+        assert!(\n+            choices\n+                .windows(2)\n+                .all(|w| w[0].probability >= w[1].probability)\n+        );\n+        // The reply is made to begin with a type the model did not pick.\n+        let other = if choices[0].name == \"docs\" {\n+            \"fix\"\n+        } else {\n+            \"docs\"\n+        };\n+        let reply = backend\n+            .generate_starting_with(&prompt, other, &config)\n+            .unwrap();\n+        println!(\"{name}: {choices:?} -> {reply:?}\");\n+        assert!(reply.starts_with(other), \"{name}: {reply:?}\");\n+        assert!(\n+            reply.len() > other.len(),\n+            \"{name}: only the start came back\"\n+        );\n+    }\n+}\n+\n #[test]\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat: add a way for the model to choose its first token",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: test, feat, refactor.\n- Scopes used here: fixtures, cli, device. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest: isolate the tests from the machine's hardware\ntest(cli): run the tests of auto on a fake machine\ntest(fixtures): trace a device filter answered as a new backend\nfeat(device): use only the devices the machine has\ntest(fixtures): trace a budget fix answered as a feature\n",
+          "user": "Files changed:\nsrc/backend/choices.rs | new, +138 -0\nsrc/backend/llamacpp/mod.rs | +89 -11\nsrc/backend/llamacpp/tests.rs | +79 -0\nsrc/backend/mod.rs | +95 -0\ntests/hardware.rs | +38 -0\n\nDiff:\n--- src/backend/choices.rs\n@@ -0,0 +1,138 @@\n+//! The Conventional Commits type a reply starts with, as the probability a\n+//! model gives each candidate for its first token.\n+\n+use serde::{Deserialize, Serialize};\n+\n+/// The types a reply may start with.\n+pub const TYPES: [&str; 11] = [\n[... 131 more lines]\n--- src/backend/llamacpp/mod.rs\n@@ -30,3 +30,3 @@ use serde_json::{Value, json};\n \n-use crate::backend::{Backend, BackendError, GenerationConfig, Metrics};\n+use crate::backend::{Backend, BackendError, GenerationConfig, Metrics, TypeChoice, choices};\n use crate::prompt::Prompt;\n@@ -256,2 +256,22 @@ impl LlamaCppBackend {\n \n+impl LlamaCppBackend {\n[... 104 more lines]\n--- src/backend/llamacpp/tests.rs\n@@ -337 +337,80 @@ fn socket_dirs_are_private_and_short() {\n }\n+\n+#[test]\n+fn a_reply_can_be_begun_for_the_model() {\n+    let request =\n+        chat_request_starting_with(&prompt(), &GenerationConfig { max_new_tokens: 96 }, \"fix\");\n+    let messages = request[\"messages\"].as_array().unwrap();\n+    assert_eq!(messages.len(), 3);\n[... 72 more lines]\n--- src/backend/mod.rs\n@@ -3,2 +3,3 @@\n \n+pub mod choices;\n pub mod device;\n@@ -15,2 +16,4 @@ use crate::prompt::Prompt;\n \n+pub use choices::TypeChoice;\n+\n /// Everything that affects what the model generates, made explicit so a\n@@ -67,2 +70,23 @@ pub trait Backend {\n \n[... 108 more lines]\n\n(5 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat: add a way for the model to choose its first token",
+        "rejected": null
+      }
+    ]
+  }
+}
