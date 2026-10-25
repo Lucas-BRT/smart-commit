@@ -273,6 +273,17 @@ real_change conventional-en-vague-refactor 9fc1e92 "refactor(cli): add error han
 # A new `-v` flag and tracing, answered `refactor` and about the wrong thing:
 # `feat(cli): report with tracing and add -v for debug output`.
 real_change conventional-en-feat-as-refactor 6cabc49 "refactor(cli): split the module by ui and notes"
+# A pure split of llamacpp.rs into a backend, an HTTP client and tests,
+# answered `feat` and as if an HTTP server had been added: it is a
+# `refactor`, and nothing new was added.
+real_change conventional-en-split-llamacpp 1f4cd5a "feat(llamacpp): add http server and client"
+# The same kind of split for diff.rs, answered `refactor` but with a subject
+# that names no file or purpose: `split the module into parse, classify,
+# compact and tests`.
+real_change conventional-en-split-diff d1ba19d "refactor(diff): split diff into its components"
+# And for models.rs, answered `feat` and as if the module had moved to a new
+# directory, which says nothing of what the split separated.
+real_change conventional-en-split-models 00f23be "feat(models): move models to a new directory"
 
 # Prompts the size of real ones, for `smart-commit bench`: a change of one of
 # this repository's files, from a pinned commit, sized like the 25th, 50th,
