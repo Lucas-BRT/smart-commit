@@ -135,6 +135,17 @@ pub const KEYS: &[Key] = &[
                       do not depend on it.",
     },
     Key {
+        name: "model.keep_loaded_max_ram",
+        kind: Kind::Count { min: 1, max: 100 },
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_KEEP_LOADED_MAX_RAM"),
+        description: "The share of the machine's RAM, in percent, a model kept loaded may take: \
+                      the model file and about 256 MB. A model that would take more is loaded \
+                      for the commit only, one kept stops when it passes the share, and a \
+                      machine with less than a tenth of its RAM available keeps none. 100 \
+                      removes the share (not the tenth that stays available).",
+    },
+    Key {
         name: "model.ask_type",
         kind: Kind::Choice(&["off", "low_confidence"]),
         scope: Scope::User,

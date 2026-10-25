@@ -537,3 +537,50 @@ fn asking_for_the_type_is_a_personal_setting_not_the_repositorys() {
         "{err}"
     );
 }
+
+#[test]
+fn a_kept_model_may_take_a_sixth_of_the_ram_unless_set() {
+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();
+    assert_eq!(settings.keep_loaded_max_ram, 15);
+    let file = "[model]\nkeep_loaded_max_ram = 40\n";
+    let settings = resolve(Some(file), None, HOME, vec![]).unwrap().settings();
+    assert_eq!(settings.keep_loaded_max_ram, 40);
+    let vars = [
+        ("HOME", "/home/me"),
+        ("SMART_COMMIT_KEEP_LOADED_MAX_RAM", "25"),
+    ];
+    let settings = resolve(Some(file), None, &vars, vec![]).unwrap().settings();
+    assert_eq!(settings.keep_loaded_max_ram, 25, "the environment wins");
+}
+
+#[test]
+fn the_share_of_ram_is_a_percentage_from_one_to_a_hundred() {
+    for value in ["0", "101"] {
+        let file = format!("[model]\nkeep_loaded_max_ram = {value}\n");
+        let err = resolve(Some(&file), None, HOME, vec![]).unwrap_err();
+        assert!(
+            err.to_string().contains("a whole number from 1 to 100"),
+            "{value}: {err}"
+        );
+    }
+    let repo = "[model]\nkeep_loaded_max_ram = 90\n";
+    let err = resolve(None, Some(repo), HOME, vec![]).unwrap_err();
+    assert!(
+        matches!(&err, ConfigError::UserOnly { key, .. } if key == "model.keep_loaded_max_ram"),
+        "{err}"
+    );
+}
+
+#[test]
+fn only_a_keep_loaded_someone_set_counts_as_asked_for() {
+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();
+    assert!(!settings.keep_loaded_explicit);
+    assert_eq!(settings.keep_loaded, std::time::Duration::from_secs(600));
+    let file = "[model]\nkeep_loaded = 10\n";
+    let settings = resolve(Some(file), None, HOME, vec![]).unwrap().settings();
+    assert!(settings.keep_loaded_explicit, "even to the default's value");
+    let vars = [("HOME", "/home/me"), ("SMART_COMMIT_KEEP_LOADED", "0")];
+    let settings = resolve(None, None, &vars, vec![]).unwrap().settings();
+    assert!(settings.keep_loaded_explicit);
+    assert!(settings.keep_loaded.is_zero());
+}

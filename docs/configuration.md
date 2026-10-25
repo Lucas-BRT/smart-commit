@@ -47,6 +47,7 @@ value, for example when an environment variable is set.
 | `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
 | `model.threads_batch` | 0–1024 | 0 (one per physical core) | | global |
 | `model.keep_loaded` | 0–1440 | 10 | `SMART_COMMIT_KEEP_LOADED` | global |
+| `model.keep_loaded_max_ram` | 1–100 | 15 | `SMART_COMMIT_KEEP_LOADED_MAX_RAM` | global |
 | `model.ask_type` | `off`, `low_confidence` | `off` | `SMART_COMMIT_ASK_TYPE` | global |
 | `model.ask_type_below` | 1–99 | 50 | `SMART_COMMIT_ASK_TYPE_BELOW` | global |
 | `model.npu_prefill_chunk` | 512–8192 | 512 | | global |
