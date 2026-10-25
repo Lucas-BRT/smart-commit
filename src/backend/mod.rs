@@ -1,6 +1,11 @@
 //! The model that writes the message, behind a trait so everything around
 //! it can be tested without an NPU.
 
+pub mod device;
+pub mod genai;
+pub mod llamacpp;
+pub mod server;
+
 use std::collections::VecDeque;
 use std::sync::Mutex;
 

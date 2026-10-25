@@ -2,7 +2,8 @@
 
 use anyhow::Result;
 use clap::Subcommand;
-use smart_commit::{paths, server};
+use smart_commit::backend::server;
+use smart_commit::paths;
 
 use super::settings::env;
 

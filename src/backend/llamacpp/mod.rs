@@ -7,7 +7,7 @@
 //! Each generation session starts a private `llama-server`, listening on a
 //! UNIX socket in a fresh temporary directory (nothing is exposed on the
 //! network), and stops it when the backend is dropped; with
-//! `model.keep_loaded`, [`crate::server`] keeps one running between commits
+//! `model.keep_loaded`, [`crate::backend::server`] keeps one running between commits
 //! instead. The HTTP client is a
 //! minimal HTTP/1.1 one over that socket, so no network library is needed.
 

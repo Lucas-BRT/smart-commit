@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::*;
-use crate::device::Target;
+use crate::backend::device::Target;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Report {

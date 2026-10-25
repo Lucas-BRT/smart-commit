@@ -36,8 +36,8 @@ impl Device {
     }
 
     /// The smart-commit device this is.
-    pub fn target(self) -> crate::device::Target {
-        use crate::device::Target;
+    pub fn target(self) -> crate::backend::device::Target {
+        use crate::backend::device::Target;
         match self {
             Self::Npu => Target::Npu,
             Self::Gpu => Target::IntelGpu,

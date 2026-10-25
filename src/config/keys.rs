@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use toml_edit::Item;
 
-use crate::device;
+use crate::backend::device;
 use crate::models;
 
 use super::{ConfigError, Value};

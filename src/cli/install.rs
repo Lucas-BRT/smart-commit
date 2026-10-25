@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context as _, Result, anyhow, bail};
-use smart_commit::{paths, server, tui};
+use smart_commit::backend::server;
+use smart_commit::{paths, tui};
 
 use super::settings::{env, resolve};
 

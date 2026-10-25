@@ -4,10 +4,10 @@ use std::cell::OnceCell;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
+use smart_commit::backend::device::Target;
 use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};
 use smart_commit::config::{BackendKind, Origin, Resolved, Value};
 use smart_commit::context::RepoContext;
-use smart_commit::device::Target;
 use smart_commit::diff::FileDiff;
 use smart_commit::generate::{self, Generation};
 use smart_commit::git::Repo;

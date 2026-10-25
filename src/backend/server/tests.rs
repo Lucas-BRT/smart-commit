@@ -2,7 +2,7 @@ use std::cell::Cell;
 use std::os::unix::net::UnixListener;
 
 use super::*;
-use crate::llamacpp::LlamaDevice;
+use crate::backend::llamacpp::LlamaDevice;
 
 fn options(dir: &Path) -> LlamaCppOptions {
     LlamaCppOptions {

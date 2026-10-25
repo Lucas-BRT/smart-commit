@@ -19,7 +19,7 @@ pub use report::{Machine, Report};
 
 use serde::{Deserialize, Serialize};
 
-use crate::device::Target;
+use crate::backend::device::Target;
 use crate::prompt::Prompt;
 use crate::trace::Trace;
 

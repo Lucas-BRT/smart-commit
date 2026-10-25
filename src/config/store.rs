@@ -8,9 +8,9 @@ use std::time::Duration;
 use toml_edit::{DocumentMut, Item, Table};
 
 use crate::backend::GenerationConfig;
-use crate::device::Target;
-use crate::genai::{Device, GenaiOptions, NpuTuning};
-use crate::llamacpp::{LlamaCppOptions, LlamaDevice};
+use crate::backend::device::Target;
+use crate::backend::genai::{Device, GenaiOptions, NpuTuning};
+use crate::backend::llamacpp::{LlamaCppOptions, LlamaDevice};
 use crate::models::{self, Model};
 use crate::paths;
 use crate::prompt::{DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptOptions, PromptRules};

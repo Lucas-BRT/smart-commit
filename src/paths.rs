@@ -47,7 +47,10 @@ pub fn default_llama_server(env: impl Fn(&str) -> Option<String>) -> Option<Path
     Some(
         xdg(&env, "XDG_DATA_HOME", ".local/share")?
             .join("smart-commit/llama.cpp")
-            .join(format!("llama-{}", crate::llamacpp::LLAMA_CPP_BUILD))
+            .join(format!(
+                "llama-{}",
+                crate::backend::llamacpp::LLAMA_CPP_BUILD
+            ))
             .join("llama-server"),
     )
 }

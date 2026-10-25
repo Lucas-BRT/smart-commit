@@ -24,9 +24,10 @@ Everything except the model is deterministic and tested without hardware.
 | `message` | sanitizes the model's output; builds the fallback message |
 | `generate` | prompt → model → sanitize → retry → fallback, keeping every attempt |
 | `backend` | the `Backend` trait, `GenerationConfig`, `MockBackend` |
-| `genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
-| `llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
-| `device` | candidate devices and loading the first that works |
+| `backend::genai` | OpenVINO GenAI backend (`npu`, `intel-gpu`, `openvino-cpu`), loaded at run time |
+| `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
+| `backend::server` | the `llama-server` kept loaded between commits (`model.keep_loaded`) |
+| `backend::device` | candidate devices and loading the first that works |
 | `bench` | measures every device on four embedded prompts sized like real ones |
 | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |
 | `setup` | the steps the hardware needs, for the setup screen |

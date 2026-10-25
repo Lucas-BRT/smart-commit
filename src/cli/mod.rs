@@ -219,7 +219,9 @@ pub fn run() -> ExitCode {
         Some(Command::Server(command)) => keep_loaded::run(command),
         Some(Command::Update) => install::update(),
         Some(Command::Uninstall { yes, system }) => install::uninstall(yes, system),
-        Some(Command::KeepServer { dir }) => smart_commit::server::serve(&dir).map_err(Into::into),
+        Some(Command::KeepServer { dir }) => {
+            smart_commit::backend::server::serve(&dir).map_err(Into::into)
+        }
         None => suggest::run(&cli.generate),
     };
     match result {

@@ -1,8 +1,8 @@
 use std::time::Instant;
 
 use super::*;
+use crate::backend::device::Target;
 use crate::backend::{Backend, BackendError, GenerationConfig};
-use crate::device::Target;
 use crate::prompt::Prompt;
 
 /// CPU time used by this process and its waited-for children (such as

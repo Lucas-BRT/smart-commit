@@ -36,7 +36,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::backend::BackendError;
-use crate::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};
+use crate::backend::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};
 
 /// The hidden subcommand that runs the supervisor.
 pub const SUBCOMMAND: &str = "keep-server";

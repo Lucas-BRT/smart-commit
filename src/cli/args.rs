@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{Args, ValueEnum};
-use smart_commit::device::Target;
+use smart_commit::backend::device::Target;
 use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules};
 
 #[derive(Debug, Args)]

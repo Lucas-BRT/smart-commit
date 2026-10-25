@@ -10,8 +10,8 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Cell, Paragraph, Row, Table, TableState};
 
 use super::{hints, is_interrupt, theme};
+use crate::backend::device::Target;
 use crate::bench::{Entry, Report};
-use crate::device::Target;
 
 /// What the user chose.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

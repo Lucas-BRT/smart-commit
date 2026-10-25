@@ -3,9 +3,9 @@ use super::*;
 use std::path::PathBuf;
 
 use crate::backend::GenerationConfig;
-use crate::device::{self, Target};
-use crate::genai::Device;
-use crate::llamacpp::LlamaDevice;
+use crate::backend::device::{self, Target};
+use crate::backend::genai::Device;
+use crate::backend::llamacpp::LlamaDevice;
 use crate::models;
 use crate::paths;
 use crate::prompt::PromptOptions;

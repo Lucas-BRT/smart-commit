@@ -3,10 +3,11 @@
 
 use std::path::PathBuf;
 
+use smart_commit::backend::server;
 use smart_commit::config::{self, Resolved, Sources};
 use smart_commit::git::Repo;
 use smart_commit::hardware;
-use smart_commit::{paths, server};
+use smart_commit::paths;
 
 pub(super) fn env(name: &str) -> Option<String> {
     std::env::var(name).ok()

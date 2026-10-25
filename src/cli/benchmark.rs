@@ -8,9 +8,9 @@ use std::time::Duration;
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use clap::Subcommand;
+use smart_commit::backend::device::{DEFAULT_ORDER, Target};
 use smart_commit::bench::{self, Entry, Machine, Report};
 use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};
-use smart_commit::device::{DEFAULT_ORDER, Target};
 use smart_commit::paths;
 use smart_commit::tui::bench::{Action, BenchView};
 use smart_commit::tui::{self, Screen};
@@ -54,7 +54,7 @@ fn measure_all(
 ) -> Option<Report> {
     // A model kept loaded holds memory the measured loads need.
     if let Some(runtime) = paths::runtime_dir(env) {
-        smart_commit::server::stop(&runtime);
+        smart_commit::backend::server::stop(&runtime);
     }
     let prompts = bench::prompts();
     let config = settings.generation_config();

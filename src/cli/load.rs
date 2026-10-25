@@ -1,12 +1,13 @@
 //! Loading the model on a device, or on the first that works.
 
 use anyhow::Result;
+use smart_commit::backend::device::{self, Target};
+use smart_commit::backend::genai::{Device, GenaiBackend};
+use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};
+use smart_commit::backend::server;
 use smart_commit::backend::{Backend, BackendError};
 use smart_commit::config::{DeviceSetting, Settings};
-use smart_commit::device::{self, Target};
-use smart_commit::genai::{Device, GenaiBackend};
-use smart_commit::llamacpp::{LlamaCppBackend, LlamaCppOptions};
-use smart_commit::{paths, server};
+use smart_commit::paths;
 
 use super::benchmark;
 use super::settings::env;
