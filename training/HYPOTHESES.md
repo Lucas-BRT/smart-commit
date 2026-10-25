@@ -222,6 +222,19 @@ even rewards that: `training` is a known scope, just the wrong one.
   traces stay): with no model trained on it, it only cost tokens. It comes
   back with H4b, switched on for the model trained with it, like H6's
   switch.
+- **Measured with v0.1, map against none** (`smart-commit eval --device
+  vulkan`, the binaries of `04e3713` and of the revert, on the 138 inputs
+  of eval-v1h whose prompt the map changes, 136 Conventional; the other
+  362 get the same prompt, hence the same reply). The map adds ~725
+  characters (~200 tokens) to the system message, and the 1024-token
+  budget takes them from the diff: 1081 → 695 characters on average,
+  shorter in 67 of 138. Without the map, v0.1 0.5B: ungrounded 0.206 →
+  0.103, word_f1 0.335 → 0.368, scope_fits 0.471 → 0.515; v0.1 1.5B:
+  ungrounded 0.184 → 0.074, word_f1 0.352 → 0.395, scope_fits 0.441 →
+  0.478; type_match within noise for both. The base 1.5B moves the other
+  way, within noise (type_match 0.449 → 0.419, scope_fits 0.331 → 0.287).
+  H4b must keep the diff's share: a shorter map (the idf idea below) or a
+  budget that does not shrink the diff.
 - **Weakness seen on this repository:** docs/ is among the places of almost
   every scope (each feature updates the docs here), so the map is long
   (~100 tokens for 8 scopes) and tells scopes apart less. Possible fix:
