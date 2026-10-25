@@ -165,11 +165,12 @@ smart-commit bench             # measure again
 `auto` uses the fastest device of the last benchmark, and falls back to the
 next one, with a note, if it becomes unavailable. See [devices](devices.md).
 
-To skip loading the model at every commit on `vulkan` and `cpu`, keep it
-loaded for some idle minutes:
+On `vulkan` and `cpu` the model stays loaded for 10 idle minutes after a
+message, so only the first commit pays for loading it (`model.keep_loaded`;
+0 turns it off, and it costs the model's memory meanwhile):
 
 ```bash
-smart-commit config set model.keep_loaded 10
+smart-commit config set model.keep_loaded 30   # or 0
 smart-commit server status     # what is kept loaded, and how long it has been idle
 smart-commit server stop       # free its memory now
 ```

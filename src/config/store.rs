@@ -286,7 +286,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("model.vulkan_device", Value::Count(0)),
         ("model.fast_load", text("auto")),
         ("model.threads_batch", Value::Count(0)),
-        ("model.keep_loaded", Value::Count(0)),
+        ("model.keep_loaded", Value::Count(10)),
         (
             "model.npu_prefill_chunk",
             Value::Count(NpuTuning::default().prefill_chunk),

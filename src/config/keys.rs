@@ -130,8 +130,9 @@ pub const KEYS: &[Key] = &[
         scope: Scope::User,
         env: Some("SMART_COMMIT_KEEP_LOADED"),
         description: "llama.cpp devices: minutes to keep the model loaded after a message, so \
-                      the next commit skips loading it (most of a commit on a GPU). 0: stop it \
-                      after each command. Replies do not depend on it.",
+                      the next commit skips loading it (most of a commit on a GPU), at the \
+                      cost of its memory meanwhile. 0: stop it after each command. Replies \
+                      do not depend on it.",
     },
     Key {
         name: "model.npu_prefill_chunk",

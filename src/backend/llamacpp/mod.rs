@@ -97,6 +97,24 @@ impl fmt::Debug for LlamaCppBackend {
     }
 }
 
+/// The error of the model or the server not being where `options` say.
+pub fn missing_file(options: &LlamaCppOptions) -> Option<BackendError> {
+    let unavailable = BackendError::Unavailable;
+    if !options.model.is_file() {
+        return Some(unavailable(format!(
+            "no GGUF model at {}; `smart-commit setup` downloads it",
+            options.model.display()
+        )));
+    }
+    if !options.server.is_file() {
+        return Some(unavailable(format!(
+            "no llama-server at {}; `smart-commit setup` installs it",
+            options.server.display()
+        )));
+    }
+    None
+}
+
 impl LlamaCppBackend {
     /// Starts `llama-server` and waits until the model is loaded.
     pub fn start(options: &LlamaCppOptions) -> Result<Self, BackendError> {
@@ -118,17 +136,8 @@ impl LlamaCppBackend {
         extra: &[String],
     ) -> Result<Self, BackendError> {
         let unavailable = BackendError::Unavailable;
-        if !options.model.is_file() {
-            return Err(unavailable(format!(
-                "no GGUF model at {}; `smart-commit setup` downloads it",
-                options.model.display()
-            )));
-        }
-        if !options.server.is_file() {
-            return Err(unavailable(format!(
-                "no llama-server at {}; `smart-commit setup` installs it",
-                options.server.display()
-            )));
+        if let Some(missing) = missing_file(options) {
+            return Err(missing);
         }
         let dir = match dir {
             Some(dir) => private_dir_at(dir).map(|()| dir.to_owned()),

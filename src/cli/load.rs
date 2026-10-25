@@ -3,7 +3,7 @@
 use anyhow::Result;
 use smart_commit::backend::device::{self, Target};
 use smart_commit::backend::genai::{Device, GenaiBackend};
-use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};
+use smart_commit::backend::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};
 use smart_commit::backend::server;
 use smart_commit::backend::{Backend, BackendError};
 use smart_commit::config::{DeviceSetting, Settings};
@@ -90,7 +90,9 @@ pub(super) fn load_with(
 /// one; on any failure the model is loaded for this command only, with a
 /// note.
 fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCppBackend> {
-    if settings.keep_loaded.is_zero() {
+    // Without its files there is nothing to keep: loading it normally says
+    // what is missing, once.
+    if settings.keep_loaded.is_zero() || llamacpp::missing_file(options).is_some() {
         return None;
     }
     let result = match (paths::runtime_dir(env), std::env::current_exe()) {

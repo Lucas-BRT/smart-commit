@@ -46,7 +46,7 @@ value, for example when an environment variable is set.
 | `model.vulkan_device` | 0–15 | 0 | | global |
 | `model.fast_load` | `auto`, `on`, `off` | `auto` | `SMART_COMMIT_FAST_LOAD` | global |
 | `model.threads_batch` | 0–1024 | 0 (one per physical core) | | global |
-| `model.keep_loaded` | 0–1440 | 0 | `SMART_COMMIT_KEEP_LOADED` | global |
+| `model.keep_loaded` | 0–1440 | 10 | `SMART_COMMIT_KEEP_LOADED` | global |
 | `model.npu_prefill_chunk` | 512–8192 | 512 | | global |
 | `model.npu_generate_hint` | `best_perf`, `fast_compile` | `best_perf` | | global |
 | `model.max_prompt_tokens` | 256–8192 | 1024 | | global |
@@ -90,7 +90,7 @@ value, for example when an environment variable is set.
   [measurements](measurements.md#threads-on-the-cpu). Decoding keeps
   llama.cpp's default thread count.
 - `model.keep_loaded` keeps the model loaded on `vulkan` and `cpu` for that
-  many minutes after a message, so the next commit skips loading it, which
+  many minutes after a message (10 by default; 0 stops it after each command), so the next commit skips loading it, which
   is most of a commit on a GPU. It costs the model's memory (RAM or VRAM)
   while it stays loaded. The server listens in `$XDG_RUNTIME_DIR`; without
   that variable, or if it cannot start, the model is loaded for the commit

@@ -62,6 +62,15 @@ fn defaults_match_the_built_in_options() {
 }
 
 #[test]
+fn the_model_is_kept_loaded_for_ten_minutes_unless_set() {
+    let settings = resolve(None, None, HOME, vec![]).unwrap().settings();
+    assert_eq!(settings.keep_loaded, std::time::Duration::from_secs(600));
+    let off = [("HOME", "/home/me"), ("SMART_COMMIT_KEEP_LOADED", "0")];
+    let settings = resolve(None, None, &off, vec![]).unwrap().settings();
+    assert!(settings.keep_loaded.is_zero());
+}
+
+#[test]
 fn layers_override_in_order() {
     let global = "backend = \"mock\"\n[model]\ndevice = \"gpu\"\n[style]\nlanguage = \"english\"\nhistory_depth = 10\n";
     let repo = "[style]\nlanguage = \"portuguese\"\n";
