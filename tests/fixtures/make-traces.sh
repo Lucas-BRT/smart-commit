@@ -394,3 +394,7 @@ real_change conventional-en-training-as-mining 534d7d9 "feat(training): add DPO 
 # A bundle and a notebook that sample replies on Kaggle, answered as a dataset
 # made from mined pairs: the bundle holds the inputs, the pairs come after.
 real_change conventional-en-mining-bundle-as-pairs adfe47e "feat(training): make a Kaggle dataset from mined pairs"
+
+# Validation pairs, a loss term and the log of each reply's reward added to a
+# DPO script that already had its loss, answered as adding the loss.
+real_change conventional-en-dpo-validation-as-loss a8cf80a "feat(training): add a DPO loss to train_dpo.py"
