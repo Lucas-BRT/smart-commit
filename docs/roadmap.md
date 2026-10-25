@@ -95,8 +95,6 @@ the current runtime: they target newer tooling (the LFM2.5 one crashed, and
 Qwen3.5 is multimodal), and the small ones are INT4 asymmetric, which the
 NPU does not take. Models are exported with the pinned toolchain instead.
 
-The exploratory scripts behind these numbers are in `scripts/experiments/`.
-
 ## Sources
 
 - [OpenVINO GenAI on NPU](https://docs.openvino.ai/2026/openvino-workflow-generative/inference-with-genai/inference-with-genai-on-npu.html)
