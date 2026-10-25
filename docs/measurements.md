@@ -115,6 +115,25 @@ the Ryzen 5 5500 with the RTX 3050; the replies were the same either way:
 | `smart-commit-0.5b-v0.1`, `cpu` | 1.3 s | 0.8 s |
 | `qwen2.5-coder-7b`, `vulkan` | 7.5 s | 0.57 s |
 
+What a server holds in RAM, which `model.keep_loaded_max_ram`
+([configuration](configuration.md)) bounds: the resident memory of
+`llama-server` (llama.cpp b11381, a context of 1664 tokens, one reply) on the
+CPU of the 15 GiB machine:
+
+| Model | File | `--no-repack` (fast load) | Without it |
+|---|---|---|---|
+| `smart-commit-0.5b-v0.1` | 380 MB | 564 MB | 593 MB |
+| `smart-commit-1.5b-v0.1` | 941 MB | 1,169 MB | 1,773 MB |
+
+The weights are most of it. The server adds about 195 MB over the 0.5B file
+and 250 MB over the 1.5B one (the estimate is the file and 256 MB); the
+context, which is 28 KB a token for the 1.5B, and the batch size change it by
+less than 25 MB. Without `--no-repack` llama.cpp keeps a second copy of the
+weights in the layout of the CPU, 600 MB more for the 1.5B, which is why the
+supervisor also checks the server's resident memory, not only the estimate.
+On a GPU the weights are in its memory, which a machine without a discrete
+one takes from the same RAM; the estimate counts them there too.
+
 ## Threads on the CPU
 
 Reading the prompt (prefill) is most of the time per message on the CPU,

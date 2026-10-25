@@ -192,7 +192,9 @@ next one, with a note, if it becomes unavailable. See [devices](devices.md).
 
 On `vulkan` and `cpu` the model stays loaded for 10 idle minutes after a
 message, so only the first commit pays for loading it (`model.keep_loaded`;
-0 turns it off, and it costs the model's memory meanwhile):
+0 turns it off, and it costs the model's memory meanwhile, which is why it is
+kept only if it takes at most 15% of the RAM and leaves a tenth free, see
+`model.keep_loaded_max_ram`):
 
 ```bash
 smart-commit config set model.keep_loaded 30   # or 0

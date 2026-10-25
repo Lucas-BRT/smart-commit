@@ -127,6 +127,13 @@ change of a `model.*` setting, since it holds memory the GPU may need (two
 7B models do not fit in 8 GB). A hardware test checks that a kept model
 gives the same replies as a fresh one.
 
+What it holds is a share of the RAM that depends on the machine, so a model
+is kept only if it takes at most `model.keep_loaded_max_ram` of it (15%) and
+leaves a tenth available, and a kept one stops if the machine runs short:
+the 1.5B model, about 1.2 GB on the CPU, is kept on a 16 GiB machine and not
+on one with 4 GiB. The figures per model are in
+[measurements](measurements.md#keeping-the-model-loaded).
+
 ## Asking for the type
 
 Only `vulkan` and `cpu` can tell how likely each type is and start a reply
