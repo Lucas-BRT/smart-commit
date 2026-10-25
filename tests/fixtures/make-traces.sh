@@ -340,6 +340,8 @@ real_change conventional-en-setup-in-rust 1dd70cd "feat(deps): add the LLaMA-CPP
 # The probabilities of the first token read to tell how sure the model is of the
 # type, answered as the model being given a way to choose its first token.
 real_change conventional-en-first-token-inverted 4b6ddd2 "feat: add a way for the model to choose its first token"
+# A new setting with its code and tests, answered as a documentation change.
+real_change conventional-en-setting-as-docs a8dafca "docs(config): add keep_loaded_max_ram to config docs"
 # A fix to the token estimate and the NPU budget, answered as a feature that
 # adds prompt budgeting (the estimator is not mentioned).
 real_change conventional-en-fix-as-feat-budget ae339ad "feat(generate): add prompt budgeting"
