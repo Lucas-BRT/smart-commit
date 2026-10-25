@@ -108,3 +108,69 @@ fn every_command_is_in_the_usage_guide() {
         "docs/usage.md does not mention: {missing:?}"
     );
 }
+
+/// GitHub's anchor for a heading: lowercase, punctuation dropped, spaces as
+/// hyphens.
+fn anchor(heading: &str) -> String {
+    heading
+        .trim()
+        .to_lowercase()
+        .chars()
+        .filter(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_'))
+        .map(|c| if c == ' ' { '-' } else { c })
+        .collect()
+}
+
+fn anchors(text: &str) -> Vec<String> {
+    let mut fenced = false;
+    let mut found = Vec::new();
+    for line in text.lines() {
+        if line.trim_start().starts_with("```") {
+            fenced = !fenced;
+        } else if !fenced && line.starts_with('#') {
+            found.push(anchor(line.trim_start_matches('#')));
+        }
+    }
+    found
+}
+
+#[test]
+fn links_between_the_pages_resolve() {
+    let mut broken = Vec::new();
+    for page in all_pages() {
+        let text = fs::read_to_string(&page).unwrap();
+        let name = page.strip_prefix(ROOT).unwrap().display().to_string();
+        let mut fenced = false;
+        for line in text.lines() {
+            if line.trim_start().starts_with("```") {
+                fenced = !fenced;
+            }
+            if fenced {
+                continue;
+            }
+            for target in line.split("](").skip(1) {
+                let Some((target, _)) = target.split_once(')') else {
+                    continue;
+                };
+                if target.starts_with("http") || target.starts_with("mailto:") {
+                    continue;
+                }
+                let (file, fragment) = target.split_once('#').unwrap_or((target, ""));
+                let path = if file.is_empty() {
+                    page.clone()
+                } else {
+                    page.parent().unwrap().join(file)
+                };
+                if !path.exists() {
+                    broken.push(format!("{name}: {target} (no such file)"));
+                } else if !fragment.is_empty()
+                    && path.extension().is_some_and(|e| e == "md")
+                    && !anchors(&fs::read_to_string(&path).unwrap()).contains(&fragment.to_owned())
+                {
+                    broken.push(format!("{name}: {target} (no such heading)"));
+                }
+            }
+        }
+    }
+    assert!(broken.is_empty(), "broken links:\n{}", broken.join("\n"));
+}
