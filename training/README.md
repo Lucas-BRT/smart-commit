@@ -17,6 +17,7 @@ cd training && uv sync --locked
 uv run --locked python -I test_make_examples.py
 uv run --locked python -I test_mine_pairs.py
 uv run --locked python -I test_train_dpo.py
+uv run --locked python -I test_kaggle_mine_bundle.py
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
 cargo build --locked && cargo test --locked -p smart-commit-training -- --ignored   # every scenario, built twice
@@ -201,6 +202,49 @@ repositories are dropped. From them `sc-training pairs` made, for the 0.5B,
 1,287 pairs (964 with the real subject chosen; rejected replies by failure:
 ungrounded 619, copied 271, unsupported 258, long 134, format 5) and, for the
 1.5B, 1,255 (916; 597, 275, 239, 139, 5).
+
+### Mining on Kaggle
+
+The same mining on two T4s, when the local GPU is busy: the prompts are built
+here, without a GPU, and only the sampling runs there. `kaggle_mine_bundle.py`
+splits the inputs into shards (every Nth input to each), pins what the
+notebook downloads (llama.cpp's CUDA 12.8 build by SHA-256, the models by the
+revision and SHA-256 of `src/models/registry.rs`) and orders the jobs, a model
+and a shard each, the longest first.
+
+The inputs of the second run are mostly Conventional (the first had 7%), from
+`data/train-all` without the commits the SFT trained on (`data/curve`) and
+without the evaluation sets' repositories, at most 8 commits per repository
+and 22% of a type (young repositories apart):
+
+```bash
+EX="--exclude-hashes-of data/curve --exclude-repos-of data/eval-v1 data/eval-short data/val1"
+$SCT select data/train-all data/dpo2/conv  --conventional 4500 --free 0 --per-repo 8 \
+  --max-type-share 0.22 --supported-only $EX
+$SCT select data/train-all data/dpo2/young --conventional 1000 --free 0 --per-repo 3 \
+  --min-history 0 --max-history 9 --max-type-share 0.3 --supported-only $EX
+mkdir -p data/dpo2/mix
+cat data/dpo2/conv/inputs.jsonl data/dpo2/young/inputs.jsonl > data/dpo2/mix/inputs.jsonl
+cat data/dpo2/conv/meta.jsonl   data/dpo2/young/meta.jsonl   > data/dpo2/mix/meta.jsonl
+python -I mine_pairs.py data/dpo2/mix data/dpo2/mine --binary $SC --prompts-only \
+  --rules full --diff plain --exclude-repos-of data/eval-v1 data/eval-short data/val1
+python -I kaggle_mine_bundle.py data/kaggle/dpo2-mine data/dpo2/mine --samples 6
+# upload it as a private dataset, run kaggle_mine.ipynb on it with GPU T4 x2 and internet,
+# download the <model>-shard-K.tar.gz archives and unpack them in data/dpo2/mined/.
+# A shard's candidates line up with that shard's inputs, so the pairs are made per
+# shard, with the shard's directory of the bundle, and concatenated:
+for size in 0.5b 1.5b; do
+  for k in 0 1 2 3; do
+    $SCT pairs data/dpo2/mined/$size-shard-$k/candidates.jsonl data/kaggle/dpo2-mine/shard-$k \
+      data/dpo2/pairs-$size-$k.jsonl
+  done
+  cat data/dpo2/pairs-$size-?.jsonl > data/dpo2/pairs-$size.jsonl
+done
+```
+
+The notebook checks each download against its SHA-256, samples four inputs of
+each model first (so a CUDA build that does not fit the image fails in a
+minute, not after an hour), and packs a job as soon as it ends.
 
 ### Training on the pairs
 
