@@ -97,6 +97,7 @@ pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) ->
     let (backend, running) = start_backend(&resolved, &args.mock_responses)?;
     eprintln!("evaluating {} input(s) with {running}", inputs.len());
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
+    let options = generate::budgeted(&options, backend.as_ref());
     for case in &inputs {
         let ctx = case.context();
         let generation =

@@ -7,7 +7,7 @@ use std::process::Output;
 use smart_commit::trace::Trace;
 
 mod common;
-use common::{TestRepo, smart_commit};
+use common::{FakeMachine, TestRepo, smart_commit};
 
 const MOCK: (&str, &str) = ("SMART_COMMIT_BACKEND", "mock");
 
@@ -153,11 +153,12 @@ fn commit_all_sees_the_index_being_committed() {
 fn failures_warn_but_never_block_the_commit() {
     let repo = repo_with_hook();
     // No model exported; the user writes the message instead.
-    let output = repo.git_with(
-        &["commit", "--quiet"],
-        // Portable editor: git appends the file name, which becomes $1.
-        &[("GIT_EDITOR", "sh -c 'echo \"written by hand\" > \"$1\"' -")],
-    );
+    let fake = FakeMachine::all_intel();
+    let machine = fake.env();
+    let mut env: Vec<(&str, &str)> = machine.iter().map(|(n, v)| (*n, v.as_str())).collect();
+    // Portable editor: git appends the file name, which becomes $1.
+    env.push(("GIT_EDITOR", "sh -c 'echo \"written by hand\" > \"$1\"' -"));
+    let output = repo.git_with(&["commit", "--quiet"], &env);
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(
         stderr(&output).contains("smart-commit: no device could run the model:"),

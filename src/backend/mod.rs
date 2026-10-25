@@ -57,6 +57,14 @@ pub trait Backend {
 
     fn generate(&self, prompt: &Prompt, config: &GenerationConfig) -> Result<String, BackendError>;
 
+    /// The prompt budget, in estimated tokens, this backend can take when
+    /// asked for `requested`: less for a backend that fails past a fixed
+    /// prompt length, since the estimate can be short (see
+    /// [`crate::diff::estimate_tokens`]).
+    fn prompt_budget(&self, requested: usize) -> usize {
+        requested
+    }
+
     /// Timings of the last successful [`Backend::generate`], when the
     /// backend measures them.
     fn last_metrics(&self) -> Option<Metrics> {

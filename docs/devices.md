@@ -37,11 +37,8 @@ $ smart-commit bench
 Benchmark on AMD Ryzen 5 5500: 4 prompts, after one warm-up load.
 
   device       per message     load  generate     CPU
-  intel-gpu    unavailable: backend unavailable: OpenVINO GenAI not found (...); Intel GPUs need it; `smart-commit setup` installs it on machines with one (other GPUs use the vulkan device)
-  npu          unavailable: backend unavailable: OpenVINO GenAI not found (...); the Intel NPU needs it; `smart-commit setup` installs it on machines with one
   vulkan             2.4 s    2.1 s     0.3 s    0.4x  <- selected
   cpu                4.0 s    0.7 s     3.3 s    5.7x
-  openvino-cpu unavailable: backend unavailable: OpenVINO GenAI not found (...); only openvino-cpu needs it (the cpu device runs on llama.cpp); setup-npu.sh --openvino-only installs it
 
 fast load turned on for vulkan (--no-repack --fit off): 2.7 s -> 2.4 s per message
 fast load turned on for cpu (--no-repack --fit off): 5.1 s -> 4.0 s per message
@@ -58,9 +55,13 @@ $ smart-commit device          # the last benchmark and the current choice
 
 - **`model.device = auto`** (the default) tries the devices in the order of
   the last benchmark, fastest first, then in the default order
-  **intel-gpu, npu, vulkan, cpu, openvino-cpu**. The first that loads wins, with a note naming
-  the ones skipped. When none works, the error lists the reason for each.
-- **`smart-commit bench`** measures the five devices on four prompts
+  **intel-gpu, npu, vulkan, cpu, openvino-cpu**, leaving out the devices the
+  machine does not have (no NPU, no Intel GPU, no GPU with a Vulkan driver;
+  `openvino-cpu` also needs OpenVINO installed). The first that loads wins,
+  with a note naming the ones skipped. When none works, the error lists the
+  reason for each. A device set by hand in `model.device` is tried even when
+  it is not there, and the error says why it failed.
+- **`smart-commit bench`** measures the devices the machine has (up to five) on four prompts
   embedded in the binary (`tests/fixtures/traces/bench-*.json`), so every
   machine is measured on the same inputs. They are sized like real prompts,
   about 300 to 900 tokens (the quartiles and 90th percentile of eval-v1's),
@@ -212,7 +213,9 @@ misleading `CL_OUT_OF_HOST_MEMORY`.
 ## The NPU
 
 The NPU compiles the model for fixed shapes: a prompt of
-`model.max_prompt_tokens` and a reply of `model.max_new_tokens`.
+`model.max_prompt_tokens` and a reply of `model.max_new_tokens`. A longer
+prompt fails, and the token estimate can be short, so the NPU is given a
+fifth less than that as the prompt budget.
 
 - **Cache.** The first load compiles the graph; later loads read it from
   `$XDG_CACHE_HOME/smart-commit/openvino`.
@@ -224,7 +227,7 @@ The NPU compiles the model for fixed shapes: a prompt of
   (`UnrollPermuteDMA`).
 - **`GENERATE_HINT=BEST_PERF`** (`model.npu_generate_hint`) compiles slower,
   once, for faster tokens.
-- Both settings give identical replies (a hardware test checks it).
+- The two settings give the same reply for nearly every prompt: chunked prefill and `BEST_PERF` change the arithmetic, so a reply near a tie can differ (4 of the 51 fixture prompts do); a hardware test requires that at most one in ten does.
 
 What they gain is in [measurements](measurements.md#the-npu).
 

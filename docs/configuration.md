@@ -101,7 +101,10 @@ value, for example when an environment variable is set.
   fails while a model is kept says so.
 - `model.npu_prefill_chunk` must divide `model.max_prompt_tokens`. Chunks
   smaller than 512 fail to compile with NPU driver 1.38.
-- `model.max_prompt_tokens` is also the prompt length the NPU compiles for.
+- `model.max_prompt_tokens` is also the prompt length the NPU compiles for;
+  the NPU is given a fifth less of it as the prompt budget, since it fails
+  on a longer prompt and the estimate can be short
+  ([architecture](architecture.md#fitting-the-diff)).
   Shorter prompts are faster on the NPU but see less of the diff; changing it
   recompiles the model once (see [measurements](measurements.md#the-npu)).
 - `style.convention` and `style.language` other than `auto` override what

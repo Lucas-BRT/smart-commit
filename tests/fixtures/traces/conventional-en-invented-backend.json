@@ -1,0 +1,162 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 87533ac",
+      "test(fixtures): trace a budget fix answered as a feature",
+      "fix(prompt): count digits and dense runs, and give the NPU a smaller budget",
+      "chore: release 0.9.0",
+      "Merge branch 'refactor/structure'",
+      "Merge branch 'refactor/structure-a'",
+      "Merge branch 'revert/scope-map-prompt'"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "docs/devices.md",
+        "src/backend/device.rs",
+        "src/cli/benchmark.rs",
+        "src/cli/load.rs",
+        "tests/bench_cli.rs",
+        "tests/common/mod.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/devices.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/device.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/benchmark.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/load.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/bench_cli.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/common/mod.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -30,3 +30,3 @@ Everything except the model is deterministic and tested without hardware.\n | `backend::device` | candidate devices and loading the first that works |\n-| `bench` | measures every device on four embedded prompts sized like real ones |\n+| `bench` | measures every device the machine has on four embedded prompts sized like real ones |\n | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |\n"
+      },
+      {
+        "path": "docs/devices.md",
+        "old_path": null,
+        "lines": [
+          7,
+          6
+        ],
+        "hunks": "@@ -39,7 +39,4 @@ Benchmark on AMD Ryzen 5 5500: 4 prompts, after one warm-up load.\n   device       per message     load  generate     CPU\n-  intel-gpu    unavailable: backend unavailable: OpenVINO GenAI not found (...); Intel GPUs need it; `smart-commit setup` installs it on machines with one (other GPUs use the vulkan device)\n-  npu          unavailable: backend unavailable: OpenVINO GenAI not found (...); the Intel NPU needs it; `smart-commit setup` installs it on machines with one\n   vulkan             2.4 s    2.1 s     0.3 s    0.4x  <- selected\n   cpu                4.0 s    0.7 s     3.3 s    5.7x\n-  openvino-cpu unavailable: backend unavailable: OpenVINO GenAI not found (...); only openvino-cpu needs it (the cpu device runs on llama.cpp); setup-npu.sh --openvino-only installs it\n \n@@ -60,5 +57,9 @@ $ smart-commit device          # the last benchmark and the current choice\n   the last benchmark, fastest first, then in the default order\n-  **intel-gpu, npu, vulkan, cpu, openvino-cpu**. The first that loads wins, with a note naming\n-  the ones skipped. When none works, the error lists the reason for each.\n-- **`smart-commit bench`** measures the five devices on four prompts\n+  **intel-gpu, npu, vulkan, cpu, openvino-cpu**, leaving out the devices the\n+  machine does not have (no NPU, no Intel GPU, no GPU with a Vulkan driver;\n+  `openvino-cpu` also needs OpenVINO installed). The first that loads wins,\n+  with a note naming the ones skipped. When none works, the error lists the\n+  reason for each. A device set by hand in `model.device` is tried even when\n+  it is not there, and the error says why it failed.\n+- **`smart-commit bench`** measures the devices the machine has (up to five) on four prompts\n   embedded in the binary (`tests/fixtures/traces/bench-*.json`), so every\n"
+      },
+      {
+        "path": "src/backend/device.rs",
+        "old_path": null,
+        "lines": [
+          130,
+          0
+        ],
+        "hunks": "@@ -13,2 +13,3 @@ use crate::backend::{Backend, BackendError};\n use crate::config::{BackendKind, DeviceSetting};\n+use crate::hardware::{Hardware, Npu};\n \n@@ -97,2 +98,49 @@ fn list_failures(failures: &[(Target, BackendError)]) -> String {\n \n+impl Target {\n+    /// Whether `hardware` has what this device runs on: an Intel NPU, an\n+    /// Intel GPU with its kernel driver, a GPU with a Vulkan driver, an\n+    /// x86_64 CPU (OpenVINO's also needs OpenVINO installed). The runtime\n+    /// may still be missing: that is for loading to say.\n+    pub fn is_present(self, hardware: &Hardware) -> bool {\n+        let x86_64 = hardware.arch == \"x86_64\";\n+        match self {\n+            Self::Npu => hardware.npu == Npu::Intel,\n+            Self::IntelGpu => hardware\n+                .gpus\n+                .iter()\n+                .any(|gpu| gpu.is_intel() && matches!(gpu.driver.as_str(), \"i915\" | \"xe\")),\n+            Self::Vulkan => hardware.gpus.iter().any(|gpu| {\n+                matches!(\n+                    (gpu.vendor.as_str(), gpu.driver.as_str()),\n+                    (\"0x8086\", \"i915\" | \"xe\")\n+                        | (\"0x1002\", \"amdgpu\")\n+                        | (\"0x10de\", \"nvidia\" | \"nouveau\")\n+                )\n+            }),\n+            Self::Cpu => x86_64,\n+            Self::OpenvinoCpu => x86_64 && hardware.openvino_installed,\n+        }\n+    }\n+}\n+\n+/// The devices `hardware` has, in [`DEFAULT_ORDER`].\n+pub fn present(hardware: &Hardware) -> Vec<Target> {\n+    DEFAULT_ORDER\n+        .into_iter()\n+        .filter(|target| target.is_present(hardware))\n+        .collect()\n+}\n+\n+/// `order` without the devices `hardware` lacks, so `auto` does not try an\n+/// NPU on a machine without one. If that leaves nothing (hardware that is\n+/// not recognised), `order` as it is: a load can still work.\n+pub fn only_present(order: Vec<Target>, hardware: &Hardware) -> Vec<Target> {\n+    let kept: Vec<Target> = order\n+        .iter()\n+        .copied()\n+        .filter(|target| target.is_present(hardware))\n+        .collect();\n+    if kept.is_empty() { order } else { kept }\n+}\n+\n /// The devices to try, in order. `preferred` (from a benchmark, fastest\n@@ -177,2 +225,84 @@ mod tests {\n \n+    fn machine(gpus: &[(&str, &str)], npu: Npu, openvino: bool) -> Hardware {\n+        Hardware {\n+            cpu_vendor: crate::hardware::CpuVendor::Other,\n+            cpu_model: \"Test CPU\".into(),\n+            arch: \"x86_64\".into(),\n+            gpus: gpus\n+                .iter()\n+                .map(|(vendor, driver)| crate::hardware::Gpu {\n+                    vendor: (*vendor).into(),\n+                    device: \"0x0000\".into(),\n+                    driver: (*driver).into(),\n+                    slot: \"0000:00:02.0\".into(),\n+                    name: None,\n+                    nvidia_version: None,\n+                })\n+                .collect(),\n+            npu,\n+            openvino_installed: openvino,\n+        }\n+    }\n+\n+    #[test]\n+    fn a_machine_has_the_devices_its_hardware_gives() {\n+        let all = machine(&[(\"0x8086\", \"xe\")], Npu::Intel, true);\n+        assert_eq!(present(&all), DEFAULT_ORDER);\n+        let amd = machine(&[(\"0x1002\", \"amdgpu\")], Npu::None, false);\n+        assert_eq!(present(&amd), [Target::Vulkan, Target::Cpu]);\n+        let nvidia = machine(&[(\"0x10de\", \"nvidia\")], Npu::None, false);\n+        assert_eq!(present(&nvidia), [Target::Vulkan, Target::Cpu]);\n+        let nouveau = machine(&[(\"0x10de\", \"nouveau\")], Npu::None, false);\n+        assert_eq!(present(&nouveau), [Target::Vulkan, Target::Cpu]);\n+        let bare = machine(&[], Npu::None, false);\n+        assert_eq!(present(&bare), [Target::Cpu]);\n+    }\n+\n+    #[test]\n+    fn a_gpu_needs_its_kernel_driver() {\n+        let unbound = machine(&[(\"0x8086\", \"none\"), (\"0x10de\", \"none\")], Npu::None, false);\n+        assert_eq!(present(&unbound), [Target::Cpu]);\n+        let old = machine(&[(\"0x1002\", \"radeon\")], Npu::None, false);\n+        assert_eq!(present(&old), [Target::Cpu]);\n+    }\n+\n+    #[test]\n+    fn the_openvino_devices_of_an_intel_machine_wait_for_openvino_but_the_npu_does_not() {\n+        // The NPU is listed so that loading can say what is missing.\n+        let hardware = machine(&[(\"0x8086\", \"i915\")], Npu::Intel, false);\n+        assert_eq!(\n+            present(&hardware),\n+            [Target::IntelGpu, Target::Npu, Target::Vulkan, Target::Cpu]\n+        );\n+    }\n+\n+    #[test]\n+    fn the_ryzen_ai_npu_is_not_one_of_ours() {\n+        let hardware = machine(&[], Npu::AmdXdna, true);\n+        assert_eq!(present(&hardware), [Target::Cpu, Target::OpenvinoCpu]);\n+    }\n+\n+    #[test]\n+    fn only_x86_64_has_the_cpu_devices() {\n+        let mut arm = machine(&[(\"0x10de\", \"nvidia\")], Npu::None, true);\n+        arm.arch = \"aarch64\".into();\n+        assert_eq!(present(&arm), [Target::Vulkan]);\n+    }\n+\n+    #[test]\n+    fn auto_keeps_its_order_without_the_devices_a_machine_lacks() {\n+        let amd = machine(&[(\"0x1002\", \"amdgpu\")], Npu::None, false);\n+        let order = vec![Target::Npu, Target::Cpu, Target::Vulkan, Target::IntelGpu];\n+        assert_eq!(only_present(order, &amd), [Target::Cpu, Target::Vulkan]);\n+    }\n+\n+    #[test]\n+    fn auto_keeps_every_candidate_when_none_is_recognised() {\n+        let arm = Hardware {\n+            arch: \"riscv64\".into(),\n+            ..machine(&[], Npu::None, false)\n+        };\n+        assert_eq!(only_present(DEFAULT_ORDER.to_vec(), &arm), DEFAULT_ORDER);\n+    }\n+\n     #[test]\n"
+      },
+      {
+        "path": "src/cli/benchmark.rs",
+        "old_path": null,
+        "lines": [
+          15,
+          5
+        ],
+        "hunks": "@@ -10,5 +10,6 @@ use anyhow::{Context as _, Result, anyhow, bail};\n use clap::Subcommand;\n-use smart_commit::backend::device::{DEFAULT_ORDER, Target};\n+use smart_commit::backend::device::{self, Target};\n use smart_commit::bench::{self, Entry, Machine, Report};\n use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};\n+use smart_commit::hardware::Hardware;\n use smart_commit::paths;\n@@ -19,3 +20,3 @@ use super::args::DeviceArg;\n use super::load::{Retry, load_with};\n-use super::settings::{env, resolve, stop_kept_after, warn_renamed};\n+use super::settings::{env, hardware_sources, resolve, stop_kept_after, warn_renamed};\n use super::ui::note;\n@@ -41,2 +42,7 @@ const HOW_TO_CHANGE: &str = \"To use another device: smart-commit device use \\\n \n+/// The devices of this machine: the ones a benchmark measures.\n+fn present_devices() -> Vec<Target> {\n+    device::present(&Hardware::detect(&hardware_sources()))\n+}\n+\n /// What the measuring thread reports.\n@@ -61,3 +67,3 @@ fn measure_all(\n     let mut entries = Vec::new();\n-    for target in DEFAULT_ORDER {\n+    for target in present_devices() {\n         if stop.load(Ordering::Relaxed) {\n@@ -155,3 +161,3 @@ pub(super) fn bench_in(screen: &mut Screen, settings: &Settings) -> Result<Bench\n         format!(\"Benchmark on {}\", Machine::current().cpu),\n-        &DEFAULT_ORDER,\n+        &present_devices(),\n         auto,\n@@ -359,3 +365,7 @@ fn show_device() -> Result<()> {\n              Until then, auto uses the first that works of {}.\",\n-            DEFAULT_ORDER.map(Target::name).join(\", \")\n+            present_devices()\n+                .into_iter()\n+                .map(Target::name)\n+                .collect::<Vec<_>>()\n+                .join(\", \")\n         ),\n"
+      },
+      {
+        "path": "src/cli/load.rs",
+        "old_path": null,
+        "lines": [
+          7,
+          2
+        ],
+        "hunks": "@@ -9,2 +9,3 @@ use smart_commit::backend::{Backend, BackendError};\n use smart_commit::config::{DeviceSetting, Settings};\n+use smart_commit::hardware::Hardware;\n use smart_commit::paths;\n@@ -12,3 +13,3 @@ use smart_commit::paths;\n use super::benchmark;\n-use super::settings::env;\n+use super::settings::{env, hardware_sources};\n use super::ui::note;\n@@ -17,3 +18,7 @@ use super::ui::note;\n pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target)> {\n-    let candidates = device::candidates(settings.backend, settings.device, &preferred_devices())?;\n+    let mut candidates =\n+        device::candidates(settings.backend, settings.device, &preferred_devices())?;\n+    if settings.device == DeviceSetting::Auto {\n+        candidates = device::only_present(candidates, &Hardware::detect(&hardware_sources()));\n+    }\n     let selection = device::load_first(&candidates, |target| load_on(settings, target))?;\n"
+      },
+      {
+        "path": "tests/bench_cli.rs",
+        "old_path": null,
+        "lines": [
+          66,
+          9
+        ],
+        "hunks": "@@ -12,3 +12,3 @@ use tempfile::TempDir;\n mod common;\n-use common::{TestRepo, smart_commit};\n+use common::{FakeMachine, TestRepo, smart_commit};\n \n@@ -17,2 +17,3 @@ struct Home {\n     data: TempDir,\n+    machine: FakeMachine,\n }\n@@ -20,3 +21,8 @@ struct Home {\n impl Home {\n+    /// On a machine with every device.\n     fn new() -> Self {\n+        Self::on(FakeMachine::all_intel())\n+    }\n+\n+    fn on(machine: FakeMachine) -> Self {\n         Self {\n@@ -24,2 +30,3 @@ impl Home {\n             data: TempDir::new().unwrap(),\n+            machine,\n         }\n@@ -28,10 +35,9 @@ impl Home {\n     fn run(&self, args: &[&str], dir: &Path) -> Output {\n-        smart_commit(\n-            args,\n-            dir,\n-            &[\n-                (\"XDG_CONFIG_HOME\", self.config.path().to_str().unwrap()),\n-                (\"XDG_DATA_HOME\", self.data.path().to_str().unwrap()),\n-            ],\n-        )\n+        let machine = self.machine.env();\n+        let mut env = vec![\n+            (\"XDG_CONFIG_HOME\", self.config.path().to_str().unwrap()),\n+            (\"XDG_DATA_HOME\", self.data.path().to_str().unwrap()),\n+        ];\n+        env.extend(machine.iter().map(|(name, value)| (*name, value.as_str())));\n+        smart_commit(args, dir, &env)\n     }\n@@ -104,2 +110,53 @@ fn bench_without_models_reports_every_device_and_fails() {\n \n+#[test]\n+fn bench_measures_only_the_devices_the_machine_has() {\n+    let home = Home::on(FakeMachine::amd_nvidia());\n+    let dir = TempDir::new().unwrap();\n+    let output = home.run(&[\"bench\", \"--json\"], dir.path());\n+    let report = Report::from_json(&stdout(&output)).unwrap();\n+    assert_eq!(\n+        report.entries.iter().map(|e| e.target).collect::<Vec<_>>(),\n+        [Target::Vulkan, Target::Cpu]\n+    );\n+    let err = stderr(&output);\n+    assert!(err.contains(\"measuring vulkan...\"), \"{err}\");\n+    assert!(!err.contains(\"npu\"), \"{err}\");\n+}\n+\n+#[test]\n+fn device_without_a_benchmark_lists_only_the_devices_the_machine_has() {\n+    let home = Home::on(FakeMachine::amd_nvidia());\n+    let dir = TempDir::new().unwrap();\n+    let out = stdout(&home.run(&[\"device\"], dir.path()));\n+    assert!(out.contains(\"first that works of vulkan, cpu.\"), \"{out}\");\n+}\n+\n+#[test]\n+fn auto_skips_the_devices_the_machine_lacks() {\n+    let home = Home::on(FakeMachine::amd_nvidia());\n+    let repo = TestRepo::new();\n+    repo.commit(\"feat: init\");\n+    repo.write(\"a.rs\", \"fn a() {}\\n\");\n+    repo.git(&[\"add\", \"a.rs\"]);\n+    let err = stderr(&home.run(&[], repo.path()));\n+    assert!(err.contains(\"vulkan:\") && err.contains(\"cpu:\"), \"{err}\");\n+    for absent in [\"intel-gpu:\", \"npu:\", \"openvino-cpu:\"] {\n+        assert!(!err.contains(absent), \"{err}\");\n+    }\n+}\n+\n+#[test]\n+fn a_device_set_by_hand_is_tried_even_where_it_is_not_present() {\n+    let home = Home::on(FakeMachine::amd_nvidia());\n+    let repo = TestRepo::new();\n+    repo.commit(\"feat: init\");\n+    repo.write(\"a.rs\", \"fn a() {}\\n\");\n+    repo.git(&[\"add\", \"a.rs\"]);\n+    let err = stderr(&home.run(&[\"--device\", \"npu\"], repo.path()));\n+    // It reaches the OpenVINO load (which misses the model here), and tries\n+    // no other device.\n+    assert!(err.contains(\"backend unavailable: no model\"), \"{err}\");\n+    assert!(!err.contains(\"vulkan\"), \"{err}\");\n+}\n+\n #[test]\n"
+      },
+      {
+        "path": "tests/common/mod.rs",
+        "old_path": null,
+        "lines": [
+          76,
+          1
+        ],
+        "hunks": "@@ -6,3 +6,3 @@\n use std::fs;\n-use std::path::Path;\n+use std::path::{Path, PathBuf};\n use std::process::{Command, Output};\n@@ -126 +126,76 @@ impl TestRepo {\n }\n+\n+/// A machine for `SMART_COMMIT_SYSFS` and friends: a sysfs tree and a\n+/// cpuinfo in a temporary directory, never this machine's hardware.\n+pub struct FakeMachine {\n+    dir: TempDir,\n+}\n+\n+impl FakeMachine {\n+    fn new(cpu: &str, vendor: &str, devices: &[(&str, &str, &str, &str)]) -> Self {\n+        let dir = TempDir::new().unwrap();\n+        let sysfs = dir.path().join(\"sys\");\n+        for (n, (class, vendor, device, driver)) in devices.iter().enumerate() {\n+            let dev = sysfs\n+                .join(\"bus/pci/devices\")\n+                .join(format!(\"0000:0{n}:00.0\"));\n+            fs::create_dir_all(&dev).unwrap();\n+            fs::create_dir_all(sysfs.join(\"bus/pci/drivers\").join(driver)).unwrap();\n+            for (file, value) in [(\"class\", class), (\"vendor\", vendor), (\"device\", device)] {\n+                fs::write(dev.join(file), format!(\"{value}\\n\")).unwrap();\n+            }\n+            std::os::unix::fs::symlink(\n+                format!(\"../../../bus/pci/drivers/{driver}\"),\n+                dev.join(\"driver\"),\n+            )\n+            .unwrap();\n+        }\n+        fs::write(\n+            dir.path().join(\"cpuinfo\"),\n+            format!(\"vendor_id\\t: {vendor}\\nmodel name\\t: {cpu}\\n\"),\n+        )\n+        .unwrap();\n+        Self { dir }\n+    }\n+\n+    /// An Intel GPU, an Intel NPU and OpenVINO installed.\n+    pub fn all_intel() -> Self {\n+        let machine = Self::new(\n+            \"Test Intel CPU\",\n+            \"GenuineIntel\",\n+            &[\n+                (\"0x030000\", \"0x8086\", \"0x7d51\", \"xe\"),\n+                (\"0x120000\", \"0x8086\", \"0xad1d\", \"intel_vpu\"),\n+            ],\n+        );\n+        let lib = machine.dir.path().join(\"openvino/runtime/lib/intel64\");\n+        fs::create_dir_all(&lib).unwrap();\n+        fs::write(lib.join(\"libopenvino_genai_c.so\"), \"\").unwrap();\n+        machine\n+    }\n+\n+    /// An AMD CPU with an NVIDIA GPU, and no OpenVINO.\n+    pub fn amd_nvidia() -> Self {\n+        Self::new(\n+            \"Test AMD CPU\",\n+            \"AuthenticAMD\",\n+            &[(\"0x030000\", \"0x10de\", \"0x2507\", \"nvidia\")],\n+        )\n+    }\n+\n+    /// The variables that point the binary at this machine.\n+    pub fn env(&self) -> Vec<(&'static str, String)> {\n+        let path = |p: PathBuf| p.to_str().unwrap().to_owned();\n+        vec![\n+            (\"SMART_COMMIT_SYSFS\", path(self.dir.path().join(\"sys\"))),\n+            (\n+                \"SMART_COMMIT_CPUINFO\",\n+                path(self.dir.path().join(\"cpuinfo\")),\n+            ),\n+            (\n+                \"SMART_COMMIT_OPENVINO_DIR\",\n+                path(self.dir.path().join(\"openvino\")),\n+            ),\n+        ]\n+    }\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat: add a device backend that can run benchmarks on NPU and GPU",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nparent of 87533ac\ntest(fixtures): trace a budget fix answered as a feature\nfix(prompt): count digits and dense runs, and give the NPU a smaller budget\nchore: release 0.9.0\nMerge branch 'refactor/structure'\n",
+          "user": "Files changed:\ndocs/architecture.md | +1 -1\ndocs/devices.md | +7 -6\nsrc/backend/device.rs | +130 -0\nsrc/cli/benchmark.rs | +15 -5\nsrc/cli/load.rs | +7 -2\ntests/bench_cli.rs | +66 -9\ntests/common/mod.rs | +76 -1\n\nDiff:\n--- src/backend/device.rs\n@@ -13,2 +13,3 @@ use crate::backend::{Backend, BackendError};\n use crate::config::{BackendKind, DeviceSetting};\n+use crate::hardware::{Hardware, Npu};\n \n@@ -97,2 +98,49 @@ fn list_failures(failures: &[(Target, BackendError)]) -> String {\n \n+impl Target {\n+    /// Whether `hardware` has what this device runs on: an Intel NPU, an\n+    /// Intel GPU with its kernel driver, a GPU with a Vulkan driver, an\n+    /// x86_64 CPU (OpenVINO's also needs OpenVINO installed). The runtime\n[... 129 more lines]\n--- src/cli/benchmark.rs\n@@ -10,5 +10,6 @@ use anyhow::{Context as _, Result, anyhow, bail};\n use clap::Subcommand;\n-use smart_commit::backend::device::{DEFAULT_ORDER, Target};\n+use smart_commit::backend::device::{self, Target};\n use smart_commit::bench::{self, Entry, Machine, Report};\n use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};\n+use smart_commit::hardware::Hardware;\n use smart_commit::paths;\n@@ -19,3 +20,3 @@ use super::args::DeviceArg;\n use super::load::{Retry, load_with};\n[... 30 more lines]\n--- src/cli/load.rs\n@@ -9,2 +9,3 @@ use smart_commit::backend::{Backend, BackendError};\n use smart_commit::config::{DeviceSetting, Settings};\n+use smart_commit::hardware::Hardware;\n use smart_commit::paths;\n@@ -12,3 +13,3 @@ use smart_commit::paths;\n use super::benchmark;\n-use super::settings::env;\n+use super::settings::{env, hardware_sources};\n use super::ui::note;\n@@ -17,3 +18,7 @@ use super::ui::note;\n pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target)> {\n[... 7 more lines]\n\n(7 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat: add a device backend that can run benchmarks on NPU and GPU",
+        "rejected": null
+      }
+    ]
+  }
+}

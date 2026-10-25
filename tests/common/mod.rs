@@ -4,7 +4,7 @@
 #![allow(dead_code)]
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 use smart_commit::context::RepoContext;
@@ -34,6 +34,12 @@ pub const CACHE_HOME: &str = "/nonexistent/smart-commit-tests/cache";
 /// model a benchmark in a test would stop.
 pub const RUNTIME_DIR: &str = "/nonexistent/smart-commit-tests/run";
 
+/// The hardware of a machine with nothing: no GPU, no NPU, no OpenVINO.
+/// Tests that need devices pass a [`FakeMachine`]'s variables.
+pub const NO_SYSFS: &str = "/nonexistent/smart-commit-tests/sys";
+pub const NO_CPUINFO: &str = "/nonexistent/smart-commit-tests/cpuinfo";
+pub const NO_OPENVINO: &str = "/nonexistent/smart-commit-tests/openvino";
+
 /// Applies [`GIT_ENV`], drops every `SMART_COMMIT_*` variable the developer
 /// may have exported (settings and test overrides alike) and points the XDG directories at
 /// [`CONFIG_HOME`], [`DATA_HOME`], [`CACHE_HOME`] and [`RUNTIME_DIR`], so the command behaves
@@ -49,6 +55,9 @@ pub fn isolate(command: &mut Command) -> &mut Command {
         .env("XDG_DATA_HOME", DATA_HOME)
         .env("XDG_CACHE_HOME", CACHE_HOME)
         .env("XDG_RUNTIME_DIR", RUNTIME_DIR)
+        .env("SMART_COMMIT_SYSFS", NO_SYSFS)
+        .env("SMART_COMMIT_CPUINFO", NO_CPUINFO)
+        .env("SMART_COMMIT_OPENVINO_DIR", NO_OPENVINO)
         .envs(GIT_ENV.iter().copied())
 }
 
@@ -122,5 +131,80 @@ impl TestRepo {
 
     pub fn context(&self) -> RepoContext {
         RepoContext::collect(&self.repo()).unwrap()
+    }
+}
+
+/// A machine for `SMART_COMMIT_SYSFS` and friends: a sysfs tree and a
+/// cpuinfo in a temporary directory, never this machine's hardware.
+pub struct FakeMachine {
+    dir: TempDir,
+}
+
+impl FakeMachine {
+    fn new(cpu: &str, vendor: &str, devices: &[(&str, &str, &str, &str)]) -> Self {
+        let dir = TempDir::new().unwrap();
+        let sysfs = dir.path().join("sys");
+        for (n, (class, vendor, device, driver)) in devices.iter().enumerate() {
+            let dev = sysfs
+                .join("bus/pci/devices")
+                .join(format!("0000:0{n}:00.0"));
+            fs::create_dir_all(&dev).unwrap();
+            fs::create_dir_all(sysfs.join("bus/pci/drivers").join(driver)).unwrap();
+            for (file, value) in [("class", class), ("vendor", vendor), ("device", device)] {
+                fs::write(dev.join(file), format!("{value}\n")).unwrap();
+            }
+            std::os::unix::fs::symlink(
+                format!("../../../bus/pci/drivers/{driver}"),
+                dev.join("driver"),
+            )
+            .unwrap();
+        }
+        fs::write(
+            dir.path().join("cpuinfo"),
+            format!("vendor_id\t: {vendor}\nmodel name\t: {cpu}\n"),
+        )
+        .unwrap();
+        Self { dir }
+    }
+
+    /// An Intel GPU, an Intel NPU and OpenVINO installed.
+    pub fn all_intel() -> Self {
+        let machine = Self::new(
+            "Test Intel CPU",
+            "GenuineIntel",
+            &[
+                ("0x030000", "0x8086", "0x7d51", "xe"),
+                ("0x120000", "0x8086", "0xad1d", "intel_vpu"),
+            ],
+        );
+        let lib = machine.dir.path().join("openvino/runtime/lib/intel64");
+        fs::create_dir_all(&lib).unwrap();
+        fs::write(lib.join("libopenvino_genai_c.so"), "").unwrap();
+        machine
+    }
+
+    /// An AMD CPU with an NVIDIA GPU, and no OpenVINO.
+    pub fn amd_nvidia() -> Self {
+        Self::new(
+            "Test AMD CPU",
+            "AuthenticAMD",
+            &[("0x030000", "0x10de", "0x2507", "nvidia")],
+        )
+    }
+
+    /// The variables that point the binary at this machine.
+    pub fn env(&self) -> Vec<(&'static str, String)> {
+        let path = |p: PathBuf| p.to_str().unwrap().to_owned();
+        vec![
+            ("SMART_COMMIT_SYSFS", path(self.dir.path().join("sys"))),
+            (
+                "SMART_COMMIT_CPUINFO",
+                path(self.dir.path().join("cpuinfo")),
+            ),
+            (
+                "SMART_COMMIT_OPENVINO_DIR",
+                path(self.dir.path().join("openvino")),
+            ),
+        ]
     }
 }

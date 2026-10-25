@@ -7,15 +7,20 @@ use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions};
 use smart_commit::backend::server;
 use smart_commit::backend::{Backend, BackendError};
 use smart_commit::config::{DeviceSetting, Settings};
+use smart_commit::hardware::Hardware;
 use smart_commit::paths;
 
 use super::benchmark;
-use super::settings::env;
+use super::settings::{env, hardware_sources};
 use super::ui::note;
 
 /// Loads the model on the configured device, or picks one for `auto`.
 pub(super) fn load_model(settings: &Settings) -> Result<(Box<dyn Backend>, Target)> {
-    let candidates = device::candidates(settings.backend, settings.device, &preferred_devices())?;
+    let mut candidates =
+        device::candidates(settings.backend, settings.device, &preferred_devices())?;
+    if settings.device == DeviceSetting::Auto {
+        candidates = device::only_present(candidates, &Hardware::detect(&hardware_sources()));
+    }
     let selection = device::load_first(&candidates, |target| load_on(settings, target))?;
     if settings.device == DeviceSetting::Auto && !selection.skipped.is_empty() {
         let skipped: Vec<&str> = selection.skipped.iter().map(|(t, _)| t.name()).collect();

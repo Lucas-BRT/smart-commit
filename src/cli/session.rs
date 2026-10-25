@@ -79,11 +79,13 @@ impl Session {
         } else {
             &NoModel
         };
+        // The budget this backend can take, which a trace records.
+        let options = generate::budgeted(&self.options, backend);
         let generation = generate::generate_avoiding(
             &self.context,
             &self.files,
             backend,
-            &self.options,
+            &options,
             &self.config,
             avoid,
         )?;
@@ -92,7 +94,7 @@ impl Session {
                 &self.context,
                 &self.files,
                 backend,
-                &self.options,
+                &options,
                 &self.config,
                 &generation,
             );

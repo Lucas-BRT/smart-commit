@@ -10,30 +10,36 @@ use smart_commit::bench::{self, Entry, FastLoadTrial, Machine, Measurement, Repo
 use tempfile::TempDir;
 
 mod common;
-use common::{TestRepo, smart_commit};
+use common::{FakeMachine, TestRepo, smart_commit};
 
 struct Home {
     config: TempDir,
     data: TempDir,
+    machine: FakeMachine,
 }
 
 impl Home {
+    /// On a machine with every device.
     fn new() -> Self {
+        Self::on(FakeMachine::all_intel())
+    }
+
+    fn on(machine: FakeMachine) -> Self {
         Self {
             config: TempDir::new().unwrap(),
             data: TempDir::new().unwrap(),
+            machine,
         }
     }
 
     fn run(&self, args: &[&str], dir: &Path) -> Output {
-        smart_commit(
-            args,
-            dir,
-            &[
-                ("XDG_CONFIG_HOME", self.config.path().to_str().unwrap()),
-                ("XDG_DATA_HOME", self.data.path().to_str().unwrap()),
-            ],
-        )
+        let machine = self.machine.env();
+        let mut env = vec![
+            ("XDG_CONFIG_HOME", self.config.path().to_str().unwrap()),
+            ("XDG_DATA_HOME", self.data.path().to_str().unwrap()),
+        ];
+        env.extend(machine.iter().map(|(name, value)| (*name, value.as_str())));
+        smart_commit(args, dir, &env)
     }
 
     fn bench_file(&self) -> std::path::PathBuf {
@@ -100,6 +106,57 @@ fn bench_without_models_reports_every_device_and_fails() {
     let saved = Report::from_json(&fs::read_to_string(home.bench_file()).unwrap()).unwrap();
     assert_eq!(saved.entries.len(), 5);
     assert_eq!(saved.fastest(), None);
+}
+
+#[test]
+fn bench_measures_only_the_devices_the_machine_has() {
+    let home = Home::on(FakeMachine::amd_nvidia());
+    let dir = TempDir::new().unwrap();
+    let output = home.run(&["bench", "--json"], dir.path());
+    let report = Report::from_json(&stdout(&output)).unwrap();
+    assert_eq!(
+        report.entries.iter().map(|e| e.target).collect::<Vec<_>>(),
+        [Target::Vulkan, Target::Cpu]
+    );
+    let err = stderr(&output);
+    assert!(err.contains("measuring vulkan..."), "{err}");
+    assert!(!err.contains("npu"), "{err}");
+}
+
+#[test]
+fn device_without_a_benchmark_lists_only_the_devices_the_machine_has() {
+    let home = Home::on(FakeMachine::amd_nvidia());
+    let dir = TempDir::new().unwrap();
+    let out = stdout(&home.run(&["device"], dir.path()));
+    assert!(out.contains("first that works of vulkan, cpu."), "{out}");
+}
+
+#[test]
+fn auto_skips_the_devices_the_machine_lacks() {
+    let home = Home::on(FakeMachine::amd_nvidia());
+    let repo = TestRepo::new();
+    repo.commit("feat: init");
+    repo.write("a.rs", "fn a() {}\n");
+    repo.git(&["add", "a.rs"]);
+    let err = stderr(&home.run(&[], repo.path()));
+    assert!(err.contains("vulkan:") && err.contains("cpu:"), "{err}");
+    for absent in ["intel-gpu:", "npu:", "openvino-cpu:"] {
+        assert!(!err.contains(absent), "{err}");
+    }
+}
+
+#[test]
+fn a_device_set_by_hand_is_tried_even_where_it_is_not_present() {
+    let home = Home::on(FakeMachine::amd_nvidia());
+    let repo = TestRepo::new();
+    repo.commit("feat: init");
+    repo.write("a.rs", "fn a() {}\n");
+    repo.git(&["add", "a.rs"]);
+    let err = stderr(&home.run(&["--device", "npu"], repo.path()));
+    // It reaches the OpenVINO load (which misses the model here), and tries
+    // no other device.
+    assert!(err.contains("backend unavailable: no model"), "{err}");
+    assert!(!err.contains("vulkan"), "{err}");
 }
 
 #[test]

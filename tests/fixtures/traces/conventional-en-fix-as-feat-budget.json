@@ -1,0 +1,1001 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of ae339ad",
+      "chore: release 0.9.0",
+      "Merge branch 'refactor/structure'",
+      "Merge branch 'refactor/structure-a'",
+      "Merge branch 'revert/scope-map-prompt'",
+      "Merge pull request #14 from Lucas-BRT/docs/update-since-0.7.0",
+      "docs: say where the tools' tests and the setup in Rust are"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "docs/configuration.md",
+        "docs/devices.md",
+        "docs/measurements.md",
+        "src/backend/genai.rs",
+        "src/backend/llamacpp/mod.rs",
+        "src/backend/mod.rs",
+        "src/cli/inspect.rs",
+        "src/cli/session.rs",
+        "src/diff/mod.rs",
+        "src/diff/tests.rs",
+        "src/generate/mod.rs",
+        "src/generate/tests.rs",
+        "tests/fixtures/make-traces.sh",
+        "tests/fixtures/traces/bench-p25.json",
+        "tests/fixtures/traces/bench-p50.json",
+        "tests/fixtures/traces/bench-p75.json",
+        "tests/fixtures/traces/bench-p90.json",
+        "tests/fixtures/traces/conventional-en-bench-prompts.json",
+        "tests/fixtures/traces/conventional-en-build-inputs-in-rust.json"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/configuration.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/devices.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/measurements.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/genai.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/backend/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/inspect.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/session.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/diff/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/diff/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/make-traces.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p25.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p50.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p75.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p90.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-bench-prompts.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-build-inputs-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-closed-types.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-copied-twice.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-copied.json",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tests/fixtures/traces/conventional-en-dense.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-deps-incomplete.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-links-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-measurements.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-only.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-paths-as-typos.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-roadmap-as-typos.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-test-as-docs.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-empty-diff.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-feat-as-refactor.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-file-scope.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-fix-as-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-fixtures-of-splits.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-group-backend.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-lockfile.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-merge.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-move-annotate.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-move-to-tools-crate.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-partial-copy.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-refactor-as-feat.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-release-notes-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-release.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-remove-experiments.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-remove-python-tools.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-scenarios-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-scopes.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-setup-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-annotate.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-as-feat.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-bench.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-diff.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-hardware.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-llamacpp.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-models.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-server.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-too-long.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-training-tools-deps.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-two-subjects.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-vague-refactor.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-pt-retry.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/free-en-chatty.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/gitmoji-fallback.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/hardware.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          10,
+          6
+        ],
+        "hunks": "@@ -88,8 +88,12 @@ From the last `style.history_depth` (30) subjects, merges excluded:\n The NPU has a fixed prompt length, so the diff is reduced to a budget, in\n-tokens estimated as characters / 3. That is pessimistic for most prompts,\n-not for all: hashes, base64 and long numbers take more tokens (Qwen's\n-tokenizer splits every digit). llama.cpp starts its server with half the\n-budget again as room, so such a prompt is read a little longer instead of\n-failing. How far the estimate is off is in\n-[measurements](measurements.md#token-estimate).\n+tokens estimated from the characters: 3 per token, except that every digit\n+is a token (Qwen's tokenizer splits them) and the letters of long runs\n+mixing letters and digits (hashes, base64) go 2 per token. That is\n+pessimistic for most prompts and can still be short for a few, which the\n+backends cover: llama.cpp starts its server with half the budget again as\n+room, so such a prompt is read a little longer instead of failing; the NPU\n+fails past the length it compiled for, and compiling for more breaks loading\n+its cached graph, so it is given a fifth less as the budget (`Backend::\n+prompt_budget`; a trace records the budget used). How far the estimate is\n+off is in [measurements](measurements.md#token-estimate).\n \n"
+      },
+      {
+        "path": "docs/configuration.md",
+        "old_path": null,
+        "lines": [
+          4,
+          1
+        ],
+        "hunks": "@@ -103,3 +103,6 @@ value, for example when an environment variable is set.\n   smaller than 512 fail to compile with NPU driver 1.38.\n-- `model.max_prompt_tokens` is also the prompt length the NPU compiles for.\n+- `model.max_prompt_tokens` is also the prompt length the NPU compiles for;\n+  the NPU is given a fifth less of it as the prompt budget, since it fails\n+  on a longer prompt and the estimate can be short\n+  ([architecture](architecture.md#fitting-the-diff)).\n   Shorter prompts are faster on the NPU but see less of the diff; changing it\n"
+      },
+      {
+        "path": "docs/devices.md",
+        "old_path": null,
+        "lines": [
+          4,
+          2
+        ],
+        "hunks": "@@ -214,3 +214,5 @@ misleading `CL_OUT_OF_HOST_MEMORY`.\n The NPU compiles the model for fixed shapes: a prompt of\n-`model.max_prompt_tokens` and a reply of `model.max_new_tokens`.\n+`model.max_prompt_tokens` and a reply of `model.max_new_tokens`. A longer\n+prompt fails, and the token estimate can be short, so the NPU is given a\n+fifth less than that as the prompt budget.\n \n@@ -226,3 +228,3 @@ The NPU compiles the model for fixed shapes: a prompt of\n   once, for faster tokens.\n-- Both settings give identical replies (a hardware test checks it).\n+- The two settings give the same reply for nearly every prompt: chunked prefill and `BEST_PERF` change the arithmetic, so a reply near a tie can differ (4 of the 51 fixture prompts do); a hardware test requires that at most one in ten does.\n \n"
+      },
+      {
+        "path": "docs/measurements.md",
+        "old_path": null,
+        "lines": [
+          11,
+          5
+        ],
+        "hunks": "@@ -228,7 +228,13 @@ Portuguese, so those prompts ask for Portuguese).\n \n-The prompt budget estimates tokens as characters / 3 (`estimate_tokens`). It\n-stays above the tokenizer's count for most prompts, as the budget requires:\n-real prompts are 3.4 to 3.75 characters per token, and a hardware test\n-checks it. It is not above for all: on eval-v1 the estimate was up to 1.45\n-times short for 2–3% of the prompts (hashes, base64 and long numbers).\n+The prompt budget estimates tokens with `estimate_tokens`: 3 characters per\n+token, except that every digit is a token and the letters of long runs\n+mixing letters and digits (hashes, base64) go 2 per token. Plain characters\n+/ 3 was up to 2.1 times short on diffs of checksums or keys (real prompts\n+are 3.4 to 3.75 characters per token, so it is above for most). Against the\n+tokenizer on eval-v1, eval-short and 3,000 training prompts the estimate is\n+at most 1.25 times short, at a cost of about 7% of the budget where it\n+binds. llama.cpp starts its server with half the budget again as context,\n+which covers it; the NPU, which cannot be compiled with spare length, gets\n+a fifth less budget (1 / 1.25). A hardware test checks that the estimate\n+stays within that room.\n \n"
+      },
+      {
+        "path": "src/backend/genai.rs",
+        "old_path": null,
+        "lines": [
+          40,
+          0
+        ],
+        "hunks": "@@ -110,2 +110,3 @@ pub fn missing_openvino(device: Device) -> &'static str {\n pub struct GenaiBackend {\n+    device: Device,\n     pipeline: Mutex<LlmPipeline>,\n@@ -152,2 +153,3 @@ impl GenaiBackend {\n         Ok(Self {\n+            device: options.device,\n             pipeline: Mutex::new(pipeline),\n@@ -164,2 +166,6 @@ impl Backend for GenaiBackend {\n \n+    fn prompt_budget(&self, requested: usize) -> usize {\n+        device_prompt_budget(self.device, requested)\n+    }\n+\n     fn last_metrics(&self) -> Option<Metrics> {\n@@ -216,2 +222,19 @@ impl Backend for GenaiBackend {\n \n+/// The share of the prompt budget the NPU gets, as a fraction. It compiles\n+/// for the budget and fails on a longer prompt, and the estimate is up to\n+/// 1.25 times short on dense text (see [`crate::diff::estimate_tokens`]), so\n+/// the budget it is given is a fifth smaller. Compiling for more than the\n+/// budget instead, to leave room, makes the cached graph fail to load again\n+/// (`Cannot find tensor for port`, OpenVINO 2026.3 and 2026.4, NPU driver\n+/// 1.38).\n+const NPU_BUDGET: (usize, usize) = (4, 5);\n+\n+/// The prompt budget `device` can take when asked for `requested`.\n+pub fn device_prompt_budget(device: Device, requested: usize) -> usize {\n+    match device {\n+        Device::Npu => requested * NPU_BUDGET.0 / NPU_BUDGET.1,\n+        Device::Gpu | Device::Cpu => requested,\n+    }\n+}\n+\n /// Device properties for the pipeline. The NPU-only ones are rejected by\n@@ -307,2 +330,19 @@ mod tests {\n \n+    #[test]\n+    fn the_npu_is_given_a_fifth_less_than_it_compiles_for() {\n+        // A prompt estimated at the budget may be up to 1.25 times longer;\n+        // the NPU fails past the length it compiled for.\n+        let budget = device_prompt_budget(Device::Npu, 1024);\n+        assert_eq!(budget, 819);\n+        assert!(budget * 125 / 100 <= 1024);\n+        assert_eq!(device_prompt_budget(Device::Npu, 512), 409);\n+        // Devices without a static shape take what they are asked for.\n+        assert_eq!(device_prompt_budget(Device::Gpu, 1024), 1024);\n+        assert_eq!(device_prompt_budget(Device::Cpu, 1024), 1024);\n+        // What the NPU compiles for is the budget itself.\n+        let options = options(Path::new(\"/m\"), Device::Npu);\n+        let npu = pipeline_properties(&options);\n+        assert!(npu.contains(&(\"MAX_PROMPT_LEN\", \"1024\".to_owned())));\n+    }\n+\n     #[test]\n"
+      },
+      {
+        "path": "src/backend/llamacpp/mod.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -298,5 +298,5 @@ impl Backend for LlamaCppBackend {\n /// The context the server is started with: the prompt budget, half again\n-/// as room for a prompt whose tokens were underestimated (the budget counts\n-/// about 3 characters per token, and hashes, base64 or long numbers take\n-/// up to twice as many tokens: Qwen splits every digit), and the reply. A\n+/// as room for a prompt whose tokens were underestimated (at most 1.25\n+/// times on the prompts measured, see [`crate::diff::estimate_tokens`]),\n+/// and the reply. A\n /// longer prompt is read a little longer instead of failing; the KV cache\n"
+      },
+      {
+        "path": "src/backend/mod.rs",
+        "old_path": null,
+        "lines": [
+          8,
+          0
+        ],
+        "hunks": "@@ -59,2 +59,10 @@ pub trait Backend {\n \n+    /// The prompt budget, in estimated tokens, this backend can take when\n+    /// asked for `requested`: less for a backend that fails past a fixed\n+    /// prompt length, since the estimate can be short (see\n+    /// [`crate::diff::estimate_tokens`]).\n+    fn prompt_budget(&self, requested: usize) -> usize {\n+        requested\n+    }\n+\n     /// Timings of the last successful [`Backend::generate`], when the\n"
+      },
+      {
+        "path": "src/cli/inspect.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -99,2 +99,3 @@ pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) ->\n     let mut out = std::io::BufWriter::new(std::io::stdout().lock());\n+    let options = generate::budgeted(&options, backend.as_ref());\n     for case in &inputs {\n"
+      },
+      {
+        "path": "src/cli/session.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          2
+        ],
+        "hunks": "@@ -81,2 +81,4 @@ impl Session {\n         };\n+        // The budget this backend can take, which a trace records.\n+        let options = generate::budgeted(&self.options, backend);\n         let generation = generate::generate_avoiding(\n@@ -85,3 +87,3 @@ impl Session {\n             backend,\n-            &self.options,\n+            &options,\n             &self.config,\n@@ -94,3 +96,3 @@ impl Session {\n                 backend,\n-                &self.options,\n+                &options,\n                 &self.config,\n"
+      },
+      {
+        "path": "src/diff/mod.rs",
+        "old_path": null,
+        "lines": [
+          46,
+          1
+        ],
+        "hunks": "@@ -24,2 +24,9 @@ pub const CHARS_PER_TOKEN: usize = 3;\n \n+/// Letters per token in long runs mixing letters and digits (hashes,\n+/// base64, keys), which split into short tokens.\n+const DENSE_LETTERS_PER_TOKEN: usize = 2;\n+\n+/// Runs at least this long, of letters and digits mixed, count as dense.\n+const DENSE_RUN: usize = 16;\n+\n /// Below this, a file's hunks are dropped instead of truncated: a few lines\n@@ -32,4 +39,42 @@ const MIN_BODY_LINES: usize = 3;\n \n+/// The tokens of `text` for Qwen's tokenizer, from above for most text:\n+/// [`CHARS_PER_TOKEN`] characters per token, except that every digit is a\n+/// token of its own and the letters of dense runs (hashes, base64) go\n+/// [`DENSE_LETTERS_PER_TOKEN`] per token. Characters / 3 alone was well\n+/// short on such diffs; the backends' headroom covers what is left (see\n+/// `docs/measurements.md`).\n pub fn estimate_tokens(text: &str) -> usize {\n-    text.chars().count().div_ceil(CHARS_PER_TOKEN)\n+    // (digits, letters of dense runs, other characters)\n+    let mut counts = (0, 0, 0);\n+    let mut run_start = None;\n+    let add_run = |run: &str, counts: &mut (usize, usize, usize)| {\n+        let digits = run.chars().filter(char::is_ascii_digit).count();\n+        let letters = run.chars().filter(char::is_ascii_alphabetic).count();\n+        let len = run.chars().count();\n+        counts.0 += digits;\n+        if len >= DENSE_RUN && digits > 0 && letters > 0 {\n+            counts.1 += letters;\n+            counts.2 += len - digits - letters;\n+        } else {\n+            counts.2 += len - digits;\n+        }\n+    };\n+    for (i, c) in text.char_indices() {\n+        let in_run = c.is_ascii_alphanumeric() || \"+/=_-\".contains(c);\n+        match (in_run, run_start) {\n+            (true, None) => run_start = Some(i),\n+            (false, Some(start)) => {\n+                add_run(&text[start..i], &mut counts);\n+                run_start = None;\n+                counts.2 += 1;\n+            }\n+            (false, None) => counts.2 += 1,\n+            (true, Some(_)) => {}\n+        }\n+    }\n+    if let Some(start) = run_start {\n+        add_run(&text[start..], &mut counts);\n+    }\n+    let (digits, dense_letters, other) = counts;\n+    digits + dense_letters.div_ceil(DENSE_LETTERS_PER_TOKEN) + other.div_ceil(CHARS_PER_TOKEN)\n }\n"
+      },
+      {
+        "path": "src/diff/tests.rs",
+        "old_path": null,
+        "lines": [
+          19,
+          0
+        ],
+        "hunks": "@@ -7,2 +7,21 @@ use super::*;\n \n+#[test]\n+fn estimate_counts_digits_and_dense_runs_apart() {\n+    // Prose and code: about 3 characters per token.\n+    assert_eq!(estimate_tokens(\"fix the parser\"), 5);\n+    assert_eq!(estimate_tokens(\"\"), 0);\n+    // Every digit is a token of its own.\n+    assert_eq!(estimate_tokens(\"v1.2.3\"), 3 + 1);\n+    // A hash: 40 digits, 24 letters at 2 per token.\n+    let sha = \"141eb93384ad59f77eba3a21bde871851c766de891f778c5686218c214c48f11\";\n+    let digits = sha.chars().filter(char::is_ascii_digit).count();\n+    assert_eq!(estimate_tokens(sha), digits + (64 - digits).div_ceil(2));\n+    assert!(estimate_tokens(sha) > sha.len().div_ceil(CHARS_PER_TOKEN) * 3 / 2);\n+    // A long word without digits is not dense.\n+    let word = \"configurationvaluesbuilder\";\n+    assert_eq!(estimate_tokens(word), word.len().div_ceil(3));\n+    // Short runs mixing letters and digits are not dense either.\n+    assert_eq!(estimate_tokens(\"abc123\"), 3 + 1);\n+}\n+\n fn file(path: &str, hunks: &str) -> FileDiff {\n"
+      },
+      {
+        "path": "src/generate/mod.rs",
+        "old_path": null,
+        "lines": [
+          9,
+          0
+        ],
+        "hunks": "@@ -57,2 +57,11 @@ pub struct Generation {\n \n+/// `options` with the budget `backend` can take: what to build the prompts\n+/// with, and what a trace of them records.\n+pub fn budgeted(options: &PromptOptions, backend: &dyn Backend) -> PromptOptions {\n+    PromptOptions {\n+        max_prompt_tokens: backend.prompt_budget(options.max_prompt_tokens),\n+        ..options.clone()\n+    }\n+}\n+\n pub fn generate(\n"
+      },
+      {
+        "path": "src/generate/tests.rs",
+        "old_path": null,
+        "lines": [
+          79,
+          0
+        ],
+        "hunks": "@@ -399,2 +399,81 @@ mod tests {\n \n+    /// A backend that takes four fifths of the budget it is asked for, as the\n+    /// NPU does, and records the prompts it was given.\n+    struct Tight(MockBackend);\n+\n+    impl Backend for Tight {\n+        fn describe(&self) -> String {\n+            \"tight\".into()\n+        }\n+\n+        fn generate(\n+            &self,\n+            prompt: &Prompt,\n+            config: &GenerationConfig,\n+        ) -> Result<String, BackendError> {\n+            self.0.generate(prompt, config)\n+        }\n+\n+        fn prompt_budget(&self, requested: usize) -> usize {\n+            requested * 4 / 5\n+        }\n+    }\n+\n+    #[test]\n+    fn a_backend_can_take_less_than_the_budget_asked_for() {\n+        let options = PromptOptions::default();\n+        let tight = Tight(MockBackend::new([\"fix(git): x\"]));\n+        let budgeted = crate::generate::budgeted(&options, &tight);\n+        assert_eq!(\n+            budgeted.max_prompt_tokens,\n+            options.max_prompt_tokens * 4 / 5\n+        );\n+        // Nothing else changes, and a backend that takes all keeps the options.\n+        assert_eq!(\n+            PromptOptions {\n+                max_prompt_tokens: options.max_prompt_tokens,\n+                ..budgeted\n+            },\n+            options\n+        );\n+        assert_eq!(\n+            crate::generate::budgeted(&options, &MockBackend::new([\"x\"])),\n+            options\n+        );\n+    }\n+\n+    #[test]\n+    fn a_tighter_budget_cuts_the_diff_sooner() {\n+        let big = vec![FileDiff {\n+            path: \"src/git.rs\".into(),\n+            old_path: None,\n+            lines: Some((400, 0)),\n+            hunks: format!(\n+                \"@@ -0,0 +1,400 @@\\n{}\",\n+                \"+let value = compute(1);\\n\".repeat(400)\n+            ),\n+        }];\n+        let tokens = |budget: usize| {\n+            let mock = MockBackend::new([\"fix(git): x\"]);\n+            let options = PromptOptions {\n+                max_prompt_tokens: budget,\n+                ..PromptOptions::default()\n+            };\n+            crate::generate::generate(\n+                &context(CONVENTIONAL),\n+                &big,\n+                &mock,\n+                &options,\n+                &GenerationConfig::default(),\n+            )\n+            .unwrap();\n+            let prompt = &mock.prompts()[0];\n+            crate::diff::estimate_tokens(&prompt.system)\n+                + crate::diff::estimate_tokens(&prompt.user)\n+        };\n+        let (full, tight) = (tokens(1024), tokens(819));\n+        assert!(full <= 1024 && tight <= 819, \"{full} {tight}\");\n+        assert!(tight < full);\n+    }\n+\n     struct Failing;\n"
+      },
+      {
+        "path": "tests/fixtures/make-traces.sh",
+        "old_path": null,
+        "lines": [
+          12,
+          0
+        ],
+        "hunks": "@@ -361 +361,13 @@ bench_fixture p75 cd1ef5c src/context.rs \"feat(context): read the ticket from th\n bench_fixture p90 482ba4d src/style.rs \"feat(style): find where each scope's commits went\"\n+\n+# A diff of checksums fills the budget with dense tokens: Qwen splits every\n+# digit, so characters / 3 was up to 2.1 times short on such prompts. The\n+# hardware tests run it on every device, the NPU's compiled length included.\n+fresh dense\n+for s in \"feat: publish the 1.0 archives\" \"docs: list the mirrors\"; do commit \"$s\"; done\n+for n in $(seq 1 60); do\n+    printf '%s  smart-commit-%s.tar.gz\\n' \"$(printf 'archive %s' \"$n\" | sha256sum | cut -c1-64)\" \"$n\"\n+done > SHA256SUMS\n+git add SHA256SUMS\n+\"$BIN\" --backend mock --mock-response \"chore: add the checksums of the archives\" \\\n+  --trace \"$OUT/conventional-en-dense.json\" >/dev/null\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p25.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p50.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p75.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p90.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -62,3 +62,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: feat, docs, fix, refactor, test.\\n- Scopes used here: cli, diff, git, prompt. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nfeat: add src/style.rs\\ntest(git): cover empty commits\\nrefactor(prompt): share the rules\\ndocs: describe the hook\\nfix(diff): keep renames in the file list\\n\",\n-          \"user\": \"Files changed:\\nsrc/style.rs | +71 -0\\n\\nDiff:\\n--- src/style.rs\\n@@ -97,2 +97,33 @@ pub fn detect<S: AsRef<str>>(subjects: &[S]) -> Style {\\n \\n+/// Where a scope's commits went: the areas (a file's directory, or the file\\n+/// itself at the root) of the files touched by the commits using `scope`,\\n+/// most frequent first, at most `max`. `files` holds the paths of each of\\n+/// `subjects`.\\n+pub fn scope_areas<S: AsRef<str>>(\\n+    scope: &str,\\n+    subjects: &[S],\\n+    files: &[Vec<String>],\\n+    max: usize,\\n+) -> Vec<String> {\\n+    let areas = subjects\\n+        .iter()\\n+        .zip(files)\\n+        .filter(|(subject, _)| {\\n+            parse_conventional(subject.as_ref().trim()).and_then(|h| h.scope) == Some(scope)\\n+        })\\n+        .flat_map(|(_, paths)| {\\n+            let mut areas: Vec<&str> = paths.iter().map(|p| area(p)).collect();\\n+            // Counted once per commit, so one wide commit does not decide.\\n+            areas.sort_unstable();\\n+            areas.dedup();\\n+            areas\\n+        });\\n+    rank(areas).into_iter().take(max).map(|(a, _)| a).collect()\\n+}\\n+\\n+/// `src/diff.rs` -> `src/`; `mise.toml` -> `mise.toml`.\\n+fn area(path: &str) -> &str {\\n+    path.rfind('/').map_or(path, |slash| &path[..=slash])\\n+}\\n+\\n /// Parses a conventional commit header: `type(scope)!: description`.\\n@@ -401,2 +432,42 @@ mod tests {\\n \\n+    #[test]\\n+    fn scope_areas_rank_places_once_per_commit() {\\n+        let subjects = [\\n+            \\\"feat(cli): add context\\\",\\n+            \\\"fix(cli): parse -C\\\",\\n+            \\\"docs: readme\\\",\\n+            \\\"fix(cli): wide change\\\",\\n+            \\\"feat(git): history\\\",\\n+        ];\\n+        let files: Vec<Vec<String>> = [\\n+            &[\\\"src/main.rs\\\", \\\"tests/cli.rs\\\"][..],\\n+            &[\\\"src/main.rs\\\"],\\n+            &[\\\"README.md\\\"],\\n+            &[\\\"src/a.rs\\\", \\\"src/b.rs\\\", \\\"src/c.rs\\\", \\\"docs/usage.md\\\"],\\n+            &[\\\"src/git.rs\\\"],\\n+        ]\\n+        .iter()\\n+        .map(|p| p.iter().map(|s| s.to_string()).collect())\\n[... 23 more lines]\\n\\n(1 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/style.rs | +71 -0\\n\\nDiff:\\n--- src/style.rs\\n@@ -97,2 +97,33 @@ pub fn detect<S: AsRef<str>>(subjects: &[S]) -> Style {\\n \\n+/// Where a scope's commits went: the areas (a file's directory, or the file\\n+/// itself at the root) of the files touched by the commits using `scope`,\\n+/// most frequent first, at most `max`. `files` holds the paths of each of\\n+/// `subjects`.\\n+pub fn scope_areas<S: AsRef<str>>(\\n+    scope: &str,\\n+    subjects: &[S],\\n+    files: &[Vec<String>],\\n+    max: usize,\\n+) -> Vec<String> {\\n+    let areas = subjects\\n+        .iter()\\n+        .zip(files)\\n+        .filter(|(subject, _)| {\\n+            parse_conventional(subject.as_ref().trim()).and_then(|h| h.scope) == Some(scope)\\n+        })\\n+        .flat_map(|(_, paths)| {\\n+            let mut areas: Vec<&str> = paths.iter().map(|p| area(p)).collect();\\n+            // Counted once per commit, so one wide commit does not decide.\\n+            areas.sort_unstable();\\n+            areas.dedup();\\n+            areas\\n+        });\\n+    rank(areas).into_iter().take(max).map(|(a, _)| a).collect()\\n+}\\n+\\n+/// `src/diff.rs` -> `src/`; `mise.toml` -> `mise.toml`.\\n+fn area(path: &str) -> &str {\\n+    path.rfind('/').map_or(path, |slash| &path[..=slash])\\n+}\\n+\\n /// Parses a conventional commit header: `type(scope)!: description`.\\n@@ -401,2 +432,42 @@ mod tests {\\n \\n+    #[test]\\n+    fn scope_areas_rank_places_once_per_commit() {\\n+        let subjects = [\\n+            \\\"feat(cli): add context\\\",\\n+            \\\"fix(cli): parse -C\\\",\\n+            \\\"docs: readme\\\",\\n+            \\\"fix(cli): wide change\\\",\\n+            \\\"feat(git): history\\\",\\n+        ];\\n+        let files: Vec<Vec<String>> = [\\n+            &[\\\"src/main.rs\\\", \\\"tests/cli.rs\\\"][..],\\n+            &[\\\"src/main.rs\\\"],\\n+            &[\\\"README.md\\\"],\\n+            &[\\\"src/a.rs\\\", \\\"src/b.rs\\\", \\\"src/c.rs\\\", \\\"docs/usage.md\\\"],\\n+            &[\\\"src/git.rs\\\"],\\n+        ]\\n[... 25 more lines]\\n\\n(1 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-bench-prompts.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -213,3 +213,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: test, docs, chore, refactor.\\n- Scopes used here: docs, fixtures. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nchore: remove scripts/experiments\\ntest(fixtures): trace twelve messages from the module splits and the docs\\ntest(docs): check that links between the pages and their headings resolve\\ndocs: gather every timing in one page, measurements.md\\ndocs: bring the roadmap and the training pages up to v0.2\\n\",\n-          \"user\": \"Files changed:\\ndocs/measurements.md | +12 -7\\ndocs/usage.md | +1 -0\\nsrc/backend/llamacpp/mod.rs | +11 -0\\nsrc/backend/llamacpp/tests.rs | +19 -0\\nsrc/bench/mod.rs | +1 -0\\nsrc/bench/server.rs | new, +141 -0\\nsrc/bench/tests.rs | +136 -0\\nsrc/cli/benchmark.rs | +32 -0\\nsrc/cli/mod.rs | +23 -2\\ntests/bench_cli.rs | +47 -0\\ntraining/time-llama-server.py | deleted, +0 -101\\n\\nDiff:\\n--- src/backend/llamacpp/mod.rs\\n@@ -108,2 +108,12 @@ impl LlamaCppBackend {\\n     pub fn start_in(options: &LlamaCppOptions, dir: Option<&Path>) -> Result<Self, BackendError> {\\n+        Self::start_with(options, dir, &[])\\n+    }\\n[... 13 more lines]\\n--- src/backend/llamacpp/tests.rs\\n@@ -288,2 +288,21 @@ fn a_server_that_dies_is_reported_with_its_output() {\\n \\n+#[test]\\n+fn extra_flags_reach_the_server_after_ours() {\\n[... 18 more lines]\\n--- src/bench/mod.rs\\n@@ -13,2 +13,3 @@ mod measure;\\n mod report;\\n+pub mod server;\\n #[cfg(test)]\\n--- src/bench/tests.rs\\n@@ -255 +255,137 @@ fn cpu_time_grows_with_work() {\\n }\\n+\\n+mod server {\\n+    use std::sync::Mutex;\\n+\\n[... 132 more lines]\\n--- src/cli/benchmark.rs\\n@@ -98,2 +98,34 @@ fn save(report: &Report) -> Result<PathBuf> {\\n \\n+/// `bench --prompts`: llama-server timed on prompts from files, with flags of\\n+/// the caller's choice.\\n[... 31 more lines]\\n--- src/cli/mod.rs\\n@@ -99,4 +99,18 @@ enum Command {\\n         /// Print the full report as JSON.\\n-        #[arg(long)]\\n+        #[arg(long, conflicts_with = \\\"prompts\\\")]\\n[... 28 more lines]\\n--- tests/bench_cli.rs\\n@@ -282 +282,48 @@ fn device_says_where_the_benchmark_turned_fast_load_on() {\\n }\\n+\\n+#[test]\\n+fn prompts_need_a_llama_cpp_device() {\\n[... 44 more lines]\\n--- training/time-llama-server.py\\n@@ -1,101 +0,0 @@\\n-\\\"\\\"\\\"Times llama-server on prompts printed by `smart-commit prompt`.\\n-\\n-usage: python3 -I time-llama-server.py MODEL.gguf PROMPTS_DIR LABEL [server flags...]\\n[... 98 more lines]\\n\\n(10 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/measurements.md | +12 -7\\ndocs/usage.md | +1 -0\\nsrc/backend/llamacpp/mod.rs | +11 -0\\nsrc/backend/llamacpp/tests.rs | +19 -0\\nsrc/bench/mod.rs | +1 -0\\nsrc/bench/server.rs | new, +141 -0\\nsrc/bench/tests.rs | +136 -0\\nsrc/cli/benchmark.rs | +32 -0\\nsrc/cli/mod.rs | +23 -2\\ntests/bench_cli.rs | +47 -0\\ntraining/time-llama-server.py | deleted, +0 -101\\n\\nDiff:\\n--- src/backend/llamacpp/mod.rs\\n@@ -108,2 +108,12 @@ impl LlamaCppBackend {\\n     pub fn start_in(options: &LlamaCppOptions, dir: Option<&Path>) -> Result<Self, BackendError> {\\n+        Self::start_with(options, dir, &[])\\n+    }\\n[... 13 more lines]\\n--- src/backend/llamacpp/tests.rs\\n@@ -288,2 +288,21 @@ fn a_server_that_dies_is_reported_with_its_output() {\\n \\n+#[test]\\n+fn extra_flags_reach_the_server_after_ours() {\\n[... 18 more lines]\\n--- src/bench/mod.rs\\n@@ -13,2 +13,3 @@ mod measure;\\n mod report;\\n+pub mod server;\\n #[cfg(test)]\\n--- src/bench/tests.rs\\n@@ -255 +255,137 @@ fn cpu_time_grows_with_work() {\\n }\\n+\\n+mod server {\\n[... 134 more lines]\\n--- src/cli/benchmark.rs\\n@@ -98,2 +98,34 @@ fn save(report: &Report) -> Result<PathBuf> {\\n \\n+/// `bench --prompts`: llama-server timed on prompts from files, with flags of\\n+/// the caller's choice.\\n[... 31 more lines]\\n--- src/cli/mod.rs\\n@@ -99,4 +99,18 @@ enum Command {\\n         /// Print the full report as JSON.\\n-        #[arg(long)]\\n+        #[arg(long, conflicts_with = \\\"prompts\\\")]\\n[... 28 more lines]\\n--- training/time-llama-server.py\\n@@ -1,101 +0,0 @@\\n-\\\"\\\"\\\"Times llama-server on prompts printed by `smart-commit prompt`.\\n-\\n-usage: python3 -I time-llama-server.py MODEL.gguf PROMPTS_DIR LABEL [server flags...]\\n[... 98 more lines]\\n\\n(10 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-build-inputs-in-rust.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -120,3 +120,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: chore, refactor, feat, test.\\n- Scopes used here: bench, deps, fixtures. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nchore(deps): add the training tools crate and its dependencies\\nrefactor: write the release notes in sc-tools instead of a shell script\\nrefactor: move the llama-server timing out of the binary into sc-tools\\nfeat(bench): time llama-server on prompt files with `bench --prompts`\\nchore: remove scripts/experiments\\n\",\n-          \"user\": \"Files changed:\\ntraining/tools/src/build_inputs.rs | new, +648 -0\\ntraining/tools/src/build_inputs_tests.rs | new, +268 -0\\ntraining/tools/src/main.rs | +65 -1\\ntraining/tools/src/pyjson.rs | new, +144 -0\\ntraining/tools/src/pytext.rs | new, +69 -0\\n\\nDiff:\\n--- training/tools/src/build_inputs.rs\\n@@ -0,0 +1,648 @@\\n+//! CommitChronicle parquet shards -> smart-commit trace `Inputs` + targets.\\n+//!\\n+//! Writes two aligned JSON Lines files: `inputs.jsonl` (one `trace::Inputs`\\n+//! per line, for `smart-commit prompt --inputs`) and `meta.jsonl`\\n[... 644 more lines]\\n--- training/tools/src/build_inputs_tests.rs\\n@@ -0,0 +1,268 @@\\n+use std::path::Path;\\n+use std::process::Command;\\n+\\n+use super::*;\\n+\\n+fn modification(change: &str, old: Option<&str>, new: Option<&str>, diff: &str) -> Mod {\\n+    Mod {\\n+        change_type: change.to_owned(),\\n[... 260 more lines]\\n--- training/tools/src/main.rs\\n@@ -1 +1,65 @@\\n-fn main() {}\\n+//! The data tools for training smart-commit's models. They are a crate of\\n+//! their own so that what they need (parquet, above all) never reaches the\\n+//! binary users install.\\n+\\n+mod build_inputs;\\n+mod pyjson;\\n+mod pytext;\\n+\\n[... 57 more lines]\\n--- training/tools/src/pyjson.rs\\n@@ -0,0 +1,144 @@\\n+//! JSON as Python's `json.dumps(..., ensure_ascii=False)` writes it, so the\\n+//! files the tools write stay byte for byte what the Python tools wrote\\n+//! (the training data is identified by their hashes).\\n+\\n+use serde_json::Value;\\n+\\n[... 138 more lines]\\n--- training/tools/src/pytext.rs\\n@@ -0,0 +1,69 @@\\n+//! The bits of Python's `str` the tools relied on, where Rust's differ.\\n+\\n+/// `str.isspace` for one character: Rust's White_Space plus the separators\\n+/// `\\\\x1c` to `\\\\x1f`.\\n+fn is_space(c: char) -> bool {\\n[... 64 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ntraining/tools/src/build_inputs.rs | new, +648 -0\\ntraining/tools/src/build_inputs_tests.rs | new, +268 -0\\ntraining/tools/src/main.rs | +65 -1\\ntraining/tools/src/pyjson.rs | new, +144 -0\\ntraining/tools/src/pytext.rs | new, +69 -0\\n\\nDiff:\\n--- training/tools/src/build_inputs.rs\\n@@ -0,0 +1,648 @@\\n+//! CommitChronicle parquet shards -> smart-commit trace `Inputs` + targets.\\n+//!\\n+//! Writes two aligned JSON Lines files: `inputs.jsonl` (one `trace::Inputs`\\n[... 645 more lines]\\n--- training/tools/src/build_inputs_tests.rs\\n@@ -0,0 +1,268 @@\\n+use std::path::Path;\\n+use std::process::Command;\\n+\\n+use super::*;\\n+\\n+fn modification(change: &str, old: Option<&str>, new: Option<&str>, diff: &str) -> Mod {\\n+    Mod {\\n[... 261 more lines]\\n--- training/tools/src/main.rs\\n@@ -1 +1,65 @@\\n-fn main() {}\\n+//! The data tools for training smart-commit's models. They are a crate of\\n+//! their own so that what they need (parquet, above all) never reaches the\\n+//! binary users install.\\n+\\n+mod build_inputs;\\n+mod pyjson;\\n[... 59 more lines]\\n--- training/tools/src/pyjson.rs\\n@@ -0,0 +1,144 @@\\n+//! JSON as Python's `json.dumps(..., ensure_ascii=False)` writes it, so the\\n+//! files the tools write stay byte for byte what the Python tools wrote\\n+//! (the training data is identified by their hashes).\\n+\\n[... 140 more lines]\\n--- training/tools/src/pytext.rs\\n@@ -0,0 +1,69 @@\\n+//! The bits of Python's `str` the tools relied on, where Rust's differ.\\n+\\n+/// `str.isspace` for one character: Rust's White_Space plus the separators\\n+/// `\\\\x1c` to `\\\\x1f`.\\n+fn is_space(c: char) -> bool {\\n[... 64 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-closed-types.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-copied-twice.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-copied.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-dense.json",
+        "old_path": null,
+        "lines": [
+          60,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,60 @@\n+{\n+  \"format\": 1,\n+  \"tool_version\": \"0.9.0\",\n+  \"backend\": \"mock\",\n+  \"options\": {\n+    \"max_prompt_tokens\": 1024,\n+    \"default_convention\": \"conventional\",\n+    \"default_language\": \"english\",\n+    \"diff\": \"annotated\"\n+  },\n+  \"config\": {\n+    \"max_new_tokens\": 128\n+  },\n+  \"inputs\": {\n+    \"branch\": \"main\",\n+    \"subjects\": [\n+      \"docs: list the mirrors\",\n+      \"feat: publish the 1.0 archives\"\n+    ],\n+    \"history_files\": [\n+      [],\n+      []\n+    ],\n+    \"staged\": [\n+      {\n+        \"status\": \"added\",\n+        \"path\": \"SHA256SUMS\",\n+        \"old_path\": null\n+      }\n+    ],\n+    \"files\": [\n+      {\n+        \"path\": \"SHA256SUMS\",\n+        \"old_path\": null,\n+        \"lines\": [\n+          60,\n+          0\n+        ],\n+        \"hunks\": \"@@ -0,0 +1,60 @@\\n+d9baf236e10ad5bd745fb8001fe97479eb06de761f4a692da31410c2365fe910  smart-commit-1.tar.gz\\n+f12584295f96d08290f2fda7368dd6a67b958b5893918604d3327744f37286f3  smart-commit-2.tar.gz\\n+780a315ab1a8b28868019df4b8f93814cf5c42c2f59a950e02605a2f7c70a60c  smart-commit-3.tar.gz\\n+a1ce7c66a3c7207cc66a4be748523bbd3673fe0a4fea5121da93f44ed316381a  smart-commit-4.tar.gz\\n+6c57a613be859bdb60ab8c628d987d7fe44046b251dc58a745eadade77dbf08d  smart-commit-5.tar.gz\\n+8e217e76d8afebb3834d20f1a99146376bf282256148fdb0f3d431324431c0db  smart-commit-6.tar.gz\\n+1f53a4c69d3ac811c99c162ca62c369fd8b1bb6f922fb16827f8c76118d8a091  smart-commit-7.tar.gz\\n+e70bdfb4b7b4ff90a19ae85b66fc9cdcdc3865f029eb60657a18abda67d9091f  smart-commit-8.tar.gz\\n+d68d38de712c4e5c7a90e02cc0256a421a21c2cb8c5a498f9eb55992d43b6540  smart-commit-9.tar.gz\\n+23da0ab56240f0311284ddf8d35187ae9c4ceff0a4f133c2220ce5840ee54f7d  smart-commit-10.tar.gz\\n+d1f06e405277d13f7471467efef7bd8e85e24c03c357ae8b7a5aacfcaade518e  smart-commit-11.tar.gz\\n+66a234c5acc803e1e0f5f4963afb7191159f3e115edd256a944c8325c0baf710  smart-commit-12.tar.gz\\n+897444e6dfdd19b1958573e77e9fb9f2f91d55be80c3f5bf7768a090956cb922  smart-commit-13.tar.gz\\n+71f3f209b0e9cdeb2b7f68f0395c7b71c1cf11ff7909ad8f8fc903f104d3a25c  smart-commit-14.tar.gz\\n+ae2c8b88e4ec90b129f7aea82befa724753166c75d04fe1443dd3d41cae1b1c0  smart-commit-15.tar.gz\\n+64cbf13ff55901560bd383b925a21175b5f574da45c2ab3f1ee854d21c3d6333  smart-commit-16.tar.gz\\n+008052fe8e853b5f22997b3af02d576a69ba6b4c8257f0441ffe25f732c385ae  smart-commit-17.tar.gz\\n+2915029aa141a95aa5df4181e18d8185c259b4852189b516b4be215e3f39083a  smart-commit-18.tar.gz\\n+1b043647d77ae866d38ecb2ff1f5005ee8e6e58d3c7ccc5ec3f679c110339374  smart-commit-19.tar.gz\\n+3bd611e61bb7436bd6e5bf91a0e02d15623a7716aa2a505746b1bf7cac8f1bce  smart-commit-20.tar.gz\\n+56512a2a93da3ca7d9fb1d66925a90155318f1d0a363ed640de3fb0197cdacbd  smart-commit-21.tar.gz\\n+123fde3bf898302ef40e9d0f8534ec32a3c97f53df179bac3baa578062d6224c  smart-commit-22.tar.gz\\n+1086fd90e67b33fe76a8c0d0d0bea30e574460e1bf2ab0ae0e25b8860c9fc74d  smart-commit-23.tar.gz\\n+be92a4bb9c6fe953833fe46c17b447c1d2669692050b057c6c6847a96d1bca3f  smart-commit-24.tar.gz\\n+b56f8ebe1901ac4af978652b739e3624a467b7e92d9d199de365c35685dd3fa7  smart-commit-25.tar.gz\\n+a28ff5c261ea40f200a030d47d414e6b43820751db511c92a1b1f35cf9b5b2b5  smart-commit-26.tar.gz\\n+2e5b90dfa1081237a75806565d5fc3fefaccd37475a172500262ed692cd9488d  smart-commit-27.tar.gz\\n+555357b3ccb2464b048745983bf0e7649155f4d68f0fe2eb38f1e604820c4bf4  smart-commit-28.tar.gz\\n+8d07d63faae77b76eaea0e142a2f4f5bf4c78c58cc3c54e5dac9e407acbfab3b  smart-commit-29.tar.gz\\n+0f00f4d6caf63a5673e2a6d0209b66d5a9e4a36a89aa9fb2e8715b8212f95264  smart-commit-30.tar.gz\\n+e4f0393d8d94047a30650c22af7e71a75d8b3bde34ccbde8f5589b48df6e34c6  smart-commit-31.tar.gz\\n+c032195a474583e2de7d7e77a1fa675996943071afc80c09dd7b01d254b80300  smart-commit-32.tar.gz\\n+ab166294c154b4b569c6555deb4058f832889506103f455274153fcfbd5a445c  smart-commit-33.tar.gz\\n+e0952d6da678bc9e88e3fee5a0bf6fd35b9f45dc5566ce67a4cf25d1520176a5  smart-commit-34.tar.gz\\n+8d8b1f2112e32b11d6ca9c7af4aeb69d6958401d3a0f0aaeb997a3ea09b6fecd  smart-commit-35.tar.gz\\n+01c09905c82008c1a88c94b9849d548e24f70fd1cbb153c2948e6302a84cb633  smart-commit-36.tar.gz\\n+e6163f82f9f8cff3598599c7f282895de874522f8ea6676e97317214658a0802  smart-commit-37.tar.gz\\n+e999ccbd78349d402d5d9551d6f62ac237b8a010dbcc91ae5af247bb0f511dd0  smart-commit-38.tar.gz\\n+6e0518093ddc63c12c3750dcfa2893ed201b15e9345a85822edfae95d64d1b5a  smart-commit-39.tar.gz\\n+f599afdaec6a0a57c66771f4fe0b50ea871eaae586440cd4b8fa68a0944a5807  smart-commit-40.tar.gz\\n+f061b03bf9882f5988996115f0576f2294c973250ef218341162e223910b42c4  smart-commit-41.tar.gz\\n+553caccc56805718cca2df3e523336067dae9e7e19b8c09a8011aaadd7626bb8  smart-commit-42.tar.gz\\n+372ee46576ee415cb7dff6c2175001d3bebd7d1ae648a27f262f9f8c3e5351a2  smart-commit-43.tar.gz\\n+8cc795e80b0e33d9ca9eb8e41fee1ffc5ad1867d924dabffcda457275b60dfa7  smart-commit-44.tar.gz\\n+245245ea9c36942501872cad58264ca55dd3e17b37b6c0845bb30753fb8a3dd6  smart-commit-45.tar.gz\\n+3fa544a6cffa3902e4943fcc33823f3c8d65649c679598adef57edc1e50a0cb8  smart-commit-46.tar.gz\\n+b95eec65c976bd25f1dfaef8cb872abcf82f6a1d5a6e22d8088ad5dff0a0602c  smart-commit-47.tar.gz\\n+ffeeb69897bbeefcddf9ac9f9874eb1d9d693b0375c9247063abf23d15f532de  smart-commit-48.tar.gz\\n+ba5cb320b8768918c8a7b4f56b2548bdbf11b8e3b72a7c01cbfdb4b9eae3c40b  smart-commit-49.tar.gz\\n+639de59cf2413343aab6400efa9c93cbe95dfe6dea16ff9df05dff2e0cbffb24  smart-commit-50.tar.gz\\n+6ef7c700d45fd1d094d3dd096be52fcc21422155a5e0f7dde97b1f2e521a3268  smart-commit-51.tar.gz\\n+de149e145025ff58bcd4fa6b7a748f7fd1eff9f442230ddefae14c54e5ed7712  smart-commit-52.tar.gz\\n+e7fc490adeabecff573c32c41f00f4d60c282dba6300763f810e8a66e3860169  smart-commit-53.tar.gz\\n+ee7bf45d9b1700a6f5f291bc4ad5235ca610b379681b450603796a27ae767a0f  smart-commit-54.tar.gz\\n+d29a1ad260dbd1046be5d454590b78ec9315c7b1447b3b87ad53be50a460382a  smart-commit-55.tar.gz\\n+bb379a71dd93ff5bec85d5ee015c604f875a5dc57dc4255222bc80d1c865436e  smart-commit-56.tar.gz\\n+b257842dadd2f4379f90f8a170095ae730fbc8d8de64fc65924bf97b8b5ec102  smart-commit-57.tar.gz\\n+07eba76873ff743a61c3bf46b47d0c61c5cf92e83061c884498b6ae28d386221  smart-commit-58.tar.gz\\n+2f80fc36701f238ea1490b29e1924a6de64e7595e652c91b5eb9ea559400c4cd  smart-commit-59.tar.gz\\n+cd97aa7121e7040ef944f4fb15247e7aa64063f269937c95df0165993ed691b2  smart-commit-60.tar.gz\\n\"\n+      }\n+    ]\n+  },\n+  \"generation\": {\n+    \"message\": {\n+      \"subject\": \"chore: add the checksums of the archives\",\n+      \"body\": null\n+    },\n+    \"source\": \"model\",\n+    \"attempts\": [\n+      {\n+        \"prompt\": {\n+          \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, feat, refactor.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: list the mirrors\\nfeat: publish the 1.0 archives\\n\",\n+          \"user\": \"Files changed:\\nSHA256SUMS | new, +60 -0\\n\\nDiff:\\n--- SHA256SUMS\\n@@ -0,0 +1,60 @@\\n+d9baf236e10ad5bd745fb8001fe97479eb06de761f4a692da31410c2365fe910  smart-commit-1.tar.gz\\n+f12584295f96d08290f2fda7368dd6a67b958b5893918604d3327744f37286f3  smart-commit-2.tar.gz\\n+780a315ab1a8b28868019df4b8f93814cf5c42c2f59a950e02605a2f7c70a60c  smart-commit-3.tar.gz\\n+a1ce7c66a3c7207cc66a4be748523bbd3673fe0a4fea5121da93f44ed316381a  smart-commit-4.tar.gz\\n+6c57a613be859bdb60ab8c628d987d7fe44046b251dc58a745eadade77dbf08d  smart-commit-5.tar.gz\\n+8e217e76d8afebb3834d20f1a99146376bf282256148fdb0f3d431324431c0db  smart-commit-6.tar.gz\\n+1f53a4c69d3ac811c99c162ca62c369fd8b1bb6f922fb16827f8c76118d8a091  smart-commit-7.tar.gz\\n+e70bdfb4b7b4ff90a19ae85b66fc9cdcdc3865f029eb60657a18abda67d9091f  smart-commit-8.tar.gz\\n+d68d38de712c4e5c7a90e02cc0256a421a21c2cb8c5a498f9eb55992d43b6540  smart-commit-9.tar.gz\\n+23da0ab56240f0311284ddf8d35187ae9c4ceff0a4f133c2220ce5840ee54f7d  smart-commit-10.tar.gz\\n+d1f06e405277d13f7471467efef7bd8e85e24c03c357ae8b7a5aacfcaade518e  smart-commit-11.tar.gz\\n[... 49 more lines]\\n\\n(1 files are only partly shown; rely on the file list.)\\n\"\n+        },\n+        \"raw\": \"chore: add the checksums of the archives\",\n+        \"rejected\": null\n+      }\n+    ]\n+  }\n+}\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-deps-incomplete.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-links-test.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -64,3 +64,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, refactor, test.\\n- Scopes used here: diff, docs. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: gather every timing in one page, measurements.md\\ndocs: bring the roadmap and the training pages up to v0.2\\ntest(docs): check that the pages name real paths and list every command\\ndocs: fix paths of the split modules and two misplaced passages\\nrefactor: group genai, llamacpp, server and device under backend\\n\",\n-          \"user\": \"Files changed:\\ntests/docs.rs | +66 -0\\n\\nDiff:\\n--- tests/docs.rs\\n@@ -110 +110,67 @@ fn every_command_is_in_the_usage_guide() {\\n }\\n+\\n+/// GitHub's anchor for a heading: lowercase, punctuation dropped, spaces as\\n+/// hyphens.\\n+fn anchor(heading: &str) -> String {\\n+    heading\\n+        .trim()\\n+        .to_lowercase()\\n+        .chars()\\n+        .filter(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_'))\\n+        .map(|c| if c == ' ' { '-' } else { c })\\n+        .collect()\\n+}\\n+\\n+fn anchors(text: &str) -> Vec<String> {\\n+    let mut fenced = false;\\n+    let mut found = Vec::new();\\n+    for line in text.lines() {\\n+        if line.trim_start().starts_with(\\\"```\\\") {\\n+            fenced = !fenced;\\n+        } else if !fenced && line.starts_with('#') {\\n+            found.push(anchor(line.trim_start_matches('#')));\\n+        }\\n+    }\\n+    found\\n+}\\n+\\n+#[test]\\n+fn links_between_the_pages_resolve() {\\n+    let mut broken = Vec::new();\\n+    for page in all_pages() {\\n+        let text = fs::read_to_string(&page).unwrap();\\n+        let name = page.strip_prefix(ROOT).unwrap().display().to_string();\\n+        let mut fenced = false;\\n+        for line in text.lines() {\\n+            if line.trim_start().starts_with(\\\"```\\\") {\\n+                fenced = !fenced;\\n+            }\\n+            if fenced {\\n+                continue;\\n+            }\\n+            for target in line.split(\\\"](\\\").skip(1) {\\n+                let Some((target, _)) = target.split_once(')') else {\\n+                    continue;\\n+                };\\n+                if target.starts_with(\\\"http\\\") || target.starts_with(\\\"mailto:\\\") {\\n+                    continue;\\n+                }\\n+                let (file, fragment) = target.split_once('#').unwrap_or((target, \\\"\\\"));\\n+                let path = if file.is_empty() {\\n+                    page.clone()\\n[... 16 more lines]\\n\\n(1 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ntests/docs.rs | +66 -0\\n\\nDiff:\\n--- tests/docs.rs\\n@@ -110 +110,67 @@ fn every_command_is_in_the_usage_guide() {\\n }\\n+\\n+/// GitHub's anchor for a heading: lowercase, punctuation dropped, spaces as\\n+/// hyphens.\\n+fn anchor(heading: &str) -> String {\\n+    heading\\n+        .trim()\\n+        .to_lowercase()\\n+        .chars()\\n+        .filter(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_'))\\n+        .map(|c| if c == ' ' { '-' } else { c })\\n+        .collect()\\n+}\\n+\\n+fn anchors(text: &str) -> Vec<String> {\\n+    let mut fenced = false;\\n+    let mut found = Vec::new();\\n+    for line in text.lines() {\\n+        if line.trim_start().starts_with(\\\"```\\\") {\\n+            fenced = !fenced;\\n+        } else if !fenced && line.starts_with('#') {\\n+            found.push(anchor(line.trim_start_matches('#')));\\n+        }\\n+    }\\n+    found\\n+}\\n+\\n+#[test]\\n+fn links_between_the_pages_resolve() {\\n+    let mut broken = Vec::new();\\n+    for page in all_pages() {\\n+        let text = fs::read_to_string(&page).unwrap();\\n+        let name = page.strip_prefix(ROOT).unwrap().display().to_string();\\n+        let mut fenced = false;\\n+        for line in text.lines() {\\n+            if line.trim_start().starts_with(\\\"```\\\") {\\n+                fenced = !fenced;\\n+            }\\n+            if fenced {\\n+                continue;\\n+            }\\n+            for target in line.split(\\\"](\\\").skip(1) {\\n+                let Some((target, _)) = target.split_once(')') else {\\n+                    continue;\\n+                };\\n+                if target.starts_with(\\\"http\\\") || target.starts_with(\\\"mailto:\\\") {\\n+                    continue;\\n+                }\\n+                let (file, fragment) = target.split_once('#').unwrap_or((target, \\\"\\\"));\\n[... 18 more lines]\\n\\n(1 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-measurements.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -198,3 +198,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, docs, test.\\n- Scopes used here: diff, docs, server. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: bring the roadmap and the training pages up to v0.2\\ntest(docs): check that the pages name real paths and list every command\\ndocs: fix paths of the split modules and two misplaced passages\\nrefactor: group genai, llamacpp, server and device under backend\\nrefactor(diff): move annotate under diff\\n\",\n-          \"user\": \"Files changed:\\nAGENTS.md | +3 -1\\nREADME.md | +5 -8\\ndocs/architecture.md | +6 -6\\ndocs/configuration.md | +4 -4\\ndocs/devices.md | +30 -96\\ndocs/measurements.md | new, +232 -0\\ndocs/models.md | +16 -20\\ndocs/reproducibility.md | +2 -3\\ndocs/roadmap.md | +3 -3\\ndocs/training.md | +4 -65\\n\\nDiff:\\n--- AGENTS.md\\n@@ -175,2 +175,4 @@ reproducibility); [docs/roadmap.md](docs/roadmap.md) tracks what is done and\\n what is next. Numbers in the docs (timings, counts) come from measurements\\n-that can be repeated, never from memory.\\n+that can be repeated, never from memory. Timings live in\\n[... 2 more lines]\\n--- README.md\\n@@ -94,9 +94,5 @@ downloaded, after listing it.\\n \\n-The default model is Qwen2.5-Coder-1.5B-Instruct. On a Ryzen 5 5500 with an\\n-RTX 3050 a message takes 2.4 s through Vulkan and 4.0 s on the CPU through\\n[... 15 more lines]\\n--- docs/architecture.md\\n@@ -81,8 +81,8 @@ From the last `style.history_depth` (30) subjects, merges excluded:\\n The NPU has a fixed prompt length, so the diff is reduced to a budget, in\\n-tokens estimated as characters / 3. That is pessimistic for most prompts\\n-(3.4–3.75 characters per token), not for all: hashes, base64 and long\\n[... 11 more lines]\\n--- docs/configuration.md\\n@@ -88,5 +88,5 @@ value, for example when an environment variable is set.\\n   topology in sysfs. llama.cpp's own default already does that on some\\n-  processors and not on others (2 threads on a 14-core Core Ultra 5 225H);\\n-  see [devices](devices.md#threads-on-the-cpu). Decoding keeps llama.cpp's\\n[... 10 more lines]\\n--- docs/reproducibility.md\\n@@ -79,5 +79,4 @@ model are removed afterwards (`--keep` keeps them). The **Model** workflow\\n (`.github/workflows/model.yml`) runs the export on CI after any change to\\n-it, to check that it reproduces on another machine. On a Ryzen 5 5500 the\\n-export from scratch (uv, Python, the packages and the source model\\n[... 4 more lines]\\n\\n(10 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nAGENTS.md | +3 -1\\nREADME.md | +5 -8\\ndocs/architecture.md | +6 -6\\ndocs/configuration.md | +4 -4\\ndocs/devices.md | +30 -96\\ndocs/measurements.md | new, +232 -0\\ndocs/models.md | +16 -20\\ndocs/reproducibility.md | +2 -3\\ndocs/roadmap.md | +3 -3\\ndocs/training.md | +4 -65\\n\\nDiff:\\n--- AGENTS.md\\n@@ -175,2 +175,4 @@ reproducibility); [docs/roadmap.md](docs/roadmap.md) tracks what is done and\\n what is next. Numbers in the docs (timings, counts) come from measurements\\n-that can be repeated, never from memory.\\n+that can be repeated, never from memory. Timings live in\\n[... 2 more lines]\\n--- docs/architecture.md\\n@@ -81,8 +81,8 @@ From the last `style.history_depth` (30) subjects, merges excluded:\\n The NPU has a fixed prompt length, so the diff is reduced to a budget, in\\n-tokens estimated as characters / 3. That is pessimistic for most prompts\\n-(3.4–3.75 characters per token), not for all: hashes, base64 and long\\n[... 11 more lines]\\n--- docs/configuration.md\\n@@ -88,5 +88,5 @@ value, for example when an environment variable is set.\\n   topology in sysfs. llama.cpp's own default already does that on some\\n-  processors and not on others (2 threads on a 14-core Core Ultra 5 225H);\\n-  see [devices](devices.md#threads-on-the-cpu). Decoding keeps llama.cpp's\\n[... 10 more lines]\\n--- docs/reproducibility.md\\n@@ -79,5 +79,4 @@ model are removed afterwards (`--keep` keeps them). The **Model** workflow\\n (`.github/workflows/model.yml`) runs the export on CI after any change to\\n-it, to check that it reproduces on another machine. On a Ryzen 5 5500 the\\n-export from scratch (uv, Python, the packages and the source model\\n[... 4 more lines]\\n\\n(10 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-only.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-paths-as-typos.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-roadmap-as-typos.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -94,3 +94,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, docs, test.\\n- Scopes used here: diff, docs, hardware, server. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ntest(docs): check that the pages name real paths and list every command\\ndocs: fix paths of the split modules and two misplaced passages\\nrefactor: group genai, llamacpp, server and device under backend\\nrefactor(diff): move annotate under diff\\nrefactor(server): split the module into the supervisor, management and tests\\n\",\n-          \"user\": \"Files changed:\\ndocs/roadmap.md | +14 -2\\ndocs/training.md | +9 -5\\ntraining/HYPOTHESES.md | +3 -3\\n\\nDiff:\\n--- docs/roadmap.md\\n@@ -33,2 +33,14 @@\\n   between training and evaluation.\\n+- Messages that keep to git's own: the message of a merge, revert or\\n+  cherry-pick in progress, a subject cut where it still reads\\n+  (`style.subject_max`), a retry for a reply in the wrong language or nearly\\n+  a copy, and never a message the user turned down.\\n+- A file list with what the line counts do not say (status, renames,\\n+  whitespace-only and comment-only changes), on by default.\\n+- `smart-commit update` and `smart-commit uninstall`.\\n[... 14 more lines]\\n--- docs/training.md\\n@@ -318,6 +318,10 @@ What is published is one model per size smart-commit offers, named\\n    experimental models in `src/models/registry.rs`.\\n-6. The next version, v0.2: H5 (young repositories), H6 (the rules in the\\n-   weights) and H4b (the scope map) in one bundle on about 20k examples,\\n-   with H7's cheap data changes (release bumps kept when the diff shows\\n-   the version) and H8's type cap, tested first on its own. The order and\\n-   the work outside training are in the [roadmap](roadmap.md).\\n[... 9 more lines]\\n--- training/HYPOTHESES.md\\n@@ -230,3 +230,3 @@ even rewards that: `training` is a known scope, just the wrong one.\\n \\n-### H5. Training on young repositories stops the copying — planned\\n+### H5. Training on young repositories stops the copying — confirmed in v0.2\\n \\n@@ -273,3 +273,3 @@ example and \\\"follow their style\\\", repeating it is the easy answer.\\n \\n-### H6. The rules can live in the weights instead of the prompt — switch implemented, training planned\\n+### H6. The rules can live in the weights instead of the prompt — confirmed in v0.2\\n \\n[... 5 more lines]\\n\\n(3 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/roadmap.md | +14 -2\\ndocs/training.md | +9 -5\\ntraining/HYPOTHESES.md | +3 -3\\n\\nDiff:\\n--- docs/roadmap.md\\n@@ -33,2 +33,14 @@\\n   between training and evaluation.\\n+- Messages that keep to git's own: the message of a merge, revert or\\n+  cherry-pick in progress, a subject cut where it still reads\\n+  (`style.subject_max`), a retry for a reply in the wrong language or nearly\\n+  a copy, and never a message the user turned down.\\n+- A file list with what the line counts do not say (status, renames,\\n+  whitespace-only and comment-only changes), on by default.\\n+- `smart-commit update` and `smart-commit uninstall`.\\n[... 14 more lines]\\n--- docs/training.md\\n@@ -318,6 +318,10 @@ What is published is one model per size smart-commit offers, named\\n    experimental models in `src/models/registry.rs`.\\n-6. The next version, v0.2: H5 (young repositories), H6 (the rules in the\\n-   weights) and H4b (the scope map) in one bundle on about 20k examples,\\n-   with H7's cheap data changes (release bumps kept when the diff shows\\n-   the version) and H8's type cap, tested first on its own. The order and\\n-   the work outside training are in the [roadmap](roadmap.md).\\n[... 9 more lines]\\n--- training/HYPOTHESES.md\\n@@ -230,3 +230,3 @@ even rewards that: `training` is a known scope, just the wrong one.\\n \\n-### H5. Training on young repositories stops the copying — planned\\n+### H5. Training on young repositories stops the copying — confirmed in v0.2\\n \\n@@ -273,3 +273,3 @@ example and \\\"follow their style\\\", repeating it is the easy answer.\\n \\n-### H6. The rules can live in the weights instead of the prompt — switch implemented, training planned\\n[... 7 more lines]\\n\\n(3 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-test-as-docs.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -78,3 +78,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, docs.\\n- Scopes used here: bench, diff, hardware, server. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: fix paths of the split modules and two misplaced passages\\nrefactor: group genai, llamacpp, server and device under backend\\nrefactor(diff): move annotate under diff\\nrefactor(server): split the module into the supervisor, management and tests\\nrefactor(hardware): split the module into sysfs reading, fakes and tests\\n\",\n-          \"user\": \"Files changed:\\nAGENTS.md | +1 -0\\ntests/docs.rs | new, +110 -0\\n\\nDiff:\\n--- tests/docs.rs\\n@@ -0,0 +1,110 @@\\n+//! The Markdown pages describe the repository as it is: the paths they name\\n+//! exist and every command is in the usage guide.\\n+\\n+mod common;\\n+\\n+use std::fs;\\n+use std::path::{Path, PathBuf};\\n+use std::process::Command;\\n+\\n+const ROOT: &str = env!(\\\"CARGO_MANIFEST_DIR\\\");\\n+\\n+/// Directories that are not documentation: build output, ignored data and\\n+/// the synthetic repositories of the training scenarios.\\n+const SKIPPED: &[&str] = &[\\n+    \\\"target\\\",\\n+    \\\".git\\\",\\n+    \\\"training/data\\\",\\n+    \\\"training/runs\\\",\\n+    \\\"training/scenarios/repos\\\",\\n+    \\\"training/.venv\\\",\\n+];\\n+\\n+/// The first directory of a path that a page may name from the root.\\n+const ROOT_DIRS: &[&str] = &[\\\"src/\\\", \\\"tests/\\\", \\\"scripts/\\\", \\\"docs/\\\", \\\".github/\\\"];\\n+\\n+fn pages(dir: &Path, found: &mut Vec<PathBuf>) {\\n+    let mut entries: Vec<_> = fs::read_dir(dir).unwrap().flatten().collect();\\n+    entries.sort_by_key(|e| e.path());\\n+    for entry in entries {\\n+        let path = entry.path();\\n+        let relative = path.strip_prefix(ROOT).unwrap().to_string_lossy();\\n+        if SKIPPED.iter().any(|s| relative == *s) {\\n+            continue;\\n+        }\\n+        if path.is_dir() {\\n+            pages(&path, found);\\n+        } else if path.extension().is_some_and(|e| e == \\\"md\\\") {\\n+            found.push(path);\\n+        }\\n+    }\\n+}\\n+\\n+fn all_pages() -> Vec<PathBuf> {\\n+    let mut found = Vec::new();\\n+    pages(Path::new(ROOT), &mut found);\\n+    assert!(!found.is_empty());\\n+    found\\n+}\\n+\\n+/// The inline `code` spans of a page, outside fenced blocks (which hold\\n+/// examples, not references).\\n+fn inline_code(text: &str) -> Vec<String> {\\n+    let mut spans = Vec::new();\\n+    let mut fenced = false;\\n[... 56 more lines]\\n\\n(2 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nAGENTS.md | +1 -0\\ntests/docs.rs | new, +110 -0\\n\\nDiff:\\n--- tests/docs.rs\\n@@ -0,0 +1,110 @@\\n+//! The Markdown pages describe the repository as it is: the paths they name\\n+//! exist and every command is in the usage guide.\\n+\\n+mod common;\\n+\\n+use std::fs;\\n+use std::path::{Path, PathBuf};\\n+use std::process::Command;\\n+\\n+const ROOT: &str = env!(\\\"CARGO_MANIFEST_DIR\\\");\\n+\\n+/// Directories that are not documentation: build output, ignored data and\\n+/// the synthetic repositories of the training scenarios.\\n+const SKIPPED: &[&str] = &[\\n+    \\\"target\\\",\\n+    \\\".git\\\",\\n+    \\\"training/data\\\",\\n+    \\\"training/runs\\\",\\n+    \\\"training/scenarios/repos\\\",\\n+    \\\"training/.venv\\\",\\n+];\\n+\\n+/// The first directory of a path that a page may name from the root.\\n+const ROOT_DIRS: &[&str] = &[\\\"src/\\\", \\\"tests/\\\", \\\"scripts/\\\", \\\"docs/\\\", \\\".github/\\\"];\\n+\\n+fn pages(dir: &Path, found: &mut Vec<PathBuf>) {\\n+    let mut entries: Vec<_> = fs::read_dir(dir).unwrap().flatten().collect();\\n+    entries.sort_by_key(|e| e.path());\\n+    for entry in entries {\\n+        let path = entry.path();\\n+        let relative = path.strip_prefix(ROOT).unwrap().to_string_lossy();\\n+        if SKIPPED.iter().any(|s| relative == *s) {\\n+            continue;\\n+        }\\n+        if path.is_dir() {\\n+            pages(&path, found);\\n+        } else if path.extension().is_some_and(|e| e == \\\"md\\\") {\\n+            found.push(path);\\n+        }\\n+    }\\n+}\\n+\\n+fn all_pages() -> Vec<PathBuf> {\\n+    let mut found = Vec::new();\\n+    pages(Path::new(ROOT), &mut found);\\n+    assert!(!found.is_empty());\\n+    found\\n+}\\n+\\n+/// The inline `code` spans of a page, outside fenced blocks (which hold\\n+/// examples, not references).\\n+fn inline_code(text: &str) -> Vec<String> {\\n[... 58 more lines]\\n\\n(2 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-empty-diff.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -600,3 +600,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: chore, docs, fix, refactor.\\n- Scopes used here: llamacpp, training. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs(training): v0.2's results, the 0.5B gains and the 1.5B trades\\nchore: release 0.6.0\\nfix(llamacpp): leave room for prompts whose tokens were underestimated\\n\",\n-          \"user\": \"Files changed:\\ntraining/scenario_02.py | new, +30 -0\\ntraining/scenario_05.py | new, +30 -0\\ntraining/scenario_08.py | new, +30 -0\\ntraining/scenario_11.py | new, +30 -0\\ntraining/scenario_14.py | new, +30 -0\\ntraining/scenario_17.py | new, +30 -0\\ntraining/scenario_20.py | new, +30 -0\\ntraining/scenario_23.py | new, +30 -0\\ntraining/scenario_26.py | new, +30 -0\\ntraining/scenario_29.py | new, +30 -0\\ntraining/scenario_32.py | new, +30 -0\\ntraining/scenario_35.py | new, +30 -0\\ntraining/scenario_38.py | new, +30 -0\\ntraining/scenarios/cases/case-03.toml | new, +30 -0\\ntraining/scenarios/cases/case-06.toml | new, +30 -0\\ntraining/scenarios/cases/case-09.toml | new, +30 -0\\ntraining/scenarios/cases/case-12.toml | new, +30 -0\\ntraining/scenarios/cases/case-15.toml | new, +30 -0\\ntraining/scenarios/cases/case-18.toml | new, +30 -0\\ntraining/scenarios/cases/case-21.toml | new, +30 -0\\ntraining/scenarios/cases/case-24.toml | new, +30 -0\\ntraining/scenarios/cases/case-27.toml | new, +30 -0\\ntraining/scenarios/cases/case-30.toml | new, +30 -0\\n... and 17 more files\\n\\nDiff:\\n--- training/scenario_02.py\\n@@ -0,0 +1,30 @@\\n+value_02_1 = \\\"line 1 of a new scenario file\\\"\\n+value_02_2 = \\\"line 2 of a new scenario file\\\"\\n+value_02_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_05.py\\n@@ -0,0 +1,30 @@\\n+value_05_1 = \\\"line 1 of a new scenario file\\\"\\n+value_05_2 = \\\"line 2 of a new scenario file\\\"\\n+value_05_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_08.py\\n@@ -0,0 +1,30 @@\\n+value_08_1 = \\\"line 1 of a new scenario file\\\"\\n+value_08_2 = \\\"line 2 of a new scenario file\\\"\\n+value_08_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_11.py\\n@@ -0,0 +1,30 @@\\n+value_11_1 = \\\"line 1 of a new scenario file\\\"\\n+value_11_2 = \\\"line 2 of a new scenario file\\\"\\n+value_11_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_14.py\\n@@ -0,0 +1,30 @@\\n+value_14_1 = \\\"line 1 of a new scenario file\\\"\\n+value_14_2 = \\\"line 2 of a new scenario file\\\"\\n+value_14_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n\\n(40 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ntraining/scenario_02.py | new, +30 -0\\ntraining/scenario_05.py | new, +30 -0\\ntraining/scenario_08.py | new, +30 -0\\ntraining/scenario_11.py | new, +30 -0\\ntraining/scenario_14.py | new, +30 -0\\ntraining/scenario_17.py | new, +30 -0\\ntraining/scenario_20.py | new, +30 -0\\ntraining/scenario_23.py | new, +30 -0\\ntraining/scenario_26.py | new, +30 -0\\ntraining/scenario_29.py | new, +30 -0\\ntraining/scenario_32.py | new, +30 -0\\ntraining/scenario_35.py | new, +30 -0\\ntraining/scenario_38.py | new, +30 -0\\ntraining/scenarios/cases/case-03.toml | new, +30 -0\\ntraining/scenarios/cases/case-06.toml | new, +30 -0\\ntraining/scenarios/cases/case-09.toml | new, +30 -0\\n... and 24 more files\\n\\nDiff:\\n--- training/scenario_02.py\\n@@ -0,0 +1,30 @@\\n+value_02_1 = \\\"line 1 of a new scenario file\\\"\\n+value_02_2 = \\\"line 2 of a new scenario file\\\"\\n+value_02_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_05.py\\n@@ -0,0 +1,30 @@\\n+value_05_1 = \\\"line 1 of a new scenario file\\\"\\n+value_05_2 = \\\"line 2 of a new scenario file\\\"\\n+value_05_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_08.py\\n@@ -0,0 +1,30 @@\\n+value_08_1 = \\\"line 1 of a new scenario file\\\"\\n+value_08_2 = \\\"line 2 of a new scenario file\\\"\\n+value_08_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n--- training/scenario_11.py\\n@@ -0,0 +1,30 @@\\n+value_11_1 = \\\"line 1 of a new scenario file\\\"\\n+value_11_2 = \\\"line 2 of a new scenario file\\\"\\n+value_11_3 = \\\"line 3 of a new scenario file\\\"\\n[... 27 more lines]\\n\\n(40 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-feat-as-refactor.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -287,3 +287,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, chore.\\n- Scopes used here: cli, deps, generate, message, style. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor: use anyhow in the binary and a typed DeviceError in the library\\nrefactor(cli): split main.rs into the cli module and its commands\\nchore(deps): add anyhow, tracing and tracing-subscriber\\nrefactor(generate): split the module by notes, retry and rules\\nrefactor(message): split the module by parsing, format and fallback\\n\",\n-          \"user\": \"Files changed:\\ndocs/architecture.md | +5 -1\\ndocs/usage.md | +6 -0\\nsrc/cli/benchmark.rs | +4 -3\\nsrc/cli/configure.rs | +2 -1\\nsrc/cli/guided_setup.rs | +2 -2\\nsrc/cli/inspect.rs | +3 -2\\nsrc/cli/load.rs | +5 -6\\nsrc/cli/logging.rs | new, +49 -0\\nsrc/cli/mod.rs | +42 -4\\nsrc/cli/model.rs | +2 -1\\nsrc/cli/settings.rs | +1 -1\\nsrc/cli/suggest.rs | +4 -4\\nsrc/cli/ui.rs | new, +15 -0\\nsrc/device.rs | +4 -1\\nsrc/generate/mod.rs | +14 -5\\ntests/cli.rs | +58 -0\\n\\nDiff:\\n--- src/cli/benchmark.rs\\n@@ -20,2 +20,3 @@ use super::load::{Retry, load_with};\\n use super::settings::{env, resolve, stop_kept_after, warn_renamed};\\n+use super::ui::note;\\n \\n[... 12 more lines]\\n--- src/cli/configure.rs\\n@@ -11,2 +11,3 @@ use smart_commit::paths;\\n use super::settings::{env, resolve, stop_kept_after};\\n+use super::ui::note;\\n \\n[... 5 more lines]\\n--- src/cli/guided_setup.rs\\n@@ -56,4 +56,4 @@ fn set_aside_invalid_settings() -> Result<()> {\\n     for removed in config::set_aside_invalid(&path, env(\\\"HOME\\\").as_deref())? {\\n-        eprintln!(\\n-            \\\"warning: {removed}; removed, so the default applies \\\\\\n[... 3 more lines]\\n--- src/cli/model.rs\\n@@ -17,2 +17,3 @@ use smart_commit::tui::{self, Screen};\\n use super::settings::{env, resolve, stop_kept_after};\\n+use super::ui::note;\\n \\n[... 5 more lines]\\n--- src/cli/settings.rs\\n@@ -31,3 +31,3 @@ pub(super) fn warn_renamed(resolved: &Resolved) {\\n     for warning in resolved.renamed_values() {\\n-        eprintln!(\\\"warning: {warning}\\\");\\n+        tracing::warn!(\\\"{warning}\\\");\\n     }\\n--- src/cli/ui.rs\\n@@ -0,0 +1,15 @@\\n+//! What a command tells the person running it, apart from its output.\\n+//!\\n+//! Notes are part of a command's result (what it chose, what overrides what),\\n[... 12 more lines]\\n--- src/device.rs\\n@@ -160,3 +160,6 @@ pub fn load_first(\\n             }\\n-            Err(err) => skipped.push((target, err)),\\n+            Err(err) => {\\n[... 4 more lines]\\n\\n(15 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/architecture.md | +5 -1\\ndocs/usage.md | +6 -0\\nsrc/cli/benchmark.rs | +4 -3\\nsrc/cli/configure.rs | +2 -1\\nsrc/cli/guided_setup.rs | +2 -2\\nsrc/cli/inspect.rs | +3 -2\\nsrc/cli/load.rs | +5 -6\\nsrc/cli/logging.rs | new, +49 -0\\nsrc/cli/mod.rs | +42 -4\\nsrc/cli/model.rs | +2 -1\\nsrc/cli/settings.rs | +1 -1\\nsrc/cli/suggest.rs | +4 -4\\nsrc/cli/ui.rs | new, +15 -0\\nsrc/device.rs | +4 -1\\nsrc/generate/mod.rs | +14 -5\\ntests/cli.rs | +58 -0\\n\\nDiff:\\n--- src/cli/configure.rs\\n@@ -11,2 +11,3 @@ use smart_commit::paths;\\n use super::settings::{env, resolve, stop_kept_after};\\n+use super::ui::note;\\n \\n[... 5 more lines]\\n--- src/cli/guided_setup.rs\\n@@ -56,4 +56,4 @@ fn set_aside_invalid_settings() -> Result<()> {\\n     for removed in config::set_aside_invalid(&path, env(\\\"HOME\\\").as_deref())? {\\n-        eprintln!(\\n-            \\\"warning: {removed}; removed, so the default applies \\\\\\n[... 3 more lines]\\n--- src/cli/model.rs\\n@@ -17,2 +17,3 @@ use smart_commit::tui::{self, Screen};\\n use super::settings::{env, resolve, stop_kept_after};\\n+use super::ui::note;\\n \\n[... 5 more lines]\\n--- src/cli/settings.rs\\n@@ -31,3 +31,3 @@ pub(super) fn warn_renamed(resolved: &Resolved) {\\n     for warning in resolved.renamed_values() {\\n-        eprintln!(\\\"warning: {warning}\\\");\\n+        tracing::warn!(\\\"{warning}\\\");\\n     }\\n--- src/cli/ui.rs\\n@@ -0,0 +1,15 @@\\n+//! What a command tells the person running it, apart from its output.\\n+//!\\n+//! Notes are part of a command's result (what it chose, what overrides what),\\n[... 12 more lines]\\n--- src/device.rs\\n@@ -160,3 +160,6 @@ pub fn load_first(\\n             }\\n-            Err(err) => skipped.push((target, err)),\\n+            Err(err) => {\\n[... 4 more lines]\\n\\n(15 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-file-scope.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-fix-as-test.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-fixtures-of-splits.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -106,3 +106,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, feat, test.\\n- Scopes used here: cli, diff, fixtures, llamacpp, models. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(models): split the module into the registry, installing and tests\\nrefactor(diff): split the module into parse, classify, compact and tests\\nrefactor(llamacpp): split the module into the backend, its HTTP client and tests\\ntest(fixtures): trace four bad messages from the cli refactor\\nfeat(cli): report with tracing and add -v for debug output\\n\",\n-          \"user\": \"Files changed:\\ntests/fixtures/make-traces.sh | +11 -0\\ntests/fixtures/traces/conventional-en-split-diff.json | new, +142 -0\\ntests/fixtures/traces/conventional-en-split-llamacpp.json | new, +100 -0\\ntests/fixtures/traces/conventional-en-split-models.json | new, +128 -0\\n\\nDiff:\\n--- tests/fixtures/make-traces.sh\\n@@ -275,2 +275,13 @@ real_change conventional-en-vague-refactor 9fc1e92 \\\"refactor(cli): add error han\\n real_change conventional-en-feat-as-refactor 6cabc49 \\\"refactor(cli): split the module by ui and notes\\\"\\n+# A pure split of llamacpp.rs into a backend, an HTTP client and tests,\\n+# answered `feat` and as if an HTTP server had been added: it is a\\n[... 10 more lines]\\n--- tests/fixtures/traces/conventional-en-split-diff.json\\n@@ -0,0 +1,142 @@\\n+{\\n+  \\\"format\\\": 1,\\n+  \\\"tool_version\\\": \\\"0.7.0\\\",\\n+  \\\"backend\\\": \\\"mock\\\",\\n+  \\\"options\\\": {\\n+    \\\"max_prompt_tokens\\\": 1024,\\n+    \\\"default_convention\\\": \\\"conventional\\\",\\n+    \\\"default_language\\\": \\\"english\\\",\\n+    \\\"diff\\\": \\\"annotated\\\"\\n+  },\\n+  \\\"config\\\": {\\n+    \\\"max_new_tokens\\\": 128\\n+  },\\n[... 129 more lines]\\n--- tests/fixtures/traces/conventional-en-split-llamacpp.json\\n@@ -0,0 +1,100 @@\\n+{\\n+  \\\"format\\\": 1,\\n+  \\\"tool_version\\\": \\\"0.7.0\\\",\\n+  \\\"backend\\\": \\\"mock\\\",\\n+  \\\"options\\\": {\\n+    \\\"max_prompt_tokens\\\": 1024,\\n+    \\\"default_convention\\\": \\\"conventional\\\",\\n+    \\\"default_language\\\": \\\"english\\\",\\n+    \\\"diff\\\": \\\"annotated\\\"\\n+  },\\n+  \\\"config\\\": {\\n+    \\\"max_new_tokens\\\": 128\\n+  },\\n[... 87 more lines]\\n--- tests/fixtures/traces/conventional-en-split-models.json\\n@@ -0,0 +1,128 @@\\n+{\\n+  \\\"format\\\": 1,\\n+  \\\"tool_version\\\": \\\"0.7.0\\\",\\n+  \\\"backend\\\": \\\"mock\\\",\\n+  \\\"options\\\": {\\n+    \\\"max_prompt_tokens\\\": 1024,\\n+    \\\"default_convention\\\": \\\"conventional\\\",\\n+    \\\"default_language\\\": \\\"english\\\",\\n+    \\\"diff\\\": \\\"annotated\\\"\\n+  },\\n+  \\\"config\\\": {\\n+    \\\"max_new_tokens\\\": 128\\n+  },\\n[... 115 more lines]\\n\\n(4 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ntests/fixtures/make-traces.sh | +11 -0\\ntests/fixtures/traces/conventional-en-split-diff.json | new, +142 -0\\ntests/fixtures/traces/conventional-en-split-llamacpp.json | new, +100 -0\\ntests/fixtures/traces/conventional-en-split-models.json | new, +128 -0\\n\\nDiff:\\n--- tests/fixtures/make-traces.sh\\n@@ -275,2 +275,13 @@ real_change conventional-en-vague-refactor 9fc1e92 \\\"refactor(cli): add error han\\n real_change conventional-en-feat-as-refactor 6cabc49 \\\"refactor(cli): split the module by ui and notes\\\"\\n+# A pure split of llamacpp.rs into a backend, an HTTP client and tests,\\n+# answered `feat` and as if an HTTP server had been added: it is a\\n[... 10 more lines]\\n--- tests/fixtures/traces/conventional-en-split-diff.json\\n@@ -0,0 +1,142 @@\\n+{\\n+  \\\"format\\\": 1,\\n+  \\\"tool_version\\\": \\\"0.7.0\\\",\\n+  \\\"backend\\\": \\\"mock\\\",\\n+  \\\"options\\\": {\\n+    \\\"max_prompt_tokens\\\": 1024,\\n+    \\\"default_convention\\\": \\\"conventional\\\",\\n+    \\\"default_language\\\": \\\"english\\\",\\n+    \\\"diff\\\": \\\"annotated\\\"\\n+  },\\n[... 132 more lines]\\n--- tests/fixtures/traces/conventional-en-split-llamacpp.json\\n@@ -0,0 +1,100 @@\\n+{\\n+  \\\"format\\\": 1,\\n+  \\\"tool_version\\\": \\\"0.7.0\\\",\\n+  \\\"backend\\\": \\\"mock\\\",\\n+  \\\"options\\\": {\\n+    \\\"max_prompt_tokens\\\": 1024,\\n+    \\\"default_convention\\\": \\\"conventional\\\",\\n+    \\\"default_language\\\": \\\"english\\\",\\n+    \\\"diff\\\": \\\"annotated\\\"\\n[... 91 more lines]\\n--- tests/fixtures/traces/conventional-en-split-models.json\\n@@ -0,0 +1,128 @@\\n+{\\n+  \\\"format\\\": 1,\\n+  \\\"tool_version\\\": \\\"0.7.0\\\",\\n+  \\\"backend\\\": \\\"mock\\\",\\n+  \\\"options\\\": {\\n+    \\\"max_prompt_tokens\\\": 1024,\\n+    \\\"default_convention\\\": \\\"conventional\\\",\\n+    \\\"default_language\\\": \\\"english\\\",\\n+    \\\"diff\\\": \\\"annotated\\\"\\n[... 119 more lines]\\n\\n(4 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-group-backend.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -489,3 +489,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, test.\\n- Scopes used here: annotate, bench, diff, fixtures, hardware, server. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(diff): move annotate under diff\\nrefactor(server): split the module into the supervisor, management and tests\\nrefactor(hardware): split the module into sysfs reading, fakes and tests\\nrefactor(bench): split the module into the report, measuring and tests\\nrefactor(annotate): split the module into comments, rename and tests\\n\",\n-          \"user\": \"Files changed:\\ndocs/architecture.md | +4 -3\\nsrc/{device.rs => backend/device.rs} | renamed, unchanged, +0 -0\\nsrc/{genai.rs => backend/genai.rs} | renamed, +2 -2\\nsrc/{llamacpp => backend/llamacpp}/ | 3 files renamed, +2 -2\\nsrc/{backend.rs => backend/mod.rs} | renamed, +5 -0\\nsrc/{server => backend/server}/ | 4 files renamed, +2 -2\\nsrc/bench/measure.rs | +1 -1\\nsrc/bench/mod.rs | +1 -1\\nsrc/bench/report.rs | +1 -1\\nsrc/cli/args.rs | +1 -1\\nsrc/cli/benchmark.rs | +2 -2\\nsrc/cli/install.rs | +2 -1\\nsrc/cli/keep_loaded.rs | +2 -1\\nsrc/cli/load.rs | +5 -4\\nsrc/cli/mod.rs | +3 -1\\nsrc/cli/session.rs | +1 -1\\nsrc/cli/settings.rs | +2 -1\\nsrc/config/keys.rs | +1 -1\\nsrc/config/store.rs | +3 -3\\nsrc/config/tests.rs | +3 -3\\nsrc/lib.rs | +0 -4\\nsrc/paths.rs | +4 -1\\nsrc/tui/bench.rs | +1 -1\\ntests/bench_cli.rs | +1 -1\\ntests/hardware.rs | +5 -4\\n\\nDiff:\\n--- src/backend/mod.rs\\n@@ -3,2 +3,7 @@\\n \\n+pub mod device;\\n+pub mod genai;\\n[... 4 more lines]\\n--- src/backend/server/tests.rs\\n@@ -4,3 +4,3 @@ use std::os::unix::net::UnixListener;\\n use super::*;\\n-use crate::llamacpp::LlamaDevice;\\n+use crate::backend::llamacpp::LlamaDevice;\\n \\n--- src/bench/mod.rs\\n@@ -21,3 +21,3 @@ use serde::{Deserialize, Serialize};\\n \\n-use crate::device::Target;\\n+use crate::backend::device::Target;\\n use crate::prompt::Prompt;\\n--- src/bench/report.rs\\n@@ -3,3 +3,3 @@ use serde::{Deserialize, Serialize};\\n use super::*;\\n-use crate::device::Target;\\n+use crate::backend::device::Target;\\n \\n--- src/cli/keep_loaded.rs\\n@@ -4,3 +4,4 @@ use anyhow::Result;\\n use clap::Subcommand;\\n-use smart_commit::{paths, server};\\n+use smart_commit::backend::server;\\n+use smart_commit::paths;\\n \\n--- src/cli/settings.rs\\n@@ -5,2 +5,3 @@ use std::path::PathBuf;\\n \\n+use smart_commit::backend::server;\\n use smart_commit::config::{self, Resolved, Sources};\\n[... 5 more lines]\\n--- src/config/keys.rs\\n@@ -6,3 +6,3 @@ use toml_edit::Item;\\n \\n-use crate::device;\\n+use crate::backend::device;\\n use crate::models;\\n\\n(21 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/architecture.md | +4 -3\\nsrc/{device.rs => backend/device.rs} | renamed, unchanged, +0 -0\\nsrc/{genai.rs => backend/genai.rs} | renamed, +2 -2\\nsrc/{llamacpp => backend/llamacpp}/ | 3 files renamed, +2 -2\\nsrc/{backend.rs => backend/mod.rs} | renamed, +5 -0\\nsrc/{server => backend/server}/ | 4 files renamed, +2 -2\\nsrc/bench/measure.rs | +1 -1\\nsrc/bench/mod.rs | +1 -1\\nsrc/bench/report.rs | +1 -1\\nsrc/cli/args.rs | +1 -1\\nsrc/cli/benchmark.rs | +2 -2\\nsrc/cli/install.rs | +2 -1\\nsrc/cli/keep_loaded.rs | +2 -1\\nsrc/cli/load.rs | +5 -4\\nsrc/cli/mod.rs | +3 -1\\nsrc/cli/session.rs | +1 -1\\nsrc/cli/settings.rs | +2 -1\\nsrc/config/keys.rs | +1 -1\\nsrc/config/store.rs | +3 -3\\nsrc/config/tests.rs | +3 -3\\nsrc/lib.rs | +0 -4\\nsrc/paths.rs | +4 -1\\nsrc/tui/bench.rs | +1 -1\\ntests/bench_cli.rs | +1 -1\\ntests/hardware.rs | +5 -4\\n\\nDiff:\\n--- src/backend/mod.rs\\n@@ -3,2 +3,7 @@\\n \\n+pub mod device;\\n+pub mod genai;\\n[... 4 more lines]\\n--- src/backend/server/tests.rs\\n@@ -4,3 +4,3 @@ use std::os::unix::net::UnixListener;\\n use super::*;\\n-use crate::llamacpp::LlamaDevice;\\n+use crate::backend::llamacpp::LlamaDevice;\\n \\n--- src/bench/mod.rs\\n@@ -21,3 +21,3 @@ use serde::{Deserialize, Serialize};\\n \\n-use crate::device::Target;\\n+use crate::backend::device::Target;\\n use crate::prompt::Prompt;\\n--- src/bench/report.rs\\n@@ -3,3 +3,3 @@ use serde::{Deserialize, Serialize};\\n use super::*;\\n-use crate::device::Target;\\n+use crate::backend::device::Target;\\n \\n--- src/config/keys.rs\\n@@ -6,3 +6,3 @@ use toml_edit::Item;\\n \\n-use crate::device;\\n+use crate::backend::device;\\n use crate::models;\\n--- src/lib.rs\\n@@ -7,5 +7,3 @@ pub mod config;\\n pub mod context;\\n-pub mod device;\\n pub mod diff;\\n[... 10 more lines]\\n\\n(22 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-lockfile.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"none\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-merge.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"none\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-move-annotate.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-move-to-tools-crate.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -301,3 +301,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, test, chore, feat, refactor.\\n- Scopes used here: bench, docs, fixtures. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nfeat(bench): time llama-server on prompt files with `bench --prompts`\\nchore: remove scripts/experiments\\ntest(fixtures): trace twelve messages from the module splits and the docs\\ntest(docs): check that links between the pages and their headings resolve\\ndocs: gather every timing in one page, measurements.md\\n\",\n-          \"user\": \"Files changed:\\n.github/workflows/ci.yml | +2 -2\\nAGENTS.md | +3 -3\\nCargo.lock | +10 -0\\nCargo.toml | +6 -0\\nREADME.md | +2 -2\\ndocs/architecture.md | +5 -0\\ndocs/measurements.md | +8 -6\\ndocs/usage.md | +0 -1\\nsrc/bench/mod.rs | +0 -1\\nsrc/bench/tests.rs | +0 -136\\nsrc/cli/benchmark.rs | +0 -32\\nsrc/cli/mod.rs | +2 -23\\ntests/bench_cli.rs | +0 -47\\ntools/Cargo.toml | new, +19 -0\\ntools/src/main.rs | new, +88 -0\\n{src/bench/server.rs => tools/src/time_server.rs} | renamed, +8 -4\\ntools/src/time_server_tests.rs | new, +133 -0\\n\\nDiff:\\n--- src/bench/mod.rs\\n@@ -13,3 +13,2 @@ mod measure;\\n mod report;\\n-pub mod server;\\n #[cfg(test)]\\n--- src/bench/tests.rs\\n@@ -255,137 +255 @@ fn cpu_time_grows_with_work() {\\n }\\n-\\n-mod server {\\n-    use std::sync::Mutex;\\n-\\n[... 132 more lines]\\n--- src/cli/benchmark.rs\\n@@ -98,34 +98,2 @@ fn save(report: &Report) -> Result<PathBuf> {\\n \\n-/// `bench --prompts`: llama-server timed on prompts from files, with flags of\\n-/// the caller's choice.\\n[... 31 more lines]\\n--- src/cli/mod.rs\\n@@ -99,18 +99,4 @@ enum Command {\\n         /// Print the full report as JSON.\\n-        #[arg(long, conflicts_with = \\\"prompts\\\")]\\n+        #[arg(long)]\\n[... 28 more lines]\\n--- tools/src/main.rs\\n@@ -0,0 +1,88 @@\\n+//! Tools for working on smart-commit. They are a crate of their own so that\\n+//! what they need never reaches the binary users install.\\n+\\n[... 85 more lines]\\n--- tools/src/time_server.rs\\n@@ -1,2 +1,2 @@\\n-//! `smart-commit bench --prompts`: times llama-server on prompts printed by\\n+//! `sc-tools time-server`: times llama-server on prompts printed by\\n //! `smart-commit prompt`, with llama-server flags of the caller's choice, to\\n[... 15 more lines]\\n--- tools/src/time_server_tests.rs\\n@@ -0,0 +1,133 @@\\n+use std::sync::Mutex;\\n+\\n+use super::{ServerTiming, parse_prompt_file, read_prompts, time_prompts};\\n[... 130 more lines]\\n\\n(15 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\n.github/workflows/ci.yml | +2 -2\\nAGENTS.md | +3 -3\\nCargo.lock | +10 -0\\nCargo.toml | +6 -0\\nREADME.md | +2 -2\\ndocs/architecture.md | +5 -0\\ndocs/measurements.md | +8 -6\\ndocs/usage.md | +0 -1\\nsrc/bench/mod.rs | +0 -1\\nsrc/bench/tests.rs | +0 -136\\nsrc/cli/benchmark.rs | +0 -32\\nsrc/cli/mod.rs | +2 -23\\ntests/bench_cli.rs | +0 -47\\ntools/Cargo.toml | new, +19 -0\\ntools/src/main.rs | new, +88 -0\\n{src/bench/server.rs => tools/src/time_server.rs} | renamed, +8 -4\\ntools/src/time_server_tests.rs | new, +133 -0\\n\\nDiff:\\n--- src/bench/mod.rs\\n@@ -13,3 +13,2 @@ mod measure;\\n mod report;\\n-pub mod server;\\n #[cfg(test)]\\n--- src/cli/benchmark.rs\\n@@ -98,34 +98,2 @@ fn save(report: &Report) -> Result<PathBuf> {\\n \\n-/// `bench --prompts`: llama-server timed on prompts from files, with flags of\\n-/// the caller's choice.\\n[... 31 more lines]\\n--- src/cli/mod.rs\\n@@ -99,18 +99,4 @@ enum Command {\\n         /// Print the full report as JSON.\\n-        #[arg(long, conflicts_with = \\\"prompts\\\")]\\n+        #[arg(long)]\\n[... 28 more lines]\\n--- tools/src/main.rs\\n@@ -0,0 +1,88 @@\\n+//! Tools for working on smart-commit. They are a crate of their own so that\\n+//! what they need never reaches the binary users install.\\n+\\n[... 85 more lines]\\n--- tools/src/time_server.rs\\n@@ -1,2 +1,2 @@\\n-//! `smart-commit bench --prompts`: times llama-server on prompts printed by\\n+//! `sc-tools time-server`: times llama-server on prompts printed by\\n //! `smart-commit prompt`, with llama-server flags of the caller's choice, to\\n[... 15 more lines]\\n--- tools/src/time_server_tests.rs\\n@@ -0,0 +1,133 @@\\n+use std::sync::Mutex;\\n+\\n+use super::{ServerTiming, parse_prompt_file, read_prompts, time_prompts};\\n[... 130 more lines]\\n\\n(15 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-partial-copy.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-refactor-as-feat.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-release-notes-in-rust.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -182,3 +182,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: test, chore, docs, feat, refactor.\\n- Scopes used here: bench, docs, fixtures. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor: move the llama-server timing out of the binary into sc-tools\\nfeat(bench): time llama-server on prompt files with `bench --prompts`\\nchore: remove scripts/experiments\\ntest(fixtures): trace twelve messages from the module splits and the docs\\ntest(docs): check that links between the pages and their headings resolve\\n\",\n-          \"user\": \"Files changed:\\n.github/workflows/ci.yml | +0 -1\\n.github/workflows/release.yml | +1 -1\\nAGENTS.md | +1 -1\\ndocs/architecture.md | +2 -2\\nscripts/release-notes.sh | deleted, +0 -52\\ntests/scripts/test-release-notes.sh | deleted, +0 -60\\ntools/src/main.rs | +15 -0\\ntools/src/release_notes.rs | new, +126 -0\\ntools/src/release_notes_tests.rs | new, +128 -0\\n\\nDiff:\\n--- scripts/release-notes.sh\\n@@ -1,52 +0,0 @@\\n-#!/usr/bin/env bash\\n-# Prints the release notes of TAG: the commits since the previous v* tag,\\n-# grouped by their Conventional Commits type, plus how to install.\\n-#\\n-#   scripts/release-notes.sh v0.2.0 [REV]   (REV defaults to HEAD)\\n-set -euo pipefail\\n-\\n-TAG=${1:?usage: release-notes.sh TAG [REV]}\\n[... 44 more lines]\\n--- tools/src/main.rs\\n@@ -3,2 +3,3 @@\\n \\n+mod release_notes;\\n mod time_server;\\n@@ -22,2 +23,9 @@ struct Cli {\\n enum Command {\\n+    /// The notes of release TAG: the commits since the previous `v*` tag,\\n+    /// grouped by type, plus how to install (`REV` defaults to HEAD).\\n+    ReleaseNotes {\\n+        tag: String,\\n+        #[arg(default_value = \\\"HEAD\\\")]\\n[... 13 more lines]\\n--- tools/src/release_notes.rs\\n@@ -0,0 +1,126 @@\\n+//! `sc-tools release-notes TAG [REV]`: the notes of a release, from the\\n+//! commits since the previous `v*` tag, grouped by their Conventional\\n+//! Commits type, plus how to install. The release workflow publishes them.\\n+\\n+use std::path::Path;\\n+use std::process::Command;\\n+\\n[... 119 more lines]\\n--- tools/src/release_notes_tests.rs\\n@@ -0,0 +1,128 @@\\n+use std::path::Path;\\n+use std::process::Command;\\n+\\n+use super::*;\\n+\\n+fn subjects(list: &[&str]) -> Vec<String> {\\n+    list.iter().map(|s| (*s).to_owned()).collect()\\n+}\\n+\\n+#[test]\\n+fn subjects_are_grouped_by_type_and_the_scope_is_bold() {\\n+    let notes = render(\\n+        \\\"v0.2.0\\\",\\n[... 115 more lines]\\n\\n(9 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\n.github/workflows/ci.yml | +0 -1\\n.github/workflows/release.yml | +1 -1\\nAGENTS.md | +1 -1\\ndocs/architecture.md | +2 -2\\nscripts/release-notes.sh | deleted, +0 -52\\ntests/scripts/test-release-notes.sh | deleted, +0 -60\\ntools/src/main.rs | +15 -0\\ntools/src/release_notes.rs | new, +126 -0\\ntools/src/release_notes_tests.rs | new, +128 -0\\n\\nDiff:\\n--- scripts/release-notes.sh\\n@@ -1,52 +0,0 @@\\n-#!/usr/bin/env bash\\n-# Prints the release notes of TAG: the commits since the previous v* tag,\\n-# grouped by their Conventional Commits type, plus how to install.\\n-#\\n-#   scripts/release-notes.sh v0.2.0 [REV]   (REV defaults to HEAD)\\n-set -euo pipefail\\n-\\n[... 45 more lines]\\n--- tools/src/main.rs\\n@@ -3,2 +3,3 @@\\n \\n+mod release_notes;\\n mod time_server;\\n@@ -22,2 +23,9 @@ struct Cli {\\n enum Command {\\n+    /// The notes of release TAG: the commits since the previous `v*` tag,\\n+    /// grouped by type, plus how to install (`REV` defaults to HEAD).\\n+    ReleaseNotes {\\n[... 15 more lines]\\n--- tools/src/release_notes.rs\\n@@ -0,0 +1,126 @@\\n+//! `sc-tools release-notes TAG [REV]`: the notes of a release, from the\\n+//! commits since the previous `v*` tag, grouped by their Conventional\\n+//! Commits type, plus how to install. The release workflow publishes them.\\n+\\n+use std::path::Path;\\n+use std::process::Command;\\n[... 120 more lines]\\n--- tools/src/release_notes_tests.rs\\n@@ -0,0 +1,128 @@\\n+use std::path::Path;\\n+use std::process::Command;\\n+\\n+use super::*;\\n+\\n+fn subjects(list: &[&str]) -> Vec<String> {\\n+    list.iter().map(|s| (*s).to_owned()).collect()\\n+}\\n+\\n+#[test]\\n+fn subjects_are_grouped_by_type_and_the_scope_is_bold() {\\n[... 117 more lines]\\n\\n(9 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-release.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-remove-experiments.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -124,3 +124,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, test, refactor.\\n- Scopes used here: docs, fixtures. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ntest(fixtures): trace twelve messages from the module splits and the docs\\ntest(docs): check that links between the pages and their headings resolve\\ndocs: gather every timing in one page, measurements.md\\ndocs: bring the roadmap and the training pages up to v0.2\\ntest(docs): check that the pages name real paths and list every command\\n\",\n-          \"user\": \"Files changed:\\ndocs/roadmap.md | +0 -2\\nscripts/experiments/README.md | deleted, +0 -34\\nscripts/experiments/cand_gpu.py | deleted, +0 -18\\nscripts/experiments/gpu_precision.py | deleted, +0 -13\\nscripts/experiments/npu_hints.py | deleted, +0 -34\\n\\nDiff:\\n--- scripts/experiments/cand_gpu.py\\n@@ -1,18 +0,0 @@\\n-import json, sys, time, glob, os, resource\\n-import openvino_genai as g\\n-model, fixtures, cache, think = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4] == \\\"think\\\"\\n-prompts = [a[\\\"prompt\\\"] for p in sorted(glob.glob(fixtures + \\\"/*.json\\\")) for a in json.load(open(p))[\\\"generation\\\"][\\\"attempts\\\"]]\\n-t = time.time()\\n-pipe = g.LLMPipeline(model, \\\"GPU\\\", CACHE_DIR=cache)\\n-load = time.time() - t\\n-cfg = g.GenerationConfig(max_new_tokens=128, do_sample=False)\\n[... 10 more lines]\\n--- scripts/experiments/gpu_precision.py\\n@@ -1,13 +0,0 @@\\n-import json, sys, time, glob\\n-import openvino_genai as g\\n-model, fixtures, cache = sys.argv[1:4]\\n-prompts = [a[\\\"prompt\\\"] for path in sorted(glob.glob(fixtures + \\\"/*.json\\\")) for a in json.load(open(path))[\\\"generation\\\"][\\\"attempts\\\"]]\\n-for name, props in {\\\"GPU f32 + KV f32\\\": {\\\"INFERENCE_PRECISION_HINT\\\": \\\"f32\\\", \\\"KV_CACHE_PRECISION\\\": \\\"f32\\\"}}.items():\\n-    pipe = g.LLMPipeline(model, \\\"GPU\\\", CACHE_DIR=f\\\"{cache}/{len(props)}\\\", **props)\\n[... 7 more lines]\\n--- scripts/experiments/npu_hints.py\\n@@ -1,34 +0,0 @@\\n-import json, sys, time, glob\\n-import openvino_genai as g\\n-model, fixtures, cache = sys.argv[1], sys.argv[2], sys.argv[3]\\n-prompts = []\\n-for path in sorted(glob.glob(fixtures + \\\"/*.json\\\")):\\n-    for a in json.load(open(path))[\\\"generation\\\"][\\\"attempts\\\"]:\\n-        prompts.append(a[\\\"prompt\\\"])\\n-variants = {\\n-    \\\"chunk 512 + BEST_PERF\\\": {\\\"NPUW_LLM_PREFILL_CHUNK_SIZE\\\": 512, \\\"GENERATE_HINT\\\": \\\"BEST_PERF\\\"},\\n-}\\n-for name, extra in variants.items():\\n[... 23 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/roadmap.md | +0 -2\\nscripts/experiments/README.md | deleted, +0 -34\\nscripts/experiments/cand_gpu.py | deleted, +0 -18\\nscripts/experiments/gpu_precision.py | deleted, +0 -13\\nscripts/experiments/npu_hints.py | deleted, +0 -34\\n\\nDiff:\\n--- scripts/experiments/cand_gpu.py\\n@@ -1,18 +0,0 @@\\n-import json, sys, time, glob, os, resource\\n-import openvino_genai as g\\n-model, fixtures, cache, think = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4] == \\\"think\\\"\\n-prompts = [a[\\\"prompt\\\"] for p in sorted(glob.glob(fixtures + \\\"/*.json\\\")) for a in json.load(open(p))[\\\"generation\\\"][\\\"attempts\\\"]]\\n-t = time.time()\\n-pipe = g.LLMPipeline(model, \\\"GPU\\\", CACHE_DIR=cache)\\n-load = time.time() - t\\n[... 11 more lines]\\n--- scripts/experiments/gpu_precision.py\\n@@ -1,13 +0,0 @@\\n-import json, sys, time, glob\\n-import openvino_genai as g\\n-model, fixtures, cache = sys.argv[1:4]\\n-prompts = [a[\\\"prompt\\\"] for path in sorted(glob.glob(fixtures + \\\"/*.json\\\")) for a in json.load(open(path))[\\\"generation\\\"][\\\"attempts\\\"]]\\n-for name, props in {\\\"GPU f32 + KV f32\\\": {\\\"INFERENCE_PRECISION_HINT\\\": \\\"f32\\\", \\\"KV_CACHE_PRECISION\\\": \\\"f32\\\"}}.items():\\n[... 8 more lines]\\n--- scripts/experiments/npu_hints.py\\n@@ -1,34 +0,0 @@\\n-import json, sys, time, glob\\n-import openvino_genai as g\\n-model, fixtures, cache = sys.argv[1], sys.argv[2], sys.argv[3]\\n-prompts = []\\n-for path in sorted(glob.glob(fixtures + \\\"/*.json\\\")):\\n-    for a in json.load(open(path))[\\\"generation\\\"][\\\"attempts\\\"]:\\n-        prompts.append(a[\\\"prompt\\\"])\\n-variants = {\\n-    \\\"chunk 512 + BEST_PERF\\\": {\\\"NPUW_LLM_PREFILL_CHUNK_SIZE\\\": 512, \\\"GENERATE_HINT\\\": \\\"BEST_PERF\\\"},\\n-}\\n[... 24 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-remove-python-tools.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -288,3 +288,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: feat, refactor, chore.\\n- Scopes used here: training, bench, deps. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nfeat(training): select, score and build the scenarios with sc-training\\nfeat(training): build the training inputs with sc-training build-inputs\\nchore(deps): add the training tools crate and its dependencies\\nrefactor: write the release notes in sc-tools instead of a shell script\\nrefactor: move the llama-server timing out of the binary into sc-tools\\n\",\n-          \"user\": \"Files changed:\\ndocs/architecture.md | +6 -4\\ndocs/measurements.md | +1 -1\\ndocs/training.md | +5 -5\\ntraining/HYPOTHESES.md | +12 -12\\ntraining/README.md | +29 -25\\ntraining/build_inputs.py | deleted, +0 -311\\ntraining/build_scenarios.py | deleted, +0 -112\\ntraining/filter_supported.py | deleted, +0 -39\\ntraining/nest.py | comments only, +1 -1\\ntraining/scenarios.py | deleted, +0 -414\\ntraining/scenarios/README.md | +11 -9\\ntraining/score.py | deleted, +0 -294\\ntraining/select.py | deleted, +0 -120\\ntraining/test_build_inputs.py | deleted, +0 -258\\ntraining/test_make_examples.py | new, maybe renamed from training/test_build_inputs.py, +37 -0\\ntraining/test_scenarios.py | deleted, +0 -202\\n\\nDiff:\\n--- training/build_scenarios.py\\n@@ -1,112 +0,0 @@\\n-\\\"\\\"\\\"Builds the commit scenarios of `scenarios/` (see scenarios.py).\\n-\\n-    python -I build_scenarios.py build DIR SMART_COMMIT [--split train|eval|all] [--only PREFIX]\\n[... 109 more lines]\\n--- training/filter_supported.py\\n@@ -1,39 +0,0 @@\\n-\\\"\\\"\\\"Drops, from a selection already made, the commits a cleaner label set\\n-leaves out: subjects `build_inputs.keep_target` now rejects (versions alone,\\n-release bumps) and subjects naming a version, number or identifier found\\n[... 36 more lines]\\n--- training/nest.py\\n@@ -18,3 +18,3 @@ def main() -> None:\\n     lines = src.read_text().splitlines()\\n-    # Salted: select.py already ranked by the plain hash, and took the lowest\\n+    # Salted: sc-training select already ranked by the plain hash, and took the lowest\\n[... 1 more lines]\\n--- training/score.py\\n@@ -1,294 +0,0 @@\\n-\\\"\\\"\\\"Scores `smart-commit eval` traces against the real subjects.\\n-\\n-    python -I score.py EVAL_DIR TRACES.jsonl [--json]\\n[... 291 more lines]\\n--- training/select.py\\n@@ -1,120 +0,0 @@\\n-\\\"\\\"\\\"Deterministic subsets of `build_inputs.py` output.\\n-\\n-Commits are ranked by the SHA-256 of their hash, so the choice does not\\n[... 117 more lines]\\n\\n(16 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/architecture.md | +6 -4\\ndocs/measurements.md | +1 -1\\ndocs/training.md | +5 -5\\ntraining/HYPOTHESES.md | +12 -12\\ntraining/README.md | +29 -25\\ntraining/build_inputs.py | deleted, +0 -311\\ntraining/build_scenarios.py | deleted, +0 -112\\ntraining/filter_supported.py | deleted, +0 -39\\ntraining/nest.py | comments only, +1 -1\\ntraining/scenarios.py | deleted, +0 -414\\ntraining/scenarios/README.md | +11 -9\\ntraining/score.py | deleted, +0 -294\\ntraining/select.py | deleted, +0 -120\\ntraining/test_build_inputs.py | deleted, +0 -258\\ntraining/test_make_examples.py | new, maybe renamed from training/test_build_inputs.py, +37 -0\\ntraining/test_scenarios.py | deleted, +0 -202\\n\\nDiff:\\n--- training/build_scenarios.py\\n@@ -1,112 +0,0 @@\\n-\\\"\\\"\\\"Builds the commit scenarios of `scenarios/` (see scenarios.py).\\n-\\n-    python -I build_scenarios.py build DIR SMART_COMMIT [--split train|eval|all] [--only PREFIX]\\n[... 109 more lines]\\n--- training/filter_supported.py\\n@@ -1,39 +0,0 @@\\n-\\\"\\\"\\\"Drops, from a selection already made, the commits a cleaner label set\\n-leaves out: subjects `build_inputs.keep_target` now rejects (versions alone,\\n-release bumps) and subjects naming a version, number or identifier found\\n[... 36 more lines]\\n--- training/nest.py\\n@@ -18,3 +18,3 @@ def main() -> None:\\n     lines = src.read_text().splitlines()\\n-    # Salted: select.py already ranked by the plain hash, and took the lowest\\n+    # Salted: sc-training select already ranked by the plain hash, and took the lowest\\n[... 1 more lines]\\n--- training/score.py\\n@@ -1,294 +0,0 @@\\n-\\\"\\\"\\\"Scores `smart-commit eval` traces against the real subjects.\\n-\\n-    python -I score.py EVAL_DIR TRACES.jsonl [--json]\\n[... 291 more lines]\\n\\n(16 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-scenarios-in-rust.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -191,3 +191,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: chore, feat, refactor.\\n- Scopes used here: bench, deps, training. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nfeat(training): build the training inputs with sc-training build-inputs\\nchore(deps): add the training tools crate and its dependencies\\nrefactor: write the release notes in sc-tools instead of a shell script\\nrefactor: move the llama-server timing out of the binary into sc-tools\\nfeat(bench): time llama-server on prompt files with `bench --prompts`\\n\",\n-          \"user\": \"Files changed:\\ntraining/tools/Cargo.toml | +1 -3\\ntraining/tools/src/build_scenarios.rs | new, +140 -0\\ntraining/tools/src/main.rs | +209 -0\\ntraining/tools/src/mt.rs | new, +126 -0\\ntraining/tools/src/scenarios.rs | new, +982 -0\\ntraining/tools/src/scenarios_tests.rs | new, +646 -0\\ntraining/tools/src/score.rs | new, +508 -0\\ntraining/tools/src/score_tests.rs | new, +189 -0\\ntraining/tools/src/select.rs | new, +257 -0\\ntraining/tools/src/select_tests.rs | new, +209 -0\\n\\nDiff:\\n--- training/tools/src/build_scenarios.rs\\n@@ -0,0 +1,140 @@\\n+//! Builds the commit scenarios of `scenarios/` (see `scenarios.rs`).\\n+//!\\n+//! `build` writes DIR/inputs.jsonl and DIR/meta.jsonl, the layout of\\n[... 137 more lines]\\n--- training/tools/src/main.rs\\n@@ -5,4 +5,9 @@\\n mod build_inputs;\\n+mod build_scenarios;\\n+mod mt;\\n[... 217 more lines]\\n--- training/tools/src/mt.rs\\n@@ -0,0 +1,126 @@\\n+//! Python's `random.Random(seed).randbytes(n)`, for the binary files of the\\n+//! scenarios: the same seed gives the same bytes as the Python tool made.\\n+//! MT19937, seeded the way CPython seeds from an int (`init_by_array`).\\n[... 123 more lines]\\n--- training/tools/src/scenarios_tests.rs\\n@@ -0,0 +1,646 @@\\n+use serde_json::json;\\n+\\n+use super::*;\\n[... 643 more lines]\\n--- training/tools/src/score_tests.rs\\n@@ -0,0 +1,189 @@\\n+use serde_json::json;\\n+\\n+use super::*;\\n[... 186 more lines]\\n--- training/tools/src/select.rs\\n@@ -0,0 +1,257 @@\\n+//! Deterministic subsets of `build-inputs` output.\\n+//!\\n+//! Commits are ranked by the SHA-256 of their hash, so the choice does not\\n[... 254 more lines]\\n--- training/tools/src/select_tests.rs\\n@@ -0,0 +1,209 @@\\n+use std::path::Path;\\n+\\n+use serde_json::json;\\n[... 206 more lines]\\n\\n(10 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ntraining/tools/Cargo.toml | +1 -3\\ntraining/tools/src/build_scenarios.rs | new, +140 -0\\ntraining/tools/src/main.rs | +209 -0\\ntraining/tools/src/mt.rs | new, +126 -0\\ntraining/tools/src/scenarios.rs | new, +982 -0\\ntraining/tools/src/scenarios_tests.rs | new, +646 -0\\ntraining/tools/src/score.rs | new, +508 -0\\ntraining/tools/src/score_tests.rs | new, +189 -0\\ntraining/tools/src/select.rs | new, +257 -0\\ntraining/tools/src/select_tests.rs | new, +209 -0\\n\\nDiff:\\n--- training/tools/src/build_scenarios.rs\\n@@ -0,0 +1,140 @@\\n+//! Builds the commit scenarios of `scenarios/` (see `scenarios.rs`).\\n+//!\\n+//! `build` writes DIR/inputs.jsonl and DIR/meta.jsonl, the layout of\\n[... 137 more lines]\\n--- training/tools/src/main.rs\\n@@ -5,4 +5,9 @@\\n mod build_inputs;\\n+mod build_scenarios;\\n+mod mt;\\n[... 217 more lines]\\n--- training/tools/src/mt.rs\\n@@ -0,0 +1,126 @@\\n+//! Python's `random.Random(seed).randbytes(n)`, for the binary files of the\\n+//! scenarios: the same seed gives the same bytes as the Python tool made.\\n+//! MT19937, seeded the way CPython seeds from an int (`init_by_array`).\\n[... 123 more lines]\\n--- training/tools/src/score_tests.rs\\n@@ -0,0 +1,189 @@\\n+use serde_json::json;\\n+\\n+use super::*;\\n[... 186 more lines]\\n--- training/tools/src/select.rs\\n@@ -0,0 +1,257 @@\\n+//! Deterministic subsets of `build-inputs` output.\\n+//!\\n+//! Commits are ranked by the SHA-256 of their hash, so the choice does not\\n[... 254 more lines]\\n--- training/tools/src/select_tests.rs\\n@@ -0,0 +1,209 @@\\n+use std::path::Path;\\n+\\n+use serde_json::json;\\n[... 206 more lines]\\n\\n(10 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-scopes.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-setup-in-rust.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -503,3 +503,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, feat, chore.\\n- Scopes used here: training, deps. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(training): remove the Python data tools\\nfeat(training): select, score and build the scenarios with sc-training\\nfeat(training): build the training inputs with sc-training build-inputs\\nchore(deps): add the training tools crate and its dependencies\\nrefactor: write the release notes in sc-tools instead of a shell script\\n\",\n-          \"user\": \"Files changed:\\n.github/workflows/ci.yml | +0 -2\\nAGENTS.md | +1 -1\\ndocs/configuration.md | +4 -4\\ndocs/devices.md | +4 -5\\ndocs/reproducibility.md | +1 -1\\ndocs/usage.md | +2 -1\\ninstall.sh | +9 -8\\nscripts/hardware.sh | deleted, +0 -147\\nscripts/package.sh | +1 -2\\nscripts/setup-gpu.sh | +19 -5\\nscripts/setup-llamacpp.sh | deleted, +0 -95\\nscripts/setup.sh | deleted, +0 -147\\nsrc/backend/llamacpp/install.rs | new, +235 -0\\nsrc/backend/llamacpp/mod.rs | +1 -0\\nsrc/backend/llamacpp/tests.rs | +0 -6\\nsrc/cli/guided_setup.rs | +241 -27\\nsrc/cli/mod.rs | +6 -1\\nsrc/cli/settings.rs | comments only, +2 -2\\nsrc/hardware/fake.rs | comments only, +1 -2\\nsrc/hardware/mod.rs | comments only, +1 -4\\nsrc/models/install.rs | +23 -11\\nsrc/models/tests.rs | +1 -5\\nsrc/setup.rs | comments only, +1 -1\\ntests/cli.rs | +2 -2\\ntests/hardware_inventory.rs | deleted, +0 -132\\ntests/scripts/test-install-data.sh | +6 -8\\ntests/scripts/test-install.sh | +2 -3\\n... and 4 more files\\n\\nDiff:\\n--- scripts/package.sh\\n@@ -56,4 +56,3 @@ install -m 755 \\\"$binary/smart-commit\\\" \\\"$stage/bin/\\\"\\n rm -rf \\\"$binary\\\"\\n-for script in setup.sh hardware.sh setup-llamacpp.sh setup-npu.sh setup-gpu.sh check-npu.sh \\\\\\n-    export-model.sh; do\\n[... 2 more lines]\\n--- src/backend/llamacpp/mod.rs\\n@@ -14,2 +14,3 @@\\n mod http;\\n+pub mod install;\\n #[cfg(test)]\\n--- src/backend/llamacpp/tests.rs\\n@@ -323,8 +323,2 @@ fn description_names_build_device_and_model() {\\n \\n-#[test]\\n-fn setup_script_installs_what_the_code_expects() {\\n[... 5 more lines]\\n--- src/hardware/fake.rs\\n@@ -1,3 +1,2 @@\\n-//! Fake machines: a sysfs tree and a cpuinfo, like\\n-//! `tests/scripts/test-setup.sh` builds.\\n+//! Fake machines: a sysfs tree and a cpuinfo.\\n \\n--- src/setup.rs\\n@@ -1,3 +1,3 @@\\n //! What `smart-commit setup` does on a machine: the steps its hardware\\n-//! needs, and only those, as `scripts/setup.sh` plans them.\\n+//! needs, and only those, as `smart-commit setup` plans them.\\n //!\\n\\n(28 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\n.github/workflows/ci.yml | +0 -2\\nAGENTS.md | +1 -1\\ndocs/configuration.md | +4 -4\\ndocs/devices.md | +4 -5\\ndocs/reproducibility.md | +1 -1\\ndocs/usage.md | +2 -1\\ninstall.sh | +9 -8\\nscripts/hardware.sh | deleted, +0 -147\\nscripts/package.sh | +1 -2\\nscripts/setup-gpu.sh | +19 -5\\nscripts/setup-llamacpp.sh | deleted, +0 -95\\nscripts/setup.sh | deleted, +0 -147\\nsrc/backend/llamacpp/install.rs | new, +235 -0\\nsrc/backend/llamacpp/mod.rs | +1 -0\\nsrc/backend/llamacpp/tests.rs | +0 -6\\nsrc/cli/guided_setup.rs | +241 -27\\nsrc/cli/mod.rs | +6 -1\\nsrc/cli/settings.rs | comments only, +2 -2\\nsrc/hardware/fake.rs | comments only, +1 -2\\nsrc/hardware/mod.rs | comments only, +1 -4\\nsrc/models/install.rs | +23 -11\\nsrc/models/tests.rs | +1 -5\\nsrc/setup.rs | comments only, +1 -1\\ntests/cli.rs | +2 -2\\n... and 7 more files\\n\\nDiff:\\n--- src/backend/llamacpp/mod.rs\\n@@ -14,2 +14,3 @@\\n mod http;\\n+pub mod install;\\n #[cfg(test)]\\n--- src/backend/llamacpp/tests.rs\\n@@ -323,8 +323,2 @@ fn description_names_build_device_and_model() {\\n \\n-#[test]\\n-fn setup_script_installs_what_the_code_expects() {\\n[... 5 more lines]\\n--- src/hardware/fake.rs\\n@@ -1,3 +1,2 @@\\n-//! Fake machines: a sysfs tree and a cpuinfo, like\\n-//! `tests/scripts/test-setup.sh` builds.\\n+//! Fake machines: a sysfs tree and a cpuinfo.\\n \\n--- src/hardware/mod.rs\\n@@ -3,5 +3,2 @@\\n //! each one gives. Read from sysfs and /proc/cpuinfo, without root.\\n-//!\\n-//! `scripts/hardware.sh` does the same for the setup scripts; a test checks\\n[... 7 more lines]\\n--- src/setup.rs\\n@@ -1,3 +1,3 @@\\n //! What `smart-commit setup` does on a machine: the steps its hardware\\n-//! needs, and only those, as `scripts/setup.sh` plans them.\\n+//! needs, and only those, as `smart-commit setup` plans them.\\n //!\\n\\n(28 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-annotate.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -120,3 +120,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, test, feat.\\n- Scopes used here: fixtures, cli, diff, llamacpp, models. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ntest(fixtures): trace three module splits answered as feat or vaguely\\nrefactor(models): split the module into the registry, installing and tests\\nrefactor(diff): split the module into parse, classify, compact and tests\\nrefactor(llamacpp): split the module into the backend, its HTTP client and tests\\ntest(fixtures): trace four bad messages from the cli refactor\\n\",\n-          \"user\": \"Files changed:\\nsrc/annotate.rs | deleted, +0 -622\\nsrc/annotate/comments.rs | new, maybe renamed from src/annotate.rs, +65 -0\\nsrc/annotate/mod.rs | new, maybe renamed from src/annotate.rs, +255 -0\\nsrc/annotate/rename.rs | new, maybe renamed from src/annotate.rs, +81 -0\\nsrc/annotate/tests.rs | new, maybe renamed from src/annotate.rs, +227 -0\\n\\nDiff:\\n--- src/annotate.rs\\n@@ -1,622 +0,0 @@\\n-//! The annotated file list: what each staged file's line counts do not say.\\n-//!\\n-//! The plain list (`path | +3 -1`) leaves the model to guess a file's\\n-//! status, and shows a whitespace fix, a comment and a rename like any\\n[... 618 more lines]\\n--- src/annotate/comments.rs\\n@@ -0,0 +1,65 @@\\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\\n+pub(super) enum CommentSyntax {\\n+    /// `#`, with Python's docstrings.\\n+    Python,\\n+    /// `#` alone: shell, Ruby, TOML, YAML.\\n+    Hash,\\n+    /// `//` and `/* ... */`.\\n[... 58 more lines]\\n--- src/annotate/mod.rs\\n@@ -0,0 +1,255 @@\\n+//! The annotated file list: what each staged file's line counts do not say.\\n+//!\\n+//! The plain list (`path | +3 -1`) leaves the model to guess a file's\\n+//! status, and shows a whitespace fix, a comment and a rename like any\\n[... 251 more lines]\\n--- src/annotate/rename.rs\\n@@ -0,0 +1,81 @@\\n+use crate::diff::FileDiff;\\n+\\n+/// A new file sharing this share of its lines with a deleted one is\\n+/// probably that file renamed, below git's 50% rename threshold.\\n+const LIKELY_RENAME: f64 = 0.4;\\n+\\n[... 75 more lines]\\n--- src/annotate/tests.rs\\n@@ -0,0 +1,227 @@\\n+use super::*;\\n+\\n+fn file(path: &str, hunks: &str) -> FileDiff {\\n+    let added = hunks.lines().filter(|l| l.starts_with('+')).count();\\n+    let deleted = hunks.lines().filter(|l| l.starts_with('-')).count();\\n+    FileDiff {\\n[... 221 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/annotate.rs | deleted, +0 -622\\nsrc/annotate/comments.rs | new, maybe renamed from src/annotate.rs, +65 -0\\nsrc/annotate/mod.rs | new, maybe renamed from src/annotate.rs, +255 -0\\nsrc/annotate/rename.rs | new, maybe renamed from src/annotate.rs, +81 -0\\nsrc/annotate/tests.rs | new, maybe renamed from src/annotate.rs, +227 -0\\n\\nDiff:\\n--- src/annotate.rs\\n@@ -1,622 +0,0 @@\\n-//! The annotated file list: what each staged file's line counts do not say.\\n-//!\\n-//! The plain list (`path | +3 -1`) leaves the model to guess a file's\\n[... 619 more lines]\\n--- src/annotate/comments.rs\\n@@ -0,0 +1,65 @@\\n+#[derive(Debug, Clone, Copy, PartialEq, Eq)]\\n+pub(super) enum CommentSyntax {\\n+    /// `#`, with Python's docstrings.\\n+    Python,\\n+    /// `#` alone: shell, Ruby, TOML, YAML.\\n+    Hash,\\n[... 59 more lines]\\n--- src/annotate/mod.rs\\n@@ -0,0 +1,255 @@\\n+//! The annotated file list: what each staged file's line counts do not say.\\n+//!\\n+//! The plain list (`path | +3 -1`) leaves the model to guess a file's\\n[... 252 more lines]\\n--- src/annotate/rename.rs\\n@@ -0,0 +1,81 @@\\n+use crate::diff::FileDiff;\\n+\\n+/// A new file sharing this share of its lines with a deleted one is\\n+/// probably that file renamed, below git's 50% rename threshold.\\n[... 77 more lines]\\n--- src/annotate/tests.rs\\n@@ -0,0 +1,227 @@\\n+use super::*;\\n+\\n+fn file(path: &str, hunks: &str) -> FileDiff {\\n+    let added = hunks.lines().filter(|l| l.starts_with('+')).count();\\n[... 223 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-as-feat.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -280,3 +280,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, test, chore.\\n- Scopes used here: deps, fixtures, generate, message, prompt, style. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nchore(deps): add anyhow, tracing and tracing-subscriber\\nrefactor(generate): split the module by notes, retry and rules\\nrefactor(message): split the module by parsing, format and fallback\\nrefactor(style): split the module by parsing, gitmoji, language and tickets\\ntest(fixtures): regenerate traces for refactor type list change\\n\",\n-          \"user\": \"Files changed:\\ndocs/architecture.md | +5 -3\\nsrc/cli/args.rs | new, +179 -0\\nsrc/{bench_cmd.rs => cli/benchmark.rs} | renamed, +25 -24\\nsrc/{config_cmd.rs => cli/configure.rs} | renamed, +10 -12\\nsrc/cli/git_hook.rs | new, +149 -0\\nsrc/{setup_cmd.rs => cli/guided_setup.rs} | renamed, +13 -16\\nsrc/cli/inspect.rs | new, +212 -0\\nsrc/{install_cmd.rs => cli/install.rs} | renamed, +6 -8\\nsrc/cli/keep_loaded.rs | new, +42 -0\\nsrc/cli/load.rs | new, +121 -0\\nsrc/cli/mod.rs | new, +194 -0\\nsrc/{model_cmd.rs => cli/model.rs} | renamed, +16 -18\\nsrc/cli/session.rs | new, +153 -0\\nsrc/cli/settings.rs | new, +57 -0\\nsrc/cli/suggest.rs | new, +93 -0\\nsrc/main.rs | +2 -1088\\n\\nDiff:\\n--- src/cli/benchmark.rs\\n@@ -3,3 +3,2 @@\\n \\n-use std::error::Error;\\n use std::path::{Path, PathBuf};\\n[... 99 more lines]\\n--- src/cli/configure.rs\\n@@ -2,3 +2,2 @@\\n \\n-use std::error::Error;\\n use std::path::PathBuf;\\n[... 46 more lines]\\n--- src/cli/guided_setup.rs\\n@@ -4,3 +4,2 @@\\n \\n-use std::error::Error;\\n use std::io::{BufRead, BufReader, Read};\\n[... 53 more lines]\\n--- src/cli/install.rs\\n@@ -6,3 +6,2 @@\\n \\n-use std::error::Error;\\n use std::io::{self, BufRead, Write as _};\\n[... 28 more lines]\\n--- src/cli/keep_loaded.rs\\n@@ -0,0 +1,42 @@\\n+//! `smart-commit server`: the models kept loaded between commits.\\n+\\n+use clap::Subcommand;\\n[... 39 more lines]\\n--- src/cli/model.rs\\n@@ -3,3 +3,2 @@\\n \\n-use std::error::Error;\\n use std::io::{IsTerminal, Write};\\n[... 74 more lines]\\n--- src/cli/settings.rs\\n@@ -0,0 +1,57 @@\\n+//! What a command reads from outside: settings, the environment and the\\n+//! machine, and what changing a setting affects.\\n+\\n[... 54 more lines]\\n--- src/cli/suggest.rs\\n@@ -0,0 +1,93 @@\\n+//! `smart-commit` without a subcommand: write the message for what is\\n+//! staged, and optionally commit it.\\n+\\n[... 90 more lines]\\n\\n(16 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/architecture.md | +5 -3\\nsrc/cli/args.rs | new, +179 -0\\nsrc/{bench_cmd.rs => cli/benchmark.rs} | renamed, +25 -24\\nsrc/{config_cmd.rs => cli/configure.rs} | renamed, +10 -12\\nsrc/cli/git_hook.rs | new, +149 -0\\nsrc/{setup_cmd.rs => cli/guided_setup.rs} | renamed, +13 -16\\nsrc/cli/inspect.rs | new, +212 -0\\nsrc/{install_cmd.rs => cli/install.rs} | renamed, +6 -8\\nsrc/cli/keep_loaded.rs | new, +42 -0\\nsrc/cli/load.rs | new, +121 -0\\nsrc/cli/mod.rs | new, +194 -0\\nsrc/{model_cmd.rs => cli/model.rs} | renamed, +16 -18\\nsrc/cli/session.rs | new, +153 -0\\nsrc/cli/settings.rs | new, +57 -0\\nsrc/cli/suggest.rs | new, +93 -0\\nsrc/main.rs | +2 -1088\\n\\nDiff:\\n--- src/cli/configure.rs\\n@@ -2,3 +2,2 @@\\n \\n-use std::error::Error;\\n use std::path::PathBuf;\\n[... 46 more lines]\\n--- src/cli/guided_setup.rs\\n@@ -4,3 +4,2 @@\\n \\n-use std::error::Error;\\n use std::io::{BufRead, BufReader, Read};\\n[... 53 more lines]\\n--- src/cli/install.rs\\n@@ -6,3 +6,2 @@\\n \\n-use std::error::Error;\\n use std::io::{self, BufRead, Write as _};\\n[... 28 more lines]\\n--- src/cli/keep_loaded.rs\\n@@ -0,0 +1,42 @@\\n+//! `smart-commit server`: the models kept loaded between commits.\\n+\\n+use clap::Subcommand;\\n[... 39 more lines]\\n--- src/cli/settings.rs\\n@@ -0,0 +1,57 @@\\n+//! What a command reads from outside: settings, the environment and the\\n+//! machine, and what changing a setting affects.\\n+\\n[... 54 more lines]\\n--- src/cli/suggest.rs\\n@@ -0,0 +1,93 @@\\n+//! `smart-commit` without a subcommand: write the message for what is\\n+//! staged, and optionally commit it.\\n+\\n[... 90 more lines]\\n\\n(16 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-bench.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -120,3 +120,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, test.\\n- Scopes used here: fixtures, annotate, diff, llamacpp, models. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(annotate): split the module into comments, rename and tests\\ntest(fixtures): trace three module splits answered as feat or vaguely\\nrefactor(models): split the module into the registry, installing and tests\\nrefactor(diff): split the module into parse, classify, compact and tests\\nrefactor(llamacpp): split the module into the backend, its HTTP client and tests\\n\",\n-          \"user\": \"Files changed:\\nsrc/bench.rs | deleted, +0 -609\\nsrc/bench/measure.rs | new, maybe renamed from src/bench.rs, +113 -0\\nsrc/bench/mod.rs | new, maybe renamed from src/bench.rs, +129 -0\\nsrc/bench/report.rs | new, maybe renamed from src/bench.rs, +124 -0\\nsrc/bench/tests.rs | new, maybe renamed from src/bench.rs, +255 -0\\n\\nDiff:\\n--- src/bench.rs\\n@@ -1,609 +0,0 @@\\n-//! Measures every device on fixed prompts, so `model.device = \\\"auto\\\"` can\\n-//! pick the fastest one on this machine.\\n-//!\\n-//! The prompts are recorded in `tests/fixtures/traces/bench-*.json`, embedded\\n[... 605 more lines]\\n--- src/bench/measure.rs\\n@@ -0,0 +1,113 @@\\n+use std::time::Instant;\\n+\\n+use super::*;\\n+use crate::backend::{Backend, BackendError, GenerationConfig};\\n+use crate::device::Target;\\n+use crate::prompt::Prompt;\\n+\\n[... 106 more lines]\\n--- src/bench/mod.rs\\n@@ -0,0 +1,129 @@\\n+//! Measures every device on fixed prompts, so `model.device = \\\"auto\\\"` can\\n+//! pick the fastest one on this machine.\\n+//!\\n+//! The prompts are recorded in `tests/fixtures/traces/bench-*.json`, embedded\\n[... 125 more lines]\\n--- src/bench/report.rs\\n@@ -0,0 +1,124 @@\\n+use serde::{Deserialize, Serialize};\\n+\\n+use super::*;\\n+use crate::device::Target;\\n+\\n+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]\\n+pub struct Report {\\n+    pub format: u32,\\n+    pub tool_version: String,\\n[... 115 more lines]\\n--- src/bench/tests.rs\\n@@ -0,0 +1,255 @@\\n+use std::time::Instant;\\n+\\n+use super::*;\\n+use crate::backend::MockBackend;\\n+use crate::backend::{Backend, BackendError, GenerationConfig};\\n+\\n+fn entry(target: Target, per_message_ms: Option<f64>) -> Entry {\\n+    Entry {\\n[... 247 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/bench.rs | deleted, +0 -609\\nsrc/bench/measure.rs | new, maybe renamed from src/bench.rs, +113 -0\\nsrc/bench/mod.rs | new, maybe renamed from src/bench.rs, +129 -0\\nsrc/bench/report.rs | new, maybe renamed from src/bench.rs, +124 -0\\nsrc/bench/tests.rs | new, maybe renamed from src/bench.rs, +255 -0\\n\\nDiff:\\n--- src/bench.rs\\n@@ -1,609 +0,0 @@\\n-//! Measures every device on fixed prompts, so `model.device = \\\"auto\\\"` can\\n-//! pick the fastest one on this machine.\\n-//!\\n-//! The prompts are recorded in `tests/fixtures/traces/bench-*.json`, embedded\\n[... 605 more lines]\\n--- src/bench/measure.rs\\n@@ -0,0 +1,113 @@\\n+use std::time::Instant;\\n+\\n+use super::*;\\n+use crate::backend::{Backend, BackendError, GenerationConfig};\\n+use crate::device::Target;\\n+use crate::prompt::Prompt;\\n+\\n[... 106 more lines]\\n--- src/bench/mod.rs\\n@@ -0,0 +1,129 @@\\n+//! Measures every device on fixed prompts, so `model.device = \\\"auto\\\"` can\\n+//! pick the fastest one on this machine.\\n+//!\\n+//! The prompts are recorded in `tests/fixtures/traces/bench-*.json`, embedded\\n[... 125 more lines]\\n--- src/bench/report.rs\\n@@ -0,0 +1,124 @@\\n+use serde::{Deserialize, Serialize};\\n+\\n+use super::*;\\n+use crate::device::Target;\\n+\\n+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]\\n+pub struct Report {\\n+    pub format: u32,\\n[... 116 more lines]\\n--- src/bench/tests.rs\\n@@ -0,0 +1,255 @@\\n+use std::time::Instant;\\n+\\n+use super::*;\\n+use crate::backend::MockBackend;\\n+use crate::backend::{Backend, BackendError, GenerationConfig};\\n+\\n[... 249 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-diff.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -134,3 +134,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, chore, feat, test.\\n- Scopes used here: cli, deps, fixtures, llamacpp. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(llamacpp): split the module into the backend, its HTTP client and tests\\ntest(fixtures): trace four bad messages from the cli refactor\\nfeat(cli): report with tracing and add -v for debug output\\nrefactor: use anyhow in the binary and a typed DeviceError in the library\\nrefactor(cli): split main.rs into the cli module and its commands\\n\",\n-          \"user\": \"Files changed:\\nsrc/diff.rs | deleted, +0 -769\\nsrc/diff/classify.rs | new, maybe renamed from src/diff.rs, +116 -0\\nsrc/diff/compact.rs | new, maybe renamed from src/diff.rs, +167 -0\\nsrc/diff/mod.rs | new, maybe renamed from src/diff.rs, +122 -0\\nsrc/diff/parse.rs | new, maybe renamed from src/diff.rs, +72 -0\\nsrc/diff/tests.rs | new, maybe renamed from src/diff.rs, +305 -0\\n\\nDiff:\\n--- src/diff.rs\\n@@ -1,769 +0,0 @@\\n-//! Fits a staged diff into the small prompt an NPU model accepts.\\n-//!\\n-//! Files are classified by path, noise (lockfiles, generated and binary\\n[... 766 more lines]\\n--- src/diff/classify.rs\\n@@ -0,0 +1,116 @@\\n+use super::{FileDiff, FileKind};\\n+\\n+const LOCKFILES: &[&str] = &[\\n+    \\\"Cargo.lock\\\",\\n+    \\\"package-lock.json\\\",\\n+    \\\"npm-shrinkwrap.json\\\",\\n+    \\\"yarn.lock\\\",\\n[... 109 more lines]\\n--- src/diff/compact.rs\\n@@ -0,0 +1,167 @@\\n+use std::fmt::Write as _;\\n+\\n+use super::{CompactDiff, FileDiff, FileKind, estimate_tokens};\\n+use crate::annotate;\\n+use crate::git::FileChange;\\n+\\n[... 161 more lines]\\n--- src/diff/mod.rs\\n@@ -0,0 +1,122 @@\\n+//! Fits a staged diff into the small prompt an NPU model accepts.\\n+//!\\n+//! Files are classified by path, noise (lockfiles, generated and binary\\n[... 119 more lines]\\n--- src/diff/parse.rs\\n@@ -0,0 +1,72 @@\\n+use super::FileDiff;\\n+\\n+/// Parses `git diff --numstat -z` and the matching patch.\\n+///\\n+/// Both list files in the same order, so the n-th patch section belongs to\\n[... 67 more lines]\\n--- src/diff/tests.rs\\n@@ -0,0 +1,305 @@\\n+use std::fmt::Write as _;\\n+\\n+use super::classify::*;\\n+use super::compact::*;\\n+use super::parse::*;\\n+use super::*;\\n+\\n+fn file(path: &str, hunks: &str) -> FileDiff {\\n[... 297 more lines]\\n\\n(6 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/diff.rs | deleted, +0 -769\\nsrc/diff/classify.rs | new, maybe renamed from src/diff.rs, +116 -0\\nsrc/diff/compact.rs | new, maybe renamed from src/diff.rs, +167 -0\\nsrc/diff/mod.rs | new, maybe renamed from src/diff.rs, +122 -0\\nsrc/diff/parse.rs | new, maybe renamed from src/diff.rs, +72 -0\\nsrc/diff/tests.rs | new, maybe renamed from src/diff.rs, +305 -0\\n\\nDiff:\\n--- src/diff.rs\\n@@ -1,769 +0,0 @@\\n-//! Fits a staged diff into the small prompt an NPU model accepts.\\n-//!\\n-//! Files are classified by path, noise (lockfiles, generated and binary\\n[... 766 more lines]\\n--- src/diff/classify.rs\\n@@ -0,0 +1,116 @@\\n+use super::{FileDiff, FileKind};\\n+\\n+const LOCKFILES: &[&str] = &[\\n+    \\\"Cargo.lock\\\",\\n+    \\\"package-lock.json\\\",\\n+    \\\"npm-shrinkwrap.json\\\",\\n[... 110 more lines]\\n--- src/diff/compact.rs\\n@@ -0,0 +1,167 @@\\n+use std::fmt::Write as _;\\n+\\n+use super::{CompactDiff, FileDiff, FileKind, estimate_tokens};\\n+use crate::annotate;\\n+use crate::git::FileChange;\\n[... 162 more lines]\\n--- src/diff/mod.rs\\n@@ -0,0 +1,122 @@\\n+//! Fits a staged diff into the small prompt an NPU model accepts.\\n+//!\\n+//! Files are classified by path, noise (lockfiles, generated and binary\\n[... 119 more lines]\\n--- src/diff/parse.rs\\n@@ -0,0 +1,72 @@\\n+use super::FileDiff;\\n+\\n+/// Parses `git diff --numstat -z` and the matching patch.\\n+///\\n[... 68 more lines]\\n--- src/diff/tests.rs\\n@@ -0,0 +1,305 @@\\n+use std::fmt::Write as _;\\n+\\n+use super::classify::*;\\n+use super::compact::*;\\n+use super::parse::*;\\n+use super::*;\\n+\\n[... 298 more lines]\\n\\n(6 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-hardware.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -120,3 +120,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, test.\\n- Scopes used here: annotate, bench, diff, fixtures, llamacpp, models. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(bench): split the module into the report, measuring and tests\\nrefactor(annotate): split the module into comments, rename and tests\\ntest(fixtures): trace three module splits answered as feat or vaguely\\nrefactor(models): split the module into the registry, installing and tests\\nrefactor(diff): split the module into parse, classify, compact and tests\\n\",\n-          \"user\": \"Files changed:\\nsrc/hardware.rs | deleted, +0 -525\\nsrc/hardware/fake.rs | new, maybe renamed from src/hardware.rs, +88 -0\\nsrc/hardware/mod.rs | new, maybe renamed from src/hardware.rs, +227 -0\\nsrc/hardware/sysfs.rs | new, maybe renamed from src/hardware.rs, +79 -0\\nsrc/hardware/tests.rs | new, maybe renamed from src/hardware.rs, +134 -0\\n\\nDiff:\\n--- src/hardware.rs\\n@@ -1,525 +0,0 @@\\n-//! The hardware of this machine, as smart-commit sees it: the CPU, every GPU\\n-//! and NPU, their vendor and kernel driver, and which smart-commit devices\\n-//! each one gives. Read from sysfs and /proc/cpuinfo, without root.\\n-//!\\n[... 521 more lines]\\n--- src/hardware/fake.rs\\n@@ -0,0 +1,88 @@\\n+//! Fake machines: a sysfs tree and a cpuinfo, like\\n+//! `tests/scripts/test-setup.sh` builds.\\n+\\n+use std::path::Path;\\n+\\n+/// Adds a PCI device; `driver` `none` leaves it unbound.\\n[... 82 more lines]\\n--- src/hardware/mod.rs\\n@@ -0,0 +1,227 @@\\n+//! The hardware of this machine, as smart-commit sees it: the CPU, every GPU\\n+//! and NPU, their vendor and kernel driver, and which smart-commit devices\\n+//! each one gives. Read from sysfs and /proc/cpuinfo, without root.\\n+//!\\n[... 223 more lines]\\n--- src/hardware/sysfs.rs\\n@@ -0,0 +1,79 @@\\n+use std::path::{Path, PathBuf};\\n+\\n+pub(super) struct PciDevice {\\n+    pub(super) vendor: String,\\n+    pub(super) device: String,\\n+    pub(super) driver: String,\\n+    pub(super) slot: String,\\n+}\\n+\\n[... 70 more lines]\\n--- src/hardware/tests.rs\\n@@ -0,0 +1,134 @@\\n+use super::*;\\n+\\n+/// Logical CPUs, each with the siblings sharing its core.\\n+fn topology(sysfs: &Path, file: &str, cpus: &[&str]) {\\n+    for (n, siblings) in cpus.iter().enumerate() {\\n[... 129 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/hardware.rs | deleted, +0 -525\\nsrc/hardware/fake.rs | new, maybe renamed from src/hardware.rs, +88 -0\\nsrc/hardware/mod.rs | new, maybe renamed from src/hardware.rs, +227 -0\\nsrc/hardware/sysfs.rs | new, maybe renamed from src/hardware.rs, +79 -0\\nsrc/hardware/tests.rs | new, maybe renamed from src/hardware.rs, +134 -0\\n\\nDiff:\\n--- src/hardware/fake.rs\\n@@ -0,0 +1,88 @@\\n+//! Fake machines: a sysfs tree and a cpuinfo, like\\n+//! `tests/scripts/test-setup.sh` builds.\\n+\\n+use std::path::Path;\\n+\\n+/// Adds a PCI device; `driver` `none` leaves it unbound.\\n[... 82 more lines]\\n--- src/hardware/mod.rs\\n@@ -0,0 +1,227 @@\\n+//! The hardware of this machine, as smart-commit sees it: the CPU, every GPU\\n+//! and NPU, their vendor and kernel driver, and which smart-commit devices\\n+//! each one gives. Read from sysfs and /proc/cpuinfo, without root.\\n[... 224 more lines]\\n--- src/hardware/sysfs.rs\\n@@ -0,0 +1,79 @@\\n+use std::path::{Path, PathBuf};\\n+\\n+pub(super) struct PciDevice {\\n+    pub(super) vendor: String,\\n+    pub(super) device: String,\\n+    pub(super) driver: String,\\n+    pub(super) slot: String,\\n[... 72 more lines]\\n--- src/hardware/tests.rs\\n@@ -0,0 +1,134 @@\\n+use super::*;\\n+\\n+/// Logical CPUs, each with the siblings sharing its core.\\n+fn topology(sysfs: &Path, file: &str, cpus: &[&str]) {\\n+    for (n, siblings) in cpus.iter().enumerate() {\\n[... 129 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-llamacpp.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -92,3 +92,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, chore, feat, test.\\n- Scopes used here: cli, deps, fixtures, generate. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ntest(fixtures): trace four bad messages from the cli refactor\\nfeat(cli): report with tracing and add -v for debug output\\nrefactor: use anyhow in the binary and a typed DeviceError in the library\\nrefactor(cli): split main.rs into the cli module and its commands\\nchore(deps): add anyhow, tracing and tracing-subscriber\\n\",\n-          \"user\": \"Files changed:\\nsrc/llamacpp/http.rs | new, +80 -0\\nsrc/{llamacpp.rs => llamacpp/mod.rs} | renamed, +6 -405\\nsrc/llamacpp/tests.rs | new, +324 -0\\n\\nDiff:\\n--- src/llamacpp/http.rs\\n@@ -0,0 +1,80 @@\\n+use std::io::{Read, Write};\\n+use std::os::unix::net::UnixStream;\\n+use std::path::Path;\\n+use std::time::Duration;\\n+\\n+/// One HTTP/1.1 request over the UNIX socket; returns status and body.\\n+pub fn http(\\n+    socket: &Path,\\n+    method: &str,\\n+    path: &str,\\n+    body: Option<&str>,\\n+) -> std::io::Result<(u16, String)> {\\n+    let mut stream = UnixStream::connect(socket)?;\\n+    stream.set_read_timeout(Some(Duration::from_secs(300)))?;\\n+    let body = body.unwrap_or(\\\"\\\");\\n+    write!(\\n[... 64 more lines]\\n--- src/llamacpp/mod.rs\\n@@ -13,5 +13,9 @@\\n \\n+mod http;\\n+#[cfg(test)]\\n+mod tests;\\n+\\n+pub use http::{http, parse_http_response};\\n+\\n use std::fmt;\\n-use std::io::{Read, Write};\\n-use std::os::unix::net::UnixStream;\\n use std::path::{Path, PathBuf};\\n@@ -373,78 +377,2 @@ pub fn parse_chat_response(body: &str) -> Result<(String, Metrics), BackendError\\n \\n-/// One HTTP/1.1 request over the UNIX socket; returns status and body.\\n-pub fn http(\\n-    socket: &Path,\\n-    method: &str,\\n-    path: &str,\\n-    body: Option<&str>,\\n[... 400 more lines]\\n--- src/llamacpp/tests.rs\\n@@ -0,0 +1,324 @@\\n+use std::io::{Read, Write};\\n+use std::os::unix::net::UnixListener;\\n+\\n+use super::*;\\n+\\n+fn options(dir: &Path) -> LlamaCppOptions {\\n+    LlamaCppOptions {\\n+        server: dir.join(\\\"llama-b11381/llama-server\\\"),\\n+        model: dir.join(\\\"model.gguf\\\"),\\n+        device: LlamaDevice::Vulkan(1),\\n+        max_prompt_tokens: 1024,\\n+        max_new_tokens: 128,\\n+        threads_batch: 6,\\n+        startup_timeout: Duration::from_secs(5),\\n+        fast_load: false,\\n+    }\\n+}\\n+\\n[... 306 more lines]\\n\\n(3 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/llamacpp/http.rs | new, +80 -0\\nsrc/{llamacpp.rs => llamacpp/mod.rs} | renamed, +6 -405\\nsrc/llamacpp/tests.rs | new, +324 -0\\n\\nDiff:\\n--- src/llamacpp/http.rs\\n@@ -0,0 +1,80 @@\\n+use std::io::{Read, Write};\\n+use std::os::unix::net::UnixStream;\\n+use std::path::Path;\\n+use std::time::Duration;\\n+\\n+/// One HTTP/1.1 request over the UNIX socket; returns status and body.\\n+pub fn http(\\n+    socket: &Path,\\n+    method: &str,\\n+    path: &str,\\n+    body: Option<&str>,\\n+) -> std::io::Result<(u16, String)> {\\n+    let mut stream = UnixStream::connect(socket)?;\\n+    stream.set_read_timeout(Some(Duration::from_secs(300)))?;\\n[... 66 more lines]\\n--- src/llamacpp/mod.rs\\n@@ -13,5 +13,9 @@\\n \\n+mod http;\\n+#[cfg(test)]\\n+mod tests;\\n+\\n+pub use http::{http, parse_http_response};\\n+\\n use std::fmt;\\n-use std::io::{Read, Write};\\n-use std::os::unix::net::UnixStream;\\n use std::path::{Path, PathBuf};\\n@@ -373,78 +377,2 @@ pub fn parse_chat_response(body: &str) -> Result<(String, Metrics), BackendError\\n \\n-/// One HTTP/1.1 request over the UNIX socket; returns status and body.\\n-pub fn http(\\n-    socket: &Path,\\n[... 403 more lines]\\n--- src/llamacpp/tests.rs\\n@@ -0,0 +1,324 @@\\n+use std::io::{Read, Write};\\n+use std::os::unix::net::UnixListener;\\n+\\n+use super::*;\\n+\\n+fn options(dir: &Path) -> LlamaCppOptions {\\n+    LlamaCppOptions {\\n+        server: dir.join(\\\"llama-b11381/llama-server\\\"),\\n+        model: dir.join(\\\"model.gguf\\\"),\\n+        device: LlamaDevice::Vulkan(1),\\n+        max_prompt_tokens: 1024,\\n+        max_new_tokens: 128,\\n+        threads_batch: 6,\\n[... 311 more lines]\\n\\n(3 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-models.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -120,3 +120,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, feat, test.\\n- Scopes used here: cli, diff, fixtures, llamacpp. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(diff): split the module into parse, classify, compact and tests\\nrefactor(llamacpp): split the module into the backend, its HTTP client and tests\\ntest(fixtures): trace four bad messages from the cli refactor\\nfeat(cli): report with tracing and add -v for debug output\\nrefactor: use anyhow in the binary and a typed DeviceError in the library\\n\",\n-          \"user\": \"Files changed:\\nsrc/models.rs | deleted, +0 -576\\nsrc/models/install.rs | new, maybe renamed from src/models.rs, +165 -0\\nsrc/models/mod.rs | new, maybe renamed from src/models.rs, +18 -0\\nsrc/models/registry.rs | new, maybe renamed from src/models.rs, +174 -0\\nsrc/models/tests.rs | new, maybe renamed from src/models.rs, +229 -0\\n\\nDiff:\\n--- src/models.rs\\n@@ -1,576 +0,0 @@\\n-//! The models smart-commit recommends, and installing them.\\n-//!\\n-//! Each model is downloaded from Hugging Face, pinned to a revision and\\n-//! checked against the SHA-256 of the file at that revision: other\\n[... 572 more lines]\\n--- src/models/install.rs\\n@@ -0,0 +1,165 @@\\n+use std::fmt;\\n+use std::io::Read;\\n+use std::path::{Path, PathBuf};\\n+use std::process::{Command, Stdio};\\n+use std::time::Duration;\\n+\\n+use sha2::{Digest, Sha256};\\n+\\n+use super::registry::*;\\n+use crate::prompt::PromptRules;\\n[... 155 more lines]\\n--- src/models/mod.rs\\n@@ -0,0 +1,18 @@\\n+//! The models smart-commit recommends, and installing them.\\n+//!\\n+//! Each model is downloaded from Hugging Face, pinned to a revision and\\n+//! checked against the SHA-256 of the file at that revision: other\\n[... 14 more lines]\\n--- src/models/registry.rs\\n@@ -0,0 +1,174 @@\\n+use std::fmt;\\n+\\n+use crate::prompt::PromptRules;\\n+\\n+/// Where models are downloaded from.\\n+pub const HUGGING_FACE: &str = \\\"https://huggingface.co\\\";\\n+\\n+/// The Hugging Face account the project's own fine-tunes are published\\n[... 166 more lines]\\n--- src/models/tests.rs\\n@@ -0,0 +1,229 @@\\n+use std::path::Path;\\n+\\n+use super::*;\\n+use crate::prompt::PromptRules;\\n+\\n+#[test]\\n+fn prompt_rules_follow_the_checked_file() {\\n+    let dir = tempfile::TempDir::new().unwrap();\\n+    let model = &REGISTRY[0];\\n[... 220 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/models.rs | deleted, +0 -576\\nsrc/models/install.rs | new, maybe renamed from src/models.rs, +165 -0\\nsrc/models/mod.rs | new, maybe renamed from src/models.rs, +18 -0\\nsrc/models/registry.rs | new, maybe renamed from src/models.rs, +174 -0\\nsrc/models/tests.rs | new, maybe renamed from src/models.rs, +229 -0\\n\\nDiff:\\n--- src/models.rs\\n@@ -1,576 +0,0 @@\\n-//! The models smart-commit recommends, and installing them.\\n-//!\\n-//! Each model is downloaded from Hugging Face, pinned to a revision and\\n-//! checked against the SHA-256 of the file at that revision: other\\n[... 572 more lines]\\n--- src/models/install.rs\\n@@ -0,0 +1,165 @@\\n+use std::fmt;\\n+use std::io::Read;\\n+use std::path::{Path, PathBuf};\\n+use std::process::{Command, Stdio};\\n+use std::time::Duration;\\n+\\n+use sha2::{Digest, Sha256};\\n+\\n[... 157 more lines]\\n--- src/models/mod.rs\\n@@ -0,0 +1,18 @@\\n+//! The models smart-commit recommends, and installing them.\\n+//!\\n+//! Each model is downloaded from Hugging Face, pinned to a revision and\\n+//! checked against the SHA-256 of the file at that revision: other\\n[... 14 more lines]\\n--- src/models/registry.rs\\n@@ -0,0 +1,174 @@\\n+use std::fmt;\\n+\\n+use crate::prompt::PromptRules;\\n+\\n+/// Where models are downloaded from.\\n+pub const HUGGING_FACE: &str = \\\"https://huggingface.co\\\";\\n+\\n[... 167 more lines]\\n--- src/models/tests.rs\\n@@ -0,0 +1,229 @@\\n+use std::path::Path;\\n+\\n+use super::*;\\n+use crate::prompt::PromptRules;\\n+\\n+#[test]\\n+fn prompt_rules_follow_the_checked_file() {\\n+    let dir = tempfile::TempDir::new().unwrap();\\n[... 221 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-server.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -120,3 +120,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, test.\\n- Scopes used here: annotate, bench, diff, fixtures, hardware, models. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(hardware): split the module into sysfs reading, fakes and tests\\nrefactor(bench): split the module into the report, measuring and tests\\nrefactor(annotate): split the module into comments, rename and tests\\ntest(fixtures): trace three module splits answered as feat or vaguely\\nrefactor(models): split the module into the registry, installing and tests\\n\",\n-          \"user\": \"Files changed:\\nsrc/server.rs | deleted, +0 -501\\nsrc/server/manage.rs | new, maybe renamed from src/server.rs, +80 -0\\nsrc/server/mod.rs | new, maybe renamed from src/server.rs, +183 -0\\nsrc/server/supervisor.rs | new, maybe renamed from src/server.rs, +64 -0\\nsrc/server/tests.rs | new, maybe renamed from src/server.rs, +188 -0\\n\\nDiff:\\n--- src/server.rs\\n@@ -1,501 +0,0 @@\\n-//! A llama-server kept loaded between commits (`model.keep_loaded`).\\n-//!\\n-//! Loading the model is most of a commit on a GPU (2.1 of 2.4 s on an RTX\\n-//! 3050). With `model.keep_loaded`, the first commit starts a supervisor, a\\n[... 497 more lines]\\n--- src/server/manage.rs\\n@@ -0,0 +1,80 @@\\n+use std::path::{Path, PathBuf};\\n+use std::process::{Command, Stdio};\\n+use std::time::{Duration, SystemTime};\\n+\\n+use super::{Spec, healthy};\\n+\\n+/// A server kept loaded, as [`status`] finds it.\\n[... 73 more lines]\\n--- src/server/mod.rs\\n@@ -0,0 +1,183 @@\\n+//! A llama-server kept loaded between commits (`model.keep_loaded`).\\n+//!\\n+//! Loading the model is most of a commit on a GPU (2.1 of 2.4 s on an RTX\\n+//! 3050). With `model.keep_loaded`, the first commit starts a supervisor, a\\n[... 179 more lines]\\n--- src/server/supervisor.rs\\n@@ -0,0 +1,64 @@\\n+use std::time::{Duration, SystemTime};\\n+\\n+use super::*;\\n+\\n+/// The supervisor: runs the server of `dir/spec.json` until it has been\\n+/// idle for its `keep` time or it exits, then stops it and removes `dir`.\\n[... 58 more lines]\\n--- src/server/tests.rs\\n@@ -0,0 +1,188 @@\\n+use std::cell::Cell;\\n+use std::os::unix::net::UnixListener;\\n+\\n+use super::*;\\n+use crate::llamacpp::LlamaDevice;\\n+\\n+fn options(dir: &Path) -> LlamaCppOptions {\\n+    LlamaCppOptions {\\n[... 180 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\nsrc/server.rs | deleted, +0 -501\\nsrc/server/manage.rs | new, maybe renamed from src/server.rs, +80 -0\\nsrc/server/mod.rs | new, maybe renamed from src/server.rs, +183 -0\\nsrc/server/supervisor.rs | new, maybe renamed from src/server.rs, +64 -0\\nsrc/server/tests.rs | new, maybe renamed from src/server.rs, +188 -0\\n\\nDiff:\\n--- src/server.rs\\n@@ -1,501 +0,0 @@\\n-//! A llama-server kept loaded between commits (`model.keep_loaded`).\\n-//!\\n-//! Loading the model is most of a commit on a GPU (2.1 of 2.4 s on an RTX\\n[... 498 more lines]\\n--- src/server/manage.rs\\n@@ -0,0 +1,80 @@\\n+use std::path::{Path, PathBuf};\\n+use std::process::{Command, Stdio};\\n+use std::time::{Duration, SystemTime};\\n+\\n+use super::{Spec, healthy};\\n+\\n+/// A server kept loaded, as [`status`] finds it.\\n[... 73 more lines]\\n--- src/server/mod.rs\\n@@ -0,0 +1,183 @@\\n+//! A llama-server kept loaded between commits (`model.keep_loaded`).\\n+//!\\n+//! Loading the model is most of a commit on a GPU (2.1 of 2.4 s on an RTX\\n[... 180 more lines]\\n--- src/server/supervisor.rs\\n@@ -0,0 +1,64 @@\\n+use std::time::{Duration, SystemTime};\\n+\\n+use super::*;\\n+\\n+/// The supervisor: runs the server of `dir/spec.json` until it has been\\n[... 59 more lines]\\n--- src/server/tests.rs\\n@@ -0,0 +1,188 @@\\n+use std::cell::Cell;\\n+use std::os::unix::net::UnixListener;\\n+\\n+use super::*;\\n+use crate::llamacpp::LlamaDevice;\\n+\\n+fn options(dir: &Path) -> LlamaCppOptions {\\n+    LlamaCppOptions {\\n[... 180 more lines]\\n\\n(5 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-too-long.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-training-tools-deps.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-two-subjects.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-vague-refactor.json",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n@@ -304,3 +304,3 @@\n           \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: refactor, chore, test.\\n- Scopes used here: cli, deps, fixtures, generate, message, style. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\nrefactor(cli): split main.rs into the cli module and its commands\\nchore(deps): add anyhow, tracing and tracing-subscriber\\nrefactor(generate): split the module by notes, retry and rules\\nrefactor(message): split the module by parsing, format and fallback\\nrefactor(style): split the module by parsing, gitmoji, language and tickets\\n\",\n-          \"user\": \"Files changed:\\ndocs/architecture.md | +5 -0\\nsrc/cli/args.rs | +3 -3\\nsrc/cli/benchmark.rs | +21 -22\\nsrc/cli/configure.rs | +11 -12\\nsrc/cli/git_hook.rs | +13 -16\\nsrc/cli/guided_setup.rs | +27 -25\\nsrc/cli/inspect.rs | +15 -22\\nsrc/cli/install.rs | +22 -15\\nsrc/cli/keep_loaded.rs | +2 -2\\nsrc/cli/load.rs | +2 -4\\nsrc/cli/mod.rs | +1 -1\\nsrc/cli/model.rs | +21 -23\\nsrc/cli/session.rs | +8 -14\\nsrc/cli/suggest.rs | +4 -7\\nsrc/device.rs | +37 -17\\nsrc/git.rs | +11 -1\\nsrc/trace.rs | +10 -1\\n\\nDiff:\\n--- src/cli/args.rs\\n@@ -4,2 +4,3 @@ use std::path::PathBuf;\\n \\n+use anyhow::Result;\\n use clap::{Args, ValueEnum};\\n[... 14 more lines]\\n--- src/cli/keep_loaded.rs\\n@@ -2,5 +2,5 @@\\n \\n+use anyhow::Result;\\n use clap::Subcommand;\\n[... 8 more lines]\\n--- src/cli/load.rs\\n@@ -2,2 +2,3 @@\\n \\n+use anyhow::Result;\\n use smart_commit::backend::{Backend, BackendError};\\n[... 11 more lines]\\n--- src/cli/mod.rs\\n@@ -189,3 +189,3 @@ pub fn run() -> ExitCode {\\n         Err(err) => {\\n-            eprintln!(\\\"error: {err}\\\");\\n+            eprintln!(\\\"error: {err:#}\\\");\\n             ExitCode::FAILURE\\n--- src/cli/session.rs\\n@@ -5,2 +5,3 @@ use std::path::{Path, PathBuf};\\n \\n+use anyhow::{Context as _, Result, bail};\\n use smart_commit::backend::{Backend, GenerationConfig, MockBackend, NoModel};\\n[... 44 more lines]\\n--- src/cli/suggest.rs\\n@@ -5,2 +5,3 @@ use std::time::Instant;\\n \\n+use anyhow::Result;\\n use smart_commit::generate::Source;\\n[... 22 more lines]\\n--- src/git.rs\\n@@ -14,3 +14,3 @@ use crate::diff::{self, FileDiff};\\n pub enum GitError {\\n-    #[error(\\\"failed to run git: {0}\\\")]\\n+    #[error(\\\"failed to run git\\\")]\\n[... 16 more lines]\\n--- src/trace.rs\\n@@ -77,3 +77,3 @@ impl Inputs {\\n pub enum TraceError {\\n-    #[error(\\\"invalid trace: {0}\\\")]\\n+    #[error(\\\"invalid trace\\\")]\\n[... 14 more lines]\\n\\n(16 files are only partly shown; rely on the file list.)\\n\"\n+          \"user\": \"Files changed:\\ndocs/architecture.md | +5 -0\\nsrc/cli/args.rs | +3 -3\\nsrc/cli/benchmark.rs | +21 -22\\nsrc/cli/configure.rs | +11 -12\\nsrc/cli/git_hook.rs | +13 -16\\nsrc/cli/guided_setup.rs | +27 -25\\nsrc/cli/inspect.rs | +15 -22\\nsrc/cli/install.rs | +22 -15\\nsrc/cli/keep_loaded.rs | +2 -2\\nsrc/cli/load.rs | +2 -4\\nsrc/cli/mod.rs | +1 -1\\nsrc/cli/model.rs | +21 -23\\nsrc/cli/session.rs | +8 -14\\nsrc/cli/suggest.rs | +4 -7\\nsrc/device.rs | +37 -17\\nsrc/git.rs | +11 -1\\nsrc/trace.rs | +10 -1\\n\\nDiff:\\n--- src/cli/args.rs\\n@@ -4,2 +4,3 @@ use std::path::PathBuf;\\n \\n+use anyhow::Result;\\n use clap::{Args, ValueEnum};\\n[... 14 more lines]\\n--- src/cli/keep_loaded.rs\\n@@ -2,5 +2,5 @@\\n \\n+use anyhow::Result;\\n use clap::Subcommand;\\n[... 8 more lines]\\n--- src/cli/load.rs\\n@@ -2,2 +2,3 @@\\n \\n+use anyhow::Result;\\n use smart_commit::backend::{Backend, BackendError};\\n[... 11 more lines]\\n--- src/cli/mod.rs\\n@@ -189,3 +189,3 @@ pub fn run() -> ExitCode {\\n         Err(err) => {\\n-            eprintln!(\\\"error: {err}\\\");\\n+            eprintln!(\\\"error: {err:#}\\\");\\n             ExitCode::FAILURE\\n--- src/cli/suggest.rs\\n@@ -5,2 +5,3 @@ use std::time::Instant;\\n \\n+use anyhow::Result;\\n use smart_commit::generate::Source;\\n[... 22 more lines]\\n--- src/git.rs\\n@@ -14,3 +14,3 @@ use crate::diff::{self, FileDiff};\\n pub enum GitError {\\n-    #[error(\\\"failed to run git: {0}\\\")]\\n+    #[error(\\\"failed to run git\\\")]\\n[... 16 more lines]\\n--- src/trace.rs\\n@@ -77,3 +77,3 @@ impl Inputs {\\n pub enum TraceError {\\n-    #[error(\\\"invalid trace: {0}\\\")]\\n+    #[error(\\\"invalid trace\\\")]\\n[... 14 more lines]\\n\\n(16 files are only partly shown; rely on the file list.)\\n\"\n         },\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-pt-retry.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/free-en-chatty.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/fixtures/traces/gitmoji-fallback.json",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.7.0\",\n+  \"tool_version\": \"0.9.0\",\n   \"backend\": \"mock\",\n"
+      },
+      {
+        "path": "tests/hardware.rs",
+        "old_path": null,
+        "lines": [
+          65,
+          13
+        ],
+        "hunks": "@@ -16,3 +16,5 @@ use std::path::{Path, PathBuf};\n \n-use smart_commit::backend::genai::{Device, GenaiBackend, GenaiOptions, NpuTuning};\n+use smart_commit::backend::genai::{\n+    Device, GenaiBackend, GenaiOptions, NpuTuning, device_prompt_budget,\n+};\n use smart_commit::backend::llamacpp::{LlamaCppBackend, LlamaCppOptions, LlamaDevice};\n@@ -21,3 +23,3 @@ use smart_commit::diff::estimate_tokens;\n use smart_commit::paths;\n-use smart_commit::prompt::{DEFAULT_MAX_PROMPT_TOKENS, Prompt};\n+use smart_commit::prompt::{self, DEFAULT_MAX_PROMPT_TOKENS, Prompt, PromptOptions};\n use smart_commit::trace::Trace;\n@@ -81,3 +83,15 @@ fn backend() -> Box<dyn Backend> {\n \n-/// Every prompt recorded in the fixtures, in a fixed order.\n+/// The prompt budget the device under test is given, when it is less than\n+/// the one the fixtures were recorded with: the NPU's.\n+fn device_budget(recorded: usize) -> Option<usize> {\n+    match env(\"SMART_COMMIT_TEST_DEVICE\").as_deref() {\n+        Some(\"npu\") | None => Some(device_prompt_budget(Device::Npu, recorded)),\n+        _ => None,\n+    }\n+}\n+\n+/// Every prompt recorded in the fixtures, in a fixed order. On the NPU the\n+/// first prompt of each is built again with the budget the NPU is given\n+/// (the retries, which carry a note on the first, are left out), since it\n+/// fails on a prompt longer than it compiled for.\n fn fixture_prompts() -> Vec<(String, Prompt)> {\n@@ -95,3 +109,11 @@ fn fixture_prompts() -> Vec<(String, Prompt)> {\n             let name = path.file_stem().unwrap().to_string_lossy().into_owned();\n-            trace\n+            let budget = device_budget(trace.options.max_prompt_tokens);\n+            let rebuilt = budget.map(|max_prompt_tokens| {\n+                let options = PromptOptions {\n+                    max_prompt_tokens,\n+                    ..trace.options.clone()\n+                };\n+                prompt::build(&trace.inputs.context(), &trace.inputs.files, &options)\n+            });\n+            let recorded: Vec<Prompt> = trace\n                 .generation\n@@ -99,4 +121,12 @@ fn fixture_prompts() -> Vec<(String, Prompt)> {\n                 .into_iter()\n-                .enumerate()\n-                .map(move |(n, a)| (format!(\"{name}#{}\", n + 1), a.prompt))\n+                .map(|a| a.prompt)\n+                .collect();\n+            match rebuilt {\n+                Some(prompt) => vec![(format!(\"{name}#1\"), prompt)],\n+                None => recorded\n+                    .into_iter()\n+                    .enumerate()\n+                    .map(|(n, prompt)| (format!(\"{name}#{}\", n + 1), prompt))\n+                    .collect(),\n+            }\n         })\n@@ -163,6 +193,8 @@ fn same_prompt_gives_the_same_reply() {\n #[ignore = \"needs OpenVINO GenAI and an exported model\"]\n-fn token_estimate_never_undercounts() {\n-    // The prompt budget relies on estimate_tokens being pessimistic: if the\n-    // real count were higher, a full prompt would overflow the NPU's\n-    // MAX_PROMPT_LEN and the generation would fail.\n+fn token_estimate_is_at_most_a_quarter_short() {\n+    // The prompt budget relies on estimate_tokens: a prompt longer than its\n+    // estimate by more than the backends' room (half the budget again, on\n+    // the NPU's MAX_PROMPT_LEN and llama.cpp's context) would fail the\n+    // generation. Dense text (hashes, base64) can be up to 1.25 times\n+    // longer than estimated; the fixtures include a diff of checksums.\n     let backend = backend();\n@@ -178,3 +210,4 @@ fn token_estimate_never_undercounts() {\n         // The prompt module reserves 40 tokens for the chat template.\n-        assert!(real <= estimate + 40, \"{name}: {real} > {estimate} + 40\");\n+        let bound = (estimate + 40) * 5 / 4;\n+        assert!(real <= bound, \"{name}: {real} > 1.25 × ({estimate} + 40)\");\n     }\n@@ -184,3 +217,3 @@ fn token_estimate_never_undercounts() {\n #[ignore = \"needs an NPU, OpenVINO GenAI and an exported model\"]\n-fn npu_tuning_does_not_change_replies() {\n+fn npu_tuning_does_not_change_most_replies() {\n     if std::env::var(\"SMART_COMMIT_TEST_DEVICE\").is_ok_and(|d| d != \"npu\") {\n@@ -215,3 +248,22 @@ fn npu_tuning_does_not_change_replies() {\n     let tuned = reply_all(&load(NpuTuning::default()));\n-    assert_eq!(tuned, untuned);\n+    // Chunked prefill and BEST_PERF change the arithmetic, so a reply near a\n+    // tie can differ (bench-p25 does, on OpenVINO 2026.3 and 2026.4): the\n+    // tuning must not change most of them.\n+    let names: Vec<String> = fixture_prompts().into_iter().map(|(n, _)| n).collect();\n+    let different: Vec<&String> = names\n+        .iter()\n+        .zip(tuned.iter().zip(&untuned))\n+        .filter(|(_, (a, b))| a != b)\n+        .map(|(n, _)| n)\n+        .collect();\n+    println!(\n+        \"replies that differ with the tuning: {different:?} of {}\",\n+        names.len()\n+    );\n+    assert!(\n+        different.len() * 10 <= names.len(),\n+        \"the tuning changed {} of {} replies: {different:?}\",\n+        different.len(),\n+        names.len()\n+    );\n }\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(generate): add prompt budgeting",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nparent of ae339ad\nchore: release 0.9.0\nMerge branch 'refactor/structure'\nMerge branch 'refactor/structure-a'\nMerge branch 'revert/scope-map-prompt'\n",
+          "user": "Files changed:\ndocs/architecture.md | +10 -6\ndocs/configuration.md | +4 -1\ndocs/devices.md | +4 -2\ndocs/measurements.md | +11 -5\nsrc/backend/genai.rs | +40 -0\nsrc/backend/llamacpp/mod.rs | comments only, +3 -3\nsrc/backend/mod.rs | +8 -0\nsrc/cli/inspect.rs | +1 -0\nsrc/cli/session.rs | +4 -2\nsrc/diff/mod.rs | +46 -1\nsrc/diff/tests.rs | +19 -0\nsrc/generate/mod.rs | +9 -0\nsrc/generate/tests.rs | +79 -0\ntests/fixtures/make-traces.sh | +12 -0\ntests/fixtures/traces/bench-p25.json | +1 -1\ntests/fixtures/traces/bench-p50.json | +1 -1\ntests/fixtures/traces/bench-p75.json | +1 -1\ntests/fixtures/traces/bench-p90.json | +2 -2\ntests/fixtures/traces/conventional-en-bench-prompts.json | +2 -2\ntests/fixtures/traces/conventional-en-build-inputs-in-rust.json | +2 -2\ntests/fixtures/traces/conventional-en-closed-types.json | +1 -1\ntests/fixtures/traces/conventional-en-copied-twice.json | +1 -1\n... and 44 more files\n\nDiff:\n--- src/backend/mod.rs\n@@ -59,2 +59,10 @@ pub trait Backend {\n \n+    /// The prompt budget, in estimated tokens, this backend can take when\n+    /// asked for `requested`: less for a backend that fails past a fixed\n[... 7 more lines]\n--- src/cli/inspect.rs\n@@ -99,2 +99,3 @@ pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) ->\n     let mut out = std::io::BufWriter::new(std::io::stdout().lock());\n+    let options = generate::budgeted(&options, backend.as_ref());\n     for case in &inputs {\n--- src/cli/session.rs\n@@ -81,2 +81,4 @@ impl Session {\n         };\n+        // The budget this backend can take, which a trace records.\n+        let options = generate::budgeted(&self.options, backend);\n[... 11 more lines]\n--- src/generate/mod.rs\n@@ -57,2 +57,11 @@ pub struct Generation {\n \n+/// `options` with the budget `backend` can take: what to build the prompts\n+/// with, and what a trace of them records.\n[... 8 more lines]\n\n(65 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(generate): add prompt budgeting",
+        "rejected": null
+      }
+    ]
+  }
+}

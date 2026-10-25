@@ -8,16 +8,17 @@ use std::time::Duration;
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use clap::Subcommand;
-use smart_commit::backend::device::{DEFAULT_ORDER, Target};
+use smart_commit::backend::device::{self, Target};
 use smart_commit::bench::{self, Entry, Machine, Report};
 use smart_commit::config::{self, BackendKind, DeviceSetting, FastLoad, Origin, Settings};
+use smart_commit::hardware::Hardware;
 use smart_commit::paths;
 use smart_commit::tui::bench::{Action, BenchView};
 use smart_commit::tui::{self, Screen};
 
 use super::args::DeviceArg;
 use super::load::{Retry, load_with};
-use super::settings::{env, resolve, stop_kept_after, warn_renamed};
+use super::settings::{env, hardware_sources, resolve, stop_kept_after, warn_renamed};
 use super::ui::note;
 
 #[derive(Debug, Subcommand)]
@@ -39,6 +40,11 @@ pub(super) fn last_report() -> Option<Report> {
 const HOW_TO_CHANGE: &str = "To use another device: smart-commit device use \
                              <npu|intel-gpu|vulkan|cpu|openvino-cpu>, or `auto` for the fastest.";
 
+/// The devices of this machine: the ones a benchmark measures.
+fn present_devices() -> Vec<Target> {
+    device::present(&Hardware::detect(&hardware_sources()))
+}
+
 /// What the measuring thread reports.
 enum Progress {
     Start(Target, &'static str),
@@ -59,7 +65,7 @@ fn measure_all(
     let prompts = bench::prompts();
     let config = settings.generation_config();
     let mut entries = Vec::new();
-    for target in DEFAULT_ORDER {
+    for target in present_devices() {
         if stop.load(Ordering::Relaxed) {
             return None;
         }
@@ -153,7 +159,7 @@ pub(super) fn bench_in(screen: &mut Screen, settings: &Settings) -> Result<Bench
     let auto = settings.device == DeviceSetting::Auto;
     let mut view = BenchView::measuring(
         format!("Benchmark on {}", Machine::current().cpu),
-        &DEFAULT_ORDER,
+        &present_devices(),
         auto,
     );
     let stop = Arc::new(AtomicBool::new(false));
@@ -357,7 +363,11 @@ fn show_device() -> Result<()> {
         None => println!(
             "No benchmark yet: `smart-commit bench` measures the devices of this machine.\n\
              Until then, auto uses the first that works of {}.",
-            DEFAULT_ORDER.map(Target::name).join(", ")
+            present_devices()
+                .into_iter()
+                .map(Target::name)
+                .collect::<Vec<_>>()
+                .join(", ")
         ),
     }
     println!("model.device comes from: {origin}.");

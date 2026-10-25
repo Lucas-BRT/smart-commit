@@ -28,7 +28,7 @@ Everything except the model is deterministic and tested without hardware.
 | `backend::llamacpp` | llama.cpp backend (`vulkan`, `cpu`): a private `llama-server` over a UNIX socket |
 | `backend::server` | the `llama-server` kept loaded between commits (`model.keep_loaded`) |
 | `backend::device` | candidate devices and loading the first that works |
-| `bench` | measures every device on four embedded prompts sized like real ones |
+| `bench` | measures every device the machine has on four embedded prompts sized like real ones |
 | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |
 | `setup` | the steps the hardware needs, for the setup screen |
 | `models` | the recommended models, pinned on Hugging Face, and installing them |
@@ -86,12 +86,16 @@ From the last `style.history_depth` (30) subjects, merges excluded:
 ## Fitting the diff
 
 The NPU has a fixed prompt length, so the diff is reduced to a budget, in
-tokens estimated as characters / 3. That is pessimistic for most prompts,
-not for all: hashes, base64 and long numbers take more tokens (Qwen's
-tokenizer splits every digit). llama.cpp starts its server with half the
-budget again as room, so such a prompt is read a little longer instead of
-failing. How far the estimate is off is in
-[measurements](measurements.md#token-estimate).
+tokens estimated from the characters: 3 per token, except that every digit
+is a token (Qwen's tokenizer splits them) and the letters of long runs
+mixing letters and digits (hashes, base64) go 2 per token. That is
+pessimistic for most prompts and can still be short for a few, which the
+backends cover: llama.cpp starts its server with half the budget again as
+room, so such a prompt is read a little longer instead of failing; the NPU
+fails past the length it compiled for, and compiling for more breaks loading
+its cached graph, so it is given a fifth less as the budget (`Backend::
+prompt_budget`; a trace records the budget used). How far the estimate is
+off is in [measurements](measurements.md#token-estimate).
 
 1. The patch has one line of context (`-U1`), without external diff tools
    or colours. Patch sections are paired with `--numstat` entries by order;
