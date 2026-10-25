@@ -55,6 +55,17 @@ def test_an_unknown_base_model_is_refused() -> None:
         assert refused.returncode != 0 and "no base model '7b'" in refused.stderr
 
 
+def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> None:
+    """Kaggle's torchao 0.10 made peft 0.21 refuse every 16-bit layer, all six runs
+    exited with 1, and the kernel still said COMPLETE."""
+    cells = json.loads((HERE / "kaggle_dpo.ipynb").read_text())["cells"]
+    code = ["".join(c["source"]) for c in cells if c["cell_type"] == "code"]
+    install = next(c for c in code if "pip install" in c)
+    assert install.index("pip uninstall -y -q torchao") < install.index("pip install -q -r")
+    scheduler = next(c for c in code if "pending, running" in c)
+    assert "assert not failed" in scheduler.splitlines()[-1]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
