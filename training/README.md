@@ -136,13 +136,17 @@ the history paths, as `sc-training select` writes it today).
 ## Preference pairs (DPO)
 
 What SFT never shows the model is what not to write: a history subject copied,
-a vague description, an invented detail. The pairs for DPO come from the
-model's own samples, judged by the checks of `sc-training score` that need
-no reference (a Conventional header, 72 columns, a history subject copied or
-nearly, a specific found nowhere in the diff, a description sharing no word
-with it). For each input with a reply that fails, the pair is that reply
-against the real subject if it passes the same checks, else a sampled reply
-that does.
+a vague description, an invented detail, a wrong type. The pairs for DPO come
+from the model's own samples, judged by the checks of `sc-training score`: a
+Conventional header, 72 columns, a history subject copied or nearly, a specific
+found nowhere in the diff, a description sharing no word with it and, for
+Conventional repositories, a scope the history never used (the prompt asks to
+omit it then) and a type other than the real commit's. For each input with a
+reply that fails, the rejected one is the reply failing the most serious check
+(in that order: the type last); the preferred one passes them all, and by
+default is the sample closest in words to the real subject (`--prefer real`
+puts the real subject first instead). Every pair carries its repository,
+commit, type and history length, to balance the set by.
 
 Mine from inputs the model was not trained on (`data/test1`,
 `data/test2to5h`, a split of `data/train-all` it did not see): on its own
@@ -198,7 +202,8 @@ every prompt is new, and the default prompt cache (8 GiB each) filled a
 24 GiB machine.
 
 The selection above leaves 5,688 inputs, 3,551 after the evaluation sets'
-repositories are dropped. From them `sc-training pairs` made, for the 0.5B,
+repositories are dropped. From them `sc-training pairs` made, with the first
+judge (no scope or type checks, the real subject preferred), for the 0.5B,
 1,287 pairs (964 with the real subject chosen; rejected replies by failure:
 ungrounded 619, copied 271, unsupported 258, long 134, format 5) and, for the
 1.5B, 1,255 (916; 597, 275, 239, 139, 5).

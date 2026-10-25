@@ -85,6 +85,9 @@ enum Command {
         data: PathBuf,
         /// Where the pairs go, one JSON object a line.
         out: PathBuf,
+        /// What to prefer when the real subject and samples both pass.
+        #[arg(long, value_enum, default_value_t = pairs::Prefer::Sample)]
+        prefer: pairs::Prefer,
     },
     /// Scores `smart-commit eval` traces against the real subjects.
     Score {
@@ -190,12 +193,14 @@ fn run(cli: Cli) -> Result<()> {
             candidates,
             data,
             out,
+            prefer,
         } => {
             let summary = pairs::write(
                 &candidates,
                 &data.join("inputs.jsonl"),
                 &data.join("meta.jsonl"),
                 &out,
+                prefer,
             )?;
             eprintln!(
                 "{} pairs from {} inputs ({} with the real subject chosen); by failure: {:?}",

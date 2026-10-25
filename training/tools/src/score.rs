@@ -45,7 +45,7 @@ use serde_json::{Map, Value, json};
 use crate::build_inputs::{conventional_type, fold_type};
 use crate::scenarios::expected;
 
-static SCOPE: LazyLock<Regex> =
+pub(crate) static SCOPE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z]+\(([^()]+)\)").expect("a valid pattern"));
 static WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[a-z0-9]+").expect("a valid pattern"));
 static HEADER: LazyLock<Regex> = LazyLock::new(|| {
@@ -170,7 +170,7 @@ fn counter(words: Vec<String>) -> BTreeMap<String, usize> {
     counts
 }
 
-fn f1(a: &str, b: &str) -> f64 {
+pub(crate) fn f1(a: &str, b: &str) -> f64 {
     let (x, y) = (counter(words(a)), counter(words(b)));
     let common: usize = x
         .iter()

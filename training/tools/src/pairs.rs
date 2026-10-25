@@ -2,21 +2,24 @@
 //! rejects, against one that passes.
 //!
 //! `mine_pairs.py` samples several replies for each input. Each is judged by
-//! the checks of `score` that need no reference: a Conventional header (in
-//! the Conventional set), a subject of at most 72 columns, a history subject
-//! copied, a specific (a version, an identifier) found nowhere in the diff,
-//! and a description sharing no word with it. For an input with a reply that
-//! fails, the pair is that reply, the rejected one, and the real subject if
-//! it passes the same checks, else a sampled reply that does.
+//! the checks of `score`: a Conventional header (in the Conventional set), a
+//! subject of at most 72 columns, a history subject copied, a specific (a
+//! version, an identifier) found nowhere in the diff, and a description
+//! sharing no word with it; and, in the Conventional set, a scope the history
+//! never used (the prompt asks to omit it then) and a type other than the
+//! real commit's. The rejected reply is the one that fails the most serious
+//! check, in the order of [`Failure`]. The preferred one passes them all: a
+//! sample of the model closest in words to the real subject, or the real
+//! subject itself, whichever [`Prefer`] puts first.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use anyhow::{Context as _, Result, ensure};
 use serde_json::{Value, json};
 
-use crate::build_inputs::conventional_type;
-use crate::score::{description, evidence, ungrounded, unsupported};
+use crate::build_inputs::{conventional_type, fold_type};
+use crate::score::{SCOPE, description, evidence, f1, ungrounded, unsupported};
 
 /// The longest subject, in columns, as in smart-commit.
 const SUBJECT_MAX: usize = 72;
@@ -25,7 +28,7 @@ const SUBJECT_MAX: usize = 72;
 /// four or more, is in one of theirs and covers this share of it.
 const NEAR_COPY_SHARE: f64 = 0.6;
 
-/// Why a reply is rejected.
+/// Why a reply is rejected, from the most serious check to the least.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Failure {
     Empty,
@@ -34,6 +37,20 @@ pub enum Failure {
     Copied,
     Unsupported,
     Ungrounded,
+    /// A scope no history subject used (Conventional set).
+    Scope,
+    /// Not the type of the real commit (Conventional set).
+    Type,
+}
+
+/// Which subject is preferred when the real one and samples both pass.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum Prefer {
+    /// The model's own sample closest to the real subject: what it can
+    /// already write, so the pair teaches a choice and not a style.
+    Sample,
+    /// The real subject, when it passes.
+    Real,
 }
 
 impl Failure {
@@ -45,6 +62,8 @@ impl Failure {
             Self::Copied => "copied",
             Self::Unsupported => "unsupported",
             Self::Ungrounded => "ungrounded",
+            Self::Scope => "scope",
+            Self::Type => "type",
         }
     }
 }
@@ -69,6 +88,10 @@ fn words(text: &str) -> Vec<String> {
 /// What an input allows, to judge replies against.
 pub struct Judge {
     conventional: bool,
+    /// The type of the real commit, in the Conventional set.
+    real_type: Option<String>,
+    /// The scopes of the history subjects.
+    scopes: BTreeSet<String>,
     history: Vec<String>,
     /// The history, paths and diff, lowercase: where a specific may be from.
     known: String,
@@ -77,19 +100,26 @@ pub struct Judge {
 }
 
 impl Judge {
-    /// For the input of a case of `set` (`conventional` or `free`).
-    pub fn new(set: &str, inputs: &Value) -> Self {
+    /// For the input of a case of `set` (`conventional` or `free`), whose
+    /// real commit has type `real_type` if it has one.
+    pub fn new(set: &str, real_type: Option<&str>, inputs: &Value) -> Self {
         let mut without = inputs.clone();
         without["subjects"] = json!([]);
+        let history: Vec<String> = inputs["subjects"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .map(str::to_owned)
+            .collect();
         Self {
             conventional: set == "conventional",
-            history: inputs["subjects"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .filter_map(Value::as_str)
-                .map(str::to_owned)
+            real_type: real_type.map(|t| fold_type(t).to_owned()),
+            scopes: history
+                .iter()
+                .filter_map(|h| SCOPE.captures(h).map(|s| s[1].to_owned()))
                 .collect(),
+            history,
             known: evidence(inputs),
             diff: evidence(&without),
         }
@@ -133,24 +163,55 @@ impl Judge {
         if ungrounded(subject, &self.diff) {
             return Some(Failure::Ungrounded);
         }
+        if self.conventional {
+            if SCOPE
+                .captures(subject)
+                .is_some_and(|s| !self.scopes.contains(&s[1]))
+            {
+                return Some(Failure::Scope);
+            }
+            if self.real_type.is_some() && conventional_type(subject) != self.real_type {
+                return Some(Failure::Type);
+            }
+        }
         None
     }
 }
 
+/// A subject without its case or final period, to tell two apart.
+fn normal(subject: &str) -> String {
+    subject.trim().trim_end_matches('.').to_lowercase()
+}
+
 /// The pair for one input: `replies` are what the model sampled and `target`
-/// the real subject. `None` without a failing reply, or without a subject
-/// that passes to prefer.
-pub fn pair(judge: &Judge, target: &str, replies: &[String]) -> Option<(String, String, Failure)> {
+/// the real subject. The rejected reply is the one failing the most serious
+/// check (the first, if several fail alike); `None` without one, or without
+/// a subject that passes to prefer.
+pub fn pair(
+    judge: &Judge,
+    target: &str,
+    replies: &[String],
+    prefer: Prefer,
+) -> Option<(String, String, Failure)> {
     let subjects: Vec<&str> = replies.iter().map(|r| subject_of(r)).collect();
     let (rejected, failure) = subjects
         .iter()
-        .find_map(|s| judge.failure(s).map(|f| (*s, f)))?;
-    let chosen = if judge.failure(target).is_none() {
-        target
-    } else {
-        subjects.iter().find(|s| judge.failure(s).is_none())?
+        .filter_map(|s| judge.failure(s).map(|f| (*s, f)))
+        .min_by_key(|(_, f)| *f)?;
+    let sample = || {
+        subjects
+            .iter()
+            .filter(|s| judge.failure(s).is_none())
+            // The closest in words; the first of those equally close.
+            .min_by(|a, b| f1(b, target).total_cmp(&f1(a, target)))
+            .copied()
     };
-    (chosen != rejected).then(|| (chosen.to_owned(), rejected.to_owned(), failure))
+    let real = || judge.failure(target).is_none().then_some(target);
+    let chosen = match prefer {
+        Prefer::Sample => sample().or_else(real),
+        Prefer::Real => real().or_else(sample),
+    }?;
+    (normal(chosen) != normal(rejected)).then(|| (chosen.to_owned(), rejected.to_owned(), failure))
 }
 
 /// What came out of [`write`]: inputs seen, pairs written, and by failure.
@@ -175,7 +236,13 @@ fn lines(path: &Path) -> Result<Vec<Value>> {
 /// Writes the pairs of `candidates` (a line per input: `system`, `user` and
 /// the sampled `replies`), with the `inputs` and `meta` of the same lines,
 /// to `out`, one JSON object a line.
-pub fn write(candidates: &Path, inputs: &Path, meta: &Path, out: &Path) -> Result<Summary> {
+pub fn write(
+    candidates: &Path,
+    inputs: &Path,
+    meta: &Path,
+    out: &Path,
+    prefer: Prefer,
+) -> Result<Summary> {
     let (candidates, inputs, meta) = (lines(candidates)?, lines(inputs)?, lines(meta)?);
     ensure!(
         candidates.len() == inputs.len() && inputs.len() == meta.len(),
@@ -196,8 +263,8 @@ pub fn write(candidates: &Path, inputs: &Path, meta: &Path, out: &Path) -> Resul
             .map(str::to_owned)
             .collect();
         let target = m["target"].as_str().unwrap_or("");
-        let judge = Judge::new(m["set"].as_str().unwrap_or(""), i);
-        let Some((chosen, rejected, failure)) = pair(&judge, target, &replies) else {
+        let judge = Judge::new(m["set"].as_str().unwrap_or(""), m["type"].as_str(), i);
+        let Some((chosen, rejected, failure)) = pair(&judge, target, &replies, prefer) else {
             continue;
         };
         summary.pairs += 1;
@@ -211,6 +278,10 @@ pub fn write(candidates: &Path, inputs: &Path, meta: &Path, out: &Path) -> Resul
             "failure": failure.name(),
             "source": if chosen == target { "real" } else { "sample" },
             "set": m["set"],
+            "repo": m["repo"],
+            "hash": m["hash"],
+            "type": m["type"],
+            "history": m["history"],
         });
         text.push_str(&row.to_string());
         text.push('\n');
