@@ -287,13 +287,17 @@ fn model_dir_setting_is_used_and_relative_flags_are_resolved() {
         &["config", "set", "model.dir", dir.to_str().unwrap()],
         repo.path(),
     );
-    let output = env.run(&[], repo.path());
+    // OpenVINO's devices, whatever hardware the machine running the tests has.
+    let output = env.run(&["--backend", "openvino"], repo.path());
     assert!(
         stderr(&output).contains(&format!("no model in {};", dir.display())),
         "{}",
         stderr(&output)
     );
-    let output = env.run(&["--model-dir", "relative/model"], repo.path());
+    let output = env.run(
+        &["--backend", "openvino", "--model-dir", "relative/model"],
+        repo.path(),
+    );
     let expected = std::path::absolute(repo.path().join("relative/model")).unwrap();
     assert!(
         stderr(&output).contains(&format!("no model in {};", expected.display())),
