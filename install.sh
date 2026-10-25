@@ -203,10 +203,10 @@ cp -R "$src/share/doc/smart-commit" "$PREFIX/share/doc/smart-commit"
 say "installed $("$PREFIX/bin/smart-commit" --version) in $PREFIX"
 if [ "$UPDATE" = 1 ]; then
     [ -n "$old" ] && say "updated from $old"
-    # The new binary looks for the llama.cpp build its release pins; the
-    # script is a no-op when that build is already there.
+    # The new binary looks for the llama.cpp build its release pins; it
+    # does nothing when that build is already there.
     if [ -d "${XDG_DATA_HOME:-$HOME/.local/share}/smart-commit/llama.cpp" ]; then
-        "$PREFIX/share/smart-commit/scripts/setup-llamacpp.sh" --server-only
+        "$PREFIX/bin/smart-commit" setup --llamacpp-only
     fi
 fi
 
@@ -216,12 +216,13 @@ case ":$PATH:" in
 esac
 
 if [ "$SETUP" = 1 ]; then
-    # With a terminal, `smart-commit setup` opens the full-screen setup; with
-    # curl | bash, stdin is the pipe, so it is given the terminal instead.
-    if [ "${#setup_args[@]}" -eq 0 ] && { : </dev/tty; } 2>/dev/null; then
-        "$PREFIX/bin/smart-commit" setup </dev/tty
+    # With a terminal, `smart-commit setup` opens the full-screen setup (or
+    # asks its questions, with --yes it asks none); with curl | bash, stdin is
+    # the pipe, so it is given the terminal instead.
+    if { : </dev/tty; } 2>/dev/null; then
+        "$PREFIX/bin/smart-commit" setup "${setup_args[@]}" </dev/tty
     else
-        "$PREFIX/share/smart-commit/scripts/setup.sh" "${setup_args[@]}"
+        "$PREFIX/bin/smart-commit" setup "${setup_args[@]}"
     fi
 elif [ "$UPDATE" = 0 ]; then
     echo "Run \`smart-commit setup\` to set up the devices and models."

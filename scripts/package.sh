@@ -54,8 +54,7 @@ stage=$work/$NAME
 mkdir -p "$stage/bin" "$stage/share/smart-commit/scripts/export" "$stage/share/doc/smart-commit"
 install -m 755 "$binary/smart-commit" "$stage/bin/"
 rm -rf "$binary"
-for script in setup.sh hardware.sh setup-llamacpp.sh setup-npu.sh setup-gpu.sh check-npu.sh \
-    export-model.sh; do
+for script in setup-npu.sh setup-gpu.sh check-npu.sh export-model.sh; do
     install -m 755 "scripts/$script" "$stage/share/smart-commit/scripts/"
 done
 # `smart-commit update` and `uninstall` run the installer they came with.

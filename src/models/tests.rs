@@ -96,12 +96,8 @@ fn own_fine_tunes_follow_the_naming_rule() {
 }
 
 #[test]
-fn the_default_model_is_the_one_the_scripts_install() {
+fn the_default_model_is_the_one_the_export_script_makes() {
     let model = find(DEFAULT).unwrap();
-    let script = include_str!("../../scripts/setup-llamacpp.sh");
-    assert!(script.contains(&format!("GGUF_NAME={}\n", model.gguf.file)));
-    assert!(script.contains(&format!("GGUF_SHA256={}\n", model.gguf.sha256)));
-    assert!(script.contains(model.gguf.revision));
     let export = include_str!("../../scripts/export-model.sh");
     assert!(export.contains(&format!("NAME={}\n", model.openvino.unwrap())));
 }

@@ -25,7 +25,8 @@ then the plan, where Space turns each step on or off and `m` chooses another
 downloads, and the live benchmark at the end. Steps that use `sudo` run
 outside the full screen, where `sudo` can ask for the password. Steps
 already done are listed but off. With `--yes`, or without a terminal, the
-same plan runs as text (`scripts/setup.sh`).
+same plan runs as text, asking before each step that uses `sudo` (with
+`--yes`, without asking; without a terminal, those steps are skipped).
 
 Installer options (after `bash -s --` when piping):
 

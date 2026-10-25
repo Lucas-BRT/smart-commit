@@ -88,23 +88,35 @@ pub fn install_gguf(
         return Ok(file);
     }
     std::fs::create_dir_all(dir).map_err(io(dir.display()))?;
-    let partial = dir.join(format!("{}.partial", gguf.file));
-    let url = gguf.url(base);
-    download(&url, &partial, &mut progress)?;
-    let actual = sha256_file(&partial).map_err(io(partial.display()))?;
-    if actual != gguf.sha256 {
-        let _ = std::fs::remove_file(&partial);
-        return Err(ModelError::Checksum {
-            id: model.id,
-            path: url,
-            actual,
-            expected: gguf.sha256,
-        });
-    }
-    std::fs::rename(&partial, &file).map_err(io(file.display()))?;
+    fetch(model.id, &gguf.url(base), gguf.sha256, &file, &mut progress)?;
     std::fs::write(sidecar(&file), format!("{}  {}\n", gguf.sha256, gguf.file))
         .map_err(io(file.display()))?;
     Ok(file)
+}
+
+/// Downloads `url` to `dest`, through a `.partial` file that only becomes
+/// `dest` when its SHA-256 is `expected`; `label` names what it is in the
+/// error. `progress` is called with the bytes downloaded so far.
+pub fn fetch(
+    label: &'static str,
+    url: &str,
+    expected: &'static str,
+    dest: &Path,
+    mut progress: impl FnMut(u64),
+) -> Result<(), ModelError> {
+    let partial = PathBuf::from(format!("{}.partial", dest.display()));
+    download(url, &partial, &mut progress)?;
+    let actual = sha256_file(&partial).map_err(io(partial.display()))?;
+    if actual != expected {
+        let _ = std::fs::remove_file(&partial);
+        return Err(ModelError::Checksum {
+            id: label,
+            path: url.to_owned(),
+            actual,
+            expected,
+        });
+    }
+    std::fs::rename(&partial, dest).map_err(io(dest.display()))
 }
 
 /// Downloads with curl, which every supported system has, reporting the

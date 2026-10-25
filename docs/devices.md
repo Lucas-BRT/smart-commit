@@ -172,14 +172,13 @@ with an RTX 3050:
 | AMD NPU (Ryzen AI) | nothing: listed as not supported |
 
 OpenVINO, the NPU driver and Intel's GPU runtime are never installed on a
-machine without an Intel NPU or GPU. The steps are scripts that can also run
-on their own, from `~/.local/share/smart-commit/scripts/` (or `scripts/` in
-a checkout):
+machine without an Intel NPU or GPU. `smart-commit setup` installs llama.cpp
+and the model itself; the steps that need the system are scripts, which can
+also run on their own, from `~/.local/share/smart-commit/scripts/` (or
+`scripts/` in a checkout):
 
 | Script | Does | sudo |
 |---|---|---|
-| `hardware.sh` | prints the hardware list above, like `smart-commit hardware` (a test keeps both the same) | no |
-| `setup-llamacpp.sh [--dry-run]` | llama.cpp and the GGUF model, both pinned by SHA-256 | no |
 | `setup-gpu.sh [--dry-run] [--yes]` | the system drivers each GPU needs (below) | only for system packages |
 | `setup-npu.sh` | NPU driver 1.38.0, Level Zero 1.32.0 and OpenVINO GenAI 2026.3.1, the combination Intel validated; adds you to the `render` group | yes |
 | `setup-npu.sh --openvino-only` | only OpenVINO, for an Intel GPU without an NPU, or to compare `openvino-cpu` with `cpu` | yes |

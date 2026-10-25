@@ -86,7 +86,7 @@ expect intel "intel-opencl-icd_26.27.39122.14"
 expect intel "would run: sudo dpkg -i"
 expect intel "would run: sudo apt-get install -y libvulkan1 mesa-vulkan-drivers"
 expect intel "Intel's compute runtime 26.27.39122.14 for OpenVINO"
-# llama.cpp is setup-llamacpp.sh's job.
+# llama.cpp is `smart-commit setup`'s job.
 refute intel "llama-b11381"
 refute intel ".gguf"
 

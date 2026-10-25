@@ -37,7 +37,7 @@ for test in tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs 
 | Unit | `tests.rs` beside the `mod.rs` of a module with its own directory, or `#[cfg(test)] mod tests` in a small file, under `src/` |
 | Prompt snapshots | `insta::assert_snapshot!`, files in the `snapshots/` directory beside the module (`src/prompt/snapshots/`); update with `INSTA_UPDATE=always cargo test` and review the diff |
 | Git integration | `tests/git_context.rs`, with `TestRepo` from `tests/common/` |
-| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
+| CLI end to end | `tests/cli.rs`, `tests/config_cli.rs`, `tests/bench_cli.rs`, `tests/hook.rs`, `tests/setup_cli.rs`, running the binary (`CARGO_BIN_EXE_smart-commit`) |
 | Trace fixtures | `tests/replay_fixtures.rs` |
 | Docs | `tests/docs.rs`: the paths the pages name exist, every command is in `docs/usage.md` |
 | Scripts | `tests/scripts/test-*.sh`, against fake sysfs trees, releases and binaries; no network, sudo or hardware |

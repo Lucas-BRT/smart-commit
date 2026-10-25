@@ -1,5 +1,4 @@
-//! Fake machines: a sysfs tree and a cpuinfo, like
-//! `tests/scripts/test-setup.sh` builds.
+//! Fake machines: a sysfs tree and a cpuinfo.
 
 use std::path::Path;
 

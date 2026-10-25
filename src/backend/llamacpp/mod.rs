@@ -12,6 +12,7 @@
 //! minimal HTTP/1.1 one over that socket, so no network library is needed.
 
 mod http;
+pub mod install;
 #[cfg(test)]
 mod tests;
 

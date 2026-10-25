@@ -1,9 +1,6 @@
 //! The hardware of this machine, as smart-commit sees it: the CPU, every GPU
 //! and NPU, their vendor and kernel driver, and which smart-commit devices
 //! each one gives. Read from sysfs and /proc/cpuinfo, without root.
-//!
-//! `scripts/hardware.sh` does the same for the setup scripts; a test checks
-//! that both print the same inventory.
 
 #[cfg(test)]
 pub(crate) mod fake;
@@ -188,7 +185,7 @@ impl Hardware {
         self.npu == Npu::Intel || self.has_intel_gpu()
     }
 
-    /// The inventory, as `scripts/hardware.sh` prints it.
+    /// The inventory, as `smart-commit hardware` prints it.
     pub fn inventory(&self) -> String {
         let mut out = String::new();
         let _ = writeln!(out, "  CPU  {} ({})", self.cpu_model, self.arch);

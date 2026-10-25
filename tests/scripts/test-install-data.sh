@@ -19,13 +19,11 @@ release() {
     local stage=$work/stage/smart-commit-x86_64-unknown-linux-gnu
     rm -rf "$work/stage"
     mkdir -p "$stage/bin" "$stage/share/smart-commit/scripts" "$stage/share/doc/smart-commit"
-    printf '#!/bin/sh\necho "smart-commit %s"\n' "$1" >"$stage/bin/smart-commit"
+    # Records how --update calls its setup.
+    printf '#!/bin/sh\nif [ "$1" = setup ]; then echo "%s $*" >>"%s/llamacpp-calls"; exit 0; fi\necho "smart-commit %s"\n' \
+        "$1" "$work" "$1" >"$stage/bin/smart-commit"
     chmod +x "$stage/bin/smart-commit"
-    echo "# setup $1" >"$stage/share/smart-commit/scripts/setup.sh"
-    # Records how --update calls it.
-    printf '#!/bin/sh\necho "%s $*" >>"%s/llamacpp-calls"\n' "$1" "$work" \
-        >"$stage/share/smart-commit/scripts/setup-llamacpp.sh"
-    chmod +x "$stage/share/smart-commit/scripts/setup-llamacpp.sh"
+    echo "# setup $1" >"$stage/share/smart-commit/scripts/setup-gpu.sh"
     echo "$1" >"$stage/share/smart-commit/VERSION"
     echo licence >"$stage/share/doc/smart-commit/LICENSE"
     mkdir -p "$work/releases/latest/download"
@@ -68,7 +66,7 @@ setup_data() {
 }
 
 installed() { [ "$("$prefix/bin/smart-commit")" = "smart-commit $1" ]; }
-upgraded() { [ "$(cat "$data/VERSION")" = "$1" ] && grep -q "setup $1" "$data/scripts/setup.sh"; }
+upgraded() { [ "$(cat "$data/VERSION")" = "$1" ] && grep -q "setup $1" "$data/scripts/setup-gpu.sh"; }
 release_gone() {
     [ ! -e "$prefix/bin/smart-commit" ] && [ ! -e "$data/scripts" ] && [ ! -e "$data/VERSION" ] &&
         [ ! -e "$prefix/share/doc/smart-commit" ]
@@ -102,7 +100,7 @@ run --update
 check "--update installs a new version" upgraded 1.2.0
 check "--update says from what" grep -qF "updated from 1.1.0" "$work/out"
 check "--update keeps the models, llama.cpp and the benchmark" data_kept
-check "--update brings llama.cpp to the new release's build" llamacpp_calls "1.2.0 --server-only"
+check "--update brings llama.cpp to the new release's build" llamacpp_calls "1.2.0 setup --llamacpp-only"
 check "--update does not point to the setup" not grep -qF "smart-commit setup" "$work/out"
 rm -f "$work/llamacpp-calls"
 mv "$data/llama.cpp" "$work/llama.cpp.aside"
