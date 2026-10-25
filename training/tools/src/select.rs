@@ -7,7 +7,7 @@
 //! `--releases` reads a source made by `build-inputs --releases`, whose
 //! targets are the release bumps the target filters would otherwise drop.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
@@ -31,6 +31,10 @@ pub struct Options {
     pub supported_only: bool,
     pub max_type_share: f64,
     pub releases: bool,
+    /// Selections whose commits (by hash) are left out, e.g. what a model was trained on.
+    pub exclude_hashes_of: Vec<PathBuf>,
+    /// Selections whose repositories are left out, e.g. the evaluation sets.
+    pub exclude_repos_of: Vec<PathBuf>,
 }
 
 /// Counts in the order keys were first seen, like `collections.Counter`.
@@ -73,7 +77,21 @@ fn rank(hash: &str) -> String {
         .collect()
 }
 
+/// The values of `key` in the `meta.jsonl` of each directory.
+fn meta_values(dirs: &[PathBuf], key: &str) -> Result<HashSet<String>> {
+    let mut values = HashSet::new();
+    for dir in dirs {
+        for line in lines_of(&dir.join("meta.jsonl"))? {
+            let meta: Value = serde_json::from_str(&line)?;
+            values.extend(meta[key].as_str().map(str::to_owned));
+        }
+    }
+    Ok(values)
+}
+
 pub fn select(options: &Options) -> Result<()> {
+    let excluded_hashes = meta_values(&options.exclude_hashes_of, "hash")?;
+    let excluded_repos = meta_values(&options.exclude_repos_of, "repo")?;
     let meta: Vec<Value> = lines_of(&options.src.join("meta.jsonl"))?
         .iter()
         .map(|l| serde_json::from_str(l))
@@ -128,6 +146,10 @@ pub fn select(options: &Options) -> Result<()> {
     for (i, m) in meta.iter().enumerate() {
         let history = m["history"].as_u64().unwrap_or(0) as usize;
         if history < options.min_history || options.max_history.is_some_and(|max| history > max) {
+            continue;
+        }
+        // After the repositories' style is known: only the pool shrinks.
+        if excluded_hashes.contains(&text(i, "hash")) || excluded_repos.contains(&text(i, "repo")) {
             continue;
         }
         // Filters added after the inputs were built apply here too.

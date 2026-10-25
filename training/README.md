@@ -148,6 +148,11 @@ Mine from inputs the model was not trained on (`data/test1`,
 training data it fails less, and the pairs would be fewer and easier.
 `mine_pairs.py` drops the commits of the evaluation sets' repositories
 (`data/eval-v1`, `data/eval-short`), so none of them reaches the pairs.
+`sc-training select` does the same before choosing, so the per-repository
+caps count what is left, with `--exclude-repos-of DIR...`; and
+`--exclude-hashes-of DIR...` leaves out the commits of other selections, such
+as `data/curve`, which the SFT trained on: `select` ranks by a hash of the
+commit, so without it a small cap per repository picks those very commits.
 
 ```bash
 SCT=../target/release/sc-training

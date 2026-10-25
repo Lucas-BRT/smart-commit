@@ -68,6 +68,12 @@ enum Command {
         /// The source is `build-inputs --releases`: keep its release bumps.
         #[arg(long)]
         releases: bool,
+        /// Leave out the commits of these selections (what a model trained on).
+        #[arg(long, num_args = 1..)]
+        exclude_hashes_of: Vec<PathBuf>,
+        /// Leave out the repositories of these selections (the evaluation sets).
+        #[arg(long, num_args = 1..)]
+        exclude_repos_of: Vec<PathBuf>,
     },
     /// Drops from a selection the commits a cleaner label set leaves out.
     FilterSupported { src: PathBuf, out: PathBuf },
@@ -163,6 +169,8 @@ fn run(cli: Cli) -> Result<()> {
             supported_only,
             max_type_share,
             releases,
+            exclude_hashes_of,
+            exclude_repos_of,
         } => select::select(&select::Options {
             src,
             out,
@@ -174,6 +182,8 @@ fn run(cli: Cli) -> Result<()> {
             supported_only,
             max_type_share,
             releases,
+            exclude_hashes_of,
+            exclude_repos_of,
         }),
         Command::FilterSupported { src, out } => select::filter_supported(&src, &out),
         Command::Pairs {
