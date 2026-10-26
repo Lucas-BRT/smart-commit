@@ -685,6 +685,43 @@ nowhere falls with significance, the mean subject stays between 36 and 42
 columns, and a reading of 30 messages side by side shows no new habit. If
 not, the result goes here as it is and Kaggle's quota goes no further on it.
 
+**Second run, first sweep: it failed, and why.** Six runs of the 0.5B on
+Kaggle's T4s (3,615 pairs of 826 repositories, 514 pairs of other
+repositories for validation), chosen on `data/val1` (250 Conventional + 250
+free), paired against the SFT model. All six learn the validation pairs
+(accuracy 0.77–0.83) and the chosen reply's reward turns negative in all
+(−0.5 to −1.6; −0.05 with `--sft-weight`): the model makes both replies less
+likely, the rejected one more so:
+
+| val1, Conventional | type_match | scope_known | replies with a scope | `chore` replies (real: 35 of 250) | ungrounded | word_f1 |
+|---|---|---|---|---|---|---|
+| SFT | 0.624 | 0.904 | 0.23 | 38 | 0.076 | 0.318 |
+| β 0.1, 2e-5 | 0.436 | 1.000 | 0.00 | 141 | 0.000 | 0.301 |
+| β 0.3, 2e-5 | 0.556 | 0.980 | 0.03 | 88 | 0.008 | 0.319 |
+| β 0.1, 5e-5 | 0.160 | 1.000 | 0.00 | 240 | 0.004 | 0.213 |
+| β 0.3, 5e-5 | 0.492 | 1.000 | — | — | 0.000 | 0.320 |
+| β 0.1, 2e-5, `--sft-weight 0.2` | 0.608 | 0.972 | 0.07 | 65 | 0.004 | 0.335 |
+| β 0.1, 1e-5, 2 epochs | 0.400 | 1.000 | — | — | 0.000 | 0.292 |
+
+- It is not the type pairs that failed but what the pairs add up to. The
+  rejected reply is a sample of the model, which errs most in the types it
+  writes most: among the Conventional pairs `fix` is chosen 621 times and
+  rejected 683, `feat` 584 and 681, `chore` 603 and 403; 33% of the chosen
+  replies have a scope against 47% of the rejected. The cheapest way to
+  lower the loss is to move the model's habit (fewer `fix` and `feat`, more
+  `chore`, no scope) and not to learn which type each diff is. `scope_known`
+  of 1.0 is that: no scope is always known.
+- Only the run that keeps the chosen reply likely (`--sft-weight`) stays
+  close to the SFT model. It beats it on `ungrounded`, `first_copied`,
+  `first_try` and `word_f1`, loses 4 `type_match` cases (not significant)
+  and still writes `chore` twice as often as the real commits.
+- By the criteria above none of the six is better (`type_match` does not
+  rise). The mean subject of the SFT model on val1 is 35.3 columns, below the
+  36–42 the criteria assumed from eval-v1.
+- Next: pairs whose chosen and rejected replies have the same distribution of
+  type and of scope (`sc-training balance --match-marginals`), so that only
+  what depends on the diff can lower the loss, and a larger `--sft-weight`.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
