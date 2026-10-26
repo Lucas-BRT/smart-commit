@@ -151,9 +151,12 @@ default is the sample closest in words to the real subject (`--prefer real`
 puts the real subject first instead). Every pair carries its repository,
 commit, type and history length, to balance the set by.
 
-Mine from inputs the model was not trained on (`data/test1`,
-`data/test2to5h`, a split of `data/train-all` it did not see): on its own
-training data it fails less, and the pairs would be fewer and easier.
+Mine from inputs the model was not trained on: on its own training data it
+fails less, and the pairs would be fewer and easier. The test splits
+(`data/test1`, `data/test2to5h`) are not enough for the Conventional
+repositories, which are few in them (the first run's 191 Conventional inputs
+came from 20 repositories); the second run takes them from `data/train-all`,
+without the commits the SFT trained on.
 `mine_pairs.py` drops the commits of the evaluation sets' repositories
 (`data/eval-v1`, `data/eval-short`), so none of them reaches the pairs.
 `sc-training select` does the same before choosing, so the per-repository
@@ -161,6 +164,8 @@ caps count what is left, with `--exclude-repos-of DIR...`; and
 `--exclude-hashes-of DIR...` leaves out the commits of other selections, such
 as `data/curve`, which the SFT trained on: `select` ranks by a hash of the
 commit, so without it a small cap per repository picks those very commits.
+
+The first run, on the local GPU, from the test split:
 
 ```bash
 SCT=../target/release/sc-training
@@ -190,6 +195,9 @@ for size in 0.5b 1.5b; do
 done
 ```
 
+The second run's selection, mining on Kaggle and pairs follow
+[below](#mining-on-kaggle).
+
 With `--prompts-only` (no model, no GPU) `mine_pairs.py` only writes
 `prompts.jsonl` beside the inputs it keeps; `--prompts FILE` then samples from
 those prompts without the binary, which is how the mining runs on Kaggle.
@@ -205,11 +213,21 @@ every prompt is new, and the default prompt cache (8 GiB each) filled a
 24 GiB machine.
 
 The selection above leaves 5,688 inputs, 3,551 after the evaluation sets'
-repositories are dropped. From them `sc-training pairs` made, with the first
-judge (no scope or type checks, the real subject preferred), for the 0.5B,
-1,287 pairs (964 with the real subject chosen; rejected replies by failure:
-ungrounded 619, copied 271, unsupported 258, long 134, format 5) and, for the
-1.5B, 1,255 (916; 597, 275, 239, 139, 5).
+repositories are dropped, of which 191 Conventional. From them the first
+judge (no scope or type checks, the real subject preferred) made, for the
+0.5B, 1,287 pairs (964 with the real subject chosen; rejected replies by
+failure: ungrounded 619, copied 271, unsupported 258, long 134, format 5) and,
+for the 1.5B, 1,255 (916; 597, 275, 239, 139, 5), 72 and 76 of them
+Conventional. The judge has changed since: the same candidates now give 1,343
+and 1,314 pairs, 128 of the 0.5B's Conventional.
+
+The second run, from 5,500 inputs (4,500 Conventional of 680 repositories and
+1,000 of young repositories) with six samples each: 4,052 pairs for the 0.5B
+(3,363 Conventional, 689 young; rejected replies by failure: type 1,295, scope
+598, ungrounded 902, copied 479, unsupported 374, long 226, format 178) and
+3,926 for the 1.5B. `balance` turned the 0.5B's, with the first run's free
+ones, into 3,615 pairs of training in 826 repositories and 514 of validation,
+or 3,172 with `--match-marginals`.
 
 ### Mining on Kaggle
 

@@ -319,6 +319,13 @@ What is published is one model per size smart-commit offers, named
    trained and evaluated, on Hugging Face and private (results in
    [HYPOTHESES.md](../training/HYPOTHESES.md), v0.2). The scope map (H4b)
    was not in the bundle.
-7. The next version: H4b, and more data for the 1.5B, which leans on the
+7. DPO on the models' own samples ([H12](../training/HYPOTHESES.md)): the
+   pipeline is built (`mine_pairs.py`, `sc-training pairs` and `balance`,
+   `train_dpo.py`, the Kaggle bundles and notebooks, `compare_models.py`). The
+   first run removed the failures its pairs showed and cost the scope; the
+   second run's first sweep collapsed onto one type because its pairs were
+   unbalanced, and a second sweep on pairs with matched distributions is
+   under way. Nothing is published from it.
+8. The next version: H4b, and more data for the 1.5B, which leans on the
    rules more than the 0.5B. What to publish, register and make the default
    is in the [roadmap](roadmap.md).
