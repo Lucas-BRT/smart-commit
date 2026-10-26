@@ -13,8 +13,10 @@ goes to OUT/summary.json.
 """
 
 import argparse
+import collections
 import json
 import os
+import re
 import statistics
 import subprocess
 import tempfile
@@ -23,7 +25,7 @@ from pathlib import Path
 # Metrics where a case flagged is a case right, and where it is a case wrong.
 GOOD = ["first_try", "type_match", "scope_known", "scope_fits", "exact"]
 BAD = ["ungrounded", "unsupported", "fallback", "first_copied", "copied"]
-SHOWN = ["type_match", "type_macro_f1", "scope_known", "ungrounded", "first_copied", "first_try",
+SHOWN = ["type_match", "type_macro_f1", "scope_known", "scoped", "ungrounded", "first_copied", "first_try",
          "fallback", "word_f1", "exact"]
 
 
@@ -37,6 +39,29 @@ def mean_subject_length(traces: Path) -> float:
     lengths = [len(json.loads(line)["generation"]["message"]["subject"])
                for line in traces.read_text().splitlines()]
     return round(statistics.mean(lengths), 1) if lengths else 0.0
+
+
+HEADER = re.compile(r"^(\w+)(\([^()]*\))?!?:")
+
+
+def habits(directory: Path, traces: Path | None = None) -> dict:
+    """Per set, the share of subjects with a scope and the count of each type,
+    of the model's subjects (`traces`) or of the real ones. A model that stops
+    writing scopes has a `scope_known` of 1.0, and one that writes `chore` for
+    everything a `first_try` of 1.0: only the habits show it."""
+    meta = [json.loads(line) for line in (directory / "meta.jsonl").read_text().splitlines()]
+    if traces:
+        subjects = [json.loads(line)["generation"]["message"]["subject"] for line in traces.read_text().splitlines()]
+    else:
+        subjects = [m["target"] for m in meta]
+    found: dict = {}
+    for group in ("conventional", "free"):
+        mine = [s for m, s in zip(meta, subjects) if m["set"] == group]
+        headers = [HEADER.match(s) for s in mine]
+        types = collections.Counter(("test" if h[1] == "tests" else h[1]) if h else "-" for h in headers)
+        found[group] = {"n": len(mine), "scoped": round(sum(bool(h and h[2]) for h in headers) / max(len(mine), 1), 3),
+                        "types": dict(types.most_common())}
+    return found
 
 
 def line_count(path: Path) -> int:
@@ -99,18 +124,29 @@ def main() -> None:
             scored = score(args.sct, directory, traces[name])
             paired = score(args.sct, directory, traces[name], traces[base]) if name != base else {}
             summary.setdefault(directory.name, {})[name] = {
-                "scores": scored, "against_baseline": paired, "mean_subject_chars": mean_subject_length(traces[name])}
+                "scores": scored, "against_baseline": paired, "mean_subject_chars": mean_subject_length(traces[name]),
+                "habits": habits(directory, traces[name])}
+        summary[directory.name]["real"] = {"habits": habits(directory)}
         for group in ("conventional", "free"):
             rows = [["model", *SHOWN, "chars", "net vs baseline (* p < 0.05)"]]
             for name in models:
                 entry = summary[directory.name][name]
-                scores = entry["scores"].get(group, {})
+                scores = dict(entry["scores"].get(group, {}))
+                if group == "conventional":
+                    scores["scoped"] = entry["habits"][group]["scoped"]
+                else:
+                    scores.pop("scoped", None)
                 paired = entry["against_baseline"].get(group, {})
                 nets = " ".join(f"{m}{better(m, p['gained'], p['lost']):+d}{'*' if p['p'] < 0.05 else ''}"
                                 for m, p in paired.items() if m in SHOWN and better(m, p["gained"], p["lost"]))
                 rows.append([name, *[f"{scores[m]:.3f}" if m in scores else "-" for m in SHOWN],
                              f"{entry['mean_subject_chars']}", nets or "-"])
             print(f"\n== {directory.name} / {group}\n{table(rows)}")
+            if group == "conventional":
+                real = summary[directory.name]["real"]["habits"][group]
+                print(f"\ntypes (n={real['n']}, scoped {real['scoped']}); "
+                      + "\n".join(f"  {n:12} " + " ".join(f"{t} {c}" for t, c in list(h["types"].items())[:7])
+                                  for n, h in [("real", real), *[(m, summary[directory.name][m]["habits"][group]) for m in models]]))
     (args.out / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
 
 

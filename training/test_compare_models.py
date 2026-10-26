@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from compare_models import better, line_count, mean_subject_length, run_eval, table  # noqa: E402
+from compare_models import better, habits, line_count, mean_subject_length, run_eval, table  # noqa: E402
 
 
 def fake_smart_commit(d: Path) -> str:
@@ -88,6 +88,23 @@ def test_traces_are_made_once_and_the_model_is_the_one_asked_for() -> None:
         assert run_eval(binary, "/models/other.gguf", inputs, out, "full", "plain", "vulkan")
         assert mean_subject_length(out) == len("other.gguf")
         assert (d / "runs").read_text() == "xx"
+
+
+def test_habits_show_a_model_that_stopped_writing_scopes_or_took_to_one_type() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        meta = [{"set": "conventional", "target": "fix(core): a"}, {"set": "conventional", "target": "tests: b"},
+                {"set": "conventional", "target": "feat: c"}, {"set": "free", "target": "Add d"}]
+        (d / "meta.jsonl").write_text("".join(json.dumps(m) + "\n" for m in meta))
+        real = habits(d)
+        assert real["conventional"] == {"n": 3, "scoped": 0.333, "types": {"fix": 1, "test": 1, "feat": 1}}
+        assert real["free"]["n"] == 1 and real["free"]["types"] == {"-": 1}
+        # A model that writes chore for everything, with no scope: scope_known would be 1.0.
+        traces = d / "t.jsonl"
+        traces.write_text("".join(json.dumps({"generation": {"message": {"subject": s}}}) + "\n"
+                                  for s in ["chore: a", "chore: b", "chore: c", "Add d"]))
+        got = habits(d, traces)["conventional"]
+        assert got == {"n": 3, "scoped": 0.0, "types": {"chore": 3}}
 
 
 def test_the_table_aligns_its_columns() -> None:

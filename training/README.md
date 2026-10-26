@@ -331,7 +331,11 @@ To choose among runs, `compare_models.py` evaluates each model on the
 validation set (`data/val1`: its repositories are in none of the pairs) with
 `smart-commit eval`, keeps the traces, and prints the metrics of each and, for
 each, the cases it gains and loses against the baseline, net of the direction
-of the metric, with `*` where McNemar's p is below 0.05. A candidate costs
+of the metric, with `*` where McNemar's p is below 0.05. It also shows the
+share of replies with a scope (`scoped`) and how many of each type each model
+writes next to the real commits': a model that stops writing scopes has a
+`scope_known` of 1.0, and one that writes `chore` for everything a `first_try`
+of 1.0, and only these show it. A candidate costs
 about two minutes of GPU on 500 inputs. The evaluation sets `eval-v1` and
 `eval-short` are for the model chosen, once:
 
