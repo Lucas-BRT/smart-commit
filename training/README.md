@@ -267,6 +267,14 @@ out: pairs by bucket, type and failure, repositories, and how even the lengths
 are (the chosen reply longer in about half the pairs, as in the first run).
 `--max-length-ratio` drops pairs of very different length but is off, since a
 ratio of 1.6 left the chosen replies 4.6 columns shorter than the rejected.
+`--match-marginals` drops pairs until the chosen and the rejected replies have
+the same distribution of type and the same share with a scope (within
+`--marginal-tolerance`, 0.02 of imbalance per pair). The rejected reply is a
+sample of the model, which errs most in what it writes most, so unmatched
+pairs add up to "fewer `fix` and `feat`, more `chore`, no scope", and a run on
+them did that: with the marginals unequal the loss is lowered most cheaply by
+moving the model's habit, not by learning from the diff. On the second run's
+pairs it drops 443 of 3,615 and the imbalance falls from 820 to 107.
 
 ```bash
 $SCT balance data/dpo2/pairs-0.5b.jsonl --out data/dpo2/balanced-0.5b \

@@ -121,6 +121,13 @@ enum Command {
         /// At most this many of the free set.
         #[arg(long, default_value_t = usize::MAX)]
         free: usize,
+        /// Drop pairs until the chosen and the rejected replies have the
+        /// same distribution of type and of scope.
+        #[arg(long)]
+        match_marginals: bool,
+        /// How much imbalance is left, per pair, when matching.
+        #[arg(long, default_value_t = 0.02)]
+        marginal_tolerance: f64,
     },
     /// Scores `smart-commit eval` traces against the real subjects.
     Score {
@@ -251,6 +258,8 @@ fn run(cli: Cli) -> Result<()> {
             conventional,
             young,
             free,
+            match_marginals,
+            marginal_tolerance,
         } => {
             let summary = balance::balance(&balance::Options {
                 pairs,
@@ -262,6 +271,8 @@ fn run(cli: Cli) -> Result<()> {
                 conventional,
                 young,
                 free,
+                match_marginals,
+                marginal_tolerance,
             })?;
             eprintln!("{}", summary.json());
             Ok(())

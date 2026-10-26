@@ -30,6 +30,8 @@ fn options(files: &[&Path], out: &Path) -> Options {
         conventional: usize::MAX,
         young: usize::MAX,
         free: usize::MAX,
+        match_marginals: false,
+        marginal_tolerance: 0.02,
     }
 }
 
@@ -252,4 +254,130 @@ fn pairs_of_very_different_length_and_repeated_ones_are_dropped() {
     write(&file, &pairs("copied"));
     let summary = balance(&plain_options(&file, &out)).unwrap();
     assert_eq!(summary.dropped_length, 2);
+}
+
+/// A Conventional pair whose replies are `{chosen}: a{n}` and `{rejected}: b{n}`.
+fn typed(n: usize, chosen: &str, rejected: &str) -> Value {
+    pair(
+        &format!("o/r{n}"),
+        &format!("h{n}"),
+        "conventional",
+        20,
+        Some(chosen),
+        &format!("{chosen}: add a{n}"),
+        &format!("{rejected}: change b{n}"),
+        "type",
+    )
+}
+
+fn matched(pairs: &[Value], tolerance: f64) -> (Summary, Vec<Value>) {
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("p.jsonl");
+    write(&file, pairs);
+    let out = dir.path().join("out");
+    let summary = balance(&Options {
+        val_share: 0.0,
+        match_marginals: true,
+        marginal_tolerance: tolerance,
+        ..options(&[&file], &out)
+    })
+    .unwrap();
+    (summary, read(&out.join("train.jsonl")))
+}
+
+fn count(pairs: &[Value], side: &str, prefix: &str) -> usize {
+    pairs
+        .iter()
+        .filter(|p| p[side].as_str().unwrap().starts_with(prefix))
+        .count()
+}
+
+#[test]
+fn the_chosen_and_the_rejected_replies_end_with_the_same_types() {
+    // `chore` is chosen far more often than it is rejected, `fix` the other way:
+    // the shortcut that collapsed a run onto `chore`.
+    let mut pairs: Vec<Value> = (0..6).map(|n| typed(n, "chore", "fix")).collect();
+    pairs.extend((6..8).map(|n| typed(n, "fix", "chore")));
+    let (summary, kept) = matched(&pairs, 0.0);
+    assert_eq!((summary.imbalance_before, summary.imbalance_after), (8, 0));
+    assert_eq!((summary.matched_removed, kept.len()), (4, 4));
+    for kind in ["chore", "fix"] {
+        assert_eq!(
+            count(&kept, "chosen", kind),
+            count(&kept, "rejected", kind),
+            "{kind}"
+        );
+    }
+}
+
+#[test]
+fn the_chosen_replies_do_not_lose_their_scopes_to_the_rejected_ones() {
+    // Three rejected replies with a scope against one chosen with a scope.
+    let mut pairs: Vec<Value> = (0..3)
+        .map(|n| {
+            let mut p = typed(n, "fix", "fix");
+            p["rejected"] = json!(format!("fix(core): change b{n}"));
+            p
+        })
+        .collect();
+    let mut with = typed(3, "fix", "fix");
+    with["chosen"] = json!("fix(core): add a3");
+    pairs.push(with);
+    let (summary, kept) = matched(&pairs, 0.0);
+    let scoped = |side: &str| count(&kept, side, "fix(");
+    assert_eq!(scoped("chosen"), scoped("rejected"));
+    assert_eq!((summary.imbalance_before, summary.imbalance_after), (2, 0));
+    assert_eq!(kept.len(), 2);
+}
+
+#[test]
+fn balanced_pairs_are_left_alone_and_the_free_set_has_nothing_to_match() {
+    let mut pairs: Vec<Value> = (0..4).map(|n| typed(n, "fix", "feat")).collect();
+    pairs.extend((4..8).map(|n| typed(n, "feat", "fix")));
+    let (summary, kept) = matched(&pairs, 0.0);
+    assert_eq!(
+        (summary.matched_removed, kept.len(), summary.imbalance_after),
+        (0, 8, 0)
+    );
+    // Free-style subjects have no header and no scope: nothing to even out.
+    let free: Vec<Value> = (0..5)
+        .map(|n| {
+            pair(
+                &format!("o/f{n}"),
+                &format!("f{n}"),
+                "free",
+                20,
+                None,
+                &format!("add a{n}"),
+                &format!("change b{n}"),
+                "copied",
+            )
+        })
+        .collect();
+    let (summary, kept) = matched(&free, 0.0);
+    assert_eq!((summary.matched_removed, kept.len()), (0, 5));
+}
+
+#[test]
+fn the_tolerance_is_what_may_stay_unbalanced_and_the_order_does_not_matter() {
+    let mut pairs: Vec<Value> = (0..6).map(|n| typed(n, "chore", "fix")).collect();
+    pairs.extend((6..8).map(|n| typed(n, "fix", "chore")));
+    // 8 of imbalance over 8 pairs is 1.0 each: a tolerance of 2 asks for nothing.
+    let (summary, kept) = matched(&pairs, 2.0);
+    assert_eq!((summary.matched_removed, kept.len()), (0, 8));
+    // 0.5 per pair stops as soon as the rest is within it.
+    let (summary, _) = matched(&pairs, 0.5);
+    assert!(summary.imbalance_after as f64 <= 0.5 * (8 - summary.matched_removed) as f64);
+    assert!(summary.matched_removed > 0);
+    let mut reversed = pairs.clone();
+    reversed.reverse();
+    let hashes = |kept: &[Value]| -> BTreeSet<String> {
+        kept.iter()
+            .map(|p| p["hash"].as_str().unwrap().to_owned())
+            .collect()
+    };
+    assert_eq!(
+        hashes(&matched(&pairs, 0.0).1),
+        hashes(&matched(&reversed, 0.0).1)
+    );
 }

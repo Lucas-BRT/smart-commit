@@ -11,6 +11,13 @@
 //!   quota of pairs per bucket: Conventional commits, young repositories
 //!   (fewer than ten commits of history) and the free set. Within a bucket
 //!   the pairs are taken in the order of a hash of the commit.
+//! - With `match_marginals`, pairs are dropped until the chosen and the
+//!   rejected replies have the same distribution of type and the same share
+//!   with a scope. The rejected reply is a sample of the model, which errs
+//!   most in the types and scopes it writes most, so the pairs add up to
+//!   "fewer `fix`, more `chore`, no scope": the cheapest way to lower the DPO
+//!   loss is to move the model's habit, and a run on such pairs collapsed to
+//!   `chore`. With the marginals equal only what depends on the diff can.
 //! - A repeated pair is dropped. So is, if asked, a pair whose replies
 //!   differ in length by more than `max_length_ratio`, unless the reply was
 //!   rejected for being too long. It is off by default: the pairs of the
@@ -26,6 +33,9 @@ use anyhow::{Context as _, Result};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
+use crate::build_inputs::conventional_type;
+use crate::score::SCOPE;
+
 pub struct Options {
     pub pairs: Vec<PathBuf>,
     pub out: PathBuf,
@@ -37,6 +47,10 @@ pub struct Options {
     pub conventional: usize,
     pub young: usize,
     pub free: usize,
+    /// Drop pairs until the chosen and the rejected replies have the same
+    /// distribution of type and of scope, within `marginal_tolerance`.
+    pub match_marginals: bool,
+    pub marginal_tolerance: f64,
 }
 
 /// Fewer commits of history than this is a young repository.
@@ -93,6 +107,92 @@ pub struct Summary {
     pub chosen_chars: usize,
     pub rejected_chars: usize,
     pub chosen_longer: usize,
+    /// Pairs dropped to match the marginals, and the imbalance before and after.
+    pub matched_removed: usize,
+    pub imbalance_before: i64,
+    pub imbalance_after: i64,
+}
+
+/// What a pair says about the type and the scope of its two replies.
+struct Marks {
+    chosen_type: Option<String>,
+    rejected_type: Option<String>,
+    chosen_scope: bool,
+    rejected_scope: bool,
+}
+
+fn marks(pair: &Value) -> Marks {
+    Marks {
+        chosen_type: conventional_type(text(pair, "chosen")),
+        rejected_type: conventional_type(text(pair, "rejected")),
+        chosen_scope: SCOPE.is_match(text(pair, "chosen")),
+        rejected_scope: SCOPE.is_match(text(pair, "rejected")),
+    }
+}
+
+/// How many more replies of each type the chosen side has than the rejected
+/// side (the key `scope` for those with a scope), over the pairs kept.
+#[derive(Clone, Default)]
+struct Imbalance(BTreeMap<String, i64>);
+
+impl Imbalance {
+    fn add(&mut self, marks: &Marks, sign: i64) {
+        let mut bump = |key: &str, by: i64| *self.0.entry(key.to_owned()).or_default() += by;
+        if let Some(kind) = &marks.chosen_type {
+            bump(kind, sign);
+        }
+        if let Some(kind) = &marks.rejected_type {
+            bump(kind, -sign);
+        }
+        bump(
+            "\u{0}scope",
+            sign * (i64::from(marks.chosen_scope) - i64::from(marks.rejected_scope)),
+        );
+    }
+
+    fn total(&self) -> i64 {
+        self.0.values().map(|d| d.abs()).sum()
+    }
+
+    /// How much the total would change if a pair with these marks left.
+    fn change_if_removed(&self, marks: &Marks) -> i64 {
+        let mut after = self.clone();
+        after.add(marks, -1);
+        after.total() - self.total()
+    }
+}
+
+/// Drops, one at a time, the pair whose departure brings the chosen and the
+/// rejected replies closest in type and scope, until the imbalance is at most
+/// `tolerance` per pair or no pair helps. Returns what is kept, in order.
+fn match_marginals(pairs: Vec<&Value>, tolerance: f64) -> (Vec<&Value>, i64, i64) {
+    let marks: Vec<Marks> = pairs.iter().map(|p| marks(p)).collect();
+    let mut imbalance = Imbalance::default();
+    marks.iter().for_each(|m| imbalance.add(m, 1));
+    let before = imbalance.total();
+    let mut kept = vec![true; pairs.len()];
+    let mut left = pairs.len();
+    while imbalance.total() as f64 > tolerance * left as f64 {
+        let best = (0..pairs.len())
+            .filter(|&i| kept[i])
+            .map(|i| (imbalance.change_if_removed(&marks[i]), i))
+            .min_by_key(|&(change, i)| (change, i));
+        match best {
+            Some((change, i)) if change < 0 => {
+                imbalance.add(&marks[i], -1);
+                kept[i] = false;
+                left -= 1;
+            }
+            _ => break,
+        }
+    }
+    let after = imbalance.total();
+    let pairs = pairs
+        .into_iter()
+        .zip(kept)
+        .filter_map(|(p, k)| k.then_some(p))
+        .collect();
+    (pairs, before, after)
 }
 
 pub fn balance(options: &Options) -> Result<Summary> {
@@ -136,12 +236,10 @@ pub fn balance(options: &Options) -> Result<Summary> {
     let mut per_repo: BTreeMap<String, usize> = BTreeMap::new();
     let mut per_bucket_type: BTreeMap<(&str, String), usize> = BTreeMap::new();
     let mut taken: BTreeMap<&str, usize> = BTreeMap::new();
-    let (mut train, mut validation) = (String::new(), String::new());
-    let mut repos = BTreeSet::new();
+    let (mut selected, mut validation) = (Vec::new(), String::new());
     for pair in &pairs {
-        let line = format!("{pair}\n");
         if in_validation(pair, options.val_share) {
-            validation.push_str(&line);
+            validation.push_str(&format!("{pair}\n"));
             summary.validation += 1;
             continue;
         }
@@ -162,9 +260,24 @@ pub fn balance(options: &Options) -> Result<Summary> {
         {
             continue;
         }
-        *per_repo.entry(repo.clone()).or_default() += 1;
-        *per_bucket_type.entry((name, kind.clone())).or_default() += 1;
+        *per_repo.entry(repo).or_default() += 1;
+        *per_bucket_type.entry((name, kind)).or_default() += 1;
         *taken.entry(name).or_default() += 1;
+        selected.push(pair);
+    }
+    let selected = if options.match_marginals {
+        let count = selected.len();
+        let (kept, before, after) = match_marginals(selected, options.marginal_tolerance);
+        summary.matched_removed = count - kept.len();
+        (summary.imbalance_before, summary.imbalance_after) = (before, after);
+        kept
+    } else {
+        selected
+    };
+    let (mut train, mut repos) = (String::new(), BTreeSet::new());
+    for pair in selected {
+        let name = bucket(pair);
+        let kind = pair["type"].as_str().unwrap_or("").to_owned();
         *summary.by_bucket.entry(name).or_default() += 1;
         *summary
             .by_failure
@@ -182,8 +295,8 @@ pub fn balance(options: &Options) -> Result<Summary> {
         summary.rejected_chars += rejected;
         summary.chosen_longer += usize::from(chosen > rejected);
         summary.train += 1;
-        repos.insert(repo);
-        train.push_str(&line);
+        repos.insert(text(pair, "repo").to_owned());
+        train.push_str(&format!("{pair}\n"));
     }
     summary.train_repos = repos.len();
     std::fs::create_dir_all(&options.out)?;
@@ -209,6 +322,9 @@ impl Summary {
             "by_type": self.by_type,
             "by_failure": self.by_failure,
             "real_chosen": self.real_chosen,
+            "matched_removed": self.matched_removed,
+            "imbalance_before": self.imbalance_before,
+            "imbalance_after": self.imbalance_after,
             "mean_chosen_chars": round1(self.chosen_chars as f64 / self.train.max(1) as f64),
             "mean_rejected_chars": round1(self.rejected_chars as f64 / self.train.max(1) as f64),
             "chosen_longer_share": round1(100.0 * self.chosen_longer as f64 / self.train.max(1) as f64) / 100.0,
