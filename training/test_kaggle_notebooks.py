@@ -1,70 +1,20 @@
-"""Checks the bundle of the Kaggle DPO runs.
+"""Checks the code of the Kaggle notebooks that cannot run anywhere but on Kaggle
+without these stand-ins: the scheduler cells, and what a kernel must do when its
+runs fail. (The bundles the notebooks read are made by `sc-training kaggle-bundle`
+and tested in Rust.)
 
-    python -I test_kaggle_dpo_bundle.py
+    python -I test_kaggle_notebooks.py
 """
 
 import hashlib
 import json
 import pathlib
-import subprocess
-import sys
 import tempfile
 import time
 import types
 from pathlib import Path
 
 HERE = Path(__file__).parent
-
-
-def test_a_run_carries_what_it_reads_and_nothing_else() -> None:
-    with tempfile.TemporaryDirectory() as tmp:
-        d = Path(tmp)
-        adapter = d / "c40k-0.5b/adapter"
-        adapter.mkdir(parents=True)
-        (adapter / "adapter_config.json").write_text("{}")
-        (adapter / "adapter_model.safetensors").write_bytes(b"weights")
-        (adapter / "tokenizer.json").write_text("big")  # not needed: the base has the tokenizer
-        (d / "t.jsonl").write_text('{"chosen": "a"}\n')
-        (d / "v.jsonl").write_text('{"chosen": "b"}\n')
-        out = d / "bundle"
-        subprocess.run(
-            [sys.executable, "-I", str(HERE / "kaggle_dpo_bundle.py"), str(out),
-             f"b1=0.5b:{adapter}:{d / 't.jsonl'}:{d / 'v.jsonl'}:--beta 0.3 --lr 1e-5",
-             f"b2=0.5b:{adapter}:{d / 't.jsonl'}:{d / 'v.jsonl'}"],
-            check=True, capture_output=True, cwd=HERE,
-        )
-        spec = json.loads((out / "runs.json").read_text())
-        first, second = spec["runs"]
-        assert first["args"] == ["--dtype", "fp16", "--beta", "0.3", "--lr", "1e-5"]
-        assert second["args"] == ["--dtype", "fp16"]
-        assert first["base"]["repo"] == "Qwen/Qwen2.5-Coder-0.5B-Instruct"
-        assert first["sft_sha256"] == hashlib.sha256(b"weights").hexdigest()
-        assert (out / first["train"]).read_text() == '{"chosen": "a"}\n'
-        assert (out / first["val"]).read_text() == '{"chosen": "b"}\n'
-        sft = out / first["sft"]
-        assert sorted(p.name for p in sft.iterdir()) == ["adapter_config.json", "adapter_model.safetensors"]
-        for name in ("train.py", "train_dpo.py", "requirements.txt", "dataset-metadata.json"):
-            assert (out / name).exists(), name
-        assert "torch" not in (out / "requirements.txt").read_text()
-
-
-def test_the_runs_per_gpu_reach_the_notebook_which_keeps_that_many_going() -> None:
-    with tempfile.TemporaryDirectory() as tmp:
-        d = Path(tmp)
-        adapter = d / "a/adapter"
-        adapter.mkdir(parents=True)
-        for name in ("adapter_config.json", "adapter_model.safetensors"):
-            (adapter / name).write_text("x")
-        (d / "t.jsonl").write_text("{}\n")
-        spec = f"r=0.5b:{adapter}:{d / 't.jsonl'}:{d / 't.jsonl'}"
-        for flags, want in (([], 1), (["--per-gpu", "3"], 3)):
-            out = d / f"bundle{want}"
-            subprocess.run([sys.executable, "-I", str(HERE / "kaggle_dpo_bundle.py"), str(out), *flags, spec],
-                           check=True, capture_output=True, cwd=HERE)
-            assert json.loads((out / "runs.json").read_text())["per_gpu"] == want
-    cells = json.loads((HERE / "kaggle_dpo.ipynb").read_text())["cells"]
-    scheduler = next("".join(c["source"]) for c in cells if "pending, running" in "".join(c["source"]))
-    assert "spec.get('per_gpu', 1)" in scheduler and "< per_gpu" in scheduler
 
 
 def run_scheduler(per_gpu: int, gpus: int, runs: int) -> tuple[list[tuple[int, int]], list[str]]:
@@ -135,16 +85,6 @@ def test_the_scheduler_keeps_per_gpu_runs_going_on_each_gpu() -> None:
     assert max(n for _, n in started) == 2 and len(archives) == 5
 
 
-def test_an_unknown_base_model_is_refused() -> None:
-    with tempfile.TemporaryDirectory() as tmp:
-        d = Path(tmp)
-        refused = subprocess.run(
-            [sys.executable, "-I", str(HERE / "kaggle_dpo_bundle.py"), str(d / "out"), f"x=7b:{d}:{d}:{d}"],
-            capture_output=True, text=True, cwd=HERE,
-        )
-        assert refused.returncode != 0 and "no base model '7b'" in refused.stderr
-
-
 def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> None:
     """Kaggle's torchao 0.10 made peft 0.21 refuse every 16-bit layer, all six runs
     exited with 1, and the kernel still said COMPLETE."""
@@ -153,6 +93,13 @@ def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> Non
     install = next(c for c in code if "pip install" in c)
     assert install.index("pip uninstall -y -q torchao") < install.index("pip install -q -r")
     scheduler = next(c for c in code if "pending, running" in c)
+    assert "assert not failed" in scheduler.splitlines()[-1]
+
+
+def test_the_mining_notebook_fails_when_a_job_does() -> None:
+    """A kernel whose jobs failed still says COMPLETE: only an exception makes it ERROR."""
+    cells = json.loads((HERE / "kaggle_mine.ipynb").read_text())["cells"]
+    scheduler = next("".join(c["source"]) for c in cells if "pending, running, attempts" in "".join(c["source"]))
     assert "assert not failed" in scheduler.splitlines()[-1]
 
 

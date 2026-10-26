@@ -17,8 +17,7 @@ cd training && uv sync --locked
 uv run --locked python -I test_make_examples.py
 uv run --locked python -I test_mine_pairs.py
 uv run --locked python -I test_train_dpo.py
-uv run --locked python -I test_kaggle_mine_bundle.py
-uv run --locked python -I test_kaggle_dpo_bundle.py
+uv run --locked python -I test_kaggle_notebooks.py   # the notebooks' scheduler cells; the bundles are tested in Rust
 uv run --locked python -I test_export_runs.py
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
@@ -120,7 +119,7 @@ sha256sum data/eval-v1/*.jsonl
 
 Bundle `data/kaggle/h8` (H8): `make_examples.py data/h8 $SC`, then
 `nest.py data/h8/examples.jsonl data/h8/nocap 20000`, then
-`kaggle_bundle.py data/kaggle/h8 --val data/kaggle/b2/val.examples.jsonl
+`$SCT kaggle-bundle train data/kaggle/h8 --val data/kaggle/b2/val.examples.jsonl
 c20k-nocap-0.5b=0.5b:data/h8/nocap-20000.jsonl
 c20k-ctl-0.5b=0.5b:data/curve/clean-20000.jsonl`. The examples' sha256
 start `6da30e215758959e` and `3d69c19fc6bd0577` (the c20k b2 trained on),
@@ -246,7 +245,7 @@ kaggle kernels push -p $K        # then: kaggle kernels status lucasbrt/smart-co
 ```
 
 The same mining on two T4s, when the local GPU is busy: the prompts are built
-here, without a GPU, and only the sampling runs there. `kaggle_mine_bundle.py`
+here, without a GPU, and only the sampling runs there. `sc-training kaggle-bundle mine`
 splits the inputs into shards (every Nth input to each), pins what the
 notebook downloads (llama.cpp's CUDA 12.8 build by SHA-256, the models by the
 revision and SHA-256 of `src/models/registry.rs`) and orders the jobs, a model
@@ -268,7 +267,7 @@ cat data/dpo2/conv/inputs.jsonl data/dpo2/young/inputs.jsonl > data/dpo2/mix/inp
 cat data/dpo2/conv/meta.jsonl   data/dpo2/young/meta.jsonl   > data/dpo2/mix/meta.jsonl
 python -I mine_pairs.py data/dpo2/mix data/dpo2/mine --binary $SC --prompts-only \
   --rules full --diff plain --exclude-repos-of data/eval-v1 data/eval-short data/val1
-python -I kaggle_mine_bundle.py data/kaggle/dpo2-mine data/dpo2/mine --samples 6
+$SCT kaggle-bundle mine data/kaggle/dpo2-mine data/dpo2/mine --samples 6
 # upload it as a private dataset, run kaggle_mine.ipynb on it with GPU T4 x2 and internet,
 # download the <model>-shard-K.tar.gz archives and unpack them in data/dpo2/mined/.
 # A shard's candidates line up with that shard's inputs, so the pairs are made per
@@ -341,13 +340,13 @@ uv run --locked python -I export_gguf.py runs/dpo-0.5b/merged runs/dpo-0.5b/mode
 The merged model is the `BASE_DIR` of step 5, without `--adapter`. Then step 6
 as for any model.
 
-On Kaggle (a T4 has no bf16, so `--dtype fp16`) `kaggle_dpo_bundle.py` packs
+On Kaggle (a T4 has no bf16, so `--dtype fp16`) `sc-training kaggle-bundle dpo` packs
 the runs, each with its adapter's two files, its pairs and its validation
 pairs, and `kaggle_dpo.ipynb` runs them, one per GPU, packing each as soon as
 it ends. A run is `NAME=MODEL:SFT_ADAPTER:TRAIN:VAL[:ARGS]`:
 
 ```bash
-python -I kaggle_dpo_bundle.py data/kaggle/dpo2-train \
+$SCT kaggle-bundle dpo data/kaggle/dpo2-train \
   "b01-0.5b=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:data/dpo2/balanced-0.5b/train.jsonl:data/dpo2/balanced-0.5b/val.jsonl:--beta 0.1" \
   "b03-0.5b=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:data/dpo2/balanced-0.5b/train.jsonl:data/dpo2/balanced-0.5b/val.jsonl:--beta 0.3 --sft-weight 0.1"
 # (`--per-gpu 3` before the runs starts three at once on each GPU: a 0.5B run uses
@@ -425,7 +424,7 @@ for cap in cap30 nocap; do
   py nest.py data/b3/main-$cap/examples.jsonl data/b3/main-$cap/nested 15600
   cat data/b3/main-$cap/nested-15600.jsonl data/b3/h5/examples.jsonl data/b3/h7/examples.jsonl \
     > data/b3/examples-$cap.jsonl
-  py kaggle_bundle.py data/kaggle/b3-$cap --val data/b3/val/examples.jsonl \
+  $SCT kaggle-bundle train data/kaggle/b3-$cap --val data/b3/val/examples.jsonl \
     v02-1.5b=1.5b:data/b3/examples-$cap.jsonl v02-0.5b=0.5b:data/b3/examples-$cap.jsonl
 done
 ```

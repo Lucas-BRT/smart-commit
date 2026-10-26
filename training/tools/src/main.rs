@@ -6,6 +6,7 @@ mod balance;
 mod build_inputs;
 mod build_scenarios;
 mod compare;
+mod kaggle;
 mod mt;
 mod pairs;
 mod pyjson;
@@ -130,6 +131,9 @@ enum Command {
         #[arg(long, default_value_t = 0.02)]
         marginal_tolerance: f64,
     },
+    /// The bundles of the Kaggle notebooks, to upload as private datasets.
+    #[command(subcommand)]
+    KaggleBundle(KaggleCommand),
     /// Runs models on evaluation sets and compares them with a baseline: the
     /// metrics of each, the cases it gains and loses, and its habits.
     Compare {
@@ -169,6 +173,40 @@ enum Command {
     /// The commit scenarios of `training/scenarios`.
     #[command(subcommand)]
     Scenarios(ScenarioCommand),
+}
+
+#[derive(Debug, Subcommand)]
+enum KaggleCommand {
+    /// The SFT runs of `kaggle_train.ipynb`: NAME=MODEL:EXAMPLES[:TRAIN_ARGS] each.
+    Train {
+        out: PathBuf,
+        /// Examples of other repositories, whose loss is logged.
+        #[arg(long)]
+        val: Option<PathBuf>,
+        specs: Vec<String>,
+    },
+    /// The mining of `kaggle_mine.ipynb`: the prompts of SRC in shards, sampled by each model.
+    Mine {
+        out: PathBuf,
+        /// What `mine_pairs.py --prompts-only` wrote.
+        src: PathBuf,
+        #[arg(long, default_value_t = 4)]
+        shards: usize,
+        #[arg(long, default_value_t = 6)]
+        samples: usize,
+        #[arg(long, default_value_t = 0)]
+        seed: u64,
+        /// Sizes of the fine-tunes in the registry; both by default.
+        models: Vec<String>,
+    },
+    /// The DPO runs of `kaggle_dpo.ipynb`: NAME=MODEL:SFT_ADAPTER:TRAIN:VAL[:TRAIN_ARGS] each.
+    Dpo {
+        out: PathBuf,
+        /// Runs at once on each GPU.
+        #[arg(long, default_value_t = 1)]
+        per_gpu: usize,
+        specs: Vec<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -302,6 +340,38 @@ fn run(cli: Cli) -> Result<()> {
                 marginal_tolerance,
             })?;
             eprintln!("{}", summary.json());
+            Ok(())
+        }
+        Command::KaggleBundle(command) => {
+            let (out, lines) = match command {
+                KaggleCommand::Train { out, val, specs } => {
+                    let lines = kaggle::train(&out, val.as_deref(), &specs)?;
+                    (out, lines)
+                }
+                KaggleCommand::Mine {
+                    out,
+                    src,
+                    shards,
+                    samples,
+                    seed,
+                    models,
+                } => {
+                    let lines = kaggle::mine(&out, &src, shards, samples, seed, &models)?;
+                    (out, lines)
+                }
+                KaggleCommand::Dpo {
+                    out,
+                    per_gpu,
+                    specs,
+                } => {
+                    let lines = kaggle::dpo(&out, per_gpu, &specs)?;
+                    (out, lines)
+                }
+            };
+            for line in lines {
+                println!("{line}");
+            }
+            println!("upload {} as a private Kaggle dataset", out.display());
             Ok(())
         }
         Command::Compare {

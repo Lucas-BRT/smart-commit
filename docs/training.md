@@ -232,7 +232,7 @@ time inside it:
 1. **Two streams of work, always.** The second GPU is free. Jobs go longest
    first, so neither waits for the other at the end.
 2. **More than one run on a GPU, if it has room.** A 0.5B run uses 1.7 of
-   15 GiB. `kaggle_dpo_bundle.py --per-gpu N` runs N at once; it pays only if a
+   15 GiB. `sc-training kaggle-bundle dpo --per-gpu N` runs N at once; it pays only if a
    single run leaves the GPU idle part of the time, which is not measured
    yet: compare each run's time with the 2,220 s alone, and keep the setting
    if the sum of the times of N runs is less than N times that.

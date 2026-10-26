@@ -119,9 +119,9 @@ quota and the sessions are in [training](training.md#kaggles-quota).
 
 | Component | How it is pinned |
 |---|---|
-| llama.cpp for the mining | b11381, the CUDA 12.8 build and its runtime libraries (`llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz` and `cudart-llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz`), each by SHA-256 in `training/kaggle_mine_bundle.py`, checked by the notebook before it unpacks them |
-| The models it samples from | `smart-commit-0.5b-v0.1` and `smart-commit-1.5b-v0.1`, read from `src/models/registry.rs` by the bundle (repository commit and SHA-256), downloaded and checked by size and SHA-256 |
-| The base models of the training | the Qwen2.5-Coder revisions of `training/kaggle_bundle.py` (those `scripts/export-model.sh` pins) |
+| llama.cpp for the mining | b11381, the CUDA 12.8 build and its runtime libraries (`llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz` and `cudart-llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz`), each by SHA-256 in `training/tools/src/kaggle.rs`, checked by the notebook before it unpacks them |
+| The models it samples from | `smart-commit-0.5b-v0.1` and `smart-commit-1.5b-v0.1`, read from the registry (`src/models/registry.rs`) by `sc-training kaggle-bundle` (repository commit and SHA-256), downloaded and checked by size and SHA-256 |
+| The base models of the training | the Qwen2.5-Coder revisions of `training/tools/src/kaggle.rs` (those `scripts/export-model.sh` pins) |
 | Python packages | the versions of `training/uv.lock` (`requirements.txt` of the bundle), except torch: Kaggle's own CUDA build is kept, and `run.json` records its version. Kaggle's `torchao` is removed, as the pinned `peft` refuses it |
 | The inputs of a run | the bundle holds them and the notebook checks them: the SHA-256 of each shard's prompts (mining), of the pairs and of the SFT adapter (DPO) |
 | The kernel | `training/kaggle/*-kernel-metadata.json`: the image by digest, the GPU, the internet and that it is private; `dataset_sources` is the bundle's dataset of the run |
