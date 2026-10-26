@@ -317,6 +317,8 @@ it ends. A run is `NAME=MODEL:SFT_ADAPTER:TRAIN:VAL[:ARGS]`:
 python -I kaggle_dpo_bundle.py data/kaggle/dpo2-train \
   "b01-0.5b=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:data/dpo2/balanced-0.5b/train.jsonl:data/dpo2/balanced-0.5b/val.jsonl:--beta 0.1" \
   "b03-0.5b=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:data/dpo2/balanced-0.5b/train.jsonl:data/dpo2/balanced-0.5b/val.jsonl:--beta 0.3 --sft-weight 0.1"
+# (`--per-gpu 3` before the runs starts three at once on each GPU: a 0.5B run uses
+# under 2 GiB of a T4's 15; the 1.5B needs about 4–5, so two)
 # upload it, run kaggle_dpo.ipynb on it, and unpack the archives in runs/kaggle-dpo2/;
 # the adapter is trained on the merged SFT model, so both are merged, in that order:
 uv run --locked python -I export_gguf.py $M runs/kaggle-dpo2/b01-0.5b/model-q4_k_m.gguf \

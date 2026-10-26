@@ -1,12 +1,15 @@
 """Packs DPO runs for the Kaggle notebook (kaggle_dpo.ipynb) into one
 directory, to upload as a private Kaggle dataset.
 
-    python -I kaggle_dpo_bundle.py OUT_DIR NAME=MODEL:SFT_ADAPTER:TRAIN.jsonl:VAL.jsonl[:TRAIN_ARGS] ...
+    python -I kaggle_dpo_bundle.py OUT_DIR [--per-gpu N] NAME=MODEL:SFT_ADAPTER:TRAIN.jsonl:VAL.jsonl[:TRAIN_ARGS] ...
 
 MODEL is a key of BASES, SFT_ADAPTER the directory train.py wrote, TRAIN and
 VAL the files of `sc-training balance`. e.g.
 `b1=0.5b:runs/kaggle-v2/c40k-0.5b/adapter:t.jsonl:v.jsonl:--beta 0.3` adds a
-run `b1` of `train_dpo.py ... --beta 0.3` (and Kaggle's precision flag). The
+run `b1` of `train_dpo.py ... --beta 0.3` (and Kaggle's precision flag).
+`--per-gpu N` lets the notebook run N of them at once on each GPU: a run of the
+0.5B uses under 2 GiB of a T4's 15, and whether the others slow it down is
+for the logs to say. The
 bundle holds train.py and train_dpo.py, what each run reads (the pairs and
 only the two files of its adapter that matter), `runs.json` and
 `requirements.txt` (our uv.lock versions, without torch: Kaggle's own CUDA
@@ -52,8 +55,10 @@ def add_run(out: Path, spec: str) -> dict:
 
 
 def main() -> None:
-    out, specs = Path(sys.argv[1]), sys.argv[2:]
-    if not specs:
+    out, specs, per_gpu = Path(sys.argv[1]), sys.argv[2:], 1
+    if specs[:1] == ["--per-gpu"]:
+        per_gpu, specs = int(specs[1]), specs[2:]
+    if not specs or per_gpu < 1:
         raise SystemExit(__doc__)
     out.mkdir(parents=True, exist_ok=True)
     for script in ("train.py", "train_dpo.py"):
@@ -61,7 +66,7 @@ def main() -> None:
     versions = locked_versions()
     (out / "requirements.txt").write_text("".join(f"{p}=={versions[p]}\n" for p in PACKAGES))
     runs = [add_run(out, spec) for spec in specs]
-    (out / "runs.json").write_text(json.dumps({"runs": runs}, indent=2) + "\n")
+    (out / "runs.json").write_text(json.dumps({"per_gpu": per_gpu, "runs": runs}, indent=2) + "\n")
     (out / "dataset-metadata.json").write_text(json.dumps({
         "title": f"smart-commit-training-{out.name}",
         "id": f"{USER}/smart-commit-training-{out.name}",
