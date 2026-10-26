@@ -365,7 +365,9 @@ To choose among runs, `export_runs.py` exports every run of a directory (the SFT
 adapter, then the run's, one GGUF each, kept) and prints `NAME=GGUF` for them,
 and `sc-training compare` evaluates each model on the
 validation set (`data/val1`: its repositories are in none of the pairs) with
-`smart-commit eval`, keeps the traces, and prints the metrics of each and, for
+`smart-commit eval`, keeps the traces (`OUT/SET/NAME.jsonl`, with a `NAME.key` of the file's path,
+size and time and the settings: they are made again if either changes under the same name) and
+prints the metrics of each and, for
 each, the cases it gains and loses against the baseline, net of the direction
 of the metric, with `*` where McNemar's p is below 0.05. It also shows the
 share of replies with a scope (`scoped`) and how many of each type each model

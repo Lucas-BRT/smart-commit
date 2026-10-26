@@ -69,6 +69,15 @@ impl Model {
             .split_once('=')
             .filter(|(name, gguf)| !name.is_empty() && !gguf.is_empty())
             .with_context(|| format!("{text:?} is not NAME=GGUF"))?;
+        // The name is a file name of the traces and a key of the summary: it
+        // cannot walk out of the directory, nor be `real`, whose key holds the
+        // real commits' habits.
+        ensure!(
+            name.chars()
+                .all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
+                && name != "real",
+            "{name:?} is not a name for a model: letters, digits, `.`, `_` and `-`, and not `real`"
+        );
         Ok(Self {
             name: name.to_owned(),
             gguf: gguf.into(),
@@ -116,9 +125,23 @@ pub fn run_eval(
     out: &Path,
     options: &Options,
 ) -> Result<bool> {
+    let key = out.with_extension("key");
     let wanted = line_count(inputs);
     if wanted > 0 && line_count(out) == wanted {
-        return Ok(false);
+        let found = std::fs::read_to_string(&key).ok();
+        let now = fingerprint(gguf, options);
+        match (found, now) {
+            // The traces of this model with these settings: kept.
+            (Some(found), Ok(now)) if found == now => return Ok(false),
+            // Traces made before the key existed: taken as they are, and
+            // marked, so a change from now on is seen.
+            (None, Ok(now)) => {
+                std::fs::write(&key, now)?;
+                return Ok(false);
+            }
+            // Another file or other settings under the same name: made again.
+            _ => {}
+        }
     }
     std::fs::create_dir_all(out.parent().context("an output without a directory")?)?;
     let gguf =
@@ -157,7 +180,29 @@ pub fn run_eval(
         );
     }
     std::fs::write(out, done.stdout)?;
+    std::fs::write(&key, fingerprint(&gguf, options)?)?;
     Ok(true)
+}
+
+/// What the traces of a model depend on: the file (its path, size and
+/// modification time) and the settings `eval` was given. Hashing the
+/// gigabyte would take longer than looking at the traces is worth.
+fn fingerprint(gguf: &Path, options: &Options) -> Result<String> {
+    let path =
+        std::fs::canonicalize(gguf).with_context(|| format!("no model at {}", gguf.display()))?;
+    let meta = std::fs::metadata(&path)?;
+    let modified = meta
+        .modified()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    Ok(format!(
+        "{} {} {modified} rules={} diff={} device={}\n",
+        path.display(),
+        meta.len(),
+        options.rules,
+        options.diff,
+        options.device
+    ))
 }
 
 fn subject(trace: &Value) -> &str {
@@ -212,6 +257,7 @@ pub fn habits(meta: &[Value], subjects: &[&str], known: &[String]) -> Value {
             json!({
                 "n": mine.len(),
                 "scoped": (scoped * 1000.0).round() / 1000.0,
+                "chars": mean_chars(&mine),
                 "novel": (novel as f64 / words.max(1) as f64 * 1000.0).round() / 1000.0,
                 "types": counts.into_iter().map(|(k, n)| (k, json!(n))).collect::<Map<_, _>>(),
             }),
@@ -261,7 +307,7 @@ fn shown(entry: &Value, group: &str) -> Map<String, Value> {
         scores.insert("scoped".into(), entry["habits"][group]["scoped"].clone());
     }
     scores.insert("novel".into(), entry["habits"][group]["novel"].clone());
-    scores.insert("chars".into(), entry["mean_subject_chars"].clone());
+    scores.insert("chars".into(), entry["habits"][group]["chars"].clone());
     scores
 }
 
@@ -348,6 +394,13 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
     let models: Vec<&Model> = std::iter::once(&options.baseline)
         .chain(&options.candidates)
         .collect();
+    for (i, model) in models.iter().enumerate() {
+        ensure!(
+            models[..i].iter().all(|m| m.name != model.name),
+            "two models are named {:?}",
+            model.name
+        );
+    }
     let (mut text, mut summary) = (String::new(), Map::new());
     for set in &options.sets {
         let set_name = set

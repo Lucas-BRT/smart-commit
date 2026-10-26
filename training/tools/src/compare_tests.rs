@@ -322,3 +322,67 @@ fn the_cases_to_read_come_with_the_real_subject_and_every_model() {
     let (quiet, _) = compare(&Options { read: 0, ..options }).unwrap();
     assert!(!quiet.contains("side by side"));
 }
+
+#[test]
+fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let binary = fake_smart_commit();
+    let set = write_set(dir.path());
+    let options = options(dir.path(), &set, &binary);
+    let (inputs, out) = (set.join("inputs.jsonl"), dir.path().join("out/val/m.jsonl"));
+    let (good, bad) = (dir.path().join("good.gguf"), dir.path().join("bad.gguf"));
+    let said = || std::fs::read_to_string(&out).unwrap();
+    assert!(run_eval(&binary, &good, &inputs, &out, &options).unwrap());
+    assert!(said().contains("fix: add a"));
+    // The same file and settings: kept.
+    assert!(!run_eval(&binary, &good, &inputs, &out, &options).unwrap());
+    // Another file under the same name: its traces, not the old ones scored as its own.
+    assert!(run_eval(&binary, &bad, &inputs, &out, &options).unwrap());
+    assert!(said().contains("feat: add b") && !said().contains("fix: add a"));
+    // The same file, other settings.
+    let other = Options {
+        rules: "omitted".into(),
+        ..options
+    };
+    assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
+    assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
+    assert_eq!(runs(dir.path()), 3);
+    // Traces made before keys existed are taken as they are, and marked.
+    std::fs::remove_file(out.with_extension("key")).unwrap();
+    assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
+    assert!(out.with_extension("key").exists());
+    assert_eq!(runs(dir.path()), 3);
+}
+
+#[test]
+fn a_model_name_cannot_leave_its_directory_nor_repeat_nor_be_real() {
+    for bad in ["../x=m.gguf", "a/b=m.gguf", "real=m.gguf", "a b=m.gguf"] {
+        let err = Model::parse(bad).unwrap_err().to_string();
+        assert!(err.contains("is not a name for a model"), "{bad}: {err}");
+    }
+    assert!(Model::parse("b01-lr2.v2_x=m.gguf").is_ok());
+    // Two models with one name would overwrite each other's results.
+    let dir = tempfile::TempDir::new().unwrap();
+    let binary = fake_smart_commit();
+    let set = write_set(dir.path());
+    let mut options = options(dir.path(), &set, &binary);
+    options.candidates = vec![Model {
+        name: "sft".into(),
+        gguf: dir.path().join("bad.gguf"),
+    }];
+    let err = compare(&options).unwrap_err().to_string();
+    assert!(err.contains("two models are named \"sft\""), "{err}");
+}
+
+#[test]
+fn the_length_of_the_subjects_is_that_of_each_set_not_of_both() {
+    let meta = [
+        json!({"set": "conventional"}),
+        json!({"set": "free"}),
+        json!({"set": "free"}),
+    ];
+    let nothing = vec![String::new(); 3];
+    let got = habits(&meta, &["fix: ab", "Add something long", "Add"], &nothing);
+    assert_eq!(got["conventional"]["chars"], 7.0);
+    assert_eq!(got["free"]["chars"], 10.5);
+}
