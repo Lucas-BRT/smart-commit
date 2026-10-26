@@ -411,3 +411,8 @@ real_change conventional-en-script-fix-as-test 401d67c "test(training): make sur
 # packing of a run, no GPU, reading by newlines), answered as a refactor that adds
 # an assertion on the GPU.
 real_change conventional-en-training-fixes-as-refactor 011c9eb "refactor(training): add assert gpus, 'no GPU: turn the accelerator on'"
+
+# Two fixes to the balancing of pairs (the repeats dropped in the order of the
+# files, a matching that copied a map per pair), answered in the style of the
+# repository's own fixture commits.
+real_change conventional-en-balance-fix-as-trace fa673a1 "test(training): trace four balance tests answered as a refactor of one"
