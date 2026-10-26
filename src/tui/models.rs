@@ -577,7 +577,7 @@ mod tests {
         std::fs::write(&file, "GGUF").unwrap();
 
         let mut picker = picker();
-        for _ in 0..5 {
+        for _ in 0..crate::models::REGISTRY.len() {
             picker.on_key(key(KeyCode::Down));
         }
         assert!(draw(80, 20, |f| picker.render(f)).contains("> a model from disk"));
@@ -588,7 +588,7 @@ mod tests {
         assert!(draw(80, 20, |f| picker.render(f)).contains("Path: /nope_"));
         assert_eq!(picker.on_key(key(KeyCode::Enter)), Action::None);
         assert!(draw(80, 20, |f| picker.render(f)).contains("/nope does not exist"));
-        for _ in 0..5 {
+        for _ in 0..crate::models::REGISTRY.len() {
             picker.on_key(key(KeyCode::Backspace));
         }
         for c in file.to_str().unwrap().chars() {

@@ -16,7 +16,8 @@
 - Recommended models downloaded from Hugging Face, pinned and checked
   (`smart-commit model`), or any GGUF file from disk.
 - The first fine-tunes, `smart-commit-1.5b-v0.1` and
-  `smart-commit-0.5b-v0.1`, as experimental models.
+  `smart-commit-0.5b-v0.1`, and `smart-commit-0.5b-v0.2`, trained without
+  the rules in its prompt, as experimental models.
 - Fast load for llama.cpp (`--no-repack --fit off`), turned on per device
   by the benchmark, and `--threads-batch` passed explicitly.
 - Global and per-repository configuration; the setup removes global
