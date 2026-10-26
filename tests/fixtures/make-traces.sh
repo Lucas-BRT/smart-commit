@@ -406,3 +406,8 @@ real_change conventional-en-notebook-fix-as-test 5635f71 "test(training): add a 
 # A fix to a script that passed a relative path to smart-commit, with the test
 # that pins it, answered as a test: again the type of a fix with its test.
 real_change conventional-en-script-fix-as-test 401d67c "test(training): make sure relative gguf paths are made absolute"
+
+# Four fixes to the training scripts and notebooks (hashes before the training, the
+# packing of a run, no GPU, reading by newlines), answered as a refactor that adds
+# an assertion on the GPU.
+real_change conventional-en-training-fixes-as-refactor 011c9eb "refactor(training): add assert gpus, 'no GPU: turn the accelerator on'"

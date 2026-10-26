@@ -1,0 +1,192 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 011c9eb",
+      "refactor(training): move the Kaggle bundles to sc-training kaggle-bundle",
+      "docs(training): say what is pinned on Kaggle and version the kernels' settings",
+      "feat(training): count the novel words of each model and print cases side by side in compare",
+      "refactor(training): move compare_models to sc-training compare",
+      "docs(training): say which DPO numbers come from which judge and run",
+      "feat(training): add export_runs.py"
+    ],
+    "history_files": [
+      [
+        "training/kaggle_dpo.ipynb",
+        "training/kaggle_mine.ipynb",
+        "training/kaggle_train.ipynb",
+        "training/mine_pairs.py",
+        "training/test_kaggle_notebooks.py",
+        "training/test_mine_pairs.py",
+        "training/test_train_dpo.py",
+        "training/train.py",
+        "training/train_dpo.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/kaggle_dpo.ipynb",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/kaggle_mine.ipynb",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/kaggle_train.ipynb",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/mine_pairs.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_kaggle_notebooks.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_mine_pairs.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_train_dpo.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/train.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/train_dpo.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/kaggle_dpo.ipynb",
+        "old_path": null,
+        "lines": [
+          5,
+          3
+        ],
+        "hunks": "@@ -88,2 +88,3 @@\n     \"gpus = torch.cuda.device_count()\\n\",\n+    \"assert gpus, 'no GPU: turn the accelerator on in the notebook settings'\\n\",\n     \"per_gpu = spec.get('per_gpu', 1)\\n\",\n@@ -116,5 +117,6 @@\n     \"            if (work / 'runs' / name / 'adapter').is_dir():\\n\",\n-    \"                subprocess.run(['tar', 'czf', str(work / f'{name}.tar.gz'), '-C', str(work / 'runs'),\\n\",\n-    \"                                f'{name}/adapter', f'{name}/run.json', '-C', str(work), f'{name}.log'],\\n\",\n-    \"                               check=True)\\n\",\n+    \"                packed = subprocess.run(['tar', 'czf', str(work / f'{name}.tar.gz'), '-C', str(work / 'runs'),\\n\",\n+    \"                                f'{name}/adapter', f'{name}/run.json', '-C', str(work), f'{name}.log'])\\n\",\n+    \"                if packed.returncode:\\n\",\n+    \"                    print(f'{name}: could not be packed, exit {packed.returncode}', flush=True)\\n\",\n     \"\\n\",\n"
+      },
+      {
+        "path": "training/kaggle_mine.ipynb",
+        "old_path": null,
+        "lines": [
+          5,
+          2
+        ],
+        "hunks": "@@ -135,2 +135,3 @@\n     \"gpus = len([l for l in subprocess.run(['nvidia-smi', '-L'], capture_output=True, text=True).stdout.splitlines() if l.startswith('GPU')])\\n\",\n+    \"assert gpus, 'no GPU: turn the accelerator on in the notebook settings'\\n\",\n     \"pending, running, attempts = list(spec['jobs']), [], {}\\n\",\n@@ -165,4 +166,6 @@\n     \"            # Packed right away, so a session that dies later keeps it.\\n\",\n-    \"            subprocess.run(['tar', 'czf', str(work / f'{name}.tar.gz'), '-C', str(work / 'mined'),\\n\",\n-    \"                            f'{name}/candidates.jsonl', f'{name}/meta.jsonl', '-C', str(work), f'{name}.log'], check=True)\\n\",\n+    \"            packed = subprocess.run(['tar', 'czf', str(work / f'{name}.tar.gz'), '-C', str(work / 'mined'),\\n\",\n+    \"                            f'{name}/candidates.jsonl', f'{name}/meta.jsonl', '-C', str(work), f'{name}.log'])\\n\",\n+    \"            if packed.returncode:\\n\",\n+    \"                print(f'{name}: could not be packed, exit {packed.returncode}', flush=True)\\n\",\n     \"        elif attempts[name] < 2:\\n\",\n"
+      },
+      {
+        "path": "training/kaggle_train.ipynb",
+        "old_path": null,
+        "lines": [
+          5,
+          3
+        ],
+        "hunks": "@@ -84,2 +84,3 @@\n     \"gpus = torch.cuda.device_count()\\n\",\n+    \"assert gpus, 'no GPU: turn the accelerator on in the notebook settings'\\n\",\n     \"pending, running = list(spec['runs']), []\\n\",\n@@ -114,5 +115,6 @@\n     \"            if (work / 'runs' / name / 'adapter').is_dir():\\n\",\n-    \"                subprocess.run(['tar', 'czf', str(work / f'{name}.tar.gz'), '-C', str(work / 'runs'),\\n\",\n-    \"                                f'{name}/adapter', f'{name}/run.json', '-C', str(work), f'{name}.log'],\\n\",\n-    \"                               check=True)\"\n+    \"                packed = subprocess.run(['tar', 'czf', str(work / f'{name}.tar.gz'), '-C', str(work / 'runs'),\\n\",\n+    \"                                f'{name}/adapter', f'{name}/run.json', '-C', str(work), f'{name}.log'])\\n\",\n+    \"                if packed.returncode:\\n\",\n+    \"                    print(f'{name}: could not be packed, exit {packed.returncode}', flush=True)\"\n    ],\n"
+      },
+      {
+        "path": "training/mine_pairs.py",
+        "old_path": null,
+        "lines": [
+          12,
+          3
+        ],
+        "hunks": "@@ -38,4 +38,13 @@ CONTEXT_PER_SLOT = 1664\n \n+def split_lines(text: str) -> list[str]:\n+    \"\"\"The lines of a JSON Lines file. Not `str.splitlines()`, which also splits on\n+    U+2028, U+0085 and other characters that JSON allows inside a string.\"\"\"\n+    lines = text.split(\"\\n\")\n+    if lines and lines[-1] == \"\":\n+        lines.pop()\n+    return lines\n+\n+\n def read_lines(path: Path) -> list[str]:\n-    return path.read_text().splitlines() if path.exists() else []\n+    return split_lines(path.read_text()) if path.exists() else []\n \n@@ -71,4 +80,4 @@ def prompts(binary: str, inputs: Path, rules: str, diff: str) -> list[dict]:\n             env=env, check=True, capture_output=True, text=True,\n-        ).stdout.splitlines()\n-    return [json.loads(line) for line in lines]\n+        ).stdout\n+    return [json.loads(line) for line in split_lines(lines)]\n \n"
+      },
+      {
+        "path": "training/test_kaggle_notebooks.py",
+        "old_path": null,
+        "lines": [
+          23,
+          2
+        ],
+        "hunks": "@@ -19,3 +19,3 @@ HERE = Path(__file__).parent\n \n-def run_scheduler(per_gpu: int, gpus: int, runs: int) -> tuple[list[tuple[int, int]], list[str]]:\n+def run_scheduler(per_gpu: int, gpus: int, runs: int, tar_fails_for: str = \"\") -> tuple[list[tuple[int, int]], list[str]]:\n     \"\"\"Runs the notebook's scheduler cell with stand-in processes that take three\n@@ -57,4 +57,7 @@ def run_scheduler(per_gpu: int, gpus: int, runs: int) -> tuple[list[tuple[int, i\n \n-        def tar(command, check):\n+        def tar(command, **kwargs):\n+            if tar_fails_for and Path(command[2]).name.startswith(tar_fails_for):\n+                return types.SimpleNamespace(returncode=2)\n             Path(command[2]).write_bytes(b\"archive\")\n+            return types.SimpleNamespace(returncode=0)\n \n@@ -87,2 +90,20 @@ def test_the_scheduler_keeps_per_gpu_runs_going_on_each_gpu() -> None:\n \n+def test_a_notebook_without_a_gpu_fails_at_once_and_a_run_that_cannot_be_packed_does_not_stop_the_others() -> None:\n+    # No accelerator: the loop would wait for a GPU that never comes until the 12 h end.\n+    try:\n+        run_scheduler(per_gpu=1, gpus=0, runs=2)\n+    except AssertionError as e:\n+        assert \"no GPU\" in str(e)\n+    else:\n+        raise AssertionError(\"a notebook without a GPU went on\")\n+    # A run whose archive cannot be made (no run.json, say): the rest still start and end,\n+    # and the kernel fails at the end, naming it.\n+    try:\n+        run_scheduler(per_gpu=1, gpus=2, runs=3, tar_fails_for=\"r1\")\n+    except AssertionError as e:\n+        assert \"r1\" in str(e) and \"r0\" not in str(e) and \"r2\" not in str(e), str(e)\n+    else:\n+        raise AssertionError(\"a run without an archive went unnoticed\")\n+\n+\n def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> None:\n"
+      },
+      {
+        "path": "training/test_mine_pairs.py",
+        "old_path": null,
+        "lines": [
+          14,
+          0
+        ],
+        "hunks": "@@ -142,2 +142,16 @@ def test_prompts_built_beforehand_replace_the_binary() -> None:\n \n+def test_a_line_with_a_unicode_line_separator_in_a_string_stays_one_line() -> None:\n+    \"\"\"json.dumps(ensure_ascii=False), serde_json and the Rust tools write U+2028\n+    and U+0085 raw; str.splitlines() cut the inputs there and misaligned them.\"\"\"\n+    with tempfile.TemporaryDirectory() as tmp:\n+        d = Path(tmp)\n+        d.joinpath(\"src\").mkdir()\n+        row = json.dumps({\"diff\": \"a\\u2028b\\u0085c\"}, ensure_ascii=False)\n+        meta = json.dumps({\"repo\": \"r/x\", \"target\": \"t\", \"set\": \"free\"})\n+        (d / \"src/inputs.jsonl\").write_text(row + \"\\n\" + row + \"\\n\")\n+        (d / \"src/meta.jsonl\").write_text(meta + \"\\n\" + meta + \"\\n\")\n+        assert select(d / \"src\", d / \"out\", set(), 0) == 2\n+        assert [json.loads(line)[\"diff\"] for line in (d / \"out/inputs.jsonl\").read_text().split(\"\\n\")[:2]] == [\"a\\u2028b\\u0085c\"] * 2\n+\n+\n def test_the_server_keeps_no_prompt_cache_in_ram() -> None:\n"
+      },
+      {
+        "path": "training/test_train_dpo.py",
+        "old_path": null,
+        "lines": [
+          35,
+          0
+        ],
+        "hunks": "@@ -6,2 +6,3 @@\n import contextlib\n+import json\n import math\n@@ -15,2 +16,3 @@ from transformers import Qwen2Config, Qwen2ForCausalLM\n sys.path.insert(0, str(Path(__file__).parent))\n+from train import split_lines, weights_sha256  # noqa: E402\n from train_dpo import PairCollator, dpo_loss, encode_pair, evaluate, learning_rate, pair_loss, reply_logps  # noqa: E402\n@@ -169,2 +171,35 @@ def test_the_validation_pairs_are_scored_without_training_on_them() -> None:\n \n+def test_the_lines_of_a_jsonl_file_are_cut_at_newlines_only() -> None:\n+    \"\"\"str.splitlines() also cuts at U+2028, U+0085 and others, which JSON allows in a string.\"\"\"\n+    row = json.dumps({\"diff\": \"a\\u2028b\\u0085c\\x0cd\"}, ensure_ascii=False)\n+    assert len(row.splitlines()) > 1  # the trap\n+    assert split_lines(row + \"\\n\" + row + \"\\n\") == [row, row]\n+    assert split_lines(\"\") == [] and split_lines(\"{}\") == [\"{}\"]\n+\n+\n+def test_the_weights_of_a_base_are_hashed_whole_or_by_shard_and_a_base_without_fails() -> None:\n+    import hashlib\n+    import tempfile\n+\n+    with tempfile.TemporaryDirectory() as tmp:\n+        d = Path(tmp)\n+        (d / \"whole\").mkdir()\n+        (d / \"whole/model.safetensors\").write_bytes(b\"w\")\n+        assert weights_sha256(d / \"whole\") == hashlib.sha256(b\"w\").hexdigest()\n+        (d / \"sharded\").mkdir()\n+        (d / \"sharded/model-00001-of-00002.safetensors\").write_bytes(b\"a\")\n+        (d / \"sharded/model-00002-of-00002.safetensors\").write_bytes(b\"b\")\n+        assert weights_sha256(d / \"sharded\") == {\n+            \"model-00001-of-00002.safetensors\": hashlib.sha256(b\"a\").hexdigest(),\n+            \"model-00002-of-00002.safetensors\": hashlib.sha256(b\"b\").hexdigest(),\n+        }\n+        (d / \"none\").mkdir()\n+        try:\n+            weights_sha256(d / \"none\")\n+        except SystemExit as e:\n+            assert \"no .safetensors\" in str(e)\n+        else:\n+            raise AssertionError(\"a base without weights was hashed\")\n+\n+\n if __name__ == \"__main__\":\n"
+      },
+      {
+        "path": "training/train.py",
+        "old_path": null,
+        "lines": [
+          25,
+          2
+        ],
+        "hunks": "@@ -41,2 +41,24 @@ def sha256(path: Path) -> str:\n \n+def split_lines(text: str) -> list[str]:\n+    \"\"\"The lines of a JSON Lines file. Not `str.splitlines()`, which also splits on\n+    U+2028, U+0085 and other characters that JSON allows inside a string.\"\"\"\n+    lines = text.split(\"\\n\")\n+    if lines and lines[-1] == \"\":\n+        lines.pop()\n+    return lines\n+\n+\n+def weights_sha256(directory: Path) -> str | dict:\n+    \"\"\"The SHA-256 of a base model's weights: of its `model.safetensors`, or of\n+    each shard. Taken before the training, so a base this cannot hash fails now\n+    and not after the hours.\"\"\"\n+    single = directory / \"model.safetensors\"\n+    if single.is_file():\n+        return sha256(single)\n+    shards = sorted(directory.glob(\"*.safetensors\"))\n+    if not shards:\n+        raise SystemExit(f\"no .safetensors weights in {directory}\")\n+    return {p.name: sha256(p) for p in shards}\n+\n+\n def encode(tok, example: dict, max_length: int) -> dict | None:\n@@ -123,2 +145,3 @@ def main() -> None:\n     args.out.mkdir(parents=True, exist_ok=True)\n+    base_sha256 = weights_sha256(args.base)\n \n@@ -129,3 +152,3 @@ def main() -> None:\n     def load(path: Path, limit: int = 0) -> tuple[list[dict], int]:\n-        lines = path.read_text().splitlines()\n+        lines = split_lines(path.read_text())\n         if limit:\n@@ -226,3 +249,3 @@ def main() -> None:\n         \"base_config\": json.loads((args.base / \"config.json\").read_text()).get(\"_name_or_path\"),\n-        \"base_safetensors_sha256\": sha256(args.base / \"model.safetensors\"),\n+        \"base_safetensors_sha256\": base_sha256,\n         \"versions\": {p: version(p) for p in\n"
+      },
+      {
+        "path": "training/train_dpo.py",
+        "old_path": null,
+        "lines": [
+          11,
+          7
+        ],
+        "hunks": "@@ -35,3 +35,3 @@ from transformers import AutoModelForCausalLM, AutoTokenizer\n sys.path.insert(0, str(Path(__file__).parent))\n-from train import TARGET_MODULES, Collator, encode, sha256  # noqa: E402\n+from train import TARGET_MODULES, Collator, encode, sha256, split_lines, weights_sha256  # noqa: E402\n \n@@ -150,2 +150,9 @@ def main() -> None:\n     args.out.mkdir(parents=True, exist_ok=True)\n+    # Every input is hashed now: one that cannot be fails before the training, not after it.\n+    hashes = {\n+        \"pairs_sha256\": sha256(args.pairs),\n+        \"val_sha256\": sha256(args.val) if args.val else None,\n+        \"sft_adapter_sha256\": sha256(args.sft / \"adapter_model.safetensors\"),\n+        \"base_safetensors_sha256\": weights_sha256(args.base),\n+    }\n \n@@ -155,3 +162,3 @@ def main() -> None:\n     tok = AutoTokenizer.from_pretrained(args.base)\n-    lines = args.pairs.read_text().splitlines()\n+    lines = split_lines(args.pairs.read_text())\n     if args.limit:\n@@ -165,3 +172,3 @@ def main() -> None:\n         val = [e for e in (encode_pair(tok, json.loads(line), args.max_length)\n-                           for line in args.val.read_text().splitlines()) if e is not None]\n+                           for line in split_lines(args.val.read_text())) if e is not None]\n         print(f\"{len(val)} validation pairs\")\n@@ -229,6 +236,4 @@ def main() -> None:\n         \"args\": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},\n-        \"pairs_sha256\": sha256(args.pairs),\n-        \"val_sha256\": sha256(args.val) if args.val else None,\n+        **hashes,\n         \"val_pairs\": len(val) if val else 0,\n-        \"sft_adapter_sha256\": sha256(args.sft / \"adapter_model.safetensors\"),\n         \"pairs\": len(data),\n@@ -236,3 +241,2 @@ def main() -> None:\n         \"steps\": steps,\n-        \"base_safetensors_sha256\": sha256(args.base / \"model.safetensors\"),\n         \"versions\": {p: version(p) for p in (\"torch\", \"transformers\", \"peft\", \"accelerate\")},\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "refactor(training): add assert gpus, 'no GPU: turn the accelerator on'",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, refactor.\n- Scopes used here: training. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(training): move the Kaggle bundles to sc-training kaggle-bundle\ndocs(training): say what is pinned on Kaggle and version the kernels' settings\nfeat(training): count the novel words of each model and print cases side by side in compare\nrefactor(training): move compare_models to sc-training compare\ndocs(training): say which DPO numbers come from which judge and run\n",
+          "user": "Files changed:\ntraining/kaggle_dpo.ipynb | +5 -3\ntraining/kaggle_mine.ipynb | +5 -2\ntraining/kaggle_train.ipynb | +5 -3\ntraining/mine_pairs.py | +12 -3\ntraining/test_kaggle_notebooks.py | +23 -2\ntraining/test_mine_pairs.py | +14 -0\ntraining/test_train_dpo.py | +35 -0\ntraining/train.py | +25 -2\ntraining/train_dpo.py | +11 -7\n\nDiff:\n--- training/kaggle_dpo.ipynb\n@@ -88,2 +88,3 @@\n     \"gpus = torch.cuda.device_count()\\n\",\n+    \"assert gpus, 'no GPU: turn the accelerator on in the notebook settings'\\n\",\n     \"per_gpu = spec.get('per_gpu', 1)\\n\",\n[... 10 more lines]\n--- training/kaggle_mine.ipynb\n@@ -135,2 +135,3 @@\n     \"gpus = len([l for l in subprocess.run(['nvidia-smi', '-L'], capture_output=True, text=True).stdout.splitlines() if l.startswith('GPU')])\\n\",\n+    \"assert gpus, 'no GPU: turn the accelerator on in the notebook settings'\\n\",\n[... 10 more lines]\n--- training/kaggle_train.ipynb\n@@ -84,2 +84,3 @@\n     \"gpus = torch.cuda.device_count()\\n\",\n+    \"assert gpus, 'no GPU: turn the accelerator on in the notebook settings'\\n\",\n     \"pending, running = list(spec['runs']), []\\n\",\n[... 10 more lines]\n--- training/mine_pairs.py\n@@ -38,4 +38,13 @@ CONTEXT_PER_SLOT = 1664\n \n+def split_lines(text: str) -> list[str]:\n+    \"\"\"The lines of a JSON Lines file. Not `str.splitlines()`, which also splits on\n[... 18 more lines]\n--- training/train.py\n@@ -41,2 +41,24 @@ def sha256(path: Path) -> str:\n \n+def split_lines(text: str) -> list[str]:\n+    \"\"\"The lines of a JSON Lines file. Not `str.splitlines()`, which also splits on\n[... 35 more lines]\n\n(9 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "refactor(training): add assert gpus, 'no GPU: turn the accelerator on'",
+        "rejected": null
+      }
+    ]
+  }
+}
