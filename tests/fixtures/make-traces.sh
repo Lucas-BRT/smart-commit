@@ -416,3 +416,7 @@ real_change conventional-en-training-fixes-as-refactor 011c9eb "refactor(trainin
 # files, a matching that copied a map per pair), answered in the style of the
 # repository's own fixture commits.
 real_change conventional-en-balance-fix-as-trace fa673a1 "test(training): trace four balance tests answered as a refactor of one"
+
+# Three fixes to compare (stale traces, model names, the length per set), answered
+# once more in the style of the repository's fixture commits.
+real_change conventional-en-compare-fix-as-trace 726e1d1 "test(training): trace two models with the same name and make them again"
