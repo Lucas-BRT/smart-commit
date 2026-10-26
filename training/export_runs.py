@@ -1,5 +1,5 @@
 """Exports every DPO run of a directory to a GGUF, and prints `NAME=GGUF` for
-each, the arguments `compare_models.py` takes.
+each, the arguments `sc-training compare` takes.
 
     python -I export_runs.py BASE_DIR SFT_ADAPTER RUNS_DIR --llama-src DIR --llama-bin DIR
 
@@ -7,7 +7,7 @@ A run is a directory of RUNS_DIR with an `adapter` (what `kaggle_dpo.ipynb`
 packs); its GGUF is `RUNS_DIR/NAME/model-q4_k_m.gguf`, made by
 `export_gguf.py` with the SFT adapter first and the run's after, and kept: a
 run already exported is not made again. Messages go to stderr, so
-`compare_models.py ... $(python -I export_runs.py ...)` works.
+`sc-training compare ... $(python -I export_runs.py ...)` works.
 """
 
 import argparse

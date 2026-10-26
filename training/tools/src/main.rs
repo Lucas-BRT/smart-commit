@@ -5,6 +5,7 @@
 mod balance;
 mod build_inputs;
 mod build_scenarios;
+mod compare;
 mod mt;
 mod pairs;
 mod pyjson;
@@ -128,6 +129,29 @@ enum Command {
         /// How much imbalance is left, per pair, when matching.
         #[arg(long, default_value_t = 0.02)]
         marginal_tolerance: f64,
+    },
+    /// Runs models on evaluation sets and compares them with a baseline: the
+    /// metrics of each, the cases it gains and loses, and its habits.
+    Compare {
+        /// Where the traces (OUT/SET/NAME.jsonl) and `summary.json` go.
+        out: PathBuf,
+        /// `smart-commit`, which makes the traces.
+        binary: PathBuf,
+        /// Evaluation sets: directories with `inputs.jsonl` and `meta.jsonl`.
+        #[arg(long, num_args = 1.., required = true, value_name = "DIR")]
+        sets: Vec<PathBuf>,
+        /// The model the others are compared with, NAME=GGUF.
+        #[arg(long, value_name = "NAME=GGUF")]
+        baseline: String,
+        /// The other models, NAME=GGUF.
+        candidates: Vec<String>,
+        /// Those the models were trained on (v0.1: `full` and `plain`).
+        #[arg(long, default_value = "full")]
+        rules: String,
+        #[arg(long, default_value = "plain")]
+        diff: String,
+        #[arg(long, default_value = "vulkan")]
+        device: String,
     },
     /// Scores `smart-commit eval` traces against the real subjects.
     Score {
@@ -275,6 +299,32 @@ fn run(cli: Cli) -> Result<()> {
                 marginal_tolerance,
             })?;
             eprintln!("{}", summary.json());
+            Ok(())
+        }
+        Command::Compare {
+            out,
+            binary,
+            sets,
+            baseline,
+            candidates,
+            rules,
+            diff,
+            device,
+        } => {
+            let (text, _) = compare::compare(&compare::Options {
+                out,
+                binary,
+                sets,
+                baseline: compare::Model::parse(&baseline)?,
+                candidates: candidates
+                    .iter()
+                    .map(|c| compare::Model::parse(c))
+                    .collect::<Result<_>>()?,
+                rules,
+                diff,
+                device,
+            })?;
+            println!("{text}");
             Ok(())
         }
         Command::Score {

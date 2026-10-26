@@ -19,7 +19,6 @@ uv run --locked python -I test_mine_pairs.py
 uv run --locked python -I test_train_dpo.py
 uv run --locked python -I test_kaggle_mine_bundle.py
 uv run --locked python -I test_kaggle_dpo_bundle.py
-uv run --locked python -I test_compare_models.py
 uv run --locked python -I test_export_runs.py
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
@@ -353,7 +352,7 @@ wrote (checked: the largest difference is 0.0).
 
 To choose among runs, `export_runs.py` exports every run of a directory (the SFT
 adapter, then the run's, one GGUF each, kept) and prints `NAME=GGUF` for them,
-and `compare_models.py` evaluates each model on the
+and `sc-training compare` evaluates each model on the
 validation set (`data/val1`: its repositories are in none of the pairs) with
 `smart-commit eval`, keeps the traces, and prints the metrics of each and, for
 each, the cases it gains and loses against the baseline, net of the direction
@@ -370,8 +369,8 @@ whose message matches the patterns written for them. The evaluation sets
 `eval-v1` and `eval-short` are for the model chosen, once:
 
 ```bash
-uv run --locked python -I compare_models.py runs/compare ../target/release/smart-commit $SCT \
-  --sets data/val1 data/scenarios-eval --baseline sft=runs/kaggle-v2/c40k-0.5b/model-q4_k_m.gguf \
+$SCT compare runs/compare $SC --sets data/val1 data/scenarios-eval \
+  --baseline sft=runs/kaggle-v2/c40k-0.5b/model-q4_k_m.gguf \
   $(uv run --locked python -I export_runs.py $M runs/kaggle-v2/c40k-0.5b/adapter runs/kaggle-dpo2 \
       --llama-src $C/llama.cpp-src/llama.cpp-b11381 --llama-bin ~/.local/share/smart-commit/llama.cpp/llama-b11381)
 ```

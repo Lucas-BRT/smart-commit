@@ -49,7 +49,7 @@ def test_each_run_is_exported_once_with_the_sft_adapter_first() -> None:
         fake = exporter(d)
         first = run(d, runs, fake)
         assert first.returncode == 0, first.stderr
-        # NAME=GGUF, in the order of the names, ready for compare_models.py.
+        # NAME=GGUF, in the order of the names, ready for sc-training compare.
         assert first.stdout.splitlines() == [f"b01={runs.resolve() / 'b01/model-q4_k_m.gguf'}",
                                              f"b03={runs.resolve() / 'b03/model-q4_k_m.gguf'}"]
         assert (runs / "b01/model-q4_k_m.gguf").read_text() == f"sft-adapter {runs / 'b01/adapter'}"
