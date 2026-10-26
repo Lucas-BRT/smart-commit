@@ -504,7 +504,7 @@ mod tests {
         for _ in 0..index {
             picker.on_key(key(KeyCode::Down));
         }
-        let screen = draw(90, 20, |f| picker.render(f));
+        let screen = draw(90, 22, |f| picker.render(f));
         assert!(screen.contains("> smart-commit-0.5b-v0.1"), "{screen}");
         assert!(screen.contains("smart-commit 0.5B v0.1"), "{screen}");
         assert!(
