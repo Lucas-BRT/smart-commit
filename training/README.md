@@ -358,9 +358,14 @@ validation set (`data/val1`: its repositories are in none of the pairs) with
 each, the cases it gains and loses against the baseline, net of the direction
 of the metric, with `*` where McNemar's p is below 0.05. It also shows the
 share of replies with a scope (`scoped`) and how many of each type each model
-writes next to the real commits': a model that stops writing scopes has a
-`scope_known` of 1.0, and one that writes `chore` for everything a `first_try`
-of 1.0, and only these show it. A candidate costs
+writes next to the real commits', and the share of content words in none of the
+history, the paths and the diff (`novel`, the guard against invention, and a
+fall to a third of the real commits' says the model repeats the diff instead
+of saying what changed): a model that stops writing scopes has a `scope_known`
+of 1.0, and one that writes `chore` for everything a `first_try` of 1.0, and
+only these show it. `--read 30` prints that many cases side by side (half
+Conventional, the same whatever the models): what no metric counts is seen
+there. A candidate costs
 about two minutes of GPU on 500 inputs. The hand-written scenarios
 (`sc-training scenarios build data/scenarios-eval $SC --split eval`, 43 cases,
 14 Conventional) are a second set for the same purpose: small, so they confirm
@@ -369,7 +374,7 @@ whose message matches the patterns written for them. The evaluation sets
 `eval-v1` and `eval-short` are for the model chosen, once:
 
 ```bash
-$SCT compare runs/compare $SC --sets data/val1 data/scenarios-eval \
+$SCT compare runs/compare $SC --sets data/val1 data/scenarios-eval --read 30 \
   --baseline sft=runs/kaggle-v2/c40k-0.5b/model-q4_k_m.gguf \
   $(uv run --locked python -I export_runs.py $M runs/kaggle-v2/c40k-0.5b/adapter runs/kaggle-dpo2 \
       --llama-src $C/llama.cpp-src/llama.cpp-b11381 --llama-bin ~/.local/share/smart-commit/llama.cpp/llama-b11381)

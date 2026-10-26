@@ -152,6 +152,9 @@ enum Command {
         diff: String,
         #[arg(long, default_value = "vulkan")]
         device: String,
+        /// Print this many cases side by side, half Conventional.
+        #[arg(long, default_value_t = 0)]
+        read: usize,
     },
     /// Scores `smart-commit eval` traces against the real subjects.
     Score {
@@ -310,6 +313,7 @@ fn run(cli: Cli) -> Result<()> {
             rules,
             diff,
             device,
+            read,
         } => {
             let (text, _) = compare::compare(&compare::Options {
                 out,
@@ -323,6 +327,7 @@ fn run(cli: Cli) -> Result<()> {
                 rules,
                 diff,
                 device,
+                read,
             })?;
             println!("{text}");
             Ok(())

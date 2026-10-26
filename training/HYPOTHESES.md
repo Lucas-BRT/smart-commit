@@ -650,9 +650,10 @@ RTX 3050. One binary, Vulkan, greedy, eval-v1 (250 + 250) and eval-short
 - What the pairs teach, it learns: paired on all of eval-v1, `ungrounded`
   +0/−48, `first_copied` +2/−27, `first_try` +27/−3 (all p < 0.001), the
   same on eval-short. The messages do not turn generic: they are a little
-  longer (39 columns against 37; the real ones 41) and the share of content
-  words found nowhere in the diff, paths or history does not grow (0.188 →
-  0.167 Conventional, 0.149 → 0.135 free; the real subjects 0.39 / 0.41).
+  longer (39 columns against 37; the real ones 41) and the share of their
+  content words that are in none of the history, the paths and the diff
+  (`novel` of `sc-training compare`) does not grow, it falls (0.147 → 0.126
+  Conventional, 0.118 → 0.105 free; the real subjects 0.327 Conventional).
 - What it did not teach, it lost: `scope_known` +0/−12 (p < 0.001; eval-short
   0.681 → 0.617) and `type_match` +9/−13 (p = 0.52; eval-short 0.617 → 0.702).
   β 0.3 stays closer to the SFT model and did not recover the scope, so the
@@ -680,9 +681,10 @@ never on eval-v1, which is read once, for the chosen configuration; then the
 eval-short, paired against the SFT model: `type_match` and `type_macro_f1`
 rise on the Conventional set, `scope_known` is back at 0.84 or more, and
 `ungrounded`, `first_copied` and `first_try` keep at least 80% of the first
-run's gain; and none of `word_f1`, `exact` or the share of content words found
-nowhere falls with significance, the mean subject stays between 36 and 42
-columns, and a reading of 30 messages side by side shows no new habit. If
+run's gain; and neither `word_f1` nor `exact` falls with significance, the
+share of content words found nowhere (`novel`) does not grow (written "falls"
+by mistake before the first sweep; the plan said it must not grow, as the guard
+against invention), the mean subject stays between 36 and 42 columns, and a reading of 30 messages side by side shows no new habit. If
 not, the result goes here as it is and Kaggle's quota goes no further on it.
 
 **Second run, first sweep: it failed, and why.** Six runs of the 0.5B on
@@ -693,15 +695,15 @@ free), paired against the SFT model. All six learn the validation pairs
 (−0.5 to −1.6; −0.05 with `--sft-weight`): the model makes both replies less
 likely, the rejected one more so:
 
-| val1, Conventional | type_match | scope_known | replies with a scope | `chore` replies (real: 35 of 250) | ungrounded | word_f1 |
-|---|---|---|---|---|---|---|
-| SFT | 0.624 | 0.904 | 0.23 | 38 | 0.076 | 0.318 |
-| β 0.1, 2e-5 | 0.436 | 1.000 | 0.00 | 141 | 0.000 | 0.301 |
-| β 0.3, 2e-5 | 0.556 | 0.980 | 0.03 | 88 | 0.008 | 0.319 |
-| β 0.1, 5e-5 | 0.160 | 1.000 | 0.00 | 240 | 0.004 | 0.213 |
-| β 0.3, 5e-5 | 0.492 | 1.000 | — | — | 0.000 | 0.320 |
-| β 0.1, 2e-5, `--sft-weight 0.2` | 0.608 | 0.972 | 0.07 | 65 | 0.004 | 0.335 |
-| β 0.1, 1e-5, 2 epochs | 0.400 | 1.000 | — | — | 0.000 | 0.292 |
+| val1, Conventional | type_match | scope_known | replies with a scope | `chore` replies (real: 35 of 250) | ungrounded | word_f1 | novel |
+|---|---|---|---|---|---|---|---|
+| SFT | 0.624 | 0.904 | 0.23 | 38 | 0.076 | 0.318 | 0.134 |
+| β 0.1, 2e-5 | 0.436 | 1.000 | 0.00 | 141 | 0.000 | 0.301 | 0.054 |
+| β 0.3, 2e-5 | 0.556 | 0.980 | 0.03 | 88 | 0.008 | 0.319 | 0.076 |
+| β 0.1, 5e-5 | 0.160 | 1.000 | 0.00 | 240 | 0.004 | 0.213 | 0.041 |
+| β 0.3, 5e-5 | 0.492 | 1.000 | — | — | 0.000 | 0.320 | 0.064 |
+| β 0.1, 2e-5, `--sft-weight 0.2` | 0.608 | 0.972 | 0.07 | 65 | 0.004 | 0.335 | 0.070 |
+| β 0.1, 1e-5, 2 epochs | 0.400 | 1.000 | — | — | 0.000 | 0.292 | 0.047 |
 
 - It is not the type pairs that failed but what the pairs add up to. The
   rejected reply is a sample of the model, which errs most in the types it
@@ -715,6 +717,13 @@ likely, the rejected one more so:
   close to the SFT model. It beats it on `ungrounded`, `first_copied`,
   `first_try` and `word_f1`, loses 4 `type_match` cases (not significant)
   and still writes `chore` twice as often as the real commits.
+- All six use far fewer words that are in nothing the model was given
+  (`novel`: 0.134 for the SFT model, 0.04–0.08 for them, the real subjects
+  0.316): they say what the diff says and not what the change means. Side
+  by side (`sc-training compare --read`), for a change the real commit calls
+  `feat: export getElementInfo function` the run without `--sft-weight`
+  writes `chore: move matrix utils to utils`. It is not the invention the
+  criterion guards against but a habit to count.
 - By the criteria above none of the six is better (`type_match` does not
   rise). The mean subject of the SFT model on val1 is 35.3 columns, below the
   36–42 the criteria assumed from eval-v1.

@@ -4,20 +4,24 @@
 //! and, for each metric, how many cases a model gains and loses against the
 //! baseline (paired, with McNemar's p).
 //!
-//! Beside the metrics, the habits: the share of replies with a scope and the
-//! count of each type, next to the real commits'. A model that stops writing
-//! scopes has a `scope_known` of 1.0, and one that writes `chore` for
-//! everything a `first_try` of 1.0: only the habits show it.
+//! Beside the metrics, the habits: the share of replies with a scope, the
+//! count of each type, next to the real commits', and the share of content
+//! words found in none of the history, the paths and the diff (`novel`). A
+//! model that stops writing scopes has a `scope_known` of 1.0, and one that
+//! writes `chore` for everything a `first_try` of 1.0: only the habits show
+//! it. `read` also prints some cases side by side, the real subject and each
+//! model's, which is how a new habit is seen that no metric counts.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context as _, Result, bail, ensure};
 use serde_json::{Map, Value, json};
+use sha2::{Digest, Sha256};
 
 use crate::build_inputs::conventional_type;
 use crate::jsonl;
-use crate::score::{self, SCOPE};
+use crate::score::{self, SCOPE, evidence, novel_words};
 
 /// Metrics where a case flagged is a case right, and where it is a case wrong.
 const GOOD: [&str; 6] = [
@@ -35,11 +39,12 @@ const BAD: [&str; 5] = [
     "first_copied",
     "copied",
 ];
-const SHOWN: [&str; 12] = [
+const SHOWN: [&str; 13] = [
     "type_match",
     "type_macro_f1",
     "scope_known",
     "scoped",
+    "novel",
     "ungrounded",
     "first_copied",
     "first_try",
@@ -81,6 +86,8 @@ pub struct Options {
     pub rules: String,
     pub diff: String,
     pub device: String,
+    /// How many cases to print side by side, half of each set; 0 for none.
+    pub read: usize,
 }
 
 /// Cases a model improves over the baseline, net: a flag gained is better for
@@ -171,17 +178,24 @@ pub fn mean_chars(subjects: &[&str]) -> f64 {
     round1(subjects.iter().map(|s| s.chars().count()).sum::<usize>() as f64 / subjects.len() as f64)
 }
 
-/// Per set, the share of subjects with a scope and the count of each type
-/// (`-` for none), most common first.
-pub fn habits(meta: &[Value], subjects: &[&str]) -> Value {
+/// Per set, the share of subjects with a scope, the count of each type (`-`
+/// for none), most common first, and the share of content words found in
+/// nothing the model was given (`known`: the evidence of each case).
+pub fn habits(meta: &[Value], subjects: &[&str], known: &[String]) -> Value {
     let mut found = Map::new();
     for group in GROUPS {
-        let mine: Vec<&str> = meta
+        let (mine, evidence): (Vec<&str>, Vec<&String>) = meta
             .iter()
             .zip(subjects)
-            .filter(|(m, _)| m["set"] == group)
-            .map(|(_, s)| *s)
-            .collect();
+            .zip(known)
+            .filter(|((m, _), _)| m["set"] == group)
+            .map(|((_, s), k)| (*s, k))
+            .unzip();
+        let (words, novel) = mine
+            .iter()
+            .zip(&evidence)
+            .map(|(s, k)| novel_words(s, k))
+            .fold((0, 0), |(w, n), (a, b)| (w + a, n + b));
         let mut counts: Vec<(String, usize)> = Vec::new();
         for s in &mine {
             let kind = conventional_type(s).unwrap_or_else(|| "-".to_owned());
@@ -198,6 +212,7 @@ pub fn habits(meta: &[Value], subjects: &[&str]) -> Value {
             json!({
                 "n": mine.len(),
                 "scoped": (scoped * 1000.0).round() / 1000.0,
+                "novel": (novel as f64 / words.max(1) as f64 * 1000.0).round() / 1000.0,
                 "types": counts.into_iter().map(|(k, n)| (k, json!(n))).collect::<Map<_, _>>(),
             }),
         );
@@ -245,6 +260,7 @@ fn shown(entry: &Value, group: &str) -> Map<String, Value> {
     if group == "conventional" {
         scores.insert("scoped".into(), entry["habits"][group]["scoped"].clone());
     }
+    scores.insert("novel".into(), entry["habits"][group]["novel"].clone());
     scores.insert("chars".into(), entry["mean_subject_chars"].clone());
     scores
 }
@@ -276,6 +292,55 @@ fn net(entry: &Value, group: &str) -> String {
     } else {
         nets.join(" ")
     }
+}
+
+/// `n` cases, half Conventional and half free, taken in the order of a hash of
+/// the commit, so the same cases whatever the models.
+pub fn sample(meta: &[Value], n: usize) -> Vec<usize> {
+    let mut chosen = Vec::new();
+    for (group, want) in [("conventional", n.div_ceil(2)), ("free", n / 2)] {
+        let mut mine: Vec<(Vec<u8>, usize)> = meta
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| m["set"] == group)
+            .map(|(i, m)| {
+                let hash = m["hash"].as_str().unwrap_or("");
+                (
+                    Sha256::digest(format!("read:{hash}").as_bytes()).to_vec(),
+                    i,
+                )
+            })
+            .collect();
+        mine.sort();
+        chosen.extend(mine.into_iter().take(want).map(|(_, i)| i));
+    }
+    chosen
+}
+
+/// The cases of `sample` printed side by side: the files, the real subject and
+/// each model's.
+fn read(meta: &[Value], names: &[&str], traces: &[Vec<Value>], n: usize) -> String {
+    let mut text = String::new();
+    for i in sample(meta, n) {
+        let files: Vec<&str> = traces[0][i]["inputs"]["files"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|f| f["path"].as_str())
+            .take(3)
+            .collect();
+        let group = meta[i]["set"].as_str().unwrap_or("");
+        let real = meta[i]["target"].as_str().unwrap_or("");
+        text.push_str(&format!(
+            "\n[{group} {i}] {}\n  {:12} {real}",
+            files.join(", "),
+            "real"
+        ));
+        for (name, found) in names.iter().zip(traces) {
+            text.push_str(&format!("\n  {name:12} {}", subject(&found[i])));
+        }
+    }
+    text
 }
 
 /// Runs what is not run, scores, and returns what to print and the summary.
@@ -315,6 +380,7 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
             );
             traces.push(found);
         }
+        let known: Vec<String> = traces[0].iter().map(|t| evidence(&t["inputs"])).collect();
         let mut entries = Map::new();
         for (model, found) in models.iter().zip(&traces) {
             let subjects: Vec<&str> = found.iter().map(subject).collect();
@@ -329,7 +395,7 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
                     "scores": score::report(&meta, found),
                     "against_baseline": against,
                     "mean_subject_chars": mean_chars(&subjects),
-                    "habits": habits(&meta, &subjects),
+                    "habits": habits(&meta, &subjects, &known),
                 }),
             );
         }
@@ -337,7 +403,10 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
             .iter()
             .map(|m| m["target"].as_str().unwrap_or(""))
             .collect();
-        entries.insert("real".into(), json!({"habits": habits(&meta, &real)}));
+        entries.insert(
+            "real".into(),
+            json!({"habits": habits(&meta, &real, &known)}),
+        );
         for group in GROUPS {
             let rows: Vec<Map<String, Value>> = models
                 .iter()
@@ -369,8 +438,8 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
             if group == "conventional" {
                 let real = &entries["real"]["habits"][group];
                 text.push_str(&format!(
-                    "\ntypes (n={}, scoped {})",
-                    real["n"], real["scoped"]
+                    "\ntypes (n={}, scoped {}, novel {})",
+                    real["n"], real["scoped"], real["novel"]
                 ));
                 let named = std::iter::once(("real", real)).chain(
                     models
@@ -389,6 +458,14 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
                 }
                 text.push('\n');
             }
+        }
+        if options.read > 0 {
+            let names: Vec<&str> = models.iter().map(|m| m.name.as_str()).collect();
+            text.push_str(&format!(
+                "\n== {set_name} / {} cases side by side{}\n",
+                options.read.min(meta.len()),
+                read(&meta, &names, &traces, options.read)
+            ));
         }
         summary.insert(set_name.to_owned(), Value::Object(entries));
     }
