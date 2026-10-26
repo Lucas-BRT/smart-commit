@@ -21,6 +21,7 @@ pub const IDS: &[&str] = &[
     "smart-commit-0.5b-v0.1",
     "smart-commit-0.5b-v0.2",
     "smart-commit-1.5b-v0.2",
+    "smart-commit-0.5b-v0.3",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -195,6 +196,24 @@ pub const REGISTRY: &[Model] = &[
         openvino: None,
         // Trained on prompts without the fixed rules (training H6).
         rules: PromptRules::Omitted,
+    },
+    Model {
+        id: "smart-commit-0.5b-v0.3",
+        name: "smart-commit 0.5B v0.3",
+        license: "Apache-2.0",
+        status: Status::Experimental,
+        summary: "the 0.5B v0.1 trained further on its own samples: far fewer copies, invented \
+                  details and fallbacks",
+        gguf: Gguf {
+            repo: "LucasBRT/smart-commit-0.5b-v0.3",
+            revision: "9202f7b5a903c4e24a8130f58e36d979d3c716c6",
+            file: "smart-commit-0.5b-v0.3-q4_k_m.gguf",
+            size: 397_807_488,
+            sha256: "764940aaec5d3aae4587ce032c1f0437454ff3fa3666bd6c5ff10b2df7acfc3b",
+        },
+        openvino: None,
+        // Trained with the full prompt, as v0.1 (training H12).
+        rules: PromptRules::Full,
     },
 ];
 

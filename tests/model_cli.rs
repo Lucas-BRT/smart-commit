@@ -92,6 +92,7 @@ fn list_shows_every_recommended_model_and_the_one_in_use() {
     );
     assert!(out.contains("  smart-commit-0.5b-v0.1  397 MB  "), "{out}");
     assert!(out.contains("  smart-commit-0.5b-v0.2  397 MB  "), "{out}");
+    assert!(out.contains("  smart-commit-0.5b-v0.3  397 MB  "), "{out}");
     assert!(out.contains("  smart-commit-1.5b-v0.2  986 MB  "), "{out}");
     assert!(
         out.contains("or smart-commit's own fine-tunes (smart-commit-*)"),
@@ -353,7 +354,7 @@ fn use_refuses_what_is_not_a_model() {
             "llama-3 is neither a recommended model (qwen2.5-coder-1.5b, qwen2.5-coder-0.5b, \
              qwen2.5-coder-7b, smart-commit-1.5b-v0.1, smart-commit-0.5b-v0.1, \
              smart-commit-0.5b-v0.2, \
-             smart-commit-1.5b-v0.2) nor a file"
+             smart-commit-1.5b-v0.2, smart-commit-0.5b-v0.3) nor a file"
         ),
         "{}",
         stderr(&output)

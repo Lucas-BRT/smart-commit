@@ -548,7 +548,7 @@ counted once): 0.5B 1.150 → 0.976 s per message, 1.5B 2.532 → 2.156 s.
   and in young repositories ungrounded 0.112 (0.142 without); v0.2 0.5B
   with the full prompt loses instead (type_match 0.612, type_macro_f1
   0.448). Twenty thousand examples without the rules may not be enough for
-  the 1.5B to take them in; v0.1 1.5B had forty thousand. To try in v0.3.
+  the 1.5B to take them in; v0.1 1.5B had forty thousand. To try in v0.4.
 - Both are public on Hugging Face and registered as experimental:
   `LucasBRT/smart-commit-0.5b-v0.2` (revision `bdb93a5`) and
   `LucasBRT/smart-commit-1.5b-v0.2` (`4bca5dc`); v0.1 stays the better
@@ -619,7 +619,7 @@ branch, paired with `sc-training score --against` against the plain list:
 - On the commit scenarios the 1.5B v0.2 goes from 0.51 to 0.60
   (`expected`), mostly renames and deletions; a whitespace-only file taken
   out of the diff made it invent until the list said which whitespace.
-- Next: train v0.3 on the annotated list (T1).
+- Next: train v0.4 on the annotated list (T1).
 
 ### H12. DPO on the model's own samples removes its typical failures — first run: yes, but it cost the scope; second run: yes, at no cost, but the type does not improve significantly
 

@@ -12,7 +12,7 @@ expression: "draw(80, 20, |f| picker().render(f))"
 │  smart-commit-0.5b-v0.1 397 MB  experimental gguf                            │
 │  smart-commit-0.5b-v0.2 397 MB  experimental gguf                            │
 │  smart-commit-1.5b-v0.2 986 MB  experimental gguf                            │
-│  a model from disk                                                           │
+│  smart-commit-0.5b-v0.3 397 MB  experimental gguf                            │
 └──────────────────────────────────────────────────────────────────────────────┘
 ┌ Qwen2.5-Coder-1.5B-Instruct ─────────────────────────────────────────────────┐
 │the default: fast on every device, code-focused                               │

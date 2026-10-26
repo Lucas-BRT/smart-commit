@@ -24,6 +24,8 @@ $ smart-commit model list
   smart-commit-0.5b-v0.1  397 MB  Apache-2.0  experimental  -
   smart-commit-0.5b-v0.2  397 MB  Apache-2.0  experimental  -
   smart-commit-1.5b-v0.2  986 MB  Apache-2.0  experimental  -
+  smart-commit-0.5b-v0.3 the 0.5B v0.1 trained further on its own samples: far fewer copies, invented details and fallbacks; llama.cpp devices only (vulkan, cpu)
+  smart-commit-0.5b-v0.3  397 MB  Apache-2.0  experimental  -
 
   qwen2.5-coder-1.5b     the default: fast on every device, code-focused
   qwen2.5-coder-0.5b     the smallest: faster, for slow CPUs; weaker messages; llama.cpp devices only (vulkan, cpu)
@@ -95,6 +97,18 @@ How long each takes is in [measurements](measurements.md#per-message-by-model).
   against 65.6%) and its descriptions are vaguer in young repositories, so
   v0.1 stays the better 1.5B for the type. It leans on the rules more than
   the 0.5B does.
+
+- `smart-commit-0.5b-v0.3` is `smart-commit-0.5b-v0.1` with one more step of
+  training, preference training (DPO, training H12) on its own samples, and
+  keeps the full prompt. On eval-v1, with the default file list, against v0.1
+  (250 Conventional commits): a reply with no word of its description in the
+  diff, the paths or the history falls from 0.116 to 0.008, a first reply
+  that copies an earlier subject from 0.040 to 0.004, and the file-list
+  fallback from 0.028 to 0.004 (paired p < 0.05); the type (0.648 to
+  0.668) and the scope (0.852 to 0.840) are within noise. It does not
+  help the type: on the 47 Conventional commits of young repositories its
+  `type_macro_f1` is 0.591 against 0.684. Its model card has the
+  tables.
 
 ## Where they come from
 
