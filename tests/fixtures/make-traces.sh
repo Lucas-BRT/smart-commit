@@ -420,3 +420,7 @@ real_change conventional-en-balance-fix-as-trace fa673a1 "test(training): trace 
 # Three fixes to compare (stale traces, model names, the length per set), answered
 # once more in the style of the repository's fixture commits.
 real_change conventional-en-compare-fix-as-trace 726e1d1 "test(training): trace two models with the same name and make them again"
+
+# The results of a sweep, the roadmap and the instructions to go on from another
+# machine, answered as adding H12 to training.md, which H12's page was not.
+real_change conventional-en-results-as-h12 2cd40f7 "docs(training): add H12 to training.md"
