@@ -17,7 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 
 
-def run_scheduler(per_gpu: int, gpus: int, runs: int) -> tuple[list[tuple[int, int]], list[str]]:
+def run_scheduler(per_gpu: int, gpus: int, runs: int, tar_fails_for: str = "") -> tuple[list[tuple[int, int]], list[str]]:
     """Runs the notebook's scheduler cell with stand-in processes that take three
     checks to end; returns, for each start, (gpu, runs then going on it) and the
     archives made."""
@@ -55,8 +55,11 @@ def run_scheduler(per_gpu: int, gpus: int, runs: int) -> tuple[list[tuple[int, i
                 self.returncode = 0
                 return 0
 
-        def tar(command, check):
+        def tar(command, **kwargs):
+            if tar_fails_for and Path(command[2]).name.startswith(tar_fails_for):
+                return types.SimpleNamespace(returncode=2)
             Path(command[2]).write_bytes(b"archive")
+            return types.SimpleNamespace(returncode=0)
 
         fake = types.SimpleNamespace(Popen=Process, run=tar, STDOUT=-2)
         sleep, time.sleep = time.sleep, lambda seconds: None
@@ -83,6 +86,24 @@ def test_the_scheduler_keeps_per_gpu_runs_going_on_each_gpu() -> None:
     # More runs than slots: a new one starts when one ends, never above the limit.
     started, archives = run_scheduler(per_gpu=2, gpus=1, runs=5)
     assert max(n for _, n in started) == 2 and len(archives) == 5
+
+
+def test_a_notebook_without_a_gpu_fails_at_once_and_a_run_that_cannot_be_packed_does_not_stop_the_others() -> None:
+    # No accelerator: the loop would wait for a GPU that never comes until the 12 h end.
+    try:
+        run_scheduler(per_gpu=1, gpus=0, runs=2)
+    except AssertionError as e:
+        assert "no GPU" in str(e)
+    else:
+        raise AssertionError("a notebook without a GPU went on")
+    # A run whose archive cannot be made (no run.json, say): the rest still start and end,
+    # and the kernel fails at the end, naming it.
+    try:
+        run_scheduler(per_gpu=1, gpus=2, runs=3, tar_fails_for="r1")
+    except AssertionError as e:
+        assert "r1" in str(e) and "r0" not in str(e) and "r2" not in str(e), str(e)
+    else:
+        raise AssertionError("a run without an archive went unnoticed")
 
 
 def test_the_notebook_removes_kaggles_torchao_and_fails_when_a_run_does() -> None:

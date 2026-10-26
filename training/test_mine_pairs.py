@@ -140,6 +140,20 @@ def test_prompts_built_beforehand_replace_the_binary() -> None:
     server.shutdown()
 
 
+def test_a_line_with_a_unicode_line_separator_in_a_string_stays_one_line() -> None:
+    """json.dumps(ensure_ascii=False), serde_json and the Rust tools write U+2028
+    and U+0085 raw; str.splitlines() cut the inputs there and misaligned them."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        d.joinpath("src").mkdir()
+        row = json.dumps({"diff": "a\u2028b\u0085c"}, ensure_ascii=False)
+        meta = json.dumps({"repo": "r/x", "target": "t", "set": "free"})
+        (d / "src/inputs.jsonl").write_text(row + "\n" + row + "\n")
+        (d / "src/meta.jsonl").write_text(meta + "\n" + meta + "\n")
+        assert select(d / "src", d / "out", set(), 0) == 2
+        assert [json.loads(line)["diff"] for line in (d / "out/inputs.jsonl").read_text().split("\n")[:2]] == ["a\u2028b\u0085c"] * 2
+
+
 def test_the_server_keeps_no_prompt_cache_in_ram() -> None:
     """llama-server keeps up to 8 GiB of prompts in RAM by default, and every
     prompt here is new: that filled the RAM of a 24 GiB machine."""

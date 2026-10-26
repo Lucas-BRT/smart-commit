@@ -36,8 +36,17 @@ MAX_TOKENS = 64
 CONTEXT_PER_SLOT = 1664
 
 
+def split_lines(text: str) -> list[str]:
+    """The lines of a JSON Lines file. Not `str.splitlines()`, which also splits on
+    U+2028, U+0085 and other characters that JSON allows inside a string."""
+    lines = text.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    return lines
+
+
 def read_lines(path: Path) -> list[str]:
-    return path.read_text().splitlines() if path.exists() else []
+    return split_lines(path.read_text()) if path.exists() else []
 
 
 def repos_of(directories: list[Path]) -> set[str]:
@@ -69,8 +78,8 @@ def prompts(binary: str, inputs: Path, rules: str, diff: str) -> list[dict]:
         lines = subprocess.run(
             [binary, "prompt", "--inputs", str(inputs), "--rules", rules, "--diff", diff],
             env=env, check=True, capture_output=True, text=True,
-        ).stdout.splitlines()
-    return [json.loads(line) for line in lines]
+        ).stdout
+    return [json.loads(line) for line in split_lines(lines)]
 
 
 def write_prompts(out: Path, binary: str, rules: str, diff: str) -> int:

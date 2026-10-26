@@ -39,6 +39,28 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def split_lines(text: str) -> list[str]:
+    """The lines of a JSON Lines file. Not `str.splitlines()`, which also splits on
+    U+2028, U+0085 and other characters that JSON allows inside a string."""
+    lines = text.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    return lines
+
+
+def weights_sha256(directory: Path) -> str | dict:
+    """The SHA-256 of a base model's weights: of its `model.safetensors`, or of
+    each shard. Taken before the training, so a base this cannot hash fails now
+    and not after the hours."""
+    single = directory / "model.safetensors"
+    if single.is_file():
+        return sha256(single)
+    shards = sorted(directory.glob("*.safetensors"))
+    if not shards:
+        raise SystemExit(f"no .safetensors weights in {directory}")
+    return {p.name: sha256(p) for p in shards}
+
+
 def encode(tok, example: dict, max_length: int) -> dict | None:
     messages = [
         {"role": "system", "content": example["system"]},
@@ -121,13 +143,14 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
+    base_sha256 = weights_sha256(args.base)
 
     dtype = torch.bfloat16 if args.dtype == "bf16" else torch.float16
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     tok = AutoTokenizer.from_pretrained(args.base)
     def load(path: Path, limit: int = 0) -> tuple[list[dict], int]:
-        lines = path.read_text().splitlines()
+        lines = split_lines(path.read_text())
         if limit:
             lines = lines[:limit]
         encoded = [encode(tok, json.loads(line), args.max_length) for line in lines]
@@ -224,7 +247,7 @@ def main() -> None:
         "examples": len(data),
         "skipped_too_long": skipped,
         "base_config": json.loads((args.base / "config.json").read_text()).get("_name_or_path"),
-        "base_safetensors_sha256": sha256(args.base / "model.safetensors"),
+        "base_safetensors_sha256": base_sha256,
         "versions": {p: version(p) for p in
                      ("torch", "transformers", "peft", "bitsandbytes", "accelerate")},
         "cuda": torch.version.cuda,

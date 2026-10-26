@@ -33,7 +33,7 @@ from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.insert(0, str(Path(__file__).parent))
-from train import TARGET_MODULES, Collator, encode, sha256  # noqa: E402
+from train import TARGET_MODULES, Collator, encode, sha256, split_lines, weights_sha256  # noqa: E402
 
 
 def encode_pair(tok, pair: dict, max_length: int) -> dict | None:
@@ -148,12 +148,19 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
+    # Every input is hashed now: one that cannot be fails before the training, not after it.
+    hashes = {
+        "pairs_sha256": sha256(args.pairs),
+        "val_sha256": sha256(args.val) if args.val else None,
+        "sft_adapter_sha256": sha256(args.sft / "adapter_model.safetensors"),
+        "base_safetensors_sha256": weights_sha256(args.base),
+    }
 
     dtype = torch.bfloat16 if args.dtype == "bf16" else torch.float16
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     tok = AutoTokenizer.from_pretrained(args.base)
-    lines = args.pairs.read_text().splitlines()
+    lines = split_lines(args.pairs.read_text())
     if args.limit:
         lines = lines[: args.limit]
     encoded = [encode_pair(tok, json.loads(line), args.max_length) for line in lines]
@@ -163,7 +170,7 @@ def main() -> None:
     val = None
     if args.val:
         val = [e for e in (encode_pair(tok, json.loads(line), args.max_length)
-                           for line in args.val.read_text().splitlines()) if e is not None]
+                           for line in split_lines(args.val.read_text())) if e is not None]
         print(f"{len(val)} validation pairs")
 
     model = AutoModelForCausalLM.from_pretrained(args.base, dtype=dtype, device_map={"": 0})
@@ -227,14 +234,11 @@ def main() -> None:
     ).stdout.strip()
     run = {
         "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
-        "pairs_sha256": sha256(args.pairs),
-        "val_sha256": sha256(args.val) if args.val else None,
+        **hashes,
         "val_pairs": len(val) if val else 0,
-        "sft_adapter_sha256": sha256(args.sft / "adapter_model.safetensors"),
         "pairs": len(data),
         "skipped_too_long": skipped,
         "steps": steps,
-        "base_safetensors_sha256": sha256(args.base / "model.safetensors"),
         "versions": {p: version(p) for p in ("torch", "transformers", "peft", "accelerate")},
         "cuda": torch.version.cuda,
         "gpu": gpu,

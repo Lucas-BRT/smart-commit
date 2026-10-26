@@ -4,6 +4,7 @@
 """
 
 import contextlib
+import json
 import math
 import sys
 from pathlib import Path
@@ -13,6 +14,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import Qwen2Config, Qwen2ForCausalLM
 
 sys.path.insert(0, str(Path(__file__).parent))
+from train import split_lines, weights_sha256  # noqa: E402
 from train_dpo import PairCollator, dpo_loss, encode_pair, evaluate, learning_rate, pair_loss, reply_logps  # noqa: E402
 
 
@@ -165,6 +167,39 @@ def test_the_validation_pairs_are_scored_without_training_on_them() -> None:
     assert {"val_loss", "val_accuracy", "val_margin", "val_chosen_reward"} <= set(got)
     assert math.isclose(got["val_loss"], math.log(2), rel_tol=1e-6)
     assert model.training and all(torch.equal(a, b) for a, b in zip(before, model.parameters()))
+
+
+def test_the_lines_of_a_jsonl_file_are_cut_at_newlines_only() -> None:
+    """str.splitlines() also cuts at U+2028, U+0085 and others, which JSON allows in a string."""
+    row = json.dumps({"diff": "a\u2028b\u0085c\x0cd"}, ensure_ascii=False)
+    assert len(row.splitlines()) > 1  # the trap
+    assert split_lines(row + "\n" + row + "\n") == [row, row]
+    assert split_lines("") == [] and split_lines("{}") == ["{}"]
+
+
+def test_the_weights_of_a_base_are_hashed_whole_or_by_shard_and_a_base_without_fails() -> None:
+    import hashlib
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "whole").mkdir()
+        (d / "whole/model.safetensors").write_bytes(b"w")
+        assert weights_sha256(d / "whole") == hashlib.sha256(b"w").hexdigest()
+        (d / "sharded").mkdir()
+        (d / "sharded/model-00001-of-00002.safetensors").write_bytes(b"a")
+        (d / "sharded/model-00002-of-00002.safetensors").write_bytes(b"b")
+        assert weights_sha256(d / "sharded") == {
+            "model-00001-of-00002.safetensors": hashlib.sha256(b"a").hexdigest(),
+            "model-00002-of-00002.safetensors": hashlib.sha256(b"b").hexdigest(),
+        }
+        (d / "none").mkdir()
+        try:
+            weights_sha256(d / "none")
+        except SystemExit as e:
+            assert "no .safetensors" in str(e)
+        else:
+            raise AssertionError("a base without weights was hashed")
 
 
 if __name__ == "__main__":
