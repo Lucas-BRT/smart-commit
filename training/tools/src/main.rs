@@ -6,6 +6,7 @@ mod balance;
 mod build_inputs;
 mod build_scenarios;
 mod compare;
+mod examples;
 mod kaggle;
 mod mt;
 mod pairs;
@@ -130,6 +131,28 @@ enum Command {
         /// How much imbalance is left, per pair, when matching.
         #[arg(long, default_value_t = 0.02)]
         marginal_tolerance: f64,
+    },
+    /// Training examples (`DIR/examples.jsonl`) from selected inputs, with the
+    /// prompts `smart-commit prompt --inputs` builds.
+    MakeExamples {
+        /// With `inputs.jsonl` and `meta.jsonl`.
+        dir: PathBuf,
+        /// `smart-commit`.
+        binary: PathBuf,
+        #[arg(long, default_value = "full")]
+        rules: String,
+        /// Always passed: smart-commit's default list is `annotated`, and every
+        /// model so far was trained on `plain`.
+        #[arg(long, default_value = "plain")]
+        diff: String,
+    },
+    /// Nested subsets of an examples file, for a learning curve:
+    /// `PREFIX-N.jsonl` for each size.
+    Nest {
+        examples: PathBuf,
+        prefix: String,
+        #[arg(required = true)]
+        sizes: Vec<usize>,
     },
     /// The bundles of the Kaggle notebooks, to upload as private datasets.
     #[command(subcommand)]
@@ -340,6 +363,26 @@ fn run(cli: Cli) -> Result<()> {
                 marginal_tolerance,
             })?;
             eprintln!("{}", summary.json());
+            Ok(())
+        }
+        Command::MakeExamples {
+            dir,
+            binary,
+            rules,
+            diff,
+        } => {
+            let n = examples::make_examples(&dir, &binary, &rules, &diff)?;
+            eprintln!("{n} examples in {}", dir.join("examples.jsonl").display());
+            Ok(())
+        }
+        Command::Nest {
+            examples: src,
+            prefix,
+            sizes,
+        } => {
+            for line in examples::nest(&src, &prefix, &sizes)? {
+                println!("{line}");
+            }
             Ok(())
         }
         Command::KaggleBundle(command) => {

@@ -2,7 +2,7 @@
 preference pairs (`sc-training pairs` judges them).
 
 Builds the prompts with `smart-commit prompt --inputs` (empty
-XDG_CONFIG_HOME, as `make_examples.py`), or reads them from `--prompts`,
+XDG_CONFIG_HOME, as `sc-training make-examples`), or reads them from `--prompts`,
 the `prompts.jsonl` that `--prompts-only` wrote: a machine without the
 binary (Kaggle) samples from the prompts of another. Drops the commits of the
 repositories of the evaluation sets, and samples SAMPLES replies per input

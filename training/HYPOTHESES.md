@@ -113,7 +113,7 @@ shorter prompt read and replies of 42 characters instead of 78. Kaggle T4,
 
 Bundle b2 (`lucasbrt/smart-commit-training-b2`, uploaded before the scope
 map of H4, so trained on the prompt without it): a learning curve on the
-0.5B with nested subsets (`nest.py`) of 2.5k, 5k, 20k and 40k examples,
+0.5B with nested subsets (`nest.py`, now `sc-training nest`) of 2.5k, 5k, 20k and 40k examples,
 the 40k set on the 1.5B, and h3a, the 0.5B on 9,278 examples: H1's set
 with the unsupported and version-only targets dropped and nothing chosen
 in their place, `sc-training filter-supported data/h1 data/h3a` (first made with an
@@ -314,7 +314,7 @@ for moves into the weights; the prompt shrinks.
   candidate before it is in the registry. Omitted keeps what varies by
   repository (types, scopes, examples) and what the training data lacks
   (tickets, Portuguese, gitmoji).
-- **Training.** The same pipeline, with `make_examples.py` building prompts
+- **Training.** The same pipeline, with `make_examples.py` (now `sc-training make-examples`) building prompts
   with `--rules omitted`. Best trained together with H5 (young repositories) in
   one bundle, on about 20k examples, where H3's curve flattens.
 - **Metrics.** eval-v1 and eval-short with the switch on against H2/H1 with

@@ -14,7 +14,6 @@ outside the repository, in `~/.cache/smart-commit-training/`, and in
 mise install python@3.12.15
 export UV_PYTHON=$(mise where python@3.12.15)/bin/python3 UV_PYTHON_DOWNLOADS=never
 cd training && uv sync --locked
-uv run --locked python -I test_make_examples.py
 uv run --locked python -I test_mine_pairs.py
 uv run --locked python -I test_train_dpo.py
 uv run --locked python -I test_kaggle_notebooks.py   # the notebooks' scheduler cells; the bundles are tested in Rust
@@ -66,13 +65,15 @@ $SCT select data/releases data/h7 --conventional 400 --free 200 \
 $SCT filter-supported data/h1 data/h3a
 
 # 3. Prompts built by smart-commit, joined with the targets (`--rules omitted`
-#    for a model trained without the fixed instructions, H6). The file list
-#    is annotated by default since #10/#11; v0.2 was trained on the plain
-#    one: add `--diff plain` to rebuild its examples.
-uv run --locked python -I make_examples.py data/h1 $SC
+#    for a model trained without the fixed instructions, H6). smart-commit's
+#    file list is annotated by default since #10/#11, and every model so far
+#    was trained on the plain one: make-examples passes `--rules` and `--diff`
+#    always, plain by default, and `--diff annotated` builds the other (the
+#    Python script it replaces had no `--diff`, and ran with the annotated one).
+$SCT make-examples data/h1 $SC
 
 #    Nested subsets for a learning curve (H3) or a smaller run (H8):
-uv run --locked python -I nest.py data/curve/examples.jsonl data/curve/clean 2500 5000 20000 40000
+$SCT nest data/curve/examples.jsonl data/curve/clean 2500 5000 20000 40000
 
 # 4. Train (writes runs/h1/adapter and runs/h1/run.json).
 uv run --locked python -I train.py data/h1/examples.jsonl $M runs/h1 --quant 16bit
@@ -117,8 +118,8 @@ sha256sum data/eval-v1/*.jsonl
 `test-00002`…`test-00005`; `inputs.jsonl` sha256 starts `42d212c0d2687dad`,
 `meta.jsonl` `867c9faf4c5e80bd`.
 
-Bundle `data/kaggle/h8` (H8): `make_examples.py data/h8 $SC`, then
-`nest.py data/h8/examples.jsonl data/h8/nocap 20000`, then
+Bundle `data/kaggle/h8` (H8): `$SCT make-examples data/h8 $SC`, then
+`$SCT nest data/h8/examples.jsonl data/h8/nocap 20000`, then
 `$SCT kaggle-bundle train data/kaggle/h8 --val data/kaggle/b2/val.examples.jsonl
 c20k-nocap-0.5b=0.5b:data/h8/nocap-20000.jsonl
 c20k-ctl-0.5b=0.5b:data/curve/clean-20000.jsonl`. The examples' sha256
@@ -398,7 +399,7 @@ $SCT compare runs/compare $SC --sets data/val1 data/scenarios-eval --read 30 \
 Hand-written cases from `scenarios/`, in the same layout as a selection:
 `sc-training scenarios build data/scenarios-eval $SC --split eval` (or
 `--split train`) writes `inputs.jsonl` and `meta.jsonl`, which step 3
-(`make_examples.py`) and step 6 (`smart-commit eval`, `sc-training score`) take
+(`sc-training make-examples`) and step 6 (`smart-commit eval`, `sc-training score`) take
 unchanged. How to write a case: [scenarios/README.md](scenarios/README.md).
 
 ## Bundle b3 (v0.2)
@@ -407,7 +408,7 @@ About 20k examples with prompts built with `--rules omitted` (H6): 15,600
 from the main selection, nested like the curve, plus `data/h5` (H5) and
 `data/h7` (H7), and the validation set with the same prompts. Built in both
 versions of H8's type cap until H8 decides, each selection in its own
-directory under `data/b3/`, since `make_examples.py` writes there:
+directory under `data/b3/`, since `make-examples` writes there:
 
 ```bash
 py() { uv run --locked python -I "$@"; }
@@ -421,9 +422,9 @@ $SCT select data/train-all data/b3/h5 --conventional 1600 --free 2400 \
   --min-history 0 --max-history 9 --per-repo 5 --supported-only
 $SCT select data/releases data/b3/h7 --conventional 400 --free 200 \
   --min-history 0 --per-repo 5 --supported-only --releases
-for d in val main-cap30 main-nocap h5 h7; do py make_examples.py data/b3/$d $SC --rules omitted --diff plain; done
+for d in val main-cap30 main-nocap h5 h7; do $SCT make-examples data/b3/$d $SC --rules omitted --diff plain; done
 for cap in cap30 nocap; do
-  py nest.py data/b3/main-$cap/examples.jsonl data/b3/main-$cap/nested 15600
+  $SCT nest data/b3/main-$cap/examples.jsonl data/b3/main-$cap/nested 15600
   cat data/b3/main-$cap/nested-15600.jsonl data/b3/h5/examples.jsonl data/b3/h7/examples.jsonl \
     > data/b3/examples-$cap.jsonl
   $SCT kaggle-bundle train data/kaggle/b3-$cap --val data/b3/val/examples.jsonl \

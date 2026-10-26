@@ -1,4 +1,4 @@
-"""LoRA / QLoRA fine-tune on `examples.jsonl` (from make_examples.py).
+"""LoRA / QLoRA fine-tune on `examples.jsonl` (from `sc-training make-examples`).
 
 Each example is the model's own chat template over smart-commit's system
 and user messages, then the target subject and the end-of-turn token; the
