@@ -23,10 +23,16 @@ import tempfile
 from pathlib import Path
 
 # Metrics where a case flagged is a case right, and where it is a case wrong.
-GOOD = ["first_try", "type_match", "scope_known", "scope_fits", "exact"]
+GOOD = ["first_try", "type_match", "scope_known", "scope_fits", "exact", "expected"]
 BAD = ["ungrounded", "unsupported", "fallback", "first_copied", "copied"]
 SHOWN = ["type_match", "type_macro_f1", "scope_known", "scoped", "ungrounded", "first_copied", "first_try",
-         "fallback", "word_f1", "exact"]
+         "fallback", "word_f1", "exact", "expected"]
+
+
+def columns(rows: list[dict]) -> list[str]:
+    """The metrics of SHOWN that at least one model has: `expected` exists only for
+    the scenarios, and a column of dashes says nothing."""
+    return [m for m in SHOWN if any(m in scores for scores in rows)]
 
 
 def better(metric: str, gained: int, lost: int) -> int:
@@ -128,7 +134,9 @@ def main() -> None:
                 "habits": habits(directory, traces[name])}
         summary[directory.name]["real"] = {"habits": habits(directory)}
         for group in ("conventional", "free"):
-            rows = [["model", *SHOWN, "chars", "net vs baseline (* p < 0.05)"]]
+            shown = columns([{**summary[directory.name][m]["scores"].get(group, {}),
+                              **({"scoped": 0} if group == "conventional" else {})} for m in models])
+            rows = [["model", *shown, "chars", "net vs baseline (* p < 0.05)"]]
             for name in models:
                 entry = summary[directory.name][name]
                 scores = dict(entry["scores"].get(group, {}))
@@ -139,7 +147,7 @@ def main() -> None:
                 paired = entry["against_baseline"].get(group, {})
                 nets = " ".join(f"{m}{better(m, p['gained'], p['lost']):+d}{'*' if p['p'] < 0.05 else ''}"
                                 for m, p in paired.items() if m in SHOWN and better(m, p["gained"], p["lost"]))
-                rows.append([name, *[f"{scores[m]:.3f}" if m in scores else "-" for m in SHOWN],
+                rows.append([name, *[f"{scores[m]:.3f}" if m in scores else "-" for m in shown],
                              f"{entry['mean_subject_chars']}", nets or "-"])
             print(f"\n== {directory.name} / {group}\n{table(rows)}")
             if group == "conventional":

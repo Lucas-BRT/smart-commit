@@ -341,8 +341,12 @@ share of replies with a scope (`scoped`) and how many of each type each model
 writes next to the real commits': a model that stops writing scopes has a
 `scope_known` of 1.0, and one that writes `chore` for everything a `first_try`
 of 1.0, and only these show it. A candidate costs
-about two minutes of GPU on 500 inputs. The evaluation sets `eval-v1` and
-`eval-short` are for the model chosen, once:
+about two minutes of GPU on 500 inputs. The hand-written scenarios
+(`sc-training scenarios build data/scenarios-eval $SC --split eval`, 43 cases,
+14 Conventional) are a second set for the same purpose: small, so they confirm
+more than they decide, and they add the column `expected`, the share of cases
+whose message matches the patterns written for them. The evaluation sets
+`eval-v1` and `eval-short` are for the model chosen, once:
 
 ```bash
 uv run --locked python -I compare_models.py runs/compare ../target/release/smart-commit $SCT \

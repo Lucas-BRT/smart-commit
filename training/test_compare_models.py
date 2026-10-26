@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from compare_models import better, habits, line_count, mean_subject_length, run_eval, table  # noqa: E402
+from compare_models import better, columns, habits, line_count, mean_subject_length, run_eval, table  # noqa: E402
 
 
 def fake_smart_commit(d: Path) -> str:
@@ -105,6 +105,12 @@ def test_habits_show_a_model_that_stopped_writing_scopes_or_took_to_one_type() -
                                   for s in ["chore: a", "chore: b", "chore: c", "Add d"]))
         got = habits(d, traces)["conventional"]
         assert got == {"n": 3, "scoped": 0.0, "types": {"chore": 3}}
+
+
+def test_a_column_only_the_scenarios_have_is_shown_only_when_someone_has_it() -> None:
+    assert "expected" not in columns([{"type_match": 0.5, "exact": 0.1}, {"type_match": 0.4}])
+    assert columns([{"type_match": 0.5}, {"expected": 0.6, "type_match": 0.4}]) == ["type_match", "expected"]
+    assert better("expected", 5, 2) == 3
 
 
 def test_the_table_aligns_its_columns() -> None:
