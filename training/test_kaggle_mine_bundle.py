@@ -73,6 +73,13 @@ def test_the_longest_jobs_come_first_and_everything_is_pinned() -> None:
         assert refused.returncode != 0 and "not in the registry" in refused.stderr
 
 
+def test_the_notebook_fails_when_a_job_does() -> None:
+    """A kernel whose jobs failed still says COMPLETE: only an exception makes it ERROR."""
+    cells = json.loads((HERE / "kaggle_mine.ipynb").read_text())["cells"]
+    scheduler = next("".join(c["source"]) for c in cells if "pending, running, attempts" in "".join(c["source"]))
+    assert "assert not failed" in scheduler.splitlines()[-1]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
