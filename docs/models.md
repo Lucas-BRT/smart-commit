@@ -22,12 +22,16 @@ $ smart-commit model list
   qwen2.5-coder-7b        4.7 GB  Apache-2.0  experimental  -
   smart-commit-1.5b-v0.1  986 MB  Apache-2.0  experimental  -
   smart-commit-0.5b-v0.1  397 MB  Apache-2.0  experimental  -
+  smart-commit-0.5b-v0.2  397 MB  Apache-2.0  experimental  -
+  smart-commit-1.5b-v0.2  986 MB  Apache-2.0  experimental  -
 
   qwen2.5-coder-1.5b     the default: fast on every device, code-focused
   qwen2.5-coder-0.5b     the smallest: faster, for slow CPUs; weaker messages; llama.cpp devices only (vulkan, cpu)
   qwen2.5-coder-7b       the largest: better messages, but slow to load (8 s on a GPU); llama.cpp devices only (vulkan, cpu)
   smart-commit-1.5b-v0.1 Qwen2.5-Coder-1.5B fine-tuned for smart-commit: the right commit types; llama.cpp devices only (vulkan, cpu)
   smart-commit-0.5b-v0.1 Qwen2.5-Coder-0.5B fine-tuned: as good as the 1.5B on types, faster; llama.cpp devices only (vulkan, cpu)
+  smart-commit-0.5b-v0.2 the 0.5B trained without the rules in its prompt: faster, copies less in young repositories; llama.cpp devices only (vulkan, cpu)
+  smart-commit-1.5b-v0.2 the 1.5B trained without the rules in its prompt: faster, copies less in young repositories, a little weaker on the type than v0.1; llama.cpp devices only (vulkan, cpu)
 
 In use: qwen2.5-coder-1.5b (model.name, default).
 Models come from Hugging Face, pinned and checked: their publishers' files,
@@ -77,6 +81,20 @@ How long each takes is in [measurements](measurements.md#per-message-by-model).
   Their model cards on Hugging Face list
   the evaluation, the training and the limitations. Versions are new ids
   (`-v0.2`), never replaced files.
+- `smart-commit-0.5b-v0.2` was trained on prompts without the fixed rules
+  (training H6): smart-commit recognises its file by the SHA-256 and sends
+  it the shorter prompt, so it is about 15% faster on the CPU than v0.1
+  (`bench`, whose embedded prompts carry the rules, does not show it). On
+  eval-v1 it matches v0.1; in young repositories its first reply copies an
+  earlier subject half as often (7.6% against 13.7%) and it falls back to
+  the file list half as often (4.6% against 8.6%).
+- `smart-commit-1.5b-v0.2` is the same recipe on the 1.5B: about 15% faster
+  on the CPU than v0.1, and in young repositories its first reply copies
+  half as often (5.6% against 11.2%). It trades quality for that: on
+  eval-v1 it picks the real type a little less often than v0.1 (62.8%
+  against 65.6%) and its descriptions are vaguer in young repositories, so
+  v0.1 stays the better 1.5B for the type. It leans on the rules more than
+  the 0.5B does.
 
 ## Where they come from
 

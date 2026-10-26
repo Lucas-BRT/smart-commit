@@ -91,6 +91,8 @@ fn list_shows_every_recommended_model_and_the_one_in_use() {
         "{out}"
     );
     assert!(out.contains("  smart-commit-0.5b-v0.1  397 MB  "), "{out}");
+    assert!(out.contains("  smart-commit-0.5b-v0.2  397 MB  "), "{out}");
+    assert!(out.contains("  smart-commit-1.5b-v0.2  986 MB  "), "{out}");
     assert!(
         out.contains("or smart-commit's own fine-tunes (smart-commit-*)"),
         "{out}"
@@ -226,14 +228,14 @@ fn use_takes_a_gguf_file_and_back() {
 #[test]
 fn a_gguf_file_stays_listed_after_switching_away() {
     let home = Home::new();
-    let file = home.data.path().join("smart-commit-0.5b-v0.2-q4_k_m.gguf");
+    let file = home.data.path().join("smart-commit-0.5b-v0.9-q4_k_m.gguf");
     fs::write(&file, b"GGUF\x03\x00\x00\x00").unwrap();
     let output = home.run(&["model", "use", file.to_str().unwrap()]);
     assert!(output.status.success(), "{}", stderr(&output));
     let list = stdout(&home.run(&["model"]));
     assert!(
         list.contains(
-            "  smart-commit-0.5b-v0.2-q4_k_m    0 MB  -           unverified    gguf  <- in use\n"
+            "  smart-commit-0.5b-v0.9-q4_k_m    0 MB  -           unverified    gguf  <- in use\n"
         ),
         "{list}"
     );
@@ -243,7 +245,7 @@ fn a_gguf_file_stays_listed_after_switching_away() {
     );
     assert!(
         list.contains(&format!(
-            "  smart-commit-0.5b-v0.2-q4_k_m from disk, {}; vulkan and cpu",
+            "  smart-commit-0.5b-v0.9-q4_k_m from disk, {}; vulkan and cpu",
             file.display()
         )),
         "{list}"
@@ -253,7 +255,7 @@ fn a_gguf_file_stays_listed_after_switching_away() {
     home.run(&["model", "use", "qwen2.5-coder-0.5b"]);
     let list = stdout(&home.run(&["model"]));
     assert!(
-        list.contains("  smart-commit-0.5b-v0.2-q4_k_m    0 MB  -           unverified    gguf\n"),
+        list.contains("  smart-commit-0.5b-v0.9-q4_k_m    0 MB  -           unverified    gguf\n"),
         "still listed, no longer in use: {list}"
     );
     assert!(list.contains("experimental  gguf  <- in use"), "{list}");
@@ -261,7 +263,7 @@ fn a_gguf_file_stays_listed_after_switching_away() {
     // Gone from disk, gone from the list.
     fs::remove_file(&file).unwrap();
     let list = stdout(&home.run(&["model"]));
-    assert!(!list.contains("smart-commit-0.5b-v0.2"), "{list}");
+    assert!(!list.contains("smart-commit-0.5b-v0.9"), "{list}");
     assert!(list.contains("  qwen2.5-coder-0.5b      491 MB"), "{list}");
 }
 
@@ -349,7 +351,9 @@ fn use_refuses_what_is_not_a_model() {
     assert!(
         stderr(&output).contains(
             "llama-3 is neither a recommended model (qwen2.5-coder-1.5b, qwen2.5-coder-0.5b, \
-             qwen2.5-coder-7b, smart-commit-1.5b-v0.1, smart-commit-0.5b-v0.1) nor a file"
+             qwen2.5-coder-7b, smart-commit-1.5b-v0.1, smart-commit-0.5b-v0.1, \
+             smart-commit-0.5b-v0.2, \
+             smart-commit-1.5b-v0.2) nor a file"
         ),
         "{}",
         stderr(&output)

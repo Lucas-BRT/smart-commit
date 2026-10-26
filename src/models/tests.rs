@@ -27,10 +27,17 @@ fn prompt_rules_follow_the_checked_file() {
 #[test]
 fn no_model_drops_the_rules_it_was_not_trained_without() {
     // Base models fall apart without them (training H6), and v0.1 was
-    // trained with the full prompt. A model trained without them
-    // changes this test on purpose.
+    // trained with the full prompt; v0.2 was trained without them. A
+    // model trained without them is added here on purpose.
     for model in REGISTRY {
-        assert_eq!(model.rules, PromptRules::Full, "{}", model.id);
+        let trained_without =
+            ["smart-commit-0.5b-v0.2", "smart-commit-1.5b-v0.2"].contains(&model.id);
+        let expected = if trained_without {
+            PromptRules::Omitted
+        } else {
+            PromptRules::Full
+        };
+        assert_eq!(model.rules, expected, "{}", model.id);
     }
 }
 
