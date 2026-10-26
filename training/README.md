@@ -233,6 +233,18 @@ or 3,172 with `--match-marginals`.
 How the quota is spent, what a session costs and what to run in it:
 [docs/training.md](../docs/training.md#kaggles-quota).
 
+A notebook runs as a kernel: `kaggle/mine-kernel-metadata.json` and
+`kaggle/dpo-kernel-metadata.json` are the settings of the two (the image by
+digest, a T4 x2, the internet, private); `dataset_sources` is the dataset of
+the bundle of the run, and is changed to it before pushing:
+
+```bash
+K=$(mktemp -d)
+cp kaggle_dpo.ipynb $K/smart-commit-dpo.ipynb
+sed 's#training-dpo2-sweep2#training-NAME-OF-THE-BUNDLE#' kaggle/dpo-kernel-metadata.json > $K/kernel-metadata.json
+kaggle kernels push -p $K        # then: kaggle kernels status lucasbrt/smart-commit-dpo
+```
+
 The same mining on two T4s, when the local GPU is busy: the prompts are built
 here, without a GPU, and only the sampling runs there. `kaggle_mine_bundle.py`
 splits the inputs into shards (every Nth input to each), pins what the
