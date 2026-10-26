@@ -212,6 +212,9 @@ ungrounded 619, copied 271, unsupported 258, long 134, format 5) and, for the
 
 ### Mining on Kaggle
 
+How the quota is spent, what a session costs and what to run in it:
+[docs/training.md](../docs/training.md#kaggles-quota).
+
 The same mining on two T4s, when the local GPU is busy: the prompts are built
 here, without a GPU, and only the sampling runs there. `kaggle_mine_bundle.py`
 splits the inputs into shards (every Nth input to each), pins what the
