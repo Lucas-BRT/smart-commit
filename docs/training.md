@@ -324,8 +324,11 @@ What is published is one model per size smart-commit offers, named
    `train_dpo.py`, the Kaggle bundles and notebooks, `sc-training compare`). The
    first run removed the failures its pairs showed and cost the scope; the
    second run's first sweep collapsed onto one type because its pairs were
-   unbalanced, and a second sweep on pairs with matched distributions is
-   under way. Nothing is published from it.
+   unbalanced; its second sweep, on pairs with matched distributions and the
+   chosen reply's own loss added, removes the same failures at no cost to the
+   type or the scope, but does not improve the type significantly. The six
+   runs are in a private repository on Hugging Face as experiments; the 1.5B
+   is next. Nothing is in the registry.
 8. The next version: H4b, and more data for the 1.5B, which leans on the
    rules more than the 0.5B. What to publish, register and make the default
    is in the [roadmap](roadmap.md).

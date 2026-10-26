@@ -394,6 +394,48 @@ $SCT compare runs/compare $SC --sets data/val1 data/scenarios-eval --read 30 \
       --llama-src $C/llama.cpp-src/llama.cpp-b11381 --llama-bin ~/.local/share/smart-commit/llama.cpp/llama-b11381)
 ```
 
+## Continuing from another machine
+
+Git has the code, the documentation, the notebooks and the fixtures. It does not have what is
+ignored: `training/data/`, `training/runs/`, `target/` and `~/.cache/smart-commit-training/` (the base
+models, CommitChronicle, the llama.cpp sources). What was made of them is kept in private places:
+
+| What | Where |
+|---|---|
+| Evaluation sets: `val1`, `eval-v1`, `eval-short`, `scenarios-eval` (`inputs.jsonl`, `meta.jsonl`, `SHA256SUMS`) | Kaggle dataset `lucasbrt/smart-commit-training-eval-sets` |
+| Inputs and prompts of the second run's mining (5,500) | `lucasbrt/smart-commit-training-dpo2-mine` |
+| The sampled replies (8 jobs) | the output of the kernel `lucasbrt/smart-commit-mine` |
+| The 0.5B's balanced pairs, validation pairs and SFT adapter | `lucasbrt/smart-commit-training-dpo2-sweep2` (matched marginals; `-dpo2-sweep` is the first sweep, unmatched) |
+| The 1.5B's, with two runs ready to start | `lucasbrt/smart-commit-training-dpo2-1p5b` |
+| The six trained runs of the 0.5B: adapters, logs, GGUF and results | Hugging Face `LucasBRT/smart-commit-0.5b-dpo-runs` (private) |
+
+The SFT adapters of v0.1 are inside the bundles, in `sft-<12 hex digits of its weights>/`; the base
+models are the public Qwen2.5-Coder revisions pinned in `training/tools/src/kaggle.rs`. To go on:
+
+```bash
+git fetch && git checkout feat/dpo-pairs && git pull
+cargo build --release --locked -p smart-commit -p smart-commit-training
+cd training
+# The evaluation sets, file by file (kaggle 2.2.4 downloads nothing when asked for a whole dataset):
+for set in val1 eval-v1 eval-short scenarios-eval; do for file in inputs meta; do
+  kaggle datasets download lucasbrt/smart-commit-training-eval-sets -f $set/$file.jsonl -p data/$set --unzip
+done; done
+kaggle datasets download lucasbrt/smart-commit-training-eval-sets -f SHA256SUMS -p data --unzip
+(cd data && sha256sum -c SHA256SUMS)
+
+# The 1.5B on Kaggle: two runs, one on each T4 (not timed yet).
+K=$(mktemp -d)
+cp kaggle_dpo.ipynb $K/smart-commit-dpo.ipynb
+sed 's#training-dpo2-sweep2#training-dpo2-1p5b#' kaggle/dpo-kernel-metadata.json > $K/kernel-metadata.json
+kaggle kernels push -p $K
+kaggle kernels status lucasbrt/smart-commit-dpo        # until COMPLETE; ERROR means a run failed
+```
+
+Then download the output (`kaggle kernels output lucasbrt/smart-commit-dpo -p data/dpo2/sweep3-out`),
+unpack the archives in `runs/kaggle-dpo2-1p5b/`, and export and compare as above with the 1.5B's base
+model and SFT adapter, on `data/val1` and `data/scenarios-eval` first and `eval-v1` only for the run
+chosen (the criteria are those of H12).
+
 ## Scenarios
 
 Hand-written cases from `scenarios/`, in the same layout as a selection:
