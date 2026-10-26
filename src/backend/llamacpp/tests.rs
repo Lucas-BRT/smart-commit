@@ -265,6 +265,32 @@ fn missing_files_are_reported_before_starting() {
 }
 
 #[test]
+fn a_program_still_open_for_writing_is_started_when_it_is_free() {
+    use std::io::Write as _;
+    use std::os::unix::fs::PermissionsExt as _;
+    // A program just written, with a process forked meanwhile that still holds
+    // the file open for writing: the first start fails with "text file busy"
+    // (the flake of the tests that write a script and run it at once).
+    let dir = tempfile::TempDir::new().unwrap();
+    let script = dir.path().join("program");
+    let mut open = std::fs::File::create(&script).unwrap();
+    open.write_all(b"#!/bin/sh\nexit 0\n").unwrap();
+    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let err = Command::new(&script).spawn().unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::ExecutableFileBusy, "{err}");
+    let closer = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(80));
+        drop(open);
+    });
+    let mut child = spawn_when_free(&mut Command::new(&script)).unwrap();
+    assert!(child.wait().unwrap().success());
+    closer.join().unwrap();
+    // Any other error is the first one, at once.
+    let err = spawn_when_free(&mut Command::new(dir.path().join("absent"))).unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
+}
+
+#[test]
 fn a_server_that_dies_is_reported_with_its_output() {
     let dir = tempfile::TempDir::new().unwrap();
     let mut options = options(dir.path());
