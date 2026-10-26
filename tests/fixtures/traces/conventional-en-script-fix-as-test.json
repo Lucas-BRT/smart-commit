@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 401d67c",
+      "test(fixtures): trace a notebook fix answered as a test",
+      "fix(training): remove Kaggle's torchao before the DPO runs and fail when one does",
+      "feat(training): compare models on an evaluation set against a baseline",
+      "docs(training): record the first DPO run and what the second must show",
+      "feat(training): add Kaggle DPO training",
+      "test(fixtures): trace validation added to a DPO script answered as its loss"
+    ],
+    "history_files": [
+      [
+        "training/compare_models.py",
+        "training/test_compare_models.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/compare_models.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_compare_models.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/compare_models.py",
+        "old_path": null,
+        "lines": [
+          9,
+          3
+        ],
+        "hunks": "@@ -51,6 +51,12 @@ def run_eval(binary: str, gguf: str, inputs: Path, out: Path, rules: str, diff:\n     out.parent.mkdir(parents=True, exist_ok=True)\n-    with tempfile.TemporaryDirectory() as config_home, open(out, \"w\") as f:\n+    # smart-commit takes an absolute path only, and the script may run from anywhere.\n+    gguf = str(Path(gguf).expanduser().resolve())\n+    with tempfile.TemporaryDirectory() as config_home:\n         env = {**os.environ, \"XDG_CONFIG_HOME\": config_home, \"SMART_COMMIT_GGUF\": gguf}\n-        subprocess.run([binary, \"eval\", str(inputs), \"--device\", device, \"--rules\", rules, \"--diff\", diff],\n-                       env=env, stdout=f, stderr=subprocess.DEVNULL, check=True)\n+        done = subprocess.run([binary, \"eval\", str(inputs), \"--device\", device, \"--rules\", rules, \"--diff\", diff],\n+                              env=env, capture_output=True, text=True)\n+    if done.returncode:\n+        out.unlink(missing_ok=True)\n+        raise SystemExit(f\"{binary} eval of {gguf} failed ({done.returncode}):\\n{done.stderr[-1500:]}\")\n+    out.write_text(done.stdout)\n     return True\n"
+      },
+      {
+        "path": "training/test_compare_models.py",
+        "old_path": null,
+        "lines": [
+          39,
+          0
+        ],
+        "hunks": "@@ -6,2 +6,3 @@\n import json\n+import os\n import sys\n@@ -30,2 +31,40 @@ def fake_smart_commit(d: Path) -> str:\n \n+def test_a_relative_model_path_is_made_absolute_and_a_failure_says_why() -> None:\n+    \"\"\"smart-commit refuses a relative SMART_COMMIT_GGUF, and the script said nothing.\"\"\"\n+    with tempfile.TemporaryDirectory() as tmp:\n+        d = Path(tmp)\n+        inputs = d / \"inputs.jsonl\"\n+        inputs.write_text(\"{}\\n\")\n+        fake = d / \"strict\"\n+        fake.write_text(\n+            f\"#!{sys.executable}\\n\"\n+            \"import json, os, sys\\n\"\n+            \"path = os.environ['SMART_COMMIT_GGUF']\\n\"\n+            \"if not os.path.isabs(path):\\n\"\n+            \"    sys.exit('error: expected an absolute path, got ' + path)\\n\"\n+            \"print(json.dumps({'generation': {'message': {'subject': path}}}))\\n\"\n+        )\n+        fake.chmod(0o755)\n+        out = d / \"out/model.jsonl\"\n+        here = Path.cwd()\n+        os.chdir(d)\n+        try:\n+            assert run_eval(str(fake), \"models/m.gguf\", inputs, out, \"full\", \"plain\", \"vulkan\")\n+        finally:\n+            os.chdir(here)\n+        assert json.loads(out.read_text())[\"generation\"][\"message\"][\"subject\"] == str(d / \"models/m.gguf\")\n+        # A model that cannot run leaves no trace behind and says what smart-commit said.\n+        broken = d / \"broken\"\n+        broken.write_text(\"#!/bin/sh\\necho 'error: no such model' >&2\\nexit 1\\n\")\n+        broken.chmod(0o755)\n+        gone = d / \"out/gone.jsonl\"\n+        try:\n+            run_eval(str(broken), \"/x.gguf\", inputs, gone, \"full\", \"plain\", \"vulkan\")\n+        except SystemExit as e:\n+            assert \"no such model\" in str(e) and \"/x.gguf\" in str(e)\n+        else:\n+            raise AssertionError(\"a failed evaluation went unnoticed\")\n+        assert not gone.exists()\n+\n+\n def test_a_flag_gained_is_better_for_a_good_metric_and_worse_for_a_bad_one() -> None:\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "test(training): make sure relative gguf paths are made absolute",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, test, docs, fix, refactor.\n- Scopes used here: training, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace a notebook fix answered as a test\nfix(training): remove Kaggle's torchao before the DPO runs and fail when one does\nfeat(training): compare models on an evaluation set against a baseline\ndocs(training): record the first DPO run and what the second must show\nfeat(training): add Kaggle DPO training\n",
+          "user": "Files changed:\ntraining/compare_models.py | +9 -3\ntraining/test_compare_models.py | +39 -0\n\nDiff:\n--- training/compare_models.py\n@@ -51,6 +51,12 @@ def run_eval(binary: str, gguf: str, inputs: Path, out: Path, rules: str, diff:\n     out.parent.mkdir(parents=True, exist_ok=True)\n-    with tempfile.TemporaryDirectory() as config_home, open(out, \"w\") as f:\n+    # smart-commit takes an absolute path only, and the script may run from anywhere.\n+    gguf = str(Path(gguf).expanduser().resolve())\n+    with tempfile.TemporaryDirectory() as config_home:\n         env = {**os.environ, \"XDG_CONFIG_HOME\": config_home, \"SMART_COMMIT_GGUF\": gguf}\n-        subprocess.run([binary, \"eval\", str(inputs), \"--device\", device, \"--rules\", rules, \"--diff\", diff],\n-                       env=env, stdout=f, stderr=subprocess.DEVNULL, check=True)\n+        done = subprocess.run([binary, \"eval\", str(inputs), \"--device\", device, \"--rules\", rules, \"--diff\", diff],\n+                              env=env, capture_output=True, text=True)\n+    if done.returncode:\n+        out.unlink(missing_ok=True)\n+        raise SystemExit(f\"{binary} eval of {gguf} failed ({done.returncode}):\\n{done.stderr[-1500:]}\")\n+    out.write_text(done.stdout)\n     return True\n--- training/test_compare_models.py\n@@ -6,2 +6,3 @@\n import json\n+import os\n import sys\n@@ -30,2 +31,40 @@ def fake_smart_commit(d: Path) -> str:\n \n+def test_a_relative_model_path_is_made_absolute_and_a_failure_says_why() -> None:\n+    \"\"\"smart-commit refuses a relative SMART_COMMIT_GGUF, and the script said nothing.\"\"\"\n+    with tempfile.TemporaryDirectory() as tmp:\n+        d = Path(tmp)\n+        inputs = d / \"inputs.jsonl\"\n+        inputs.write_text(\"{}\\n\")\n+        fake = d / \"strict\"\n+        fake.write_text(\n+            f\"#!{sys.executable}\\n\"\n[... 30 more lines]\n\n(1 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "test(training): make sure relative gguf paths are made absolute",
+        "rejected": null
+      }
+    ]
+  }
+}

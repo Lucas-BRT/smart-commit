@@ -402,3 +402,7 @@ real_change conventional-en-dpo-validation-as-loss a8cf80a "feat(training): add 
 # A fix to the notebook's install cell and a new check on its runs, with a test
 # that pins both, answered as a test that fails when torchao is used.
 real_change conventional-en-notebook-fix-as-test 5635f71 "test(training): add a test that fails when Kaggle's torchao is used"
+
+# A fix to a script that passed a relative path to smart-commit, with the test
+# that pins it, answered as a test: again the type of a fix with its test.
+real_change conventional-en-script-fix-as-test 401d67c "test(training): make sure relative gguf paths are made absolute"
