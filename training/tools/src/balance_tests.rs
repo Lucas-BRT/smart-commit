@@ -381,3 +381,78 @@ fn the_tolerance_is_what_may_stay_unbalanced_and_the_order_does_not_matter() {
         hashes(&matched(&reversed, 0.0).1)
     );
 }
+
+#[test]
+fn the_change_from_a_removal_is_what_removing_it_would_give() {
+    // Marks of every kind, chosen and rejected types equal or not, with or
+    // without a scope, against the imbalance of a running total: the cheap
+    // computation must be the copy-and-recount it replaced.
+    let kinds = [None, Some("fix"), Some("feat"), Some("chore")];
+    let mut all = Vec::new();
+    for chosen in kinds {
+        for rejected in kinds {
+            for chosen_scope in [false, true] {
+                for rejected_scope in [false, true] {
+                    all.push(Marks {
+                        chosen_type: chosen.map(str::to_owned),
+                        rejected_type: rejected.map(str::to_owned),
+                        chosen_scope,
+                        rejected_scope,
+                    });
+                }
+            }
+        }
+    }
+    let mut imbalance = Imbalance::default();
+    let mut seed = 7u64;
+    for _ in 0..200 {
+        seed = seed
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        imbalance.add(&all[(seed >> 33) as usize % all.len()], 1);
+    }
+    for marks in &all {
+        let mut after = imbalance.clone();
+        after.add(marks, -1);
+        assert_eq!(
+            imbalance.change_if_removed(marks),
+            after.total() - imbalance.total()
+        );
+    }
+}
+
+#[test]
+fn which_of_two_repeated_pairs_is_kept_does_not_depend_on_the_order_of_the_files() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let same = |repo: &str, hash: &str| {
+        pair(
+            repo,
+            hash,
+            "free",
+            20,
+            None,
+            "fix the parser",
+            "fix the parse",
+            "copied",
+        )
+    };
+    let (a, b) = (dir.path().join("a.jsonl"), dir.path().join("b.jsonl"));
+    write(&a, &[same("o/one", "h1"), same("o/two", "h2")]);
+    write(&b, &[same("o/three", "h3"), same("o/four", "h4")]);
+    let run = |files: &[&Path], name: &str| {
+        let out = dir.path().join(name);
+        let summary = balance(&Options {
+            val_share: 0.0,
+            ..options(files, &out)
+        })
+        .unwrap();
+        (summary.dropped_repeated, read(&out.join("train.jsonl")))
+    };
+    let (dropped, forward) = run(&[&a, &b], "forward");
+    let (dropped_back, backward) = run(&[&b, &a], "backward");
+    assert_eq!((dropped, dropped_back, forward.len()), (3, 3, 1));
+    assert_eq!(
+        forward, backward,
+        "the same pair survives whatever the order"
+    );
+}

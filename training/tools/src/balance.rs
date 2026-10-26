@@ -113,6 +113,9 @@ pub struct Summary {
     pub imbalance_after: i64,
 }
 
+/// The key of the share with a scope among the types (no type has a NUL in it).
+const SCOPE_KEY: &str = "\u{0}scope";
+
 /// What a pair says about the type and the scope of its two replies.
 struct Marks {
     chosen_type: Option<String>,
@@ -145,7 +148,7 @@ impl Imbalance {
             bump(kind, -sign);
         }
         bump(
-            "\u{0}scope",
+            SCOPE_KEY,
             sign * (i64::from(marks.chosen_scope) - i64::from(marks.rejected_scope)),
         );
     }
@@ -154,11 +157,34 @@ impl Imbalance {
         self.0.values().map(|d| d.abs()).sum()
     }
 
-    /// How much the total would change if a pair with these marks left.
+    /// How much the total would change if a pair with these marks left: only
+    /// the (at most three) values it touches count, so nothing is copied.
     fn change_if_removed(&self, marks: &Marks) -> i64 {
-        let mut after = self.clone();
-        after.add(marks, -1);
-        after.total() - self.total()
+        fn bump<'a>(touched: &mut Vec<(&'a str, i64)>, key: &'a str, by: i64) {
+            match touched.iter_mut().find(|(k, _)| *k == key) {
+                Some((_, n)) => *n += by,
+                None => touched.push((key, by)),
+            }
+        }
+        let mut touched = Vec::with_capacity(3);
+        if let Some(kind) = &marks.chosen_type {
+            bump(&mut touched, kind, -1);
+        }
+        if let Some(kind) = &marks.rejected_type {
+            bump(&mut touched, kind, 1);
+        }
+        bump(
+            &mut touched,
+            SCOPE_KEY,
+            i64::from(marks.rejected_scope) - i64::from(marks.chosen_scope),
+        );
+        touched
+            .into_iter()
+            .map(|(key, by)| {
+                let now = self.0.get(key).copied().unwrap_or(0);
+                (now + by).abs() - now.abs()
+            })
+            .sum()
     }
 }
 
@@ -197,7 +223,6 @@ fn match_marginals(pairs: Vec<&Value>, tolerance: f64) -> (Vec<&Value>, i64, i64
 
 pub fn balance(options: &Options) -> Result<Summary> {
     let mut summary = Summary::default();
-    let mut seen = HashSet::new();
     let mut pairs = Vec::new();
     for path in &options.pairs {
         let content = std::fs::read_to_string(path)
@@ -206,20 +231,28 @@ pub fn balance(options: &Options) -> Result<Summary> {
             let pair: Value = serde_json::from_str(line)
                 .with_context(|| format!("{}: bad JSON line", path.display()))?;
             summary.read += 1;
-            if !balanced_length(&pair, options.max_length_ratio) {
-                summary.dropped_length += 1;
-            } else if !seen.insert((
-                text(&pair, "chosen").to_owned(),
-                text(&pair, "rejected").to_owned(),
-            )) {
-                summary.dropped_repeated += 1;
-            } else {
+            if balanced_length(&pair, options.max_length_ratio) {
                 pairs.push(pair);
+            } else {
+                summary.dropped_length += 1;
             }
         }
     }
-    // The order of the files and of the lines must not matter.
-    pairs.sort_by_cached_key(|p| digest(&format!("{}:{}", text(p, "hash"), text(p, "rejected"))));
+    // The order of the files and of the lines must not matter: not for what is
+    // taken first, and not for which of two repeated pairs is the one kept, so
+    // the repeats are dropped after this sort and not while reading.
+    pairs.sort_by_cached_key(|p| {
+        (
+            digest(&format!("{}:{}", text(p, "hash"), text(p, "rejected"))),
+            p.to_string(),
+        )
+    });
+    let mut seen = HashSet::new();
+    pairs.retain(|p| {
+        let new = seen.insert((text(p, "chosen").to_owned(), text(p, "rejected").to_owned()));
+        summary.dropped_repeated += usize::from(!new);
+        new
+    });
 
     let mut pool: BTreeMap<&str, usize> = BTreeMap::new();
     for pair in pairs
