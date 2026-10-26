@@ -30,20 +30,26 @@ done
 /// `good.gguf`, an error to `broken.gguf` and `feat: add b` to the rest.
 fn fake_smart_commit() -> PathBuf {
     use sha2::{Digest as _, Sha256};
-    let id: String = Sha256::digest(FAKE.as_bytes())
-        .iter()
-        .take(6)
-        .map(|b| format!("{b:02x}"))
-        .collect();
-    let path = std::env::temp_dir().join(format!("sc-training-fake-smart-commit-{id}"));
-    if !path.exists() {
-        // Written aside and renamed in: nobody ever sees it half written.
-        let aside = path.with_extension(format!("{}", std::process::id()));
-        std::fs::write(&aside, FAKE).unwrap();
-        std::fs::set_permissions(&aside, std::fs::Permissions::from_mode(0o755)).unwrap();
-        std::fs::rename(&aside, &path).unwrap();
-    }
-    path
+    // Once per process: the tests run in threads, and two creating the file at
+    // once would fight over the same temporary name.
+    static PATH: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+    PATH.get_or_init(|| {
+        let id: String = Sha256::digest(FAKE.as_bytes())
+            .iter()
+            .take(6)
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        let path = std::env::temp_dir().join(format!("sc-training-fake-smart-commit-{id}"));
+        if !path.exists() {
+            // Written aside and renamed in: nobody ever sees it half written.
+            let aside = path.with_extension(format!("{}", std::process::id()));
+            std::fs::write(&aside, FAKE).unwrap();
+            std::fs::set_permissions(&aside, std::fs::Permissions::from_mode(0o755)).unwrap();
+            std::fs::rename(&aside, &path).unwrap();
+        }
+        path
+    })
+    .clone()
 }
 
 /// How many times the stand-in ran for the set in `dir` (`write_set`'s `val`).
