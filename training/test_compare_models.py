@@ -4,6 +4,7 @@
 """
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -26,6 +27,44 @@ def fake_smart_commit(d: Path) -> str:
     )
     fake.chmod(0o755)
     return str(fake)
+
+
+def test_a_relative_model_path_is_made_absolute_and_a_failure_says_why() -> None:
+    """smart-commit refuses a relative SMART_COMMIT_GGUF, and the script said nothing."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        inputs = d / "inputs.jsonl"
+        inputs.write_text("{}\n")
+        fake = d / "strict"
+        fake.write_text(
+            f"#!{sys.executable}\n"
+            "import json, os, sys\n"
+            "path = os.environ['SMART_COMMIT_GGUF']\n"
+            "if not os.path.isabs(path):\n"
+            "    sys.exit('error: expected an absolute path, got ' + path)\n"
+            "print(json.dumps({'generation': {'message': {'subject': path}}}))\n"
+        )
+        fake.chmod(0o755)
+        out = d / "out/model.jsonl"
+        here = Path.cwd()
+        os.chdir(d)
+        try:
+            assert run_eval(str(fake), "models/m.gguf", inputs, out, "full", "plain", "vulkan")
+        finally:
+            os.chdir(here)
+        assert json.loads(out.read_text())["generation"]["message"]["subject"] == str(d / "models/m.gguf")
+        # A model that cannot run leaves no trace behind and says what smart-commit said.
+        broken = d / "broken"
+        broken.write_text("#!/bin/sh\necho 'error: no such model' >&2\nexit 1\n")
+        broken.chmod(0o755)
+        gone = d / "out/gone.jsonl"
+        try:
+            run_eval(str(broken), "/x.gguf", inputs, gone, "full", "plain", "vulkan")
+        except SystemExit as e:
+            assert "no such model" in str(e) and "/x.gguf" in str(e)
+        else:
+            raise AssertionError("a failed evaluation went unnoticed")
+        assert not gone.exists()
 
 
 def test_a_flag_gained_is_better_for_a_good_metric_and_worse_for_a_bad_one() -> None:

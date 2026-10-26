@@ -49,10 +49,16 @@ def run_eval(binary: str, gguf: str, inputs: Path, out: Path, rules: str, diff: 
     if line_count(out) == line_count(inputs) > 0:
         return False
     out.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as config_home, open(out, "w") as f:
+    # smart-commit takes an absolute path only, and the script may run from anywhere.
+    gguf = str(Path(gguf).expanduser().resolve())
+    with tempfile.TemporaryDirectory() as config_home:
         env = {**os.environ, "XDG_CONFIG_HOME": config_home, "SMART_COMMIT_GGUF": gguf}
-        subprocess.run([binary, "eval", str(inputs), "--device", device, "--rules", rules, "--diff", diff],
-                       env=env, stdout=f, stderr=subprocess.DEVNULL, check=True)
+        done = subprocess.run([binary, "eval", str(inputs), "--device", device, "--rules", rules, "--diff", diff],
+                              env=env, capture_output=True, text=True)
+    if done.returncode:
+        out.unlink(missing_ok=True)
+        raise SystemExit(f"{binary} eval of {gguf} failed ({done.returncode}):\n{done.stderr[-1500:]}")
+    out.write_text(done.stdout)
     return True
 
 
