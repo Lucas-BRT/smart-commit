@@ -619,7 +619,7 @@ branch, paired with `sc-training score --against` against the plain list:
 - On the commit scenarios the 1.5B v0.2 goes from 0.51 to 0.60
   (`expected`), mostly renames and deletions; a whitespace-only file taken
   out of the diff made it invent until the list said which whitespace.
-- Next: train v0.4 on the annotated list (T1).
+- Next: train v0.4 on the annotated list (T1); the plan is H13.
 
 ### H12. DPO on the model's own samples removes its typical failures — first run: yes, but it cost the scope; second run: yes, at no cost, but the type does not improve significantly
 
@@ -828,6 +828,68 @@ against the SFT model, the base model as a control:
   DPO removes the same failures and the type rises a little, without significance (p = 0.057 with the list the
   model was trained on). One seed per configuration; differences of a few cases are noise.
 - The GGUF of the model is `smart-commit-1.5b-v0.3` on Hugging Face, public like the 0.5B's.
+
+### H13. The type is limited by what the model is trained on, not by the failures DPO removes — planned for v0.4
+
+Where the models stand (v0.3, eval-v1, Conventional, default file list):
+`type_match` 0.668 (0.5B) and 0.696 (1.5B), `type_macro_f1` 0.604 for the
+1.5B, against the failures DPO removed (`ungrounded` 0.020, `first_copied`
+0.004, `first_try` 0.996). The type has not moved since H1: SFT on more
+data (H3), without the rules (H6), without the type cap (H8) and DPO on
+its own samples (H12) all left it between 0.63 and 0.70. What is left that
+the models have not been given:
+
+1. **The list they will see.** Every model was trained on `--diff plain`;
+   the default since H11 is `annotated`, which raised the 0.5B v0.2's type
+   by 0.028 (p = 0.016) with no training on it.
+2. **The scopes.** `scope_known` is fine (0.84–0.87), but "which scope fits"
+   is still read from the history (H4: the prompt alone did not help). H4b
+   trains with the map of scopes in the prompt.
+3. **The labels.** H3: cleaner labels helped more than volume. Commits whose
+   type the diff cannot tell (a `fix` or a `feat` for the same change) ask
+   the model to guess a coin. How many of the type errors they are has not
+   been counted; S3 starts by counting them on `data/val1`.
+4. **The size of the data for the 1.5B** (H6: twenty thousand examples
+   without the rules may not be enough; v0.1 had forty thousand).
+5. **How the pairs weigh the type.** The pairs of H12 were balanced so that
+   the type's marginal does not move (the collapse onto `chore` of the first
+   sweep); the type error is one failure among several in them.
+
+**Plan.** Cheap arms on the 0.5B first, chosen on `data/val1`; the best
+recipe then on the 1.5B; DPO last, on the best SFT model. Each arm is
+`--rules full`, one seed, with the data of v0.1 unless it says otherwise.
+
+| Arm | What changes | Question |
+|---|---|---|
+| S1 | trained on `--diff annotated` | does the list it is used with beat the one it was trained on? |
+| S2 | S1 + the scope map of H4b | does the map fix the scope without costing the diff's share of the prompt? |
+| S3 | S2 + labels: the commits whose type the diff cannot tell, found by where the SFT model and the real type disagree on the training set, left out or relabelled after a reading; rare types (`perf`, `refactor`, `docs`, `build`) raised | do cleaner and more even labels move the type, as in H3? |
+| D1 | DPO (H12's recipe) on the best of S1–S3, pairs mined from it, the type failure weighted in the pairs while the marginals still match | does DPO keep what the SFT arm gained and still remove the failures? |
+| C | only if S and D fail on the type: a separate type classifier (the first token's loss, or a small model on the diff) to choose the type before the message, which the product already supports (`type_choice`, the typed start) | is the type a different problem from the message? |
+
+C is not planned before the others are read: it changes the product, and
+it is the first thing to try if S and D leave the type where it is. A
+7B trained on the same data as a teacher (H10 showed the base 7B cannot
+teach) is the other option and the most expensive.
+
+*Fixed before the first run.* A v0.4 counts as better if, on eval-v1 and
+eval-short, with the default file list, paired against the v0.3 of the same
+size: `type_match` rises by at least 0.04 (about ten net cases of 250) with
+p < 0.05 on the Conventional set, `type_macro_f1` does not fall,
+`scope_known` is not lower than the v0.3's, `ungrounded` stays at 0.03 or
+less, `first_copied` at 0.01 or less and `first_try` at 0.99 or more,
+`novel` does not grow by more than 0.02, neither `word_f1` nor `exact`
+falls with significance, `type_match` on eval-short (47) does not fall with
+significance, the mean subject is at most a column longer than the v0.3's,
+and a reading of 30 messages side by side shows no new habit. The arms S1
+to S3 are chosen on `data/val1` by the same measures against the v0.1 of
+the same size read on the same list, never on eval-v1, which is read once,
+for the recipe that goes to the 1.5B and again for the final models. If the
+type does not rise, the result goes here as it is, and C is decided then, not
+before; Kaggle's quota does not go further on S and D.
+
+*Cost.* The 0.5B arms are SFT runs like H3's; time on Kaggle's T4s is
+measured on the first arm and written here before the others start.
 
 ## Ideas not tried yet
 
