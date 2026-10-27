@@ -459,6 +459,21 @@ K=$(mktemp -d); cp kaggle_train.ipynb $K/smart-commit-lora.ipynb
 cp kaggle/train-kernel-metadata.json $K/kernel-metadata.json; kaggle kernels push -p $K
 ```
 
+S2 (S1 plus the scope map, H4b) is built from `data/curve-h4`, the same 40k commits with the paths of
+their history, and trained with S0 again on another seed (S0r) in the session after:
+
+```bash
+mkdir -p data/v04/s2 && cp data/curve-h4/inputs.jsonl data/curve-h4/meta.jsonl data/v04/s2/
+$SCT make-examples data/v04/s2 $SC --rules full --diff annotated --scopes map
+$SCT kaggle-bundle train data/kaggle/v04-s2 "s2-0.5b=0.5b:data/v04/s2/examples.jsonl" \
+  "s0r-0.5b=0.5b:data/v04/s0/examples.jsonl:--seed 1"      # no --val: the paths are not in b3/val
+kaggle datasets create -p data/kaggle/v04-s2 --dir-mode zip
+sed 's#training-v04-s"#training-v04-s2"#' kaggle/train-kernel-metadata.json > $K/kernel-metadata.json
+```
+
+S2 is evaluated on sets that have the paths of the history (`data/val1-h4`, `data/eval-v1h`,
+`data/eval-short`): on `val1` and `eval-v1` the map falls back to the names, unseen.
+
 The binary is the one of the evaluations (smart-commit 0.9.0 plus `main` up to `236d51f`): the same
 prompt code builds the training prompts and the evaluation's. Then `kaggle kernels output
 lucasbrt/smart-commit-lora`, `export_gguf.py` on each adapter and `sc-training compare` on `data/val1`

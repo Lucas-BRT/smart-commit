@@ -864,7 +864,7 @@ recipe then on the 1.5B; DPO last, on the best SFT model. Each arm is
 | S0 | the v0.1 recipe (`--diff plain`) with today's prompt | the control: the prompt changed since v0.1 (the diff budget, the types listed), so S1 against v0.1 would mix both |
 | S1 | trained on `--diff annotated` (S0's data, only the file list differs: 15,957 of the 40,000 examples have annotations) | does the list it is used with beat the one it was trained on? |
 | S2 | S1 + the scope map of H4b | does the map fix the scope without costing the diff's share of the prompt? |
-| S3 | S2 + labels: the commits whose type the diff cannot tell, found by where the SFT model and the real type disagree on the training set, left out or relabelled after a reading; rare types (`perf`, `refactor`, `docs`, `build`) raised | do cleaner and more even labels move the type, as in H3? |
+| S3 (not run as written, see below) | S2 + labels: the commits whose type the diff cannot tell, found by where the SFT model and the real type disagree on the training set, left out or relabelled after a reading; rare types (`perf`, `refactor`, `docs`, `build`) raised | do cleaner and more even labels move the type, as in H3? |
 | D1 | DPO (H12's recipe) on the best of S1–S3, pairs mined from it, the type failure weighted in the pairs while the marginals still match | does DPO keep what the SFT arm gained and still remove the failures? |
 | C | only if S and D fail on the type: a separate type classifier (the first token's loss, or a small model on the diff) to choose the type before the message, which the product already supports (`type_choice`, the typed start) | is the type a different problem from the message? |
 
@@ -916,10 +916,20 @@ them), `--rules full --diff annotated`, S1 paired against S0, Conventional:
   training data has 131 `perf` of 24,000 Conventional commits (0.5%; 4% in `val1`) and 2,398 `refactor`.
   Part of the errors is the labels (`fix`/`feat`/`chore` for the same change); the rare types are not
   written at all.
-- **Consequence for S2 and S3.** S2 is compared with S1 (the list the product uses); the type should
-  not move with the map, which is about the scope, and `scope_known` is already 0.88. S3 as written
-  (cleaner and more even labels) gets a definite first form: the rare types raised in the data (they are
-  never written), which H8's cap did not test (it lowered the share of `fix`).
+- **Consequence for S2.** S2 is compared with S1 (the list the product uses); the type should not move
+  with the map, which is about the scope (`scope_known` is already 0.88), so S2 is read on `scope_fits`,
+  and on the type only to see that it does not fall.
+- **S3 as written is not run.** The first form it took, raising the rare types, looked at the
+  frequencies: in the 625,467 typed commits of `train-all` `perf` is 0.49% and `style` 0.98%, and the
+  training set has 0.5% and 1.2%: the model was trained on the natural shares. `perf` is 4% of `val1`
+  and 2% of eval-v1 (5 of 250), a property of those samples; raising it to 4% would fit the model to
+  them and make it write `perf` where the repositories rarely have it, which is what H8 found with the
+  other cap (the boundary moves). `refactor` is 10% of the training data and written a third of the
+  times it should be: not a matter of frequency either. Cleaner labels (dropping the commits whose type
+  the diff cannot tell) stay for later, since they need a model's disagreement with the real type and
+  a reading, and nothing here says how many there are.
+- **S0r.** The second T4 of S2's session runs S0 again with `--seed 1`: how much `type_match` moves
+  with the seed alone, which every difference between arms (a few cases of 250) has to be read against.
 
 ## Ideas not tried yet
 
