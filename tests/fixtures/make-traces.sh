@@ -428,4 +428,5 @@ real_change conventional-en-results-as-h12 2cd40f7 "docs(training): add H12 to t
 # A fix so that eval loads its own model instead of joining the server kept
 # loaded between commits (which stops after model.keep_loaded minutes), with its
 # test, answered as a new `--keep` option that does not exist.
+# shellcheck disable=SC2016  # the backticks are the reply's own
 real_change conventional-en-eval-keep-loaded-as-keep-option 26006ac 'feat(cli): add `--keep` option to keep a loaded model between commits'
