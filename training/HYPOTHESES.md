@@ -895,6 +895,32 @@ Their validation loss is logged on one set (S1's, annotated) and is not
 compared between the two: the arms are compared on `data/val1` with
 `sc-training compare`. The time of each arm is written here when it ends.
 
+**S0 and S1 (first result).** The same 40k commits of v0.1, `--rules full`, QLoRA as v0.1, one seed,
+one on each T4 of a session (2.48 h and 2.39 h, 2.0 h of the session; the quota 6.98 → 8.99 of 30 h).
+`data/val1-h4` (250 Conventional + 250 free; the paths of the history are in it and the lists ignore
+them), `--rules full --diff annotated`, S1 paired against S0, Conventional:
+
+| | type_match | type_macro_f1 | scope_known | ungrounded | first_copied | first_try | fallback | word_f1 | novel |
+|---|---|---|---|---|---|---|---|---|---|
+| S0 (plain) | 0.632 | 0.426 | 0.884 | 0.088 | 0.048 | 0.948 | 0.028 | 0.317 | 0.138 |
+| S1 (annotated) | 0.628 | 0.426 | 0.884 | 0.080 | 0.056 | 0.944 | 0.028 | 0.320 | 0.135 |
+| paired | +9/−10, p = 1.0 | | +2/−2 | +9/−11, p = 0.82 | +5/−3 | +4/−5 | +5/−5 | | |
+
+- **Training on the annotated list does not move the type** (nor anything else) on `val1-h4`: S1 is not
+  better than S0 by the criteria above. On the 14 + 29 commit scenarios S1 loses a type match and
+  `type_macro_f1` (0.564 → 0.485), one case. The list helps models that never saw it (H11), and
+  gains nothing from being trained on, at 0.5B.
+- **Where the type is wrong** (S1, `val1-h4`, 93 of 250): `feat` written `fix` 19 times, `fix` written
+  `feat` 9 (together 30% of the errors); `chore` is on one side of 31 (`chore` → `fix` 11); `perf` (10
+  real) is never written and `refactor` 3 times for 9 real; `fix` is written 98 times for 75 real. The
+  training data has 131 `perf` of 24,000 Conventional commits (0.5%; 4% in `val1`) and 2,398 `refactor`.
+  Part of the errors is the labels (`fix`/`feat`/`chore` for the same change); the rare types are not
+  written at all.
+- **Consequence for S2 and S3.** S2 is compared with S1 (the list the product uses); the type should
+  not move with the map, which is about the scope, and `scope_known` is already 0.88. S3 as written
+  (cleaner and more even labels) gets a definite first form: the rare types raised in the data (they are
+  never written), which H8's cap did not test (it lowered the share of `fix`).
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
