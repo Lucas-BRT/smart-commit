@@ -115,6 +115,23 @@ pub fn missing_file(options: &LlamaCppOptions) -> Option<BackendError> {
     None
 }
 
+/// Starts the program, again a few times if it is "text file busy": a file
+/// written a moment ago (the setup installs llama-server and starts it) can
+/// still be open for writing in a process forked in between, and is free in a
+/// few milliseconds. Any other error is the first one.
+fn spawn_when_free(command: &mut Command) -> std::io::Result<Child> {
+    let mut tries = 0;
+    loop {
+        match command.spawn() {
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && tries < 10 => {
+                tries += 1;
+                std::thread::sleep(Duration::from_millis(20));
+            }
+            other => return other,
+        }
+    }
+}
+
 impl LlamaCppBackend {
     /// Starts `llama-server` and waits until the model is loaded.
     pub fn start(options: &LlamaCppOptions) -> Result<Self, BackendError> {
@@ -150,14 +167,14 @@ impl LlamaCppBackend {
             .map_err(|e| unavailable(format!("cannot create {}: {e}", log_path.display())))?;
 
         let started = Instant::now();
-        let child = Command::new(&options.server)
+        let mut command = Command::new(&options.server);
+        command
             .args(server_args(options, &socket))
             .args(extra)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
-            .stderr(log)
-            .spawn();
-        let child = match child {
+            .stderr(log);
+        let child = match spawn_when_free(&mut command) {
             Ok(child) => child,
             Err(err) => {
                 let _ = std::fs::remove_dir_all(&dir);

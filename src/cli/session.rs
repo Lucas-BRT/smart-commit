@@ -2,6 +2,7 @@
 
 use std::cell::OnceCell;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use anyhow::{Context as _, Result, bail};
 use smart_commit::backend::device::Target;
@@ -60,7 +61,7 @@ impl Session {
         if let Some(loaded) = self.backend.get() {
             return Ok(loaded);
         }
-        let loaded = start_backend(&self.resolved, &self.mock_responses)?;
+        let loaded = start_backend(&self.resolved, &self.mock_responses, true)?;
         Ok(self.backend.get_or_init(|| loaded))
     }
 
@@ -138,8 +139,19 @@ impl Session {
 }
 
 /// The backend `resolved` asks for, and its model and device for people.
-pub(super) fn start_backend(resolved: &Resolved, mock_responses: &[String]) -> Result<Loaded> {
-    let settings = resolved.settings();
+/// With `keep`, a llama.cpp model joins the server kept loaded between
+/// commits when `model.keep_loaded` asks for one; a command that runs for
+/// long on its own (`eval`) loads its own, since the kept one stops after
+/// that many minutes without a connection, however busy this command is.
+pub(super) fn start_backend(
+    resolved: &Resolved,
+    mock_responses: &[String],
+    keep: bool,
+) -> Result<Loaded> {
+    let mut settings = resolved.settings();
+    if !keep {
+        settings.keep_loaded = Duration::ZERO;
+    }
     Ok(match settings.backend {
         BackendKind::Mock => (
             Box::new(MockBackend::new(mock_responses.to_vec())),

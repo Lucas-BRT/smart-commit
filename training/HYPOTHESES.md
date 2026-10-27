@@ -113,7 +113,7 @@ shorter prompt read and replies of 42 characters instead of 78. Kaggle T4,
 
 Bundle b2 (`lucasbrt/smart-commit-training-b2`, uploaded before the scope
 map of H4, so trained on the prompt without it): a learning curve on the
-0.5B with nested subsets (`nest.py`) of 2.5k, 5k, 20k and 40k examples,
+0.5B with nested subsets (`nest.py`, now `sc-training nest`) of 2.5k, 5k, 20k and 40k examples,
 the 40k set on the 1.5B, and h3a, the 0.5B on 9,278 examples: H1's set
 with the unsupported and version-only targets dropped and nothing chosen
 in their place, `sc-training filter-supported data/h1 data/h3a` (first made with an
@@ -314,7 +314,7 @@ for moves into the weights; the prompt shrinks.
   candidate before it is in the registry. Omitted keeps what varies by
   repository (types, scopes, examples) and what the training data lacks
   (tickets, Portuguese, gitmoji).
-- **Training.** The same pipeline, with `make_examples.py` building prompts
+- **Training.** The same pipeline, with `make_examples.py` (now `sc-training make-examples`) building prompts
   with `--rules omitted`. Best trained together with H5 (young repositories) in
   one bundle, on about 20k examples, where H3's curve flattens.
 - **Metrics.** eval-v1 and eval-short with the switch on against H2/H1 with
@@ -548,7 +548,7 @@ counted once): 0.5B 1.150 → 0.976 s per message, 1.5B 2.532 → 2.156 s.
   and in young repositories ungrounded 0.112 (0.142 without); v0.2 0.5B
   with the full prompt loses instead (type_match 0.612, type_macro_f1
   0.448). Twenty thousand examples without the rules may not be enough for
-  the 1.5B to take them in; v0.1 1.5B had forty thousand. To try in v0.3.
+  the 1.5B to take them in; v0.1 1.5B had forty thousand. To try in v0.4.
 - Both are public on Hugging Face and registered as experimental:
   `LucasBRT/smart-commit-0.5b-v0.2` (revision `bdb93a5`) and
   `LucasBRT/smart-commit-1.5b-v0.2` (`4bca5dc`); v0.1 stays the better
@@ -619,7 +619,215 @@ branch, paired with `sc-training score --against` against the plain list:
 - On the commit scenarios the 1.5B v0.2 goes from 0.51 to 0.60
   (`expected`), mostly renames and deletions; a whitespace-only file taken
   out of the diff made it invent until the list said which whitespace.
-- Next: train v0.3 on the annotated list (T1).
+- Next: train v0.4 on the annotated list (T1).
+
+### H12. DPO on the model's own samples removes its typical failures — first run: yes, but it cost the scope; second run: yes, at no cost, but the type does not improve significantly
+
+SFT shows what to write, never what not to. DPO trains on pairs: a reply the
+model sampled that a check rejects (a history subject copied, a detail found
+nowhere in the diff, a vague description), against one that passes
+(`train_dpo.py`: a LoRA on the SFT model merged, which is also the
+reference; `mine_pairs.py` and `sc-training pairs` make the pairs).
+
+**First run** (v0.1 0.5B, `--rules full --diff plain`). 3,551 inputs of
+`data/test2to5h` outside the evaluation sets' repositories, four samples each
+at 0.7, 1,287 pairs (964 with the real subject chosen), of which only 72
+Conventional (191 of the 3,551 inputs were), judged by the checks that need
+no reference. β 0.1, learning rate 2e-5, 80 steps of 16 pairs, 12 minutes on the
+RTX 3050. One binary, Vulkan, greedy, eval-v1 (250 + 250) and eval-short
+(47 + 150), the SFT model re-exported the same way, paired:
+
+| eval-v1 | SFT | DPO β 0.1 | DPO β 0.3 |
+|---|---|---|---|
+| ungrounded, Conventional / free | 0.104 / 0.108 | 0.008 / 0.012 | 0.012 / 0.016 |
+| first_copied, Conventional / free | 0.040 / 0.084 | 0.016 / 0.008 | 0.020 / 0.008 |
+| fallback, Conventional / free | 0.028 / 0.076 | 0.008 / 0.008 | 0.012 / 0.008 |
+| first_try, Conventional / free | 0.960 / 0.916 | 0.980 / 0.992 | 0.980 / 0.992 |
+| scope_known, Conventional | 0.844 | 0.796 | 0.804 |
+| type_match, Conventional | 0.628 | 0.612 | 0.612 |
+| word_f1, Conventional / free | 0.333 / 0.230 | 0.319 / 0.251 | 0.323 / 0.250 |
+
+- What the pairs teach, it learns: paired on all of eval-v1, `ungrounded`
+  +0/−48, `first_copied` +2/−27, `first_try` +27/−3 (all p < 0.001), the
+  same on eval-short. The messages do not turn generic: they are a little
+  longer (39 columns against 37; the real ones 41) and the share of their
+  content words that are in none of the history, the paths and the diff
+  (`novel` of `sc-training compare`) does not grow, it falls (0.147 → 0.126
+  Conventional, 0.118 → 0.105 free; the real subjects 0.327 Conventional).
+- What it did not teach, it lost: `scope_known` +0/−12 (p < 0.001; eval-short
+  0.681 → 0.617) and `type_match` +9/−13 (p = 0.52; eval-short 0.617 → 0.702).
+  β 0.3 stays closer to the SFT model and did not recover the scope, so the
+  cause is the pairs, not how far the model moves.
+- The pairs: 94% of them are free-style prompts. The 191 Conventional inputs
+  came from 20 repositories (few repositories of the test splits are
+  Conventional), and the judge ignored the type and the scope. Of those
+  inputs, 78% have at least one sample of the real type, 50% have samples of
+  the right and the wrong type, and 53% of the samples are right: there is
+  room for pairs on the type.
+
+**Second run.** Conventional inputs from `data/train-all`
+without the commits the SFT trained on (`data/curve`) and without the
+evaluation and validation repositories: 4,500 from 680 repositories (at most
+8 each, 22% of a type) and 1,000 of young repositories, six samples each,
+mined on Kaggle's T4s; a judge that also rejects a scope the history never
+used and a type other than the real commit's, and prefers a sample of the
+model itself; pairs balanced by repository, type and bucket, a tenth of the
+repositories apart for validation (`sc-training balance`). A sweep of β,
+learning rate, epochs and `--sft-weight` on the 0.5B chosen on `data/val1`,
+never on eval-v1, which is read once, for the chosen configuration; then the
+1.5B.
+
+*Fixed before the second run.* It counts as better if, on eval-v1 and
+eval-short, paired against the SFT model: `type_match` and `type_macro_f1`
+rise on the Conventional set, `scope_known` is back at 0.84 or more, and
+`ungrounded`, `first_copied` and `first_try` keep at least 80% of the first
+run's gain; and neither `word_f1` nor `exact` falls with significance, the
+share of content words found nowhere (`novel`) does not grow (written "falls"
+by mistake before the first sweep; the plan said it must not grow, as the guard
+against invention), the mean subject stays between 36 and 42 columns, and a reading of 30 messages side by side shows no new habit. If
+not, the result goes here as it is and Kaggle's quota goes no further on it.
+
+**Second run, first sweep: it failed, and why.** Six runs of the 0.5B on
+Kaggle's T4s (3,615 pairs of 826 repositories, 514 pairs of other
+repositories for validation), chosen on `data/val1` (250 Conventional + 250
+free), paired against the SFT model. All six learn the validation pairs
+(accuracy 0.77–0.83) and the chosen reply's reward turns negative in all
+(−0.5 to −1.6; −0.05 with `--sft-weight`): the model makes both replies less
+likely, the rejected one more so:
+
+| val1, Conventional | type_match | scope_known | replies with a scope | `chore` replies (real: 35 of 250) | ungrounded | word_f1 | novel |
+|---|---|---|---|---|---|---|---|
+| SFT | 0.624 | 0.904 | 0.23 | 38 | 0.076 | 0.318 | 0.134 |
+| β 0.1, 2e-5 | 0.436 | 1.000 | 0.00 | 141 | 0.000 | 0.301 | 0.054 |
+| β 0.3, 2e-5 | 0.556 | 0.980 | 0.03 | 88 | 0.008 | 0.319 | 0.076 |
+| β 0.1, 5e-5 | 0.160 | 1.000 | 0.00 | 240 | 0.004 | 0.213 | 0.041 |
+| β 0.3, 5e-5 | 0.492 | 1.000 | — | — | 0.000 | 0.320 | 0.064 |
+| β 0.1, 2e-5, `--sft-weight 0.2` | 0.608 | 0.972 | 0.07 | 65 | 0.004 | 0.335 | 0.070 |
+| β 0.1, 1e-5, 2 epochs | 0.400 | 1.000 | — | — | 0.000 | 0.292 | 0.047 |
+
+- It is not the type pairs that failed but what the pairs add up to. The
+  rejected reply is a sample of the model, which errs most in the types it
+  writes most: among the Conventional pairs `fix` is chosen 621 times and
+  rejected 683, `feat` 584 and 681, `chore` 603 and 403; 33% of the chosen
+  replies have a scope against 47% of the rejected. The cheapest way to
+  lower the loss is to move the model's habit (fewer `fix` and `feat`, more
+  `chore`, no scope) and not to learn which type each diff is. `scope_known`
+  of 1.0 is that: no scope is always known.
+- Only the run that keeps the chosen reply likely (`--sft-weight`) stays
+  close to the SFT model. It beats it on `ungrounded`, `first_copied`,
+  `first_try` and `word_f1`, loses 4 `type_match` cases (not significant)
+  and still writes `chore` twice as often as the real commits.
+- All six use far fewer words that are in nothing the model was given
+  (`novel`: 0.134 for the SFT model, 0.04–0.08 for them, the real subjects
+  0.316): they say what the diff says and not what the change means. Side
+  by side (`sc-training compare --read`), for a change the real commit calls
+  `feat: export getElementInfo function` the run without `--sft-weight`
+  writes `chore: move matrix utils to utils`. It is not the invention the
+  criterion guards against but a habit to count.
+- By the criteria above none of the six is better (`type_match` does not
+  rise). The mean subject of the SFT model on val1 is 35.3 columns, below the
+  36–42 the criteria assumed from eval-v1.
+- Next: pairs whose chosen and rejected replies have the same distribution of
+  type and of scope (`sc-training balance --match-marginals`), so that only
+  what depends on the diff can lower the loss, and a larger `--sft-weight`.
+
+**Second run, second sweep: the collapse is gone.** Six runs of the 0.5B on the pairs with matched
+marginals (3,172 for training of 802 repositories, the same 514 for validation), `--sft-weight` 0,
+0.2, 0.5 and 1.0, on Kaggle's T4s (about 1.7 h of the session, 5.05 of the 30 h of the week in all).
+Chosen on `data/val1`, paired against the SFT model:
+
+| val1, Conventional | type_match | type_macro_f1 | scope_known | replies with a scope | novel | ungrounded | first_try (free) | word_f1 |
+|---|---|---|---|---|---|---|---|---|
+| SFT | 0.624 | 0.528 | 0.904 | 0.23 | 0.134 | 0.076 | 0.936 | 0.318 |
+| β 0.1, 2e-05, `--sft-weight` 0 | 0.584 | 0.399 | 0.936 | 0.18 | 0.063 | 0.000 | 1.000 | 0.328 |
+| β 0.1, 2e-05, `--sft-weight` 0.2 | 0.628 | 0.517 | 0.924 | 0.20 | 0.075 | 0.008 | 0.988 | 0.346 |
+| β 0.1, 2e-05, `--sft-weight` 0.5 | 0.628 | 0.515 | 0.924 | 0.21 | 0.086 | 0.020 | 0.980 | 0.339 |
+| β 0.1, 2e-05, `--sft-weight` 1 | 0.636 | 0.518 | 0.928 | 0.21 | 0.085 | 0.028 | 0.976 | 0.341 |
+| β 0.1, 1e-05, `--sft-weight` 0.5 | 0.640 | 0.521 | 0.904 | 0.24 | 0.087 | 0.024 | 0.976 | 0.341 |
+| β 0.3, 2e-05, `--sft-weight` 0.5 | 0.632 | 0.514 | 0.928 | 0.21 | 0.081 | 0.012 | 0.976 | 0.343 |
+
+- The matching alone is not enough: without `--sft-weight` the chosen reply still becomes less
+  likely (validation reward −0.446, against +0.08 to +0.13 with 0.5 or more) and the type falls
+  (0.584, `type_macro_f1` 0.399). With it the type, the scope and the habits stay where the SFT
+  model has them (in the first sweep the runs wrote `chore` for 141 to 240 of the 250 commits) and the
+  failures the pairs show go: `ungrounded` +12 to +19, `first_copied` +5 to +8, `first_try` +5 to +8 cases.
+- The type is flat on `val1` for the five runs with `--sft-weight` (+1 to +4 cases, none significant; `type_macro_f1` 0.514–0.521 against
+  0.528). `novel` falls to a half or two thirds again (0.134 → 0.075–0.087; the real commits 0.316).
+  A reading of 30 cases side by side shows replies close to the SFT model's, a complement dropped or a
+  verb changed, and no new habit.
+- Run chosen on `val1`: **m-b01-lr2-s02** (β 0.1, 2e-5, `--sft-weight` 0.2), the one with the most
+  significant gains and the highest `word_f1` (0.346). The scenarios (14 Conventional) lose one case of
+  `type_match` and one or two of `expected` in every DPO run, and are even or a little better on the 29
+  free ones (`expected` −1 to +2).
+
+Read once on the evaluation sets, paired against the SFT model:
+
+| | SFT → m-b01-lr2-s02 | paired |
+|---|---|---|
+| eval-v1 Conventional, `type_match` | 0.628 → 0.664 | +15/−6, p = 0.078 |
+| eval-v1 Conventional, `type_macro_f1` | 0.531 → 0.557 | |
+| eval-v1 Conventional, `scope_known`; replies with a scope | 0.844 → 0.840; 0.396 → 0.380 | +4/−5 |
+| eval-v1 Conventional, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.104 → 0.008; 0.040 → 0.004; 0.960 → 0.996; 0.028 → 0.004 | all p < 0.05 |
+| eval-v1 free, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.108 → 0.008; 0.084 → 0.004; 0.916 → 0.996; 0.076 → 0.004 | all p < 0.001 |
+| eval-v1, `word_f1` Conventional, free; `novel` Conventional | 0.333 → 0.347, 0.230 → 0.247; 0.147 → 0.078 | |
+| eval-short Conventional (47), `type_match`; `type_macro_f1`; `scope_known` | 0.617 → 0.617; 0.669 → 0.609; 0.681 → 0.617 | +3/−3; ; +0/−3 |
+| eval-short free (150), `first_try`; `first_copied` | 0.840 → 1.000; 0.160 → 0.000 | p < 0.001 |
+
+- **Against the criteria fixed above:** met on eval-v1 (the type and its macro F1 rise, though the
+  `type_match` not with significance; `scope_known` is 0.840; the gains of the first run are kept or
+  exceeded; `word_f1`, `exact` and `novel` are fine; the Conventional subjects average 40.2 columns);
+  **not met on eval-short**, where `type_macro_f1` falls and `scope_known` loses three cases, on 47
+  commits. Taken together: the DPO now removes what the first run removed, at no cost to the type and the
+  scope, and does **not** improve the type significantly, which was the aim of the second run. One seed
+  per configuration, so differences of a few cases between runs are noise.
+- The six runs are in a private repository, `LucasBRT/smart-commit-0.5b-dpo-runs` (adapters, logs,
+  `run.json`, Q4_K_M GGUF and the results), as experiments and not as a version of the model.
+- Next, by decision of the author and not because the criteria were met: the same configuration on the
+  1.5B (below).
+
+**Second run on the 1.5B.** The same recipe on `smart-commit-1.5b-v0.1`: 3,091 pairs (885 of
+free-style commits, 795 repositories) with matched marginals, 500 for validation, β 0.1, lr 2e-5, one epoch
+(193 steps), two runs of `--sft-weight` 0.2 and 0.5, one on each T4 of the same Kaggle session (82 minutes
+each, 4.4 GiB; about 1.5 h of the session). Validation accuracy 0.754 and 0.740.
+Chosen on `data/val1` (never on eval-v1), paired against the SFT model, 250 Conventional commits:
+
+| val1, Conventional | type_match | type_macro_f1 | scope_known | novel | ungrounded | first_copied | word_f1 |
+|---|---|---|---|---|---|---|---|
+| SFT | 0.636 | 0.432 | 0.864 | 0.157 | 0.072 | 0.056 | 0.342 |
+| `--sft-weight` 0.2 | 0.628 | 0.429 | 0.868 | 0.121 | 0.012 | 0.000 | 0.338 |
+| `--sft-weight` 0.5 | 0.636 | 0.461 | 0.868 | 0.114 | 0.028 | 0.004 | 0.344 |
+
+Both remove the failures (`ungrounded` +15 and +11 cases net, `first_copied` +14 and +13, all p < 0.01) and
+leave the type and the scope where they were; only 0.5 raises `type_macro_f1`. Run chosen, **m15-b01-lr2-s05**,
+for that, for the highest `word_f1` and the lowest `novel` of the two; the rule used for the 0.5B (the most
+significant gains and the highest `word_f1`) points to either, and the choice was written down before eval-v1
+was read. A reading of the cases side by side shows replies close to the SFT model's (a complement dropped, a
+verb or a scope changed) and no new habit.
+
+Read once on the evaluation sets (smart-commit 0.9.0 plus `main` up to `236d51f`, as for the 0.5B), paired
+against the SFT model, the base model as a control:
+
+| | SFT → m15-b01-lr2-s05, plain list | annotated list | paired (plain) |
+|---|---|---|---|
+| eval-v1 Conventional, `type_match` | 0.660 → 0.692 | 0.676 → 0.696 | +11/−3, p = 0.057 (annotated +9/−4, p = 0.27) |
+| eval-v1 Conventional, `type_macro_f1` | 0.568 → 0.589 | 0.581 → 0.604 | |
+| eval-v1 Conventional, `scope_known`; replies with a scope | 0.848 → 0.864; 0.388 → 0.384 | 0.852 → 0.868 | +6/−2, p = 0.29 |
+| eval-v1 Conventional, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.068 → 0.020; 0.076 → 0.004; 0.924 → 0.996; 0.024 → 0.004 | 0.076 → 0.020; 0.072 → 0.004; 0.928 → 0.996; 0.028 → 0.004 | p < 0.001 for the first three; fallback p = 0.06 |
+| eval-v1 free, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.068 → 0.016; 0.104 → 0.004; 0.896 → 0.996; 0.032 → 0.004 | 0.056 → 0.024; 0.112 → 0.004; 0.888 → 0.996; 0.036 → 0.004 | p ≤ 0.016 (annotated `ungrounded` p = 0.057) |
+| eval-v1, `word_f1` Conventional, free; `novel` Conventional | 0.360 → 0.366, 0.255 → 0.265; 0.157 → 0.136 | 0.362 → 0.366, 0.256 → 0.266; 0.145 → 0.130 | |
+| eval-short Conventional (47), `type_match`; `type_macro_f1`; `scope_known` | 0.723 → 0.681; 0.721 → 0.712; 0.596 → 0.638 | 0.681 → 0.702; 0.674 → 0.739; 0.553 → 0.638 | +2/−4, p = 0.69 (annotated +2/−1) |
+| eval-short free (150), `first_try`; `first_copied` | 0.873 → 0.993; 0.120 → 0.000 | 0.867 → 0.993; 0.127 → 0.000 | p < 0.001 |
+| base Qwen2.5-Coder-1.5B, same binary: eval-v1 Conventional `type_match`; `fallback` | 0.428; 0.060 | 0.436; 0.056 | |
+
+- **Against the criteria fixed above:** met on eval-v1 (the type and its macro F1 rise, the type not with
+  significance; `scope_known` is 0.864; `ungrounded`, `first_copied` and `first_try` are as good as the 0.5B's;
+  `word_f1`, `exact` and `novel` are fine); the Conventional subjects average 42.7 columns, 0.2 above the SFT
+  model's 42.3 and above the 36–42 the criteria set, which the SFT model already was. On eval-short, with
+  47 commits, the plain list loses 2 net cases of `type_match` and 0.009 of `type_macro_f1` and the annotated
+  one gains 1 and 0.065; `scope_known` rises with both. Not the fall of the 0.5B. Taken together: at 1.5B the
+  DPO removes the same failures and the type rises a little, without significance (p = 0.057 with the list the
+  model was trained on). One seed per configuration; differences of a few cases are noise.
+- The GGUF of the model is `smart-commit-1.5b-v0.3` on Hugging Face, public like the 0.5B's.
 
 ## Ideas not tried yet
 

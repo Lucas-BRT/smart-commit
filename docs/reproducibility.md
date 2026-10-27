@@ -111,6 +111,38 @@ sources):
 
 To change one, change its version and hash together.
 
+## Training and mining on Kaggle
+
+Part of the training (`training/`) runs on Kaggle's T4s, and what runs there is
+pinned like the rest, with the limits of a machine that is not ours. The
+quota and the sessions are in [training](training.md#kaggles-quota).
+
+| Component | How it is pinned |
+|---|---|
+| llama.cpp for the mining | b11381, the CUDA 12.8 build and its runtime libraries (`llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz` and `cudart-llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz`), each by SHA-256 in `training/tools/src/kaggle.rs`, checked by the notebook before it unpacks them |
+| The models it samples from | `smart-commit-0.5b-v0.1` and `smart-commit-1.5b-v0.1`, read from the registry (`src/models/registry.rs`) by `sc-training kaggle-bundle` (repository commit and SHA-256), downloaded and checked by size and SHA-256 |
+| The base models of the training | the Qwen2.5-Coder revisions of `training/tools/src/kaggle.rs` (those `scripts/export-model.sh` pins) |
+| Python packages | the versions of `training/uv.lock` (`requirements.txt` of the bundle), except torch: Kaggle's own CUDA build is kept, and `run.json` records its version. Kaggle's `torchao` is removed, as the pinned `peft` refuses it |
+| The inputs of a run | the bundle holds them and the notebook checks them: the SHA-256 of each shard's prompts (mining), of the pairs and of the SFT adapter (DPO) |
+| The kernel | `training/kaggle/*-kernel-metadata.json`: the image by digest, the GPU, the internet and that it is private; `dataset_sources` is the bundle's dataset of the run |
+
+What is recorded: `run.json` of a training has the arguments, the SHA-256 of
+the pairs, the validation pairs, the SFT adapter and the base weights, the
+versions of torch, transformers, peft and accelerate, the CUDA version, the GPU
+and its driver, Python, the seconds and the log of the losses; the notebooks keep each job's
+log.
+
+What is not reproducible, and is treated as an input instead: the weights a
+training makes (GPU kernels are not deterministic, as above), and so the DPO
+adapters. The sampling of the mining is deterministic for a model, a llama.cpp
+build, a backend and a GPU, because every reply has a seed made from the
+input's number and the sample's; whether the CUDA candidates of the second run
+equal the Vulkan ones of the first for the same input has not been checked,
+and the first run's were sampled on an RTX 3050 through Vulkan. The pairs
+made from candidates are deterministic, and so are the balanced sets
+(`sc-training balance` takes its pairs in the order of a hash, not of the
+files).
+
 ## Generation
 
 - Decoding is greedy, and every parameter is explicit in `GenerationConfig`

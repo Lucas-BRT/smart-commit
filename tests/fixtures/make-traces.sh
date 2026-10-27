@@ -381,3 +381,51 @@ done > SHA256SUMS
 git add SHA256SUMS
 "$BIN" --backend mock --mock-response "chore: add the checksums of the archives" \
   --trace "$OUT/conventional-en-dense.json" >/dev/null
+
+# A fix to a server flag with its test, answered as a test that "traces"
+# something: the type is wrong (the change fixes the RAM use) and the verb is
+# invented.
+real_change conventional-en-server-flag-as-test 80f9ba2 "test(training): trace that llama-server keeps up to 8 GiB of prompts"
+
+# A new training script with its tests and documentation, answered as the
+# mining of pairs, which an earlier commit added.
+real_change conventional-en-training-as-mining 534d7d9 "feat(training): add DPO mining to training"
+
+# A bundle and a notebook that sample replies on Kaggle, answered as a dataset
+# made from mined pairs: the bundle holds the inputs, the pairs come after.
+real_change conventional-en-mining-bundle-as-pairs adfe47e "feat(training): make a Kaggle dataset from mined pairs"
+
+# Validation pairs, a loss term and the log of each reply's reward added to a
+# DPO script that already had its loss, answered as adding the loss.
+real_change conventional-en-dpo-validation-as-loss a8cf80a "feat(training): add a DPO loss to train_dpo.py"
+
+# A fix to the notebook's install cell and a new check on its runs, with a test
+# that pins both, answered as a test that fails when torchao is used.
+real_change conventional-en-notebook-fix-as-test 5635f71 "test(training): add a test that fails when Kaggle's torchao is used"
+
+# A fix to a script that passed a relative path to smart-commit, with the test
+# that pins it, answered as a test: again the type of a fix with its test.
+real_change conventional-en-script-fix-as-test 401d67c "test(training): make sure relative gguf paths are made absolute"
+
+# Four fixes to the training scripts and notebooks (hashes before the training, the
+# packing of a run, no GPU, reading by newlines), answered as a refactor that adds
+# an assertion on the GPU.
+real_change conventional-en-training-fixes-as-refactor 011c9eb "refactor(training): add assert gpus, 'no GPU: turn the accelerator on'"
+
+# Two fixes to the balancing of pairs (the repeats dropped in the order of the
+# files, a matching that copied a map per pair), answered in the style of the
+# repository's own fixture commits.
+real_change conventional-en-balance-fix-as-trace fa673a1 "test(training): trace four balance tests answered as a refactor of one"
+
+# Three fixes to compare (stale traces, model names, the length per set), answered
+# once more in the style of the repository's fixture commits.
+real_change conventional-en-compare-fix-as-trace 726e1d1 "test(training): trace two models with the same name and make them again"
+
+# The results of a sweep, the roadmap and the instructions to go on from another
+# machine, answered as adding H12 to training.md, which H12's page was not.
+real_change conventional-en-results-as-h12 2cd40f7 "docs(training): add H12 to training.md"
+
+# A fix so that eval loads its own model instead of joining the server kept
+# loaded between commits (which stops after model.keep_loaded minutes), with its
+# test, answered as a new `--keep` option that does not exist.
+real_change conventional-en-eval-keep-loaded-as-keep-option 26006ac 'feat(cli): add `--keep` option to keep a loaded model between commits'

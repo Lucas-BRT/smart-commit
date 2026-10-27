@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of a8cf80a",
+      "feat(training): balance and split pairs",
+      "feat(training): judge the scope and the type of a reply when making pairs",
+      "test(fixtures): trace a mining bundle answered as a dataset of pairs",
+      "feat(training): mine preference pairs on Kaggle's two T4s",
+      "feat(training): mine pairs from prompts built beforehand",
+      "feat(training): let select leave out the commits and repositories of other selections"
+    ],
+    "history_files": [
+      [
+        "training/README.md",
+        "training/test_train_dpo.py",
+        "training/train_dpo.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/README.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_train_dpo.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/train_dpo.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/README.md",
+        "old_path": null,
+        "lines": [
+          6,
+          1
+        ],
+        "hunks": "@@ -281,3 +281,8 @@ the SFT one, so that is also the reference, and only one copy is loaded. The\n loss starts at ln 2 (0.693); `accuracy` is the share of pairs whose chosen\n-reply gained more than the rejected one. Defaults: β 0.1, learning rate 2e-5,\n+reply gained more than the rejected one; `chosen_reward` and `rejected_reward`\n+are β times how much more likely the model made each than the reference did\n+(the chosen one falling is the sign of the model forgetting how to write it).\n+`--val` takes the validation set of `balance`, scored every `--eval-every`\n+steps (`val_loss`, `val_accuracy`, ...), and `--sft-weight` adds the chosen\n+reply's per-token loss to the DPO loss. Defaults: β 0.1, learning rate 2e-5,\n rank 16, 2 pairs per pass and 8 passes per step, one epoch.\n"
+      },
+      {
+        "path": "training/test_train_dpo.py",
+        "old_path": null,
+        "lines": [
+          70,
+          1
+        ],
+        "hunks": "@@ -5,2 +5,3 @@\n \n+import contextlib\n import math\n@@ -10,2 +11,3 @@ from pathlib import Path\n import torch\n+from peft import LoraConfig, get_peft_model\n from transformers import Qwen2Config, Qwen2ForCausalLM\n@@ -13,3 +15,3 @@ from transformers import Qwen2Config, Qwen2ForCausalLM\n sys.path.insert(0, str(Path(__file__).parent))\n-from train_dpo import PairCollator, dpo_loss, encode_pair, learning_rate, reply_logps  # noqa: E402\n+from train_dpo import PairCollator, dpo_loss, encode_pair, evaluate, learning_rate, pair_loss, reply_logps  # noqa: E402\n \n@@ -100,2 +102,69 @@ def test_reply_logps_is_the_log_probability_of_the_reply_given_the_prompt() -> N\n \n+def tiny_policy() -> torch.nn.Module:\n+    \"\"\"A random model with a fresh LoRA, as train_dpo makes: the adapter does\n+    nothing yet, so the model is its own reference.\"\"\"\n+    torch.manual_seed(0)\n+    config = Qwen2Config(vocab_size=300, hidden_size=16, intermediate_size=32, num_hidden_layers=2,\n+                         num_attention_heads=2, num_key_value_heads=2)\n+    lora = LoraConfig(r=4, lora_alpha=8, lora_dropout=0.0, target_modules=[\"q_proj\", \"v_proj\"], task_type=\"CAUSAL_LM\")\n+    return get_peft_model(Qwen2ForCausalLM(config), lora)\n+\n+\n+def some_pairs() -> list[dict]:\n+    return [\n+        encode_pair(Tok(), pair(\"fix: a\", \"chore: bb\"), 100),\n+        encode_pair(Tok(), pair(\"feat: c\", \"docs: d\"), 100),\n+        encode_pair(Tok(), pair(\"fix: e\", \"feat: f\"), 100),\n+        encode_pair(Tok(), pair(\"docs: g\", \"fix: h\"), 100),\n+    ]\n+\n+\n+def test_rewards_are_beta_times_the_gain_over_the_reference() -> None:\n+    reference = torch.tensor([-10.0, -20.0, -12.0, -18.0])\n+    policy = reference + torch.tensor([4.0, 2.0, -6.0, -2.0])\n+    _, stats = dpo_loss(policy, reference, 0.5)\n+    assert math.isclose(stats[\"chosen_reward\"], 1.5) and math.isclose(stats[\"rejected_reward\"], -2.0)\n+    assert math.isclose(stats[\"margin\"], 3.5)\n+\n+\n+def test_an_untrained_adapter_leaves_the_model_its_own_reference() -> None:\n+    model = tiny_policy().eval()\n+    batch = PairCollator(0)(some_pairs())\n+    loss, stats = pair_loss(model, batch, 0.1, 0.0, contextlib.nullcontext)\n+    assert math.isclose(loss.item(), math.log(2), rel_tol=1e-6)\n+    assert stats[\"margin\"] == 0.0 and stats[\"chosen_reward\"] == 0.0 and stats[\"rejected_reward\"] == 0.0\n+    # The chosen reply's own loss, per token, when asked for.\n+    with_sft, with_stats = pair_loss(model, batch, 0.1, 0.5, contextlib.nullcontext)\n+    assert with_stats[\"nll\"] > 0 and math.isclose(with_sft.item(), math.log(2) + 0.5 * with_stats[\"nll\"], rel_tol=1e-5)\n+\n+\n+def test_a_few_steps_separate_the_chosen_reply_from_the_rejected_one() -> None:\n+    model = tiny_policy()\n+    model.train()\n+    pairs = some_pairs()\n+    batch = PairCollator(0)(pairs)\n+    params = [p for p in model.parameters() if p.requires_grad]\n+    optimizer = torch.optim.AdamW(params, lr=5e-2)\n+    first = None\n+    for _ in range(25):\n+        loss, stats = pair_loss(model, batch, 0.1, 0.0, contextlib.nullcontext)\n+        first = first or stats\n+        optimizer.zero_grad()\n+        loss.backward()\n+        optimizer.step()\n+    assert stats[\"loss\"] < first[\"loss\"] - 0.05 and stats[\"accuracy\"] == 1.0\n+    assert stats[\"chosen_reward\"] > 0 > stats[\"rejected_reward\"]\n+\n+\n+def test_the_validation_pairs_are_scored_without_training_on_them() -> None:\n+    model = tiny_policy()\n+    model.train()\n+    before = [p.detach().clone() for p in model.parameters()]\n+    args = type(\"Args\", (), {\"batch\": 3, \"beta\": 0.1, \"sft_weight\": 0.0})()\n+    got = evaluate(model, some_pairs(), PairCollator(0), args, contextlib.nullcontext, \"cpu\")\n+    assert {\"val_loss\", \"val_accuracy\", \"val_margin\", \"val_chosen_reward\"} <= set(got)\n+    assert math.isclose(got[\"val_loss\"], math.log(2), rel_tol=1e-6)\n+    assert model.training and all(torch.equal(a, b) for a, b in zip(before, model.parameters()))\n+\n+\n if __name__ == \"__main__\":\n"
+      },
+      {
+        "path": "training/train_dpo.py",
+        "old_path": null,
+        "lines": [
+          68,
+          12
+        ],
+        "hunks": "@@ -9,2 +9,9 @@ the merged model, the BASE_DIR of export_gguf.py.\n \n+`--val` pairs of other repositories are scored every `--eval-every` steps:\n+their loss and accuracy say whether the model learns what holds beyond the\n+training pairs. `--sft-weight` adds the per-token loss of the chosen reply\n+to the DPO loss, against the chosen reply becoming less likely as the\n+rejected one drops. The log keeps the reward of each side (beta times how\n+much more likely the model made it than the reference did).\n+\n     python -I train_dpo.py PAIRS.jsonl BASE_MODEL_DIR SFT_ADAPTER_DIR OUT_DIR [options]\n@@ -64,3 +71,4 @@ def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tupl\n     half = policy.shape[0] // 2\n-    margin = beta * ((policy[:half] - reference[:half]) - (policy[half:] - reference[half:]))\n+    gain = beta * (policy - reference)\n+    margin = gain[:half] - gain[half:]\n     return -torch.nn.functional.logsigmoid(margin).mean(), {\n@@ -68,2 +76,4 @@ def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tupl\n         \"margin\": margin.mean().item(),\n+        \"chosen_reward\": gain[:half].mean().item(),\n+        \"rejected_reward\": gain[half:].mean().item(),\n     }\n@@ -71,2 +81,38 @@ def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tupl\n \n+def reply_lengths(batch: dict) -> torch.Tensor:\n+    \"\"\"The number of tokens of each reply.\"\"\"\n+    return (batch[\"labels\"] != -100).sum(-1)\n+\n+\n+def pair_loss(model, batch: dict, beta: float, sft_weight: float, autocast) -> tuple[torch.Tensor, dict]:\n+    \"\"\"The loss of a batch of pairs. The reference is the model without its\n+    adapter; it is not differentiated.\"\"\"\n+    with torch.no_grad(), model.disable_adapter(), autocast():\n+        reference = reply_logps(model, batch)\n+    with autocast():\n+        policy = reply_logps(model, batch)\n+    loss, stats = dpo_loss(policy, reference, beta)\n+    if sft_weight:\n+        half = policy.shape[0] // 2\n+        nll = -(policy[:half] / reply_lengths(batch)[:half]).mean()\n+        loss = loss + sft_weight * nll\n+        stats[\"nll\"] = nll.item()\n+    return loss, {\"loss\": loss.item(), **stats}\n+\n+\n+def evaluate(model, pairs: list[dict], collate, args, autocast, device) -> dict:\n+    \"\"\"The mean loss and statistics of `pairs`, weighted by their number.\"\"\"\n+    model.eval()\n+    totals: dict[str, float] = {}\n+    with torch.no_grad():\n+        for at in range(0, len(pairs), args.batch):\n+            batch = {k: v.to(device) for k, v in collate(pairs[at : at + args.batch]).items()}\n+            _, stats = pair_loss(model, batch, args.beta, args.sft_weight, autocast)\n+            n = min(args.batch, len(pairs) - at)\n+            for k, v in stats.items():\n+                totals[k] = totals.get(k, 0.0) + v * n\n+    model.train()\n+    return {f\"val_{k}\": v / len(pairs) for k, v in totals.items()}\n+\n+\n def learning_rate(step: int, steps: int, peak: float, warmup: float = 0.03) -> float:\n@@ -97,2 +143,6 @@ def main() -> None:\n     parser.add_argument(\"--limit\", type=int, default=0, help=\"first N pairs only\")\n+    parser.add_argument(\"--val\", type=Path, help=\"pairs of other repositories, scored along the way\")\n+    parser.add_argument(\"--eval-every\", type=int, default=10, help=\"steps between two scores of --val\")\n+    parser.add_argument(\"--sft-weight\", type=float, default=0.0,\n+                        help=\"weight of the per-token loss of the chosen reply, added to DPO's\")\n     parser.add_argument(\"--seed\", type=int, default=0)\n@@ -112,2 +162,7 @@ def main() -> None:\n     print(f\"{len(data)} pairs, {skipped} longer than {args.max_length} tokens skipped\")\n+    val = None\n+    if args.val:\n+        val = [e for e in (encode_pair(tok, json.loads(line), args.max_length)\n+                           for line in args.val.read_text().splitlines()) if e is not None]\n+        print(f\"{len(val)} validation pairs\")\n \n@@ -133,2 +188,3 @@ def main() -> None:\n     collate = PairCollator(tok.pad_token_id)\n+    autocast = lambda: torch.autocast(\"cuda\", dtype=dtype)  # noqa: E731\n     order = random.Random(args.seed)\n@@ -141,3 +197,3 @@ def main() -> None:\n                 group[\"lr\"] = learning_rate(number, steps, args.lr)\n-            totals = {\"loss\": 0.0, \"accuracy\": 0.0, \"margin\": 0.0}\n+            totals: dict[str, float] = {}\n             for micro in range(args.accum):\n@@ -145,11 +201,6 @@ def main() -> None:\n                 batch = {k: v.to(\"cuda\") for k, v in collate(shuffled[at : at + args.batch]).items()}\n-                with torch.no_grad(), model.disable_adapter(), torch.autocast(\"cuda\", dtype=dtype):\n-                    reference = reply_logps(model, batch)\n-                with torch.autocast(\"cuda\", dtype=dtype):\n-                    policy = reply_logps(model, batch)\n-                loss, stats = dpo_loss(policy, reference, args.beta)\n+                loss, stats = pair_loss(model, batch, args.beta, args.sft_weight, autocast)\n                 scaler.scale(loss / args.accum).backward()\n-                totals[\"loss\"] += loss.item() / args.accum\n                 for k, v in stats.items():\n-                    totals[k] += v / args.accum\n+                    totals[k] = totals.get(k, 0.0) + v / args.accum\n             scaler.unscale_(optimizer)\n@@ -159,5 +210,8 @@ def main() -> None:\n             optimizer.zero_grad(set_to_none=True)\n-            log.append({\"step\": number + 1, **totals, \"lr\": optimizer.param_groups[0][\"lr\"]})\n-            if (number + 1) % 5 == 0 or number + 1 == steps:\n-                print(json.dumps(log[-1]), flush=True)\n+            entry = {\"step\": number + 1, **totals, \"lr\": optimizer.param_groups[0][\"lr\"]}\n+            if val and ((number + 1) % args.eval_every == 0 or number + 1 == steps):\n+                entry.update(evaluate(model, val, collate, args, autocast, \"cuda\"))\n+            log.append(entry)\n+            if (number + 1) % 5 == 0 or number + 1 == steps or \"val_loss\" in entry:\n+                print(json.dumps(entry), flush=True)\n \n@@ -176,2 +230,4 @@ def main() -> None:\n         \"pairs_sha256\": sha256(args.pairs),\n+        \"val_sha256\": sha256(args.val) if args.val else None,\n+        \"val_pairs\": len(val) if val else 0,\n         \"sft_adapter_sha256\": sha256(args.sft / \"adapter_model.safetensors\"),\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(training): add a DPO loss to train_dpo.py",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, test, refactor.\n- Scopes used here: training, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(training): balance and split pairs\nfeat(training): judge the scope and the type of a reply when making pairs\ntest(fixtures): trace a mining bundle answered as a dataset of pairs\nfeat(training): mine preference pairs on Kaggle's two T4s\nfeat(training): mine pairs from prompts built beforehand\n",
+          "user": "Files changed:\ntraining/README.md | +6 -1\ntraining/test_train_dpo.py | +70 -1\ntraining/train_dpo.py | +68 -12\n\nDiff:\n--- training/train_dpo.py\n@@ -9,2 +9,9 @@ the merged model, the BASE_DIR of export_gguf.py.\n \n+`--val` pairs of other repositories are scored every `--eval-every` steps:\n+their loss and accuracy say whether the model learns what holds beyond the\n+training pairs. `--sft-weight` adds the per-token loss of the chosen reply\n+to the DPO loss, against the chosen reply becoming less likely as the\n+rejected one drops. The log keeps the reward of each side (beta times how\n+much more likely the model made it than the reference did).\n+\n     python -I train_dpo.py PAIRS.jsonl BASE_MODEL_DIR SFT_ADAPTER_DIR OUT_DIR [options]\n@@ -64,3 +71,4 @@ def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tupl\n     half = policy.shape[0] // 2\n-    margin = beta * ((policy[:half] - reference[:half]) - (policy[half:] - reference[half:]))\n+    gain = beta * (policy - reference)\n+    margin = gain[:half] - gain[half:]\n     return -torch.nn.functional.logsigmoid(margin).mean(), {\n@@ -68,2 +76,4 @@ def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tupl\n         \"margin\": margin.mean().item(),\n+        \"chosen_reward\": gain[:half].mean().item(),\n+        \"rejected_reward\": gain[half:].mean().item(),\n     }\n@@ -71,2 +81,38 @@ def dpo_loss(policy: torch.Tensor, reference: torch.Tensor, beta: float) -> tupl\n \n+def reply_lengths(batch: dict) -> torch.Tensor:\n+    \"\"\"The number of tokens of each reply.\"\"\"\n+    return (batch[\"labels\"] != -100).sum(-1)\n+\n+\n+def pair_loss(model, batch: dict, beta: float, sft_weight: float, autocast) -> tuple[torch.Tensor, dict]:\n[... 86 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(training): add a DPO loss to train_dpo.py",
+        "rejected": null
+      }
+    ]
+  }
+}

@@ -7,7 +7,7 @@
 //! `OPS` applied on top of a base repository. Building a case runs
 //! smart-commit's mock backend on the result and keeps the trace's inputs, so
 //! the cases come out in the format `select` writes (`inputs.jsonl` and
-//! `meta.jsonl`): `make_examples.py` turns them into training examples, and
+//! `meta.jsonl`): `make-examples` turns them into training examples, and
 //! `smart-commit eval` and `score` evaluate them, unchanged.
 //!
 //! Everything is deterministic: fixed author, dates and git config, sorted
@@ -918,7 +918,7 @@ pub fn capture(workdir: &Path, binary: &str) -> std::result::Result<Value, Strin
         .ok_or_else(|| "no inputs in the trace".to_owned())
 }
 
-/// The `meta.jsonl` line: what `score` and `make_examples.py` read, plus
+/// The `meta.jsonl` line: what `score` and `make-examples` read, plus
 /// what the scenarios add (level, tags, split, expected words).
 pub fn meta_of(case: &Case, repo: &Repo, inputs: &Value) -> Value {
     let convention = if repo.convention == "conventional" && case.history {

@@ -16,6 +16,8 @@ fn options(src: &Path, out: &Path) -> Options {
         supported_only: false,
         max_type_share: 1.0,
         releases: false,
+        exclude_hashes_of: Vec::new(),
+        exclude_repos_of: Vec::new(),
     }
 }
 
@@ -134,6 +136,69 @@ fn at_most_per_repo_per_repository_and_the_history_range_apply() {
     })
     .unwrap();
     assert_eq!(lines(&young.join("meta.jsonl")).len(), 2);
+}
+
+#[test]
+fn the_commits_and_repositories_of_other_selections_are_left_out() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let src = dir.path().join("src");
+    let items: Vec<(Value, Value)> = ["a", "a", "b", "b", "c"]
+        .iter()
+        .enumerate()
+        .map(|(n, repo)| {
+            (
+                json!({}),
+                json!({"repo": repo, "hash": format!("h{n}"), "target": "fix: something long enough",
+                       "type": "fix", "history": 12}),
+            )
+        })
+        .collect();
+    write_set(&src, &items);
+    let hashes = |out: &Path| -> Vec<String> {
+        lines(&out.join("meta.jsonl"))
+            .iter()
+            .map(|l| {
+                serde_json::from_str::<Value>(l).unwrap()["hash"]
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .collect()
+    };
+    // What a model was trained on: two commits (h0 of "a", h2 of "b").
+    let seen = dir.path().join("seen");
+    write_set(
+        &seen,
+        &[
+            (
+                json!({}),
+                json!({"repo": "a", "hash": "h0", "target": "x", "type": "fix", "history": 12}),
+            ),
+            (
+                json!({}),
+                json!({"repo": "b", "hash": "h2", "target": "x", "type": "fix", "history": 12}),
+            ),
+        ],
+    );
+    let out = dir.path().join("hashes");
+    select(&Options {
+        conventional: 10,
+        exclude_hashes_of: vec![seen.clone()],
+        ..options(&src, &out)
+    })
+    .unwrap();
+    let mut got = hashes(&out);
+    got.sort();
+    assert_eq!(got, ["h1", "h3", "h4"]);
+    // An evaluation set: its repositories go whole, whatever the commit.
+    let out = dir.path().join("repos");
+    select(&Options {
+        conventional: 10,
+        exclude_repos_of: vec![seen],
+        ..options(&src, &out)
+    })
+    .unwrap();
+    assert_eq!(hashes(&out), ["h4"]);
 }
 
 #[test]

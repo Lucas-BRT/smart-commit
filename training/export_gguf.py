@@ -2,11 +2,13 @@
 upstream file smart-commit pins (Q4_K_M), with llama.cpp b11381.
 
     python -I export_gguf.py BASE_DIR OUT.gguf --llama-src DIR --llama-bin DIR
-                             [--adapter DIR [--merged DIR]] [--quant Q4_K_M]
+                             [--adapter DIR ... [--merged DIR]] [--quant Q4_K_M]
 
-Without --adapter it re-quantizes the base model, the control that tells
-our quantization apart from the fine-tune. --merged keeps the merged
-safetensors the GGUF is made from, the files a fine-tune is published with.
+--adapter can be given more than once, merged in that order: the SFT adapter,
+then the DPO one trained on top of it. Without --adapter it re-quantizes the
+base model, the control that tells our quantization apart from the fine-tune.
+--merged keeps the merged safetensors the GGUF is made from, the files a
+fine-tune is published with.
 """
 
 import argparse
@@ -26,7 +28,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("base", type=Path)
     parser.add_argument("out", type=Path)
-    parser.add_argument("--adapter", type=Path)
+    parser.add_argument("--adapter", type=Path, action="append",
+                        help="merged in the order given; the SFT one, then the DPO one")
     parser.add_argument("--merged", type=Path, help="keep the merged model here")
     parser.add_argument("--llama-src", type=Path, required=True)
     parser.add_argument("--llama-bin", type=Path, required=True)
@@ -40,7 +43,8 @@ def main() -> None:
         source = args.base
         if args.adapter:
             model = AutoModelForCausalLM.from_pretrained(args.base, dtype=torch.bfloat16)
-            model = PeftModel.from_pretrained(model, args.adapter).merge_and_unload()
+            for adapter in args.adapter:
+                model = PeftModel.from_pretrained(model, adapter).merge_and_unload()
             source = args.merged or tmp / "merged"
             model.save_pretrained(source)
             AutoTokenizer.from_pretrained(args.base).save_pretrained(source)

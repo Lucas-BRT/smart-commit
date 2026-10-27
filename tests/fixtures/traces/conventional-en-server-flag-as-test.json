@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 80f9ba2",
+      "docs(training): say how to mine preference pairs for DPO",
+      "feat(training): sample the replies a model gives, to mine preference pairs",
+      "feat(training): judge sampled replies into preference pairs for DPO",
+      "Merge branch 'feat/keep-loaded-default'",
+      "test(fixtures): trace a new setting answered as a documentation change",
+      "docs: say how much of the RAM a model kept loaded may take"
+    ],
+    "history_files": [
+      [
+        "training/mine_pairs.py",
+        "training/test_mine_pairs.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/mine_pairs.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_mine_pairs.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/mine_pairs.py",
+        "old_path": null,
+        "lines": [
+          2,
+          0
+        ],
+        "hunks": "@@ -158,2 +158,4 @@ def serve(server: str, gguf: str, device: str, workers: int) -> tuple[subprocess\n         \"--no-webui\", \"--offline\",\n+        # Every prompt is new, so the prompt cache would only fill the RAM (8 GiB by default).\n+        \"--cache-ram\", \"0\",\n     ]\n"
+      },
+      {
+        "path": "training/test_mine_pairs.py",
+        "old_path": null,
+        "lines": [
+          30,
+          0
+        ],
+        "hunks": "@@ -14,2 +14,3 @@ sys.path.insert(0, str(Path(__file__).parent))\n from mine_pairs import mine, repos_of, select  # noqa: E402\n+from mine_pairs import serve as serve_llama  # noqa: E402\n \n@@ -116,2 +117,31 @@ def test_a_stopped_run_resumes_after_the_inputs_it_finished() -> None:\n \n+def test_the_server_keeps_no_prompt_cache_in_ram() -> None:\n+    \"\"\"llama-server keeps up to 8 GiB of prompts in RAM by default, and every\n+    prompt here is new: that filled the RAM of a 24 GiB machine.\"\"\"\n+    with tempfile.TemporaryDirectory() as tmp:\n+        d = Path(tmp)\n+        fake = d / \"llama-server\"\n+        fake.write_text(\n+            f\"#!{sys.executable}\\n\"\n+            \"import sys\\n\"\n+            \"from http.server import BaseHTTPRequestHandler, HTTPServer\\n\"\n+            f\"open({str(d / 'args')!r}, 'w').write(' '.join(sys.argv[1:]))\\n\"\n+            \"class H(BaseHTTPRequestHandler):\\n\"\n+            \"    def do_GET(self):\\n\"\n+            \"        self.send_response(200); self.end_headers()\\n\"\n+            \"    def log_message(self, *a): pass\\n\"\n+            \"port = int(sys.argv[sys.argv.index('--port') + 1])\\n\"\n+            \"HTTPServer(('127.0.0.1', port), H).serve_forever()\\n\"\n+        )\n+        fake.chmod(0o755)\n+        process, _ = serve_llama(str(fake), \"model.gguf\", \"Vulkan0\", 2)\n+        try:\n+            args = (d / \"args\").read_text().split()\n+        finally:\n+            process.terminate()\n+            process.wait()\n+        assert args[args.index(\"--cache-ram\") + 1] == \"0\"\n+        assert args[args.index(\"--parallel\") + 1] == \"2\"\n+\n+\n if __name__ == \"__main__\":\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "test(training): trace that llama-server keeps up to 8 GiB of prompts",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, test, refactor.\n- Scopes used here: training, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(training): say how to mine preference pairs for DPO\nfeat(training): sample the replies a model gives, to mine preference pairs\nfeat(training): judge sampled replies into preference pairs for DPO\ntest(fixtures): trace a new setting answered as a documentation change\ndocs: say how much of the RAM a model kept loaded may take\n",
+          "user": "Files changed:\ntraining/mine_pairs.py | +2 -0\ntraining/test_mine_pairs.py | +30 -0\n\nDiff:\n--- training/mine_pairs.py\n@@ -158,2 +158,4 @@ def serve(server: str, gguf: str, device: str, workers: int) -> tuple[subprocess\n         \"--no-webui\", \"--offline\",\n+        # Every prompt is new, so the prompt cache would only fill the RAM (8 GiB by default).\n+        \"--cache-ram\", \"0\",\n     ]\n--- training/test_mine_pairs.py\n@@ -14,2 +14,3 @@ sys.path.insert(0, str(Path(__file__).parent))\n from mine_pairs import mine, repos_of, select  # noqa: E402\n+from mine_pairs import serve as serve_llama  # noqa: E402\n \n@@ -116,2 +117,31 @@ def test_a_stopped_run_resumes_after_the_inputs_it_finished() -> None:\n \n+def test_the_server_keeps_no_prompt_cache_in_ram() -> None:\n+    \"\"\"llama-server keeps up to 8 GiB of prompts in RAM by default, and every\n+    prompt here is new: that filled the RAM of a 24 GiB machine.\"\"\"\n+    with tempfile.TemporaryDirectory() as tmp:\n+        d = Path(tmp)\n+        fake = d / \"llama-server\"\n+        fake.write_text(\n+            f\"#!{sys.executable}\\n\"\n+            \"import sys\\n\"\n+            \"from http.server import BaseHTTPRequestHandler, HTTPServer\\n\"\n+            f\"open({str(d / 'args')!r}, 'w').write(' '.join(sys.argv[1:]))\\n\"\n+            \"class H(BaseHTTPRequestHandler):\\n\"\n+            \"    def do_GET(self):\\n\"\n+            \"        self.send_response(200); self.end_headers()\\n\"\n+            \"    def log_message(self, *a): pass\\n\"\n+            \"port = int(sys.argv[sys.argv.index('--port') + 1])\\n\"\n+            \"HTTPServer(('127.0.0.1', port), H).serve_forever()\\n\"\n+        )\n+        fake.chmod(0o755)\n+        process, _ = serve_llama(str(fake), \"model.gguf\", \"Vulkan0\", 2)\n[... 10 more lines]\n\n(1 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "test(training): trace that llama-server keeps up to 8 GiB of prompts",
+        "rejected": null
+      }
+    ]
+  }
+}

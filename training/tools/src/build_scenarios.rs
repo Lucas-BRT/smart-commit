@@ -1,7 +1,7 @@
 //! Builds the commit scenarios of `scenarios/` (see `scenarios.rs`).
 //!
 //! `build` writes DIR/inputs.jsonl and DIR/meta.jsonl, the layout of
-//! `select`'s output: `make_examples.py DIR SMART_COMMIT` makes training
+//! `select`'s output: `sc-training make-examples DIR SMART_COMMIT` makes training
 //! examples of them, `smart-commit eval DIR/inputs.jsonl` and `score DIR`
 //! evaluate a model on them. A case whose outcome differs from the expected
 //! one (smart-commit refuses to generate, or generates when it should

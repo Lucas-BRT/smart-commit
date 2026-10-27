@@ -1,0 +1,117 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 2cd40f7",
+      "refactor(training): move make_examples and nest to sc-training and pin the file list",
+      "fix(backend): start llama-server again when its file is \"text file busy\"",
+      "fix(training): create compare's stand-in smart-commit once per process",
+      "test(fixtures): trace three fixes to compare answered in the style of fixture commits",
+      "fix(training): make compare redo stale traces, refuse bad model names, and measure length per set",
+      "test(fixtures): trace a fix to balance answered in the style of fixture commits"
+    ],
+    "history_files": [
+      [
+        "docs/roadmap.md",
+        "docs/training.md",
+        "training/HYPOTHESES.md",
+        "training/README.md"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/roadmap.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/training.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/HYPOTHESES.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/README.md",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/roadmap.md",
+        "old_path": null,
+        "lines": [
+          1,
+          0
+        ],
+        "hunks": "@@ -74,2 +74,3 @@ then the largest gains for their cost.\n | 17 | **The fixed prompt prefix cached on disk** (only if a server that stays up is not wanted) | Without a server that stays up, llama-server can save a slot's KV cache to a file and restore it (`--slot-save-path`), about 28 KB per token for the 1.5B model, 7 MB for 250 tokens. It needs the prompt to start with the part that never changes (the rules), then the repository's part. Same reproducibility check as 12. Little left to cache if the trained model drops the rules (training H6). |\n+| 18 | **DPO on the models' own samples** | Preference training on pairs the model sampled itself removes the replies that copy the history, invent a detail or fall back (on eval-v1, `ungrounded` 0.104 → 0.008, `first_try` 0.960 → 0.996) at no cost to the type or the scope, but does not improve the type significantly; see [training](../training/HYPOTHESES.md), H12. Next: the 1.5B, then whether a version trained on the annotated file list (v0.3) takes it as a last step. |\n \n"
+      },
+      {
+        "path": "docs/training.md",
+        "old_path": null,
+        "lines": [
+          5,
+          2
+        ],
+        "hunks": "@@ -326,4 +326,7 @@ What is published is one model per size smart-commit offers, named\n    second run's first sweep collapsed onto one type because its pairs were\n-   unbalanced, and a second sweep on pairs with matched distributions is\n-   under way. Nothing is published from it.\n+   unbalanced; its second sweep, on pairs with matched distributions and the\n+   chosen reply's own loss added, removes the same failures at no cost to the\n+   type or the scope, but does not improve the type significantly. The six\n+   runs are in a private repository on Hugging Face as experiments; the 1.5B\n+   is next. Nothing is in the registry.\n 8. The next version: H4b, and more data for the 1.5B, which leans on the\n"
+      },
+      {
+        "path": "training/HYPOTHESES.md",
+        "old_path": null,
+        "lines": [
+          57,
+          2
+        ],
+        "hunks": "@@ -623,3 +623,3 @@ branch, paired with `sc-training score --against` against the plain list:\n \n-### H12. DPO on the model's own samples removes its typical failures — first run: yes, but it cost the scope; second run planned\n+### H12. DPO on the model's own samples removes its typical failures — first run: yes, but it cost the scope; second run: yes, at no cost, but the type does not improve significantly\n \n@@ -667,3 +667,3 @@ RTX 3050. One binary, Vulkan, greedy, eval-v1 (250 + 250) and eval-short\n \n-**Second run (planned).** Conventional inputs from `data/train-all`\n+**Second run.** Conventional inputs from `data/train-all`\n without the commits the SFT trained on (`data/curve`) and without the\n@@ -733,2 +733,57 @@ likely, the rejected one more so:\n \n+**Second run, second sweep: the collapse is gone.** Six runs of the 0.5B on the pairs with matched\n+marginals (3,172 for training of 802 repositories, the same 514 for validation), `--sft-weight` 0,\n+0.2, 0.5 and 1.0, on Kaggle's T4s (about 1.7 h of the session, 5.05 of the 30 h of the week in all).\n+Chosen on `data/val1`, paired against the SFT model:\n+\n+| val1, Conventional | type_match | type_macro_f1 | scope_known | replies with a scope | novel | ungrounded | first_try (free) | word_f1 |\n+|---|---|---|---|---|---|---|---|---|\n+| SFT | 0.624 | 0.528 | 0.904 | 0.23 | 0.134 | 0.076 | 0.936 | 0.318 |\n+| β 0.1, 2e-05, `--sft-weight` 0 | 0.584 | 0.399 | 0.936 | 0.18 | 0.063 | 0.000 | 1.000 | 0.328 |\n+| β 0.1, 2e-05, `--sft-weight` 0.2 | 0.628 | 0.517 | 0.924 | 0.20 | 0.075 | 0.008 | 0.988 | 0.346 |\n+| β 0.1, 2e-05, `--sft-weight` 0.5 | 0.628 | 0.515 | 0.924 | 0.21 | 0.086 | 0.020 | 0.980 | 0.339 |\n+| β 0.1, 2e-05, `--sft-weight` 1 | 0.636 | 0.518 | 0.928 | 0.21 | 0.085 | 0.028 | 0.976 | 0.341 |\n+| β 0.1, 1e-05, `--sft-weight` 0.5 | 0.640 | 0.521 | 0.904 | 0.24 | 0.087 | 0.024 | 0.976 | 0.341 |\n+| β 0.3, 2e-05, `--sft-weight` 0.5 | 0.632 | 0.514 | 0.928 | 0.21 | 0.081 | 0.012 | 0.976 | 0.343 |\n+\n+- The matching alone is not enough: without `--sft-weight` the chosen reply still becomes less\n+  likely (validation reward −0.446, against +0.08 to +0.13 with 0.5 or more) and the type falls\n+  (0.584, `type_macro_f1` 0.399). With it the type, the scope and the habits stay where the SFT\n+  model has them (in the first sweep the runs wrote `chore` for 141 to 240 of the 250 commits) and the\n+  failures the pairs show go: `ungrounded` +12 to +19, `first_copied` +5 to +8, `first_try` +5 to +8 cases.\n+- The type is flat on `val1` for the five runs with `--sft-weight` (+1 to +4 cases, none significant; `type_macro_f1` 0.514–0.521 against\n+  0.528). `novel` falls to a half or two thirds again (0.134 → 0.075–0.087; the real commits 0.316).\n+  A reading of 30 cases side by side shows replies close to the SFT model's, a complement dropped or a\n+  verb changed, and no new habit.\n+- Run chosen on `val1`: **m-b01-lr2-s02** (β 0.1, 2e-5, `--sft-weight` 0.2), the one with the most\n+  significant gains and the highest `word_f1` (0.346). The scenarios (14 Conventional) lose one case of\n+  `type_match` and one or two of `expected` in every DPO run, and are even or a little better on the 29\n+  free ones (`expected` −1 to +2).\n+\n+Read once on the evaluation sets, paired against the SFT model:\n+\n+| | SFT → m-b01-lr2-s02 | paired |\n+|---|---|---|\n+| eval-v1 Conventional, `type_match` | 0.628 → 0.664 | +15/−6, p = 0.078 |\n+| eval-v1 Conventional, `type_macro_f1` | 0.531 → 0.557 | |\n+| eval-v1 Conventional, `scope_known`; replies with a scope | 0.844 → 0.840; 0.396 → 0.380 | +4/−5 |\n+| eval-v1 Conventional, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.104 → 0.008; 0.040 → 0.004; 0.960 → 0.996; 0.028 → 0.004 | all p < 0.05 |\n+| eval-v1 free, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.108 → 0.008; 0.084 → 0.004; 0.916 → 0.996; 0.076 → 0.004 | all p < 0.001 |\n+| eval-v1, `word_f1` Conventional, free; `novel` Conventional | 0.333 → 0.347, 0.230 → 0.247; 0.147 → 0.078 | |\n+| eval-short Conventional (47), `type_match`; `type_macro_f1`; `scope_known` | 0.617 → 0.617; 0.669 → 0.609; 0.681 → 0.617 | +3/−3; ; +0/−3 |\n+| eval-short free (150), `first_try`; `first_copied` | 0.840 → 1.000; 0.160 → 0.000 | p < 0.001 |\n+\n+- **Against the criteria fixed above:** met on eval-v1 (the type and its macro F1 rise, though the\n+  `type_match` not with significance; `scope_known` is 0.840; the gains of the first run are kept or\n+  exceeded; `word_f1`, `exact` and `novel` are fine; the Conventional subjects average 40.2 columns);\n+  **not met on eval-short**, where `type_macro_f1` falls and `scope_known` loses three cases, on 47\n+  commits. Taken together: the DPO now removes what the first run removed, at no cost to the type and the\n+  scope, and does **not** improve the type significantly, which was the aim of the second run. One seed\n+  per configuration, so differences of a few cases between runs are noise.\n+- The six runs are in a private repository, `LucasBRT/smart-commit-0.5b-dpo-runs` (adapters, logs,\n+  `run.json`, Q4_K_M GGUF and the results), as experiments and not as a version of the model.\n+- Next, by decision of the author and not because the criteria were met: the same configuration on the\n+  1.5B (`data/kaggle/dpo2-1p5b`, also with `--sft-weight` 0.5), to see whether the type moves at that\n+  size.\n+\n ## Ideas not tried yet\n"
+      },
+      {
+        "path": "training/README.md",
+        "old_path": null,
+        "lines": [
+          42,
+          0
+        ],
+        "hunks": "@@ -396,2 +396,44 @@ $SCT compare runs/compare $SC --sets data/val1 data/scenarios-eval --read 30 \\\n \n+## Continuing from another machine\n+\n+Git has the code, the documentation, the notebooks and the fixtures. It does not have what is\n+ignored: `training/data/`, `training/runs/`, `target/` and `~/.cache/smart-commit-training/` (the base\n+models, CommitChronicle, the llama.cpp sources). What was made of them is kept in private places:\n+\n+| What | Where |\n+|---|---|\n+| Evaluation sets: `val1`, `eval-v1`, `eval-short`, `scenarios-eval` (`inputs.jsonl`, `meta.jsonl`, `SHA256SUMS`) | Kaggle dataset `lucasbrt/smart-commit-training-eval-sets` |\n+| Inputs and prompts of the second run's mining (5,500) | `lucasbrt/smart-commit-training-dpo2-mine` |\n+| The sampled replies (8 jobs) | the output of the kernel `lucasbrt/smart-commit-mine` |\n+| The 0.5B's balanced pairs, validation pairs and SFT adapter | `lucasbrt/smart-commit-training-dpo2-sweep2` (matched marginals; `-dpo2-sweep` is the first sweep, unmatched) |\n+| The 1.5B's, with two runs ready to start | `lucasbrt/smart-commit-training-dpo2-1p5b` |\n+| The six trained runs of the 0.5B: adapters, logs, GGUF and results | Hugging Face `LucasBRT/smart-commit-0.5b-dpo-runs` (private) |\n+\n+The SFT adapters of v0.1 are inside the bundles, in `sft-<12 hex digits of its weights>/`; the base\n+models are the public Qwen2.5-Coder revisions pinned in `training/tools/src/kaggle.rs`. To go on:\n+\n+```bash\n+git fetch && git checkout feat/dpo-pairs && git pull\n+cargo build --release --locked -p smart-commit -p smart-commit-training\n+cd training\n+# The evaluation sets, file by file (kaggle 2.2.4 downloads nothing when asked for a whole dataset):\n+for set in val1 eval-v1 eval-short scenarios-eval; do for file in inputs meta; do\n+  kaggle datasets download lucasbrt/smart-commit-training-eval-sets -f $set/$file.jsonl -p data/$set --unzip\n+done; done\n+kaggle datasets download lucasbrt/smart-commit-training-eval-sets -f SHA256SUMS -p data --unzip\n+(cd data && sha256sum -c SHA256SUMS)\n+\n+# The 1.5B on Kaggle: two runs, one on each T4 (not timed yet).\n+K=$(mktemp -d)\n+cp kaggle_dpo.ipynb $K/smart-commit-dpo.ipynb\n+sed 's#training-dpo2-sweep2#training-dpo2-1p5b#' kaggle/dpo-kernel-metadata.json > $K/kernel-metadata.json\n+kaggle kernels push -p $K\n+kaggle kernels status lucasbrt/smart-commit-dpo        # until COMPLETE; ERROR means a run failed\n+```\n+\n+Then download the output (`kaggle kernels output lucasbrt/smart-commit-dpo -p data/dpo2/sweep3-out`),\n+unpack the archives in `runs/kaggle-dpo2-1p5b/`, and export and compare as above with the 1.5B's base\n+model and SFT adapter, on `data/val1` and `data/scenarios-eval` first and `eval-v1` only for the run\n+chosen (the criteria are those of H12).\n+\n ## Scenarios\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs(training): add H12 to training.md",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: fix, test, refactor.\n- Scopes used here: training, fixtures, backend. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nrefactor(training): move make_examples and nest to sc-training and pin the file list\nfix(backend): start llama-server again when its file is \"text file busy\"\nfix(training): create compare's stand-in smart-commit once per process\ntest(fixtures): trace three fixes to compare answered in the style of fixture commits\nfix(training): make compare redo stale traces, refuse bad model names, and measure length per set\n",
+          "user": "Files changed:\ndocs/roadmap.md | +1 -0\ndocs/training.md | +5 -2\ntraining/HYPOTHESES.md | +57 -2\ntraining/README.md | +42 -0\n\nDiff:\n--- docs/roadmap.md\n@@ -74,2 +74,3 @@ then the largest gains for their cost.\n | 17 | **The fixed prompt prefix cached on disk** (only if a server that stays up is not wanted) | Without a server that stays up, llama-server can save a slot's KV cache to a file and restore it (`--slot-save-path`), about 28 KB per token for the 1.5B model, 7 MB for 250 tokens. It needs the prompt to start with the part that never changes (the rules), then the repository's part. Same reproducibility check as 12. Little left to cache if the trained model drops the rules (training H6). |\n+| 18 | **DPO on the models' own samples** | Preference training on pairs the model sampled itself removes the replies that copy the history, invent a detail or fall back (on eval-v1, `ungrounded` 0.104 → 0.008, `first_try` 0.960 → 0.996) at no cost to the type or the scope, but does not improve the type significantly; see [training](../training/HYPOTHESES.md), H12. Next: the 1.5B, then whether a version trained on the annotated file list (v0.3) takes it as a last step. |\n \n--- docs/training.md\n@@ -326,4 +326,7 @@ What is published is one model per size smart-commit offers, named\n    second run's first sweep collapsed onto one type because its pairs were\n-   unbalanced, and a second sweep on pairs with matched distributions is\n-   under way. Nothing is published from it.\n[... 6 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs(training): add H12 to training.md",
+        "rejected": null
+      }
+    ]
+  }
+}

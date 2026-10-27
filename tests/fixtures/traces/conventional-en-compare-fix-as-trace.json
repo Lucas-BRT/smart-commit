@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 726e1d1",
+      "test(fixtures): trace a fix to balance answered in the style of fixture commits",
+      "fix(training): make balance's repeated pairs and its matching independent of order and cheap",
+      "test(fixtures): trace four fixes answered as a refactor of one line",
+      "fix(training): fail early and read JSON Lines by newlines in the training scripts",
+      "refactor(training): move the Kaggle bundles to sc-training kaggle-bundle",
+      "docs(training): say what is pinned on Kaggle and version the kernels' settings"
+    ],
+    "history_files": [
+      [
+        "training/README.md",
+        "training/tools/src/compare.rs",
+        "training/tools/src/compare_tests.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/README.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/compare.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/compare_tests.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/README.md",
+        "old_path": null,
+        "lines": [
+          3,
+          1
+        ],
+        "hunks": "@@ -367,3 +367,5 @@ and `sc-training compare` evaluates each model on the\n validation set (`data/val1`: its repositories are in none of the pairs) with\n-`smart-commit eval`, keeps the traces, and prints the metrics of each and, for\n+`smart-commit eval`, keeps the traces (`OUT/SET/NAME.jsonl`, with a `NAME.key` of the file's path,\n+size and time and the settings: they are made again if either changes under the same name) and\n+prints the metrics of each and, for\n each, the cases it gains and loses against the baseline, net of the direction\n"
+      },
+      {
+        "path": "training/tools/src/compare.rs",
+        "old_path": null,
+        "lines": [
+          55,
+          2
+        ],
+        "hunks": "@@ -71,2 +71,11 @@ impl Model {\n             .with_context(|| format!(\"{text:?} is not NAME=GGUF\"))?;\n+        // The name is a file name of the traces and a key of the summary: it\n+        // cannot walk out of the directory, nor be `real`, whose key holds the\n+        // real commits' habits.\n+        ensure!(\n+            name.chars()\n+                .all(|c| c.is_ascii_alphanumeric() || \"._-\".contains(c))\n+                && name != \"real\",\n+            \"{name:?} is not a name for a model: letters, digits, `.`, `_` and `-`, and not `real`\"\n+        );\n         Ok(Self {\n@@ -118,5 +127,19 @@ pub fn run_eval(\n ) -> Result<bool> {\n+    let key = out.with_extension(\"key\");\n     let wanted = line_count(inputs);\n     if wanted > 0 && line_count(out) == wanted {\n-        return Ok(false);\n+        let found = std::fs::read_to_string(&key).ok();\n+        let now = fingerprint(gguf, options);\n+        match (found, now) {\n+            // The traces of this model with these settings: kept.\n+            (Some(found), Ok(now)) if found == now => return Ok(false),\n+            // Traces made before the key existed: taken as they are, and\n+            // marked, so a change from now on is seen.\n+            (None, Ok(now)) => {\n+                std::fs::write(&key, now)?;\n+                return Ok(false);\n+            }\n+            // Another file or other settings under the same name: made again.\n+            _ => {}\n+        }\n     }\n@@ -159,2 +182,3 @@ pub fn run_eval(\n     std::fs::write(out, done.stdout)?;\n+    std::fs::write(&key, fingerprint(&gguf, options)?)?;\n     Ok(true)\n@@ -162,2 +186,23 @@ pub fn run_eval(\n \n+/// What the traces of a model depend on: the file (its path, size and\n+/// modification time) and the settings `eval` was given. Hashing the\n+/// gigabyte would take longer than looking at the traces is worth.\n+fn fingerprint(gguf: &Path, options: &Options) -> Result<String> {\n+    let path =\n+        std::fs::canonicalize(gguf).with_context(|| format!(\"no model at {}\", gguf.display()))?;\n+    let meta = std::fs::metadata(&path)?;\n+    let modified = meta\n+        .modified()?\n+        .duration_since(std::time::UNIX_EPOCH)\n+        .map_or(0, |d| d.as_secs());\n+    Ok(format!(\n+        \"{} {} {modified} rules={} diff={} device={}\\n\",\n+        path.display(),\n+        meta.len(),\n+        options.rules,\n+        options.diff,\n+        options.device\n+    ))\n+}\n+\n fn subject(trace: &Value) -> &str {\n@@ -214,2 +259,3 @@ pub fn habits(meta: &[Value], subjects: &[&str], known: &[String]) -> Value {\n                 \"scoped\": (scoped * 1000.0).round() / 1000.0,\n+                \"chars\": mean_chars(&mine),\n                 \"novel\": (novel as f64 / words.max(1) as f64 * 1000.0).round() / 1000.0,\n@@ -263,3 +309,3 @@ fn shown(entry: &Value, group: &str) -> Map<String, Value> {\n     scores.insert(\"novel\".into(), entry[\"habits\"][group][\"novel\"].clone());\n-    scores.insert(\"chars\".into(), entry[\"mean_subject_chars\"].clone());\n+    scores.insert(\"chars\".into(), entry[\"habits\"][group][\"chars\"].clone());\n     scores\n@@ -350,2 +396,9 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {\n         .collect();\n+    for (i, model) in models.iter().enumerate() {\n+        ensure!(\n+            models[..i].iter().all(|m| m.name != model.name),\n+            \"two models are named {:?}\",\n+            model.name\n+        );\n+    }\n     let (mut text, mut summary) = (String::new(), Map::new());\n"
+      },
+      {
+        "path": "training/tools/src/compare_tests.rs",
+        "old_path": null,
+        "lines": [
+          64,
+          0
+        ],
+        "hunks": "@@ -324 +324,65 @@ fn the_cases_to_read_come_with_the_real_subject_and_every_model() {\n }\n+\n+#[test]\n+fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let binary = fake_smart_commit();\n+    let set = write_set(dir.path());\n+    let options = options(dir.path(), &set, &binary);\n+    let (inputs, out) = (set.join(\"inputs.jsonl\"), dir.path().join(\"out/val/m.jsonl\"));\n+    let (good, bad) = (dir.path().join(\"good.gguf\"), dir.path().join(\"bad.gguf\"));\n+    let said = || std::fs::read_to_string(&out).unwrap();\n+    assert!(run_eval(&binary, &good, &inputs, &out, &options).unwrap());\n+    assert!(said().contains(\"fix: add a\"));\n+    // The same file and settings: kept.\n+    assert!(!run_eval(&binary, &good, &inputs, &out, &options).unwrap());\n+    // Another file under the same name: its traces, not the old ones scored as its own.\n+    assert!(run_eval(&binary, &bad, &inputs, &out, &options).unwrap());\n+    assert!(said().contains(\"feat: add b\") && !said().contains(\"fix: add a\"));\n+    // The same file, other settings.\n+    let other = Options {\n+        rules: \"omitted\".into(),\n+        ..options\n+    };\n+    assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());\n+    assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());\n+    assert_eq!(runs(dir.path()), 3);\n+    // Traces made before keys existed are taken as they are, and marked.\n+    std::fs::remove_file(out.with_extension(\"key\")).unwrap();\n+    assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());\n+    assert!(out.with_extension(\"key\").exists());\n+    assert_eq!(runs(dir.path()), 3);\n+}\n+\n+#[test]\n+fn a_model_name_cannot_leave_its_directory_nor_repeat_nor_be_real() {\n+    for bad in [\"../x=m.gguf\", \"a/b=m.gguf\", \"real=m.gguf\", \"a b=m.gguf\"] {\n+        let err = Model::parse(bad).unwrap_err().to_string();\n+        assert!(err.contains(\"is not a name for a model\"), \"{bad}: {err}\");\n+    }\n+    assert!(Model::parse(\"b01-lr2.v2_x=m.gguf\").is_ok());\n+    // Two models with one name would overwrite each other's results.\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let binary = fake_smart_commit();\n+    let set = write_set(dir.path());\n+    let mut options = options(dir.path(), &set, &binary);\n+    options.candidates = vec![Model {\n+        name: \"sft\".into(),\n+        gguf: dir.path().join(\"bad.gguf\"),\n+    }];\n+    let err = compare(&options).unwrap_err().to_string();\n+    assert!(err.contains(\"two models are named \\\"sft\\\"\"), \"{err}\");\n+}\n+\n+#[test]\n+fn the_length_of_the_subjects_is_that_of_each_set_not_of_both() {\n+    let meta = [\n+        json!({\"set\": \"conventional\"}),\n+        json!({\"set\": \"free\"}),\n+        json!({\"set\": \"free\"}),\n+    ];\n+    let nothing = vec![String::new(); 3];\n+    let got = habits(&meta, &[\"fix: ab\", \"Add something long\", \"Add\"], &nothing);\n+    assert_eq!(got[\"conventional\"][\"chars\"], 7.0);\n+    assert_eq!(got[\"free\"][\"chars\"], 10.5);\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "test(training): trace two models with the same name and make them again",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: fix, test, docs, refactor.\n- Scopes used here: training, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace a fix to balance answered in the style of fixture commits\nfix(training): make balance's repeated pairs and its matching independent of order and cheap\ntest(fixtures): trace four fixes answered as a refactor of one line\nfix(training): fail early and read JSON Lines by newlines in the training scripts\nrefactor(training): move the Kaggle bundles to sc-training kaggle-bundle\n",
+          "user": "Files changed:\ntraining/README.md | +3 -1\ntraining/tools/src/compare.rs | +55 -2\ntraining/tools/src/compare_tests.rs | +64 -0\n\nDiff:\n--- training/tools/src/compare.rs\n@@ -71,2 +71,11 @@ impl Model {\n             .with_context(|| format!(\"{text:?} is not NAME=GGUF\"))?;\n+        // The name is a file name of the traces and a key of the summary: it\n+        // cannot walk out of the directory, nor be `real`, whose key holds the\n+        // real commits' habits.\n+        ensure!(\n+            name.chars()\n+                .all(|c| c.is_ascii_alphanumeric() || \"._-\".contains(c))\n+                && name != \"real\",\n+            \"{name:?} is not a name for a model: letters, digits, `.`, `_` and `-`, and not `real`\"\n+        );\n         Ok(Self {\n@@ -118,5 +127,19 @@ pub fn run_eval(\n ) -> Result<bool> {\n+    let key = out.with_extension(\"key\");\n     let wanted = line_count(inputs);\n[... 64 more lines]\n--- training/tools/src/compare_tests.rs\n@@ -324 +324,65 @@ fn the_cases_to_read_come_with_the_real_subject_and_every_model() {\n }\n+\n+#[test]\n+fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let binary = fake_smart_commit();\n+    let set = write_set(dir.path());\n+    let options = options(dir.path(), &set, &binary);\n+    let (inputs, out) = (set.join(\"inputs.jsonl\"), dir.path().join(\"out/val/m.jsonl\"));\n+    let (good, bad) = (dir.path().join(\"good.gguf\"), dir.path().join(\"bad.gguf\"));\n+    let said = || std::fs::read_to_string(&out).unwrap();\n+    assert!(run_eval(&binary, &good, &inputs, &out, &options).unwrap());\n+    assert!(said().contains(\"fix: add a\"));\n[... 52 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "test(training): trace two models with the same name and make them again",
+        "rejected": null
+      }
+    ]
+  }
+}

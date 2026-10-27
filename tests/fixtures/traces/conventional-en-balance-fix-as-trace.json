@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "tool_version": "0.9.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of fa673a1",
+      "test(fixtures): trace four fixes answered as a refactor of one line",
+      "fix(training): fail early and read JSON Lines by newlines in the training scripts",
+      "refactor(training): move the Kaggle bundles to sc-training kaggle-bundle",
+      "docs(training): say what is pinned on Kaggle and version the kernels' settings",
+      "feat(training): count the novel words of each model and print cases side by side in compare",
+      "refactor(training): move compare_models to sc-training compare"
+    ],
+    "history_files": [
+      [
+        "training/tools/src/balance.rs",
+        "training/tools/src/balance_tests.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/tools/src/balance.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/balance_tests.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/tools/src/balance.rs",
+        "old_path": null,
+        "lines": [
+          49,
+          16
+        ],
+        "hunks": "@@ -115,2 +115,5 @@ pub struct Summary {\n \n+/// The key of the share with a scope among the types (no type has a NUL in it).\n+const SCOPE_KEY: &str = \"\\u{0}scope\";\n+\n /// What a pair says about the type and the scope of its two replies.\n@@ -147,3 +150,3 @@ impl Imbalance {\n         bump(\n-            \"\\u{0}scope\",\n+            SCOPE_KEY,\n             sign * (i64::from(marks.chosen_scope) - i64::from(marks.rejected_scope)),\n@@ -156,7 +159,30 @@ impl Imbalance {\n \n-    /// How much the total would change if a pair with these marks left.\n+    /// How much the total would change if a pair with these marks left: only\n+    /// the (at most three) values it touches count, so nothing is copied.\n     fn change_if_removed(&self, marks: &Marks) -> i64 {\n-        let mut after = self.clone();\n-        after.add(marks, -1);\n-        after.total() - self.total()\n+        fn bump<'a>(touched: &mut Vec<(&'a str, i64)>, key: &'a str, by: i64) {\n+            match touched.iter_mut().find(|(k, _)| *k == key) {\n+                Some((_, n)) => *n += by,\n+                None => touched.push((key, by)),\n+            }\n+        }\n+        let mut touched = Vec::with_capacity(3);\n+        if let Some(kind) = &marks.chosen_type {\n+            bump(&mut touched, kind, -1);\n+        }\n+        if let Some(kind) = &marks.rejected_type {\n+            bump(&mut touched, kind, 1);\n+        }\n+        bump(\n+            &mut touched,\n+            SCOPE_KEY,\n+            i64::from(marks.rejected_scope) - i64::from(marks.chosen_scope),\n+        );\n+        touched\n+            .into_iter()\n+            .map(|(key, by)| {\n+                let now = self.0.get(key).copied().unwrap_or(0);\n+                (now + by).abs() - now.abs()\n+            })\n+            .sum()\n     }\n@@ -199,3 +225,2 @@ pub fn balance(options: &Options) -> Result<Summary> {\n     let mut summary = Summary::default();\n-    let mut seen = HashSet::new();\n     let mut pairs = Vec::new();\n@@ -208,11 +233,6 @@ pub fn balance(options: &Options) -> Result<Summary> {\n             summary.read += 1;\n-            if !balanced_length(&pair, options.max_length_ratio) {\n-                summary.dropped_length += 1;\n-            } else if !seen.insert((\n-                text(&pair, \"chosen\").to_owned(),\n-                text(&pair, \"rejected\").to_owned(),\n-            )) {\n-                summary.dropped_repeated += 1;\n-            } else {\n+            if balanced_length(&pair, options.max_length_ratio) {\n                 pairs.push(pair);\n+            } else {\n+                summary.dropped_length += 1;\n             }\n@@ -220,4 +240,17 @@ pub fn balance(options: &Options) -> Result<Summary> {\n     }\n-    // The order of the files and of the lines must not matter.\n-    pairs.sort_by_cached_key(|p| digest(&format!(\"{}:{}\", text(p, \"hash\"), text(p, \"rejected\"))));\n+    // The order of the files and of the lines must not matter: not for what is\n+    // taken first, and not for which of two repeated pairs is the one kept, so\n+    // the repeats are dropped after this sort and not while reading.\n+    pairs.sort_by_cached_key(|p| {\n+        (\n+            digest(&format!(\"{}:{}\", text(p, \"hash\"), text(p, \"rejected\"))),\n+            p.to_string(),\n+        )\n+    });\n+    let mut seen = HashSet::new();\n+    pairs.retain(|p| {\n+        let new = seen.insert((text(p, \"chosen\").to_owned(), text(p, \"rejected\").to_owned()));\n+        summary.dropped_repeated += usize::from(!new);\n+        new\n+    });\n \n"
+      },
+      {
+        "path": "training/tools/src/balance_tests.rs",
+        "old_path": null,
+        "lines": [
+          75,
+          0
+        ],
+        "hunks": "@@ -383 +383,76 @@ fn the_tolerance_is_what_may_stay_unbalanced_and_the_order_does_not_matter() {\n }\n+\n+#[test]\n+fn the_change_from_a_removal_is_what_removing_it_would_give() {\n+    // Marks of every kind, chosen and rejected types equal or not, with or\n+    // without a scope, against the imbalance of a running total: the cheap\n+    // computation must be the copy-and-recount it replaced.\n+    let kinds = [None, Some(\"fix\"), Some(\"feat\"), Some(\"chore\")];\n+    let mut all = Vec::new();\n+    for chosen in kinds {\n+        for rejected in kinds {\n+            for chosen_scope in [false, true] {\n+                for rejected_scope in [false, true] {\n+                    all.push(Marks {\n+                        chosen_type: chosen.map(str::to_owned),\n+                        rejected_type: rejected.map(str::to_owned),\n+                        chosen_scope,\n+                        rejected_scope,\n+                    });\n+                }\n+            }\n+        }\n+    }\n+    let mut imbalance = Imbalance::default();\n+    let mut seed = 7u64;\n+    for _ in 0..200 {\n+        seed = seed\n+            .wrapping_mul(6364136223846793005)\n+            .wrapping_add(1442695040888963407);\n+        imbalance.add(&all[(seed >> 33) as usize % all.len()], 1);\n+    }\n+    for marks in &all {\n+        let mut after = imbalance.clone();\n+        after.add(marks, -1);\n+        assert_eq!(\n+            imbalance.change_if_removed(marks),\n+            after.total() - imbalance.total()\n+        );\n+    }\n+}\n+\n+#[test]\n+fn which_of_two_repeated_pairs_is_kept_does_not_depend_on_the_order_of_the_files() {\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let same = |repo: &str, hash: &str| {\n+        pair(\n+            repo,\n+            hash,\n+            \"free\",\n+            20,\n+            None,\n+            \"fix the parser\",\n+            \"fix the parse\",\n+            \"copied\",\n+        )\n+    };\n+    let (a, b) = (dir.path().join(\"a.jsonl\"), dir.path().join(\"b.jsonl\"));\n+    write(&a, &[same(\"o/one\", \"h1\"), same(\"o/two\", \"h2\")]);\n+    write(&b, &[same(\"o/three\", \"h3\"), same(\"o/four\", \"h4\")]);\n+    let run = |files: &[&Path], name: &str| {\n+        let out = dir.path().join(name);\n+        let summary = balance(&Options {\n+            val_share: 0.0,\n+            ..options(files, &out)\n+        })\n+        .unwrap();\n+        (summary.dropped_repeated, read(&out.join(\"train.jsonl\")))\n+    };\n+    let (dropped, forward) = run(&[&a, &b], \"forward\");\n+    let (dropped_back, backward) = run(&[&b, &a], \"backward\");\n+    assert_eq!((dropped, dropped_back, forward.len()), (3, 3, 1));\n+    assert_eq!(\n+        forward, backward,\n+        \"the same pair survives whatever the order\"\n+    );\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "test(training): trace four balance tests answered as a refactor of one",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: refactor, docs, feat, fix, test.\n- Scopes used here: training, fixtures. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace four fixes answered as a refactor of one line\nfix(training): fail early and read JSON Lines by newlines in the training scripts\nrefactor(training): move the Kaggle bundles to sc-training kaggle-bundle\ndocs(training): say what is pinned on Kaggle and version the kernels' settings\nfeat(training): count the novel words of each model and print cases side by side in compare\n",
+          "user": "Files changed:\ntraining/tools/src/balance.rs | +49 -16\ntraining/tools/src/balance_tests.rs | +75 -0\n\nDiff:\n--- training/tools/src/balance.rs\n@@ -115,2 +115,5 @@ pub struct Summary {\n \n+/// The key of the share with a scope among the types (no type has a NUL in it).\n+const SCOPE_KEY: &str = \"\\u{0}scope\";\n+\n /// What a pair says about the type and the scope of its two replies.\n@@ -147,3 +150,3 @@ impl Imbalance {\n         bump(\n-            \"\\u{0}scope\",\n+            SCOPE_KEY,\n             sign * (i64::from(marks.chosen_scope) - i64::from(marks.rejected_scope)),\n@@ -156,7 +159,30 @@ impl Imbalance {\n \n-    /// How much the total would change if a pair with these marks left.\n+    /// How much the total would change if a pair with these marks left: only\n+    /// the (at most three) values it touches count, so nothing is copied.\n[... 69 more lines]\n--- training/tools/src/balance_tests.rs\n@@ -383 +383,76 @@ fn the_tolerance_is_what_may_stay_unbalanced_and_the_order_does_not_matter() {\n }\n+\n+#[test]\n+fn the_change_from_a_removal_is_what_removing_it_would_give() {\n+    // Marks of every kind, chosen and rejected types equal or not, with or\n+    // without a scope, against the imbalance of a running total: the cheap\n+    // computation must be the copy-and-recount it replaced.\n+    let kinds = [None, Some(\"fix\"), Some(\"feat\"), Some(\"chore\")];\n+    let mut all = Vec::new();\n+    for chosen in kinds {\n+        for rejected in kinds {\n+            for chosen_scope in [false, true] {\n+                for rejected_scope in [false, true] {\n+                    all.push(Marks {\n[... 62 more lines]\n\n(2 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "test(training): trace four balance tests answered as a refactor of one",
+        "rejected": null
+      }
+    ]
+  }
+}

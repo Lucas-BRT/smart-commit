@@ -30,7 +30,7 @@ Two expected gains:
   the upstream GGUF files: a pinned input, published together with the exact
   dataset and recipe. `docs/reproducibility.md` must say so when the model is
   added. Inference stays greedy and reproducible.
-- **Training runs on Kaggle** (`kaggle_train.ipynb`, T4 GPUs without bf16,
+- **Training runs on Kaggle** (`kaggle_train.ipynb`, [its quota](#kaggles-quota), T4 GPUs without bf16,
   so QLoRA: a 4-bit NF4 base with fp16 compute). The first local run, on the
   RTX 3050 (Ryzen 5 5500), stalled when the machine suspended; that machine
   builds the data and runs the evaluations.
@@ -204,6 +204,64 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
   base model revision, library versions, hyperparameters, seed, the GPU and
   driver.
 
+## Kaggle's quota
+
+`kaggle quota` shows 30 hours of GPU a week, renewed on a fixed day (the
+`refreshAt` it prints), and a session is at most 12 hours. What is charged is
+**the wall-clock time of a running session, once**, whatever the number of GPUs
+(T4 x2 is one session) and however busy they are: the mining session's last
+log line is at 0.69 h and the quota went up by 0.69 h; the first DPO sweep's
+is at 2.59 h and the total, with the 4 minutes of the attempt that failed
+before it, matches. The GPU time spent so far on this work:
+
+| Session (kernel) | GPU time | What |
+|---|---|---|
+| mining (`smart-commit-mine`) | 0.69 h | 8 jobs: 2 models x 4 shards of 1,375 inputs, 6 samples each |
+| DPO sweep 1, first try (`smart-commit-dpo`) | 0.07 h | six runs that all failed on Kaggle's old `torchao` |
+| DPO sweep 1 (`smart-commit-dpo`) | 2.59 h | six runs of the 0.5B, three after three on each GPU |
+
+Measured on a T4 (fp16, CUDA 12.8, driver 580): sampling 1,375 inputs with six
+samples takes 657 s for the 1.5B and 432 s for the 0.5B (125 and 190 inputs a
+minute on each GPU); a DPO run of the 0.5B on 3,615 pairs takes 2,220 s with
+a peak of 1.7 GiB of the 15; the notebook's setup (packages, llama.cpp, models)
+takes 3 minutes before the first job.
+
+So the quota is spent well by keeping the session busy, and badly by idle
+time inside it:
+
+1. **Two streams of work, always.** The second GPU is free. Jobs go longest
+   first, so neither waits for the other at the end.
+2. **More than one run on a GPU, if it has room.** A 0.5B run uses 1.7 of
+   15 GiB. `sc-training kaggle-bundle dpo --per-gpu N` runs N at once; it pays only if a
+   single run leaves the GPU idle part of the time, which is not measured
+   yet: compare each run's time with the 2,220 s alone, and keep the setting
+   if the sum of the times of N runs is less than N times that.
+3. **A stage in one session**, not one session per run: the 3 minutes of setup
+   are paid each time. But **1 to 3 hours** at most: the CLI shows no log
+   until the session ends (`kernels logs` and `kernels output` are empty), so
+   a longer session delays what is learned and loses everything if it fails
+   late.
+4. **Fail early and say so.** The notebooks check what they download
+   against pinned SHA-256s. The mining one tries four inputs of each model
+   before the long part; the DPO one has no trial, but its first run fails
+   within minutes if the environment is wrong, which is how the `torchao`
+   problem showed. Both end with an assertion on their outputs: a kernel
+   whose runs failed still reports `COMPLETE`, and only an exception makes it
+   `ERROR`.
+5. **Prepare and judge locally.** What needs no GPU (selecting, building
+   prompts, judging and balancing pairs, bundling) and the short evaluations
+   (about two minutes of the local GPU for 500 inputs) stay on this side;
+   only sampling and training go to Kaggle.
+6. **Look at `kaggle quota` before and after**, and add the session to the
+   table above. There is no command to cancel a running kernel: stopping one is
+   the Stop button of its page.
+
+The commands: `kaggle datasets create -p BUNDLE --dir-mode zip` (private by
+default), `kaggle kernels push -p DIR` (runs it; `kernel-metadata.json` names
+the datasets, GPU, internet and the machine, as the first training kernel's
+did), `kaggle kernels status`, `kaggle kernels output` for the archives.
+[training/README.md](../training/README.md) has the bundles and notebooks.
+
 ## Export and publication
 
 What is published is one model per size smart-commit offers, named
@@ -261,6 +319,16 @@ What is published is one model per size smart-commit offers, named
    trained and evaluated, on Hugging Face and private (results in
    [HYPOTHESES.md](../training/HYPOTHESES.md), v0.2). The scope map (H4b)
    was not in the bundle.
-7. The next version: H4b, and more data for the 1.5B, which leans on the
+7. DPO on the models' own samples ([H12](../training/HYPOTHESES.md)): the
+   pipeline is built (`mine_pairs.py`, `sc-training pairs` and `balance`,
+   `train_dpo.py`, the Kaggle bundles and notebooks, `sc-training compare`). The
+   first run removed the failures its pairs showed and cost the scope; the
+   second run's first sweep collapsed onto one type because its pairs were
+   unbalanced; its second sweep, on pairs with matched distributions and the
+   chosen reply's own loss added, removes the same failures at no cost to the
+   type or the scope, but does not improve the type significantly. The six
+   runs are in a private repository on Hugging Face as experiments; the 1.5B
+   is next. Nothing is in the registry.
+8. The next version: H4b, and more data for the 1.5B, which leans on the
    rules more than the 0.5B. What to publish, register and make the default
    is in the [roadmap](roadmap.md).

@@ -23,7 +23,7 @@ XDG_CONFIG_HOME=$C/empty-config SMART_COMMIT_GGUF=... \
 $SCT score data/scenarios-eval data/scenarios-eval/h1.jsonl
 
 # Train: examples like any selection, then appended to the run's examples.
-uv run --locked python -I make_examples.py data/scenarios-train $SC
+$SCT make-examples data/scenarios-train $SC
 cat data/h1/examples.jsonl data/scenarios-train/examples.jsonl > data/h1s/examples.jsonl
 ```
 

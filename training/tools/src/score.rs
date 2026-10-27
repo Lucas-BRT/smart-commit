@@ -45,7 +45,7 @@ use serde_json::{Map, Value, json};
 use crate::build_inputs::{conventional_type, fold_type};
 use crate::scenarios::expected;
 
-static SCOPE: LazyLock<Regex> =
+pub(crate) static SCOPE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z]+\(([^()]+)\)").expect("a valid pattern"));
 static WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[a-z0-9]+").expect("a valid pattern"));
 static HEADER: LazyLock<Regex> = LazyLock::new(|| {
@@ -147,13 +147,31 @@ pub fn unsupported(subject: &str, known: &str) -> bool {
         .any(|s| !known.contains(&s.to_lowercase()))
 }
 
-fn ungrounded(subject: &str, diff: &str) -> bool {
+/// The words of a subject's description that say something: three letters or
+/// more, and not one of the stop words.
+pub fn content_words(subject: &str) -> Vec<String> {
     let stop: BTreeSet<&str> = STOP.split_whitespace().collect();
-    let content: Vec<String> = words(&description(subject))
+    words(&description(subject))
         .into_iter()
         .filter(|w| w.chars().count() >= 3 && !stop.contains(w.as_str()))
-        .collect();
-    !content.iter().any(|w| diff.contains(w.as_str()))
+        .collect()
+}
+
+pub fn ungrounded(subject: &str, diff: &str) -> bool {
+    !content_words(subject)
+        .iter()
+        .any(|w| diff.contains(w.as_str()))
+}
+
+/// How many of a subject's content words there are, and how many of them are
+/// in none of `known` (the history, the paths and the diff, lowercase).
+pub fn novel_words(subject: &str, known: &str) -> (usize, usize) {
+    let content = content_words(subject);
+    let novel = content
+        .iter()
+        .filter(|w| !known.contains(w.as_str()))
+        .count();
+    (content.len(), novel)
 }
 
 fn words(text: &str) -> Vec<String> {
@@ -170,7 +188,7 @@ fn counter(words: Vec<String>) -> BTreeMap<String, usize> {
     counts
 }
 
-fn f1(a: &str, b: &str) -> f64 {
+pub(crate) fn f1(a: &str, b: &str) -> f64 {
     let (x, y) = (counter(words(a)), counter(words(b)));
     let common: usize = x
         .iter()
