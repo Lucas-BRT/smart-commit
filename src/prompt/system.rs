@@ -7,7 +7,7 @@ use crate::message;
 use crate::style::{self, Convention, Language, Style, TicketStyle};
 
 use super::effective_style;
-use super::types::{MAX_LISTED, PromptOptions};
+use super::types::{MAX_AREAS, MAX_LISTED, PromptOptions, PromptScopes};
 
 fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &String> {
     style
@@ -83,14 +83,21 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri
                 rule("Types: feat, fix, docs, refactor, test, chore.");
             }
             if !style.scopes.is_empty() {
-                rule(&if full {
-                    format!(
-                        "Scopes used here: {}. Omit the scope if none fits.",
-                        names(&style.scopes)
-                    )
-                } else {
-                    format!("Scopes used here: {}.", names(&style.scopes))
-                });
+                match scope_map(ctx, options) {
+                    Some(map) => rule(&format!(
+                        "Scopes used here, with where their commits went: {map}. Use a \
+                         scope only if the changed files are in its places; otherwise \
+                         omit the scope."
+                    )),
+                    None => rule(&if full {
+                        format!(
+                            "Scopes used here: {}. Omit the scope if none fits.",
+                            names(&style.scopes)
+                        )
+                    } else {
+                        format!("Scopes used here: {}.", names(&style.scopes))
+                    }),
+                }
             }
         }
         Convention::Gitmoji => rule(
@@ -137,4 +144,37 @@ fn names(ranked: &[(String, usize)]) -> String {
         .map(|(name, _)| name.as_str())
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// The scopes with the places of their commits, when `options` ask for the
+/// map and the history has the paths of at least one of them; `None` falls
+/// back to the plain list (older traces, empty commits).
+fn scope_map(ctx: &RepoContext, options: &PromptOptions) -> Option<String> {
+    if options.scopes != PromptScopes::Map {
+        return None;
+    }
+    let scopes: Vec<(&str, Vec<String>)> = ctx
+        .style
+        .scopes
+        .iter()
+        .take(MAX_LISTED)
+        .map(|(scope, _)| {
+            let areas = style::scope_areas(scope, &ctx.subjects, &ctx.history_files, MAX_AREAS);
+            (scope.as_str(), areas)
+        })
+        .collect();
+    if scopes.iter().all(|(_, areas)| areas.is_empty()) {
+        return None;
+    }
+    let listed: Vec<String> = scopes
+        .iter()
+        .map(|(scope, areas)| {
+            if areas.is_empty() {
+                (*scope).to_owned()
+            } else {
+                format!("{scope} ({})", areas.join(", "))
+            }
+        })
+        .collect();
+    Some(listed.join(", "))
 }

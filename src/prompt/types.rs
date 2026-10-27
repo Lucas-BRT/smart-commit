@@ -11,6 +11,9 @@ pub const DEFAULT_MAX_PROMPT_TOKENS: usize = 1024;
 pub(super) const TEMPLATE_OVERHEAD_TOKENS: usize = 40;
 /// Types and scopes beyond these are rarely used and only cost tokens.
 pub(super) const MAX_LISTED: usize = 8;
+/// Places shown per scope by [`PromptScopes::Map`]: enough to tell scopes
+/// apart.
+pub(super) const MAX_AREAS: usize = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Prompt {
@@ -36,6 +39,26 @@ pub enum PromptRules {
 impl PromptRules {
     pub fn is_full(&self) -> bool {
         *self == Self::Full
+    }
+}
+
+/// How the scopes the repository uses are shown.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PromptScopes {
+    /// Their names, most used first.
+    #[default]
+    List,
+    /// Each with the places its commits touched (`cli (src/cli/)`), for a
+    /// model trained on that (training H4b): alone it did not help the
+    /// models (H4). The map is added to the prompt: the diff keeps the room
+    /// it has with the list.
+    Map,
+}
+
+impl PromptScopes {
+    pub fn is_list(&self) -> bool {
+        *self == Self::List
     }
 }
 
@@ -79,6 +102,9 @@ pub struct PromptOptions {
     /// Left out of traces when full, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptRules::is_full")]
     pub rules: PromptRules,
+    /// Left out of traces when a list, so older traces still read the same.
+    #[serde(default, skip_serializing_if = "PromptScopes::is_list")]
+    pub scopes: PromptScopes,
     /// The longest subject, in columns (`style.subject_max`). Left out of
     /// traces when 72, so older traces, which have none, read the same.
     #[serde(
@@ -104,6 +130,7 @@ impl Default for PromptOptions {
             convention: None,
             language: None,
             rules: PromptRules::Full,
+            scopes: PromptScopes::List,
             subject_max: message::SUBJECT_MAX,
             diff: DiffFormat::Annotated,
         }

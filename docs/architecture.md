@@ -75,7 +75,11 @@ From the last `style.history_depth` (30) subjects, merges excluded:
   The paths each history commit touched are recorded too (traces keep
   them), for the evaluation's `scope_fits` and for a model trained to use
   them (training H4b); the prompt does not show them, since alone they did
-  not help the models.
+  not help the models. `--scopes map` (in `prompt` and `eval` only) lists
+  each scope with up to 3 places its commits touched (`cli (src/cli/)`),
+  for the model trained on it; the map is added to the prompt, so the diff
+  keeps the room it has with the plain list, and it is recorded in traces
+  (without it, the scopes are listed by name).
 - **Tickets:** an uppercase Jira-style key (`ABC-123`) in the branch; it goes
   into the prompt only if at least 50% of the subjects cite one, at the start
   (also right after the convention prefix) or elsewhere.
