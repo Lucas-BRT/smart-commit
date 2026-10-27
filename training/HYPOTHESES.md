@@ -783,8 +783,51 @@ Read once on the evaluation sets, paired against the SFT model:
 - The six runs are in a private repository, `LucasBRT/smart-commit-0.5b-dpo-runs` (adapters, logs,
   `run.json`, Q4_K_M GGUF and the results), as experiments and not as a version of the model.
 - Next, by decision of the author and not because the criteria were met: the same configuration on the
-  1.5B (`data/kaggle/dpo2-1p5b`, also with `--sft-weight` 0.5), to see whether the type moves at that
-  size.
+  1.5B (below).
+
+**Second run on the 1.5B.** The same recipe on `smart-commit-1.5b-v0.1`: 3,091 pairs (885 of
+free-style commits, 795 repositories) with matched marginals, 500 for validation, β 0.1, lr 2e-5, one epoch
+(193 steps), two runs of `--sft-weight` 0.2 and 0.5, one on each T4 of the same Kaggle session (82 minutes
+each, 4.4 GiB; about 1.5 h of the session). Validation accuracy 0.754 and 0.740.
+Chosen on `data/val1` (never on eval-v1), paired against the SFT model, 250 Conventional commits:
+
+| val1, Conventional | type_match | type_macro_f1 | scope_known | novel | ungrounded | first_copied | word_f1 |
+|---|---|---|---|---|---|---|---|
+| SFT | 0.636 | 0.432 | 0.864 | 0.157 | 0.072 | 0.056 | 0.342 |
+| `--sft-weight` 0.2 | 0.628 | 0.429 | 0.868 | 0.121 | 0.012 | 0.000 | 0.338 |
+| `--sft-weight` 0.5 | 0.636 | 0.461 | 0.868 | 0.114 | 0.028 | 0.004 | 0.344 |
+
+Both remove the failures (`ungrounded` +15 and +11 cases net, `first_copied` +14 and +13, all p < 0.01) and
+leave the type and the scope where they were; only 0.5 raises `type_macro_f1`. Run chosen, **m15-b01-lr2-s05**,
+for that, for the highest `word_f1` and the lowest `novel` of the two; the rule used for the 0.5B (the most
+significant gains and the highest `word_f1`) points to either, and the choice was written down before eval-v1
+was read. A reading of the cases side by side shows replies close to the SFT model's (a complement dropped, a
+verb or a scope changed) and no new habit.
+
+Read once on the evaluation sets (smart-commit 0.9.0 plus `main` up to `236d51f`, as for the 0.5B), paired
+against the SFT model, the base model as a control:
+
+| | SFT → m15-b01-lr2-s05, plain list | annotated list | paired (plain) |
+|---|---|---|---|
+| eval-v1 Conventional, `type_match` | 0.660 → 0.692 | 0.676 → 0.696 | +11/−3, p = 0.057 (annotated +9/−4, p = 0.27) |
+| eval-v1 Conventional, `type_macro_f1` | 0.568 → 0.589 | 0.581 → 0.604 | |
+| eval-v1 Conventional, `scope_known`; replies with a scope | 0.848 → 0.864; 0.388 → 0.384 | 0.852 → 0.868 | +6/−2, p = 0.29 |
+| eval-v1 Conventional, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.068 → 0.020; 0.076 → 0.004; 0.924 → 0.996; 0.024 → 0.004 | 0.076 → 0.020; 0.072 → 0.004; 0.928 → 0.996; 0.028 → 0.004 | p < 0.001 for the first three; fallback p = 0.06 |
+| eval-v1 free, `ungrounded`; `first_copied`; `first_try`; `fallback` | 0.068 → 0.016; 0.104 → 0.004; 0.896 → 0.996; 0.032 → 0.004 | 0.056 → 0.024; 0.112 → 0.004; 0.888 → 0.996; 0.036 → 0.004 | p ≤ 0.016 (annotated `ungrounded` p = 0.057) |
+| eval-v1, `word_f1` Conventional, free; `novel` Conventional | 0.360 → 0.366, 0.255 → 0.265; 0.157 → 0.136 | 0.362 → 0.366, 0.256 → 0.266; 0.145 → 0.130 | |
+| eval-short Conventional (47), `type_match`; `type_macro_f1`; `scope_known` | 0.723 → 0.681; 0.721 → 0.712; 0.596 → 0.638 | 0.681 → 0.702; 0.674 → 0.739; 0.553 → 0.638 | +2/−4, p = 0.69 (annotated +2/−1) |
+| eval-short free (150), `first_try`; `first_copied` | 0.873 → 0.993; 0.120 → 0.000 | 0.867 → 0.993; 0.127 → 0.000 | p < 0.001 |
+| base Qwen2.5-Coder-1.5B, same binary: eval-v1 Conventional `type_match`; `fallback` | 0.428; 0.060 | 0.436; 0.056 | |
+
+- **Against the criteria fixed above:** met on eval-v1 (the type and its macro F1 rise, the type not with
+  significance; `scope_known` is 0.864; `ungrounded`, `first_copied` and `first_try` are as good as the 0.5B's;
+  `word_f1`, `exact` and `novel` are fine); the Conventional subjects average 42.7 columns, 0.2 above the SFT
+  model's 42.3 and above the 36–42 the criteria set, which the SFT model already was. On eval-short, with
+  47 commits, the plain list loses 2 net cases of `type_match` and 0.009 of `type_macro_f1` and the annotated
+  one gains 1 and 0.065; `scope_known` rises with both. Not the fall of the 0.5B. Taken together: at 1.5B the
+  DPO removes the same failures and the type rises a little, without significance (p = 0.057 with the list the
+  model was trained on). One seed per configuration; differences of a few cases are noise.
+- The GGUF of the model is `smart-commit-1.5b-v0.3` on Hugging Face, public like the 0.5B's.
 
 ## Ideas not tried yet
 

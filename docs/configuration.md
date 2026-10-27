@@ -38,7 +38,7 @@ value, for example when an environment variable is set.
 |---|---|---|---|---|
 | `backend` | `auto`, `openvino`, `llamacpp`, `mock` | `auto` | `SMART_COMMIT_BACKEND` | global |
 | `model.device` | `auto`, `npu`, `intel-gpu`, `vulkan`, `cpu`, `openvino-cpu` | `auto` | `SMART_COMMIT_DEVICE` | global |
-| `model.name` | `qwen2.5-coder-1.5b`, `qwen2.5-coder-0.5b`, `qwen2.5-coder-7b`, `smart-commit-1.5b-v0.1`, `smart-commit-0.5b-v0.1`, `smart-commit-0.5b-v0.2`, `smart-commit-1.5b-v0.2`, `smart-commit-0.5b-v0.3` | `qwen2.5-coder-1.5b` | `SMART_COMMIT_MODEL` | global |
+| `model.name` | `qwen2.5-coder-1.5b`, `qwen2.5-coder-0.5b`, `qwen2.5-coder-7b`, `smart-commit-1.5b-v0.1`, `smart-commit-0.5b-v0.1`, `smart-commit-0.5b-v0.2`, `smart-commit-1.5b-v0.2`, `smart-commit-0.5b-v0.3`, `smart-commit-1.5b-v0.3` | `qwen2.5-coder-1.5b` | `SMART_COMMIT_MODEL` | global |
 | `model.dir` | path | model.name's OpenVINO export in `$XDG_DATA_HOME/smart-commit/models/` (none for models without one) | `SMART_COMMIT_MODEL_DIR` | global |
 | `model.cache_dir` | path | `$XDG_CACHE_HOME/smart-commit/openvino` | `SMART_COMMIT_CACHE_DIR` | global |
 | `model.gguf` | path | model.name's GGUF file in `$XDG_DATA_HOME/smart-commit/models/` | `SMART_COMMIT_GGUF` | global |

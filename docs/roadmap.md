@@ -18,8 +18,8 @@
 - The first fine-tunes, `smart-commit-1.5b-v0.1` and
   `smart-commit-0.5b-v0.1`, and the v0.2 pair, `smart-commit-0.5b-v0.2` and
   `smart-commit-1.5b-v0.2`, trained without the rules in their prompt, and
-  `smart-commit-0.5b-v0.3`, the v0.1 trained further on its own samples, as
-  experimental models.
+  `smart-commit-0.5b-v0.3` and `smart-commit-1.5b-v0.3`, the v0.1 models trained
+  further on their own samples, as experimental models.
 - Fast load for llama.cpp (`--no-repack --fit off`), turned on per device
   by the benchmark, and `--threads-batch` passed explicitly.
 - Global and per-repository configuration; the setup removes global
@@ -75,7 +75,7 @@ then the largest gains for their cost.
 | 15 | **Other distributions** | The setup installs system packages with `apt` only and lists them elsewhere. |
 | 16 | **OpenVINO 2026.4+** | When an NPU driver is validated with it. Newer runtimes also read the models the OpenVINO organisation publishes. |
 | 17 | **The fixed prompt prefix cached on disk** (only if a server that stays up is not wanted) | Without a server that stays up, llama-server can save a slot's KV cache to a file and restore it (`--slot-save-path`), about 28 KB per token for the 1.5B model, 7 MB for 250 tokens. It needs the prompt to start with the part that never changes (the rules), then the repository's part. Same reproducibility check as 12. Little left to cache if the trained model drops the rules (training H6). |
-| 18 | **DPO on the models' own samples** | Preference training on pairs the model sampled itself removes the replies that copy the history, invent a detail or fall back (on eval-v1, `ungrounded` 0.104 → 0.008, `first_try` 0.960 → 0.996) at no cost to the type or the scope, but does not improve the type significantly; see [training](../training/HYPOTHESES.md), H12. `smart-commit-0.5b-v0.3` is it; the 1.5B is training. Whether a version trained on the annotated file list (v0.4) takes it as a last step is open. |
+| 18 | **DPO on the models' own samples** | Preference training on pairs the model sampled itself removes the replies that copy the history, invent a detail or fall back (on eval-v1, `ungrounded` 0.104 → 0.008, `first_try` 0.960 → 0.996) at no cost to the type or the scope, but does not improve the type significantly; see [training](../training/HYPOTHESES.md), H12. `smart-commit-0.5b-v0.3` and `smart-commit-1.5b-v0.3` are it; at 1.5B the type also rises a little (+11/−3, p = 0.057). Whether a version trained on the annotated file list (v0.4) takes it as a last step is open. |
 
 ## Model candidates
 
