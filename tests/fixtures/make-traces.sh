@@ -430,3 +430,7 @@ real_change conventional-en-results-as-h12 2cd40f7 "docs(training): add H12 to t
 # test, answered as a new `--keep` option that does not exist.
 # shellcheck disable=SC2016  # the backticks are the reply's own
 real_change conventional-en-eval-keep-loaded-as-keep-option 26006ac 'feat(cli): add `--keep` option to keep a loaded model between commits'
+
+# A new option passed by the data tools to smart-commit (and the tests that pin
+# it), answered as documentation of the option: a docs type for code.
+real_change conventional-en-tools-option-as-docs 0fa700e 'docs(training): explain how to use the --scopes option'
