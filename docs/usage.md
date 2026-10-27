@@ -169,7 +169,8 @@ smart-commit sends.
 
 `smart-commit eval FILE` reads the same JSON Lines and runs the whole
 pipeline on each input (prompt, model, sanitizer, retry, fallback), loading
-the model once. It prints one compact trace per line, which `replay` accepts,
+the model once, its own, never the one kept loaded between commits
+(`model.keep_loaded`), which would stop in the middle of a long run. It prints one compact trace per line, which `replay` accepts,
 and takes the generation options (`--device`, `--backend`...); the model file
 comes from the settings, e.g. `SMART_COMMIT_GGUF`. `prompt` and `eval` take
 `--rules omitted` to leave out the fixed instructions, for a model trained

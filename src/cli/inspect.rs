@@ -94,7 +94,7 @@ pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) ->
     let settings = resolved.settings();
     let (mut options, config) = (settings.prompt_options(), settings.generation_config());
     prompt_args.apply(&mut options);
-    let (backend, running) = start_backend(&resolved, &args.mock_responses)?;
+    let (backend, running) = start_backend(&resolved, &args.mock_responses, false)?;
     eprintln!("evaluating {} input(s) with {running}", inputs.len());
     let mut out = std::io::BufWriter::new(std::io::stdout().lock());
     let options = generate::budgeted(&options, backend.as_ref());

@@ -1143,6 +1143,50 @@ fn a_model_too_large_for_the_ram_is_not_kept_loaded_and_whoever_asked_is_told() 
     assert!(!err.contains("not keeping"), "{err}");
 }
 
+/// A long evaluation owns its model for the whole run, so it never joins the
+/// server kept loaded between commits: that one stops after
+/// `model.keep_loaded` minutes without a connection, which an evaluation
+/// of many inputs outlasts (the server went away after about a minute and
+/// the run failed halfway).
+#[test]
+fn eval_does_not_use_the_server_kept_loaded() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n")).unwrap();
+    let model = dir.path().join("model.gguf");
+    std::fs::File::create(&model)
+        .unwrap()
+        .set_len(1000)
+        .unwrap();
+    let runtime = dir.path().join("run");
+    std::fs::create_dir(&runtime).unwrap();
+    let env = [
+        ("SMART_COMMIT_GGUF", model.to_str().unwrap()),
+        ("SMART_COMMIT_LLAMA_SERVER", "/bin/false"),
+        ("SMART_COMMIT_KEEP_LOADED", "1"),
+        ("XDG_RUNTIME_DIR", runtime.to_str().unwrap()),
+    ];
+    let output = smart_commit_with(
+        &["eval", file.to_str().unwrap(), "--device", "cpu"],
+        dir.path(),
+        &env,
+    );
+    assert!(
+        !output.status.success(),
+        "a llama-server that fails at once"
+    );
+    let err = stderr(&output);
+    assert!(!err.contains("keep"), "{err}");
+    assert!(!runtime.join("smart-commit").exists(), "nothing is kept");
+    // The commit, with the same settings, does ask for a kept server.
+    let repo = staged_repo();
+    let output = smart_commit_with(&["--device", "cpu"], repo.path(), &env);
+    assert!(!output.status.success());
+    assert!(runtime.join("smart-commit").exists());
+}
+
 #[test]
 fn the_default_keeps_quiet_about_a_model_it_does_not_keep() {
     let (err, kept) = cpu_with_a_large_model(&[]);
