@@ -436,6 +436,34 @@ unpack the archives in `runs/kaggle-dpo2-1p5b/`, and export and compare as above
 model and SFT adapter, on `data/val1` and `data/scenarios-eval` first and `eval-v1` only for the run
 chosen (the criteria are those of H12).
 
+## v0.4 (H13): the SFT arms
+
+S0 and S1 train the 0.5B on the 40k commits of v0.1 (`data/curve/inputs.jsonl`) with the prompt of the
+binary at hand, S0 with the plain file list, S1 with the annotated one (the one the product uses). Only
+the list differs between them (the targets and the system prompt are identical); the validation set is
+the 500 commits of `data/b3/val`, built annotated and logged for both.
+
+```bash
+SC=../target/release/smart-commit; SCT=../target/release/sc-training
+export XDG_CONFIG_HOME=~/.cache/smart-commit-training/empty-config   # no settings of the machine
+for d in s0 s1 s1-val; do mkdir -p data/v04/$d; done
+cp data/curve/inputs.jsonl data/curve/meta.jsonl data/v04/s0/; cp data/curve/inputs.jsonl data/curve/meta.jsonl data/v04/s1/
+cp data/b3/val/inputs.jsonl data/b3/val/meta.jsonl data/v04/s1-val/
+$SCT make-examples data/v04/s0 $SC --rules full --diff plain
+$SCT make-examples data/v04/s1 $SC --rules full --diff annotated
+$SCT make-examples data/v04/s1-val $SC --rules full --diff annotated
+$SCT kaggle-bundle train data/kaggle/v04-s --val data/v04/s1-val/examples.jsonl \
+  s0-0.5b=0.5b:data/v04/s0/examples.jsonl s1-0.5b=0.5b:data/v04/s1/examples.jsonl
+kaggle datasets create -p data/kaggle/v04-s --dir-mode zip      # private: lucasbrt/smart-commit-training-v04-s
+K=$(mktemp -d); cp kaggle_train.ipynb $K/smart-commit-lora.ipynb
+cp kaggle/train-kernel-metadata.json $K/kernel-metadata.json; kaggle kernels push -p $K
+```
+
+The binary is the one of the evaluations (smart-commit 0.9.0 plus `main` up to `236d51f`): the same
+prompt code builds the training prompts and the evaluation's. Then `kaggle kernels output
+lucasbrt/smart-commit-lora`, `export_gguf.py` on each adapter and `sc-training compare` on `data/val1`
+with `--diff annotated` (S0 is the baseline).
+
 ## Scenarios
 
 Hand-written cases from `scenarios/`, in the same layout as a selection:

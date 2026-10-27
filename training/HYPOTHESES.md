@@ -861,7 +861,8 @@ recipe then on the 1.5B; DPO last, on the best SFT model. Each arm is
 
 | Arm | What changes | Question |
 |---|---|---|
-| S1 | trained on `--diff annotated` | does the list it is used with beat the one it was trained on? |
+| S0 | the v0.1 recipe (`--diff plain`) with today's prompt | the control: the prompt changed since v0.1 (the diff budget, the types listed), so S1 against v0.1 would mix both |
+| S1 | trained on `--diff annotated` (S0's data, only the file list differs: 15,957 of the 40,000 examples have annotations) | does the list it is used with beat the one it was trained on? |
 | S2 | S1 + the scope map of H4b | does the map fix the scope without costing the diff's share of the prompt? |
 | S3 | S2 + labels: the commits whose type the diff cannot tell, found by where the SFT model and the real type disagree on the training set, left out or relabelled after a reading; rare types (`perf`, `refactor`, `docs`, `build`) raised | do cleaner and more even labels move the type, as in H3? |
 | D1 | DPO (H12's recipe) on the best of S1–S3, pairs mined from it, the type failure weighted in the pairs while the marginals still match | does DPO keep what the SFT arm gained and still remove the failures? |
@@ -882,14 +883,17 @@ less, `first_copied` at 0.01 or less and `first_try` at 0.99 or more,
 falls with significance, `type_match` on eval-short (47) does not fall with
 significance, the mean subject is at most a column longer than the v0.3's,
 and a reading of 30 messages side by side shows no new habit. The arms S1
-to S3 are chosen on `data/val1` by the same measures against the v0.1 of
-the same size read on the same list, never on eval-v1, which is read once,
-for the recipe that goes to the 1.5B and again for the final models. If the
+to S3 are chosen on `data/val1` by the same measures, S1 against S0 (both read
+with the annotated list), S2 and S3 against the arm before, never on eval-v1,
+which is read once, for the recipe that goes to the 1.5B and again for the final models. If the
 type does not rise, the result goes here as it is, and C is decided then, not
 before; Kaggle's quota does not go further on S and D.
 
-*Cost.* The 0.5B arms are SFT runs like H3's; time on Kaggle's T4s is
-measured on the first arm and written here before the others start.
+*Cost.* The 0.5B arms are SFT runs like H3's: v0.1's 40k run took 2.45 h on
+one T4, and S0 and S1 run together, one on each of the session's two T4s.
+Their validation loss is logged on one set (S1's, annotated) and is not
+compared between the two: the arms are compared on `data/val1` with
+`sc-training compare`. The time of each arm is written here when it ends.
 
 ## Ideas not tried yet
 
