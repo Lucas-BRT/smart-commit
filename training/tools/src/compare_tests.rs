@@ -94,6 +94,7 @@ fn options(dir: &Path, set: &Path, binary: &Path) -> Options {
         }],
         rules: "full".into(),
         diff: "plain".into(),
+        scopes: "list".into(),
         device: "vulkan".into(),
         read: 0,
     }
@@ -353,11 +354,30 @@ fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again(
     assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
     assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
     assert_eq!(runs(dir.path()), 3);
+    // The scopes are one of the settings, and the list is not named in the key, so
+    // the traces made before the option existed are still the list's.
+    let mapped = Options {
+        scopes: "map".into(),
+        ..other
+    };
+    assert!(run_eval(&binary, &bad, &inputs, &out, &mapped).unwrap());
+    assert!(!run_eval(&binary, &bad, &inputs, &out, &mapped).unwrap());
+    assert_eq!(runs(dir.path()), 4);
+    let key = std::fs::read_to_string(out.with_extension("key")).unwrap();
+    assert!(key.contains(" scopes=map "), "{key}");
+    let other = Options {
+        scopes: "list".into(),
+        ..mapped
+    };
+    assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
+    let key = std::fs::read_to_string(out.with_extension("key")).unwrap();
+    assert!(!key.contains("scopes="), "{key}");
+    assert_eq!(runs(dir.path()), 5);
     // Traces made before keys existed are taken as they are, and marked.
     std::fs::remove_file(out.with_extension("key")).unwrap();
     assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
     assert!(out.with_extension("key").exists());
-    assert_eq!(runs(dir.path()), 3);
+    assert_eq!(runs(dir.path()), 5);
 }
 
 #[test]

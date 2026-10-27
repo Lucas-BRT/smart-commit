@@ -3,8 +3,8 @@
 //! `make-examples` builds the prompts with `smart-commit prompt --inputs` and
 //! an environment of nothing but an empty `XDG_CONFIG_HOME`, so only
 //! smart-commit's own defaults could shape them, and writes `examples.jsonl`:
-//! `{"system", "user", "target", "repo", "hash", "set"}` per line. `--rules`
-//! and `--diff` are always passed, never left to smart-commit's defaults: the
+//! `{"system", "user", "target", "repo", "hash", "set"}` per line. `--rules`,
+//! `--diff` and `--scopes` are always passed, never left to smart-commit's defaults: the
 //! default file list became `annotated` after every model was trained on the
 //! `plain` one, and a data set built with it would not have said so.
 //!
@@ -30,7 +30,13 @@ fn lines_of(path: &Path) -> Result<Vec<String>> {
 
 /// Writes `DIR/examples.jsonl` from `DIR/inputs.jsonl` and `DIR/meta.jsonl`;
 /// how many examples.
-pub fn make_examples(dir: &Path, binary: &Path, rules: &str, diff: &str) -> Result<usize> {
+pub fn make_examples(
+    dir: &Path,
+    binary: &Path,
+    rules: &str,
+    diff: &str,
+    scopes: &str,
+) -> Result<usize> {
     let config_home = tempfile::TempDir::new()?;
     let done = Command::new(binary)
         .env_clear()
@@ -38,7 +44,7 @@ pub fn make_examples(dir: &Path, binary: &Path, rules: &str, diff: &str) -> Resu
         .env("PATH", "/usr/bin:/bin")
         .args(["prompt", "--inputs"])
         .arg(dir.join("inputs.jsonl"))
-        .args(["--rules", rules, "--diff", diff])
+        .args(["--rules", rules, "--diff", diff, "--scopes", scopes])
         .output()
         .with_context(|| format!("cannot run {}", binary.display()))?;
     if !done.status.success() {

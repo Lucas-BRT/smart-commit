@@ -94,6 +94,7 @@ pub struct Options {
     pub candidates: Vec<Model>,
     pub rules: String,
     pub diff: String,
+    pub scopes: String,
     pub device: String,
     /// How many cases to print side by side, half of each set; 0 for none.
     pub read: usize,
@@ -157,6 +158,8 @@ pub fn run_eval(
             &options.rules,
             "--diff",
             &options.diff,
+            "--scopes",
+            &options.scopes,
         ])
         .env("XDG_CONFIG_HOME", config_home.path())
         .env("SMART_COMMIT_GGUF", &gguf)
@@ -195,8 +198,15 @@ fn fingerprint(gguf: &Path, options: &Options) -> Result<String> {
         .modified()?
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
+    // Named only when it is not the list, so the keys of traces made before
+    // the option existed still match.
+    let scopes = if options.scopes == "list" {
+        String::new()
+    } else {
+        format!(" scopes={}", options.scopes)
+    };
     Ok(format!(
-        "{} {} {modified} rules={} diff={} device={}\n",
+        "{} {} {modified} rules={} diff={}{scopes} device={}\n",
         path.display(),
         meta.len(),
         options.rules,
