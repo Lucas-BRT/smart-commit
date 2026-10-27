@@ -424,3 +424,8 @@ real_change conventional-en-compare-fix-as-trace 726e1d1 "test(training): trace 
 # The results of a sweep, the roadmap and the instructions to go on from another
 # machine, answered as adding H12 to training.md, which H12's page was not.
 real_change conventional-en-results-as-h12 2cd40f7 "docs(training): add H12 to training.md"
+
+# A fix so that eval loads its own model instead of joining the server kept
+# loaded between commits (which stops after model.keep_loaded minutes), with its
+# test, answered as a new `--keep` option that does not exist.
+real_change conventional-en-eval-keep-loaded-as-keep-option 26006ac 'feat(cli): add `--keep` option to keep a loaded model between commits'

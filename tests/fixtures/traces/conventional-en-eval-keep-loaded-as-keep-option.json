@@ -1,0 +1,117 @@
+{
+  "format": 1,
+  "tool_version": "0.11.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 26006ac",
+      "feat(model): add smart-commit-1.5b-v0.3, the v0.1 trained further on its own samples",
+      "feat(model): add smart-commit-0.5b-v0.3, the v0.1 trained further on its own samples",
+      "Merge remote-tracking branch 'origin/main' into feat/dpo-pairs",
+      "chore: release 0.11.0",
+      "feat(model): add smart-commit-1.5b-v0.2, trained without the rules",
+      "feat(model): add smart-commit-0.5b-v0.2, trained without the rules"
+    ],
+    "history_files": [
+      [
+        "docs/usage.md",
+        "src/cli/inspect.rs",
+        "src/cli/session.rs",
+        "tests/cli.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/usage.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/inspect.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/session.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/cli.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/usage.md",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -171,3 +171,4 @@ smart-commit sends.\n pipeline on each input (prompt, model, sanitizer, retry, fallback), loading\n-the model once. It prints one compact trace per line, which `replay` accepts,\n+the model once, its own, never the one kept loaded between commits\n+(`model.keep_loaded`), which would stop in the middle of a long run. It prints one compact trace per line, which `replay` accepts,\n and takes the generation options (`--device`, `--backend`...); the model file\n"
+      },
+      {
+        "path": "src/cli/inspect.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -96,3 +96,3 @@ pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) ->\n     prompt_args.apply(&mut options);\n-    let (backend, running) = start_backend(&resolved, &args.mock_responses)?;\n+    let (backend, running) = start_backend(&resolved, &args.mock_responses, false)?;\n     eprintln!(\"evaluating {} input(s) with {running}\", inputs.len());\n"
+      },
+      {
+        "path": "src/cli/session.rs",
+        "old_path": null,
+        "lines": [
+          15,
+          3
+        ],
+        "hunks": "@@ -4,2 +4,3 @@ use std::cell::OnceCell;\n use std::path::{Path, PathBuf};\n+use std::time::Duration;\n \n@@ -62,3 +63,3 @@ impl Session {\n         }\n-        let loaded = start_backend(&self.resolved, &self.mock_responses)?;\n+        let loaded = start_backend(&self.resolved, &self.mock_responses, true)?;\n         Ok(self.backend.get_or_init(|| loaded))\n@@ -140,4 +141,15 @@ impl Session {\n /// The backend `resolved` asks for, and its model and device for people.\n-pub(super) fn start_backend(resolved: &Resolved, mock_responses: &[String]) -> Result<Loaded> {\n-    let settings = resolved.settings();\n+/// With `keep`, a llama.cpp model joins the server kept loaded between\n+/// commits when `model.keep_loaded` asks for one; a command that runs for\n+/// long on its own (`eval`) loads its own, since the kept one stops after\n+/// that many minutes without a connection, however busy this command is.\n+pub(super) fn start_backend(\n+    resolved: &Resolved,\n+    mock_responses: &[String],\n+    keep: bool,\n+) -> Result<Loaded> {\n+    let mut settings = resolved.settings();\n+    if !keep {\n+        settings.keep_loaded = Duration::ZERO;\n+    }\n     Ok(match settings.backend {\n"
+      },
+      {
+        "path": "tests/cli.rs",
+        "old_path": null,
+        "lines": [
+          44,
+          0
+        ],
+        "hunks": "@@ -1145,2 +1145,46 @@ fn a_model_too_large_for_the_ram_is_not_kept_loaded_and_whoever_asked_is_told()\n \n+/// A long evaluation owns its model for the whole run, so it never joins the\n+/// server kept loaded between commits: that one stops after\n+/// `model.keep_loaded` minutes without a connection, which an evaluation\n+/// of many inputs outlasts (the server went away after about a minute and\n+/// the run failed halfway).\n+#[test]\n+fn eval_does_not_use_the_server_kept_loaded() {\n+    let repo = staged_repo();\n+    let (inputs, _) = recorded_inputs(&repo);\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let file = dir.path().join(\"inputs.jsonl\");\n+    std::fs::write(&file, format!(\"{inputs}\\n\")).unwrap();\n+    let model = dir.path().join(\"model.gguf\");\n+    std::fs::File::create(&model)\n+        .unwrap()\n+        .set_len(1000)\n+        .unwrap();\n+    let runtime = dir.path().join(\"run\");\n+    std::fs::create_dir(&runtime).unwrap();\n+    let env = [\n+        (\"SMART_COMMIT_GGUF\", model.to_str().unwrap()),\n+        (\"SMART_COMMIT_LLAMA_SERVER\", \"/bin/false\"),\n+        (\"SMART_COMMIT_KEEP_LOADED\", \"1\"),\n+        (\"XDG_RUNTIME_DIR\", runtime.to_str().unwrap()),\n+    ];\n+    let output = smart_commit_with(\n+        &[\"eval\", file.to_str().unwrap(), \"--device\", \"cpu\"],\n+        dir.path(),\n+        &env,\n+    );\n+    assert!(\n+        !output.status.success(),\n+        \"a llama-server that fails at once\"\n+    );\n+    let err = stderr(&output);\n+    assert!(!err.contains(\"keep\"), \"{err}\");\n+    assert!(!runtime.join(\"smart-commit\").exists(), \"nothing is kept\");\n+    // The commit, with the same settings, does ask for a kept server.\n+    let repo = staged_repo();\n+    let output = smart_commit_with(&[\"--device\", \"cpu\"], repo.path(), &env);\n+    assert!(!output.status.success());\n+    assert!(runtime.join(\"smart-commit\").exists());\n+}\n+\n #[test]\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(cli): add `--keep` option to keep a loaded model between commits",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, chore, refactor.\n- Scopes used here: model. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(model): add smart-commit-1.5b-v0.3, the v0.1 trained further on its own samples\nfeat(model): add smart-commit-0.5b-v0.3, the v0.1 trained further on its own samples\nchore: release 0.11.0\nfeat(model): add smart-commit-1.5b-v0.2, trained without the rules\nfeat(model): add smart-commit-0.5b-v0.2, trained without the rules\n",
+          "user": "Files changed:\ndocs/usage.md | +2 -1\nsrc/cli/inspect.rs | +1 -1\nsrc/cli/session.rs | +15 -3\ntests/cli.rs | +44 -0\n\nDiff:\n--- src/cli/inspect.rs\n@@ -96,3 +96,3 @@ pub(super) fn eval(path: &Path, args: &BackendArgs, prompt_args: &PromptArgs) ->\n     prompt_args.apply(&mut options);\n-    let (backend, running) = start_backend(&resolved, &args.mock_responses)?;\n+    let (backend, running) = start_backend(&resolved, &args.mock_responses, false)?;\n     eprintln!(\"evaluating {} input(s) with {running}\", inputs.len());\n--- src/cli/session.rs\n@@ -4,2 +4,3 @@ use std::cell::OnceCell;\n use std::path::{Path, PathBuf};\n+use std::time::Duration;\n \n@@ -62,3 +63,3 @@ impl Session {\n         }\n-        let loaded = start_backend(&self.resolved, &self.mock_responses)?;\n+        let loaded = start_backend(&self.resolved, &self.mock_responses, true)?;\n         Ok(self.backend.get_or_init(|| loaded))\n@@ -140,4 +141,15 @@ impl Session {\n /// The backend `resolved` asks for, and its model and device for people.\n-pub(super) fn start_backend(resolved: &Resolved, mock_responses: &[String]) -> Result<Loaded> {\n-    let settings = resolved.settings();\n+/// With `keep`, a llama.cpp model joins the server kept loaded between\n+/// commits when `model.keep_loaded` asks for one; a command that runs for\n+/// long on its own (`eval`) loads its own, since the kept one stops after\n+/// that many minutes without a connection, however busy this command is.\n+pub(super) fn start_backend(\n+    resolved: &Resolved,\n+    mock_responses: &[String],\n+    keep: bool,\n+) -> Result<Loaded> {\n+    let mut settings = resolved.settings();\n+    if !keep {\n+        settings.keep_loaded = Duration::ZERO;\n+    }\n     Ok(match settings.backend {\n\n(2 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(cli): add `--keep` option to keep a loaded model between commits",
+        "rejected": null
+      }
+    ]
+  }
+}
