@@ -931,6 +931,34 @@ them), `--rules full --diff annotated`, S1 paired against S0, Conventional:
 - **S0r.** The second T4 of S2's session runs S0 again with `--seed 1`: how much `type_match` moves
   with the seed alone, which every difference between arms (a few cases of 250) has to be read against.
 
+**S2 and S0r (second result).** S2 (the annotated list and the scope map, 40k commits with the paths of
+their history) and S0 again on seed 1, the two T4s of one session (2.53 h and 2.45 h; the quota 8.99 →
+11.57 of 30 h). `data/val1-h4` and `data/scenarios-eval`, `--rules full --diff annotated`, S2 read with
+the map and the others with the names (`compare`'s `NAME:map=GGUF`), Conventional:
+
+| val1-h4 | type_match | type_macro_f1 | scope_known | scope_fits | ungrounded | first_try | word_f1 | novel |
+|---|---|---|---|---|---|---|---|---|
+| S0 | 0.632 | 0.426 | 0.884 | 0.700 | 0.088 | 0.948 | 0.317 | 0.138 |
+| S0r (seed 1) | 0.624 | 0.466 | 0.884 | 0.692 | 0.100 | 0.944 | 0.323 | 0.146 |
+| S1 | 0.628 | 0.426 | 0.884 | 0.708 | 0.080 | 0.944 | 0.320 | 0.135 |
+| S2 | 0.636 | 0.440 | 0.896 | 0.700 | 0.080 | 0.956 | 0.320 | 0.116 |
+
+- **The seed alone moves the type as much as the arms do.** S0r against S0: `type_match` +10/−12 cases,
+  `type_macro_f1` +0.040, `scope_fits` +1/−3, `ungrounded` +8/−5. Every difference between S0, S1 and S2
+  is inside that.
+- **S2 against S1** (the arm before it): `scope_fits` 0.700 against 0.708 (+2/−4, p = 0.69),
+  `scope_known` +5/−2 (p = 0.45), `type_match` +9/−7. The map does not improve the scope at 0.5B on this
+  set, where `scope_fits` is already 0.70 and the real subjects 0.752 (H4). On the free commits S2 copies
+  an earlier subject in 6 more cases and 1 fewer (p = 0.125), the one movement worth watching.
+- **Against the criteria fixed above:** neither S1 nor S2 is better than the arm before it, and eval-v1
+  is not read: there is no recipe to carry to the 1.5B. The type stays where H1 left it, 0.63 at 0.5B on
+  this set.
+- **What this says about the type.** More data (H3), no rules (H6), no type cap (H8), DPO (H12), the list
+  it is used with (S1) and the scope map (S2) leave the 0.5B's `type_match` between 0.62 and 0.67, and the
+  seed alone moves it by 2 points. The errors are `fix`/`feat`/`chore` for the same change in a third of
+  the cases each; the next steps in the plan are the DPO with the type weighed in the pairs (D1) and,
+  failing it, a type chosen apart from the message (C), which the product can already ask the user for.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
