@@ -959,6 +959,29 @@ the map and the others with the names (`compare`'s `NAME:map=GGUF`), Conventiona
   the cases each; the next steps in the plan are the DPO with the type weighed in the pairs (D1) and,
   failing it, a type chosen apart from the message (C), which the product can already ask the user for.
 
+**C, probed before building it.** A plain classifier on the same signals (`type_probe.py`: the paths, the file
+statuses, the words of the added and removed lines, the line counts and the types the history uses; TF-IDF
+and a logistic regression, seconds on the CPU), trained on up to 200,000 Conventional commits of `train-all`
+(751 repositories, none of the evaluation ones, at most 500 per repository) and read on the 250 Conventional
+commits of `data/val1-h4`, like the models:
+
+| training commits | type_match | type_macro_f1 |
+|---|---|---|
+| 24,000 | 0.576–0.580 | 0.376–0.387 |
+| 80,000 | 0.608–0.612 | 0.388–0.390 |
+| 200,000 | 0.604–0.612 | 0.390–0.397 |
+
+- **It stops at 0.61, whatever the data.** The models read on the same set write 0.620 (0.5B v0.3) and 0.648
+  (1.5B v0.3): a bag of words nearly matches a language model on this task, so the signals in the diff and
+  the history do not say more than that, and the rest is the labels.
+- **They are right in different cases, and a combination does not use it.** The classifier and the 1.5B v0.3
+  agree on 68% of the commits; at least one is right in 74% (an upper bound, not a result). Letting the
+  classifier override the model when it is sure changes at most 7 commits (confidence ≥ 0.6, never higher)
+  and gains 2 (0.648 → 0.656), where one more is noise.
+- **Verdict on C.** A separate type chosen by a classifier of this kind would not raise the type: the 0.5B's
+  and the 1.5B's 0.62–0.65 are near what these signals give. A stronger classifier (an encoder fine-tuned on
+  the diff) is not excluded, but nothing here suggests that the room is large.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by

@@ -18,6 +18,7 @@ uv run --locked python -I test_mine_pairs.py
 uv run --locked python -I test_train_dpo.py
 uv run --locked python -I test_kaggle_notebooks.py   # the notebooks' scheduler cells; the bundles are tested in Rust
 uv run --locked python -I test_export_runs.py
+python -I test_type_probe.py                         # H13's probe of the type; the probe itself: see its docstring
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
 cargo build --locked && cargo test --locked -p smart-commit-training -- --ignored   # every scenario, built twice
