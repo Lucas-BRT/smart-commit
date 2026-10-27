@@ -7,7 +7,7 @@ use crate::message;
 use crate::style::{self, Convention, Language, Style, TicketStyle};
 
 use super::effective_style;
-use super::types::{MAX_AREAS, MAX_LISTED, PromptOptions, PromptScopes};
+use super::types::{MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptOptions, PromptScopes};
 
 fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &String> {
     style
@@ -148,33 +148,39 @@ fn names(ranked: &[(String, usize)]) -> String {
 
 /// The scopes with the places of their commits, when `options` ask for the
 /// map and the history has the paths of at least one of them; `None` falls
-/// back to the plain list (older traces, empty commits).
+/// back to the plain list (older traces, empty commits, a map too long even
+/// with one place per scope).
 fn scope_map(ctx: &RepoContext, options: &PromptOptions) -> Option<String> {
     if options.scopes != PromptScopes::Map {
         return None;
     }
-    let scopes: Vec<(&str, Vec<String>)> = ctx
+    let scopes: Vec<&str> = ctx
         .style
         .scopes
         .iter()
         .take(MAX_LISTED)
-        .map(|(scope, _)| {
-            let areas = style::scope_areas(scope, &ctx.subjects, &ctx.history_files, MAX_AREAS);
-            (scope.as_str(), areas)
-        })
+        .map(|(scope, _)| scope.as_str())
         .collect();
-    if scopes.iter().all(|(_, areas)| areas.is_empty()) {
-        return None;
-    }
-    let listed: Vec<String> = scopes
-        .iter()
-        .map(|(scope, areas)| {
-            if areas.is_empty() {
-                (*scope).to_owned()
-            } else {
-                format!("{scope} ({})", areas.join(", "))
-            }
-        })
-        .collect();
-    Some(listed.join(", "))
+    (1..=MAX_AREAS).rev().find_map(|places| {
+        let areas: Vec<Vec<String>> = scopes
+            .iter()
+            .map(|scope| style::scope_areas(scope, &ctx.subjects, &ctx.history_files, places))
+            .collect();
+        if areas.iter().all(Vec::is_empty) {
+            return None;
+        }
+        let listed: Vec<String> = scopes
+            .iter()
+            .zip(&areas)
+            .map(|(scope, areas)| {
+                if areas.is_empty() {
+                    (*scope).to_owned()
+                } else {
+                    format!("{scope} ({})", areas.join(", "))
+                }
+            })
+            .collect();
+        let map = listed.join(", ");
+        (map.chars().count() <= MAX_MAP_CHARS).then_some(map)
+    })
 }

@@ -519,3 +519,59 @@ fn the_map_is_recorded_only_when_asked() {
     let read: PromptOptions = serde_json::from_str(&json).unwrap();
     assert_eq!(read, map());
 }
+
+/// Eight scopes whose commits touched three places each, `depth` directories deep.
+fn deep_monorepo(depth: usize) -> RepoContext {
+    let dir = |scope: usize, place: usize| {
+        let mut path = String::from("packages/manager/apps");
+        for level in 0..depth {
+            path.push_str(&format!("/area{scope}_{place}_{level}"));
+        }
+        path.push_str("/file.ts");
+        path
+    };
+    let subjects: Vec<String> = (0..8).map(|n| format!("feat(scope{n}): change")).collect();
+    let files: Vec<Vec<String>> = (0..8)
+        .map(|n| (0..3).map(|place| dir(n, place)).collect())
+        .collect();
+    let subjects: Vec<&str> = subjects.iter().map(String::as_str).collect();
+    context(&subjects, None).with_history_files(files)
+}
+
+#[test]
+fn a_long_map_shows_fewer_places_per_scope() {
+    // The map of the scopes' line, and how many places each scope has in it.
+    let map_of = |depth| {
+        let system = build(&deep_monorepo(depth), &files(), &map()).system;
+        let line = system
+            .lines()
+            .find(|l| l.contains("where their commits went: "))
+            .unwrap_or_else(|| panic!("no map in {system}"))
+            .to_owned();
+        let map = line
+            .split_once("went: ")
+            .and_then(|(_, rest)| rest.split_once(". Use a scope"))
+            .map(|(map, _)| map.to_owned())
+            .unwrap();
+        let places = map.matches("packages/manager/apps/").count() / 8;
+        (map, places)
+    };
+    let (short, places) = map_of(1);
+    assert_eq!(places, 3, "{short}");
+    let (medium, places) = map_of(3);
+    assert!((1..3).contains(&places), "{places} places in {medium}");
+    assert!(medium.chars().count() <= 1000, "{medium}");
+}
+
+#[test]
+fn a_map_too_long_even_with_one_place_falls_back_to_the_names() {
+    let prompt = build(&deep_monorepo(12), &files(), &map());
+    assert!(
+        prompt.system.contains(
+            "- Scopes used here: scope0, scope1, scope2, scope3, scope4, scope5, scope6, scope7. \
+             Omit the scope if none fits.\n"
+        ),
+        "{}",
+        prompt.system
+    );
+}

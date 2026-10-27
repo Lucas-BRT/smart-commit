@@ -14,6 +14,10 @@ pub(super) const MAX_LISTED: usize = 8;
 /// Places shown per scope by [`PromptScopes::Map`]: enough to tell scopes
 /// apart.
 pub(super) const MAX_AREAS: usize = 3;
+/// The longest map, in characters (about 250 tokens): the server reserves
+/// room for a prompt a half longer than the budget, and a monorepo's deep
+/// paths would use more. Beyond it the map shows fewer places per scope.
+pub(super) const MAX_MAP_CHARS: usize = 1000;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Prompt {
