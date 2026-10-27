@@ -434,3 +434,7 @@ real_change conventional-en-eval-keep-loaded-as-keep-option 26006ac 'feat(cli): 
 # A new option passed by the data tools to smart-commit (and the tests that pin
 # it), answered as documentation of the option: a docs type for code.
 real_change conventional-en-tools-option-as-docs 0fa700e 'docs(training): explain how to use the --scopes option'
+
+# A cap on the size of the scope map added the commit before, answered with that
+# commit's own subject (a copied history subject).
+real_change conventional-en-map-cap-as-copy 37875ea 'feat(prompt): add a map to show where each scope'"'"'s commits went'

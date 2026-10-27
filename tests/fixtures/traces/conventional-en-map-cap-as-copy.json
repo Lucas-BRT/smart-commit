@@ -1,0 +1,117 @@
+{
+  "format": 1,
+  "tool_version": "0.12.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 37875ea",
+      "test(fixtures): trace the data tools' new option answered as documentation",
+      "feat(training): pass --scopes to make-examples and compare",
+      "feat(prompt): add --scopes map to show where each scope's commits went",
+      "docs(training): add the S0 control and the commands of H13's first arms",
+      "Merge branch 'docs/h13-v04-plan'",
+      "docs(training): plan v0.4 as H13, with the criteria fixed beforehand"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "src/prompt/system.rs",
+        "src/prompt/tests.rs",
+        "src/prompt/types.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/system.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/types.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -78,3 +78,4 @@ From the last `style.history_depth` (30) subjects, merges excluded:\n   not help the models. `--scopes map` (in `prompt` and `eval` only) lists\n-  each scope with up to 3 places its commits touched (`cli (src/cli/)`),\n+  each scope with up to 3 places its commits touched (`cli (src/cli/)`;\n+  fewer, down to the names, when the map would pass 1000 characters),\n   for the model trained on it; the map is added to the prompt, so the diff\n"
+      },
+      {
+        "path": "src/prompt/system.rs",
+        "old_path": null,
+        "lines": [
+          27,
+          21
+        ],
+        "hunks": "@@ -9,3 +9,3 @@ use crate::style::{self, Convention, Language, Style, TicketStyle};\n use super::effective_style;\n-use super::types::{MAX_AREAS, MAX_LISTED, PromptOptions, PromptScopes};\n+use super::types::{MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptOptions, PromptScopes};\n \n@@ -150,3 +150,4 @@ fn names(ranked: &[(String, usize)]) -> String {\n /// map and the history has the paths of at least one of them; `None` falls\n-/// back to the plain list (older traces, empty commits).\n+/// back to the plain list (older traces, empty commits, a map too long even\n+/// with one place per scope).\n fn scope_map(ctx: &RepoContext, options: &PromptOptions) -> Option<String> {\n@@ -155,3 +156,3 @@ fn scope_map(ctx: &RepoContext, options: &PromptOptions) -> Option<String> {\n     }\n-    let scopes: Vec<(&str, Vec<String>)> = ctx\n+    let scopes: Vec<&str> = ctx\n         .style\n@@ -160,21 +161,26 @@ fn scope_map(ctx: &RepoContext, options: &PromptOptions) -> Option<String> {\n         .take(MAX_LISTED)\n-        .map(|(scope, _)| {\n-            let areas = style::scope_areas(scope, &ctx.subjects, &ctx.history_files, MAX_AREAS);\n-            (scope.as_str(), areas)\n-        })\n-        .collect();\n-    if scopes.iter().all(|(_, areas)| areas.is_empty()) {\n-        return None;\n-    }\n-    let listed: Vec<String> = scopes\n-        .iter()\n-        .map(|(scope, areas)| {\n-            if areas.is_empty() {\n-                (*scope).to_owned()\n-            } else {\n-                format!(\"{scope} ({})\", areas.join(\", \"))\n-            }\n-        })\n+        .map(|(scope, _)| scope.as_str())\n         .collect();\n-    Some(listed.join(\", \"))\n+    (1..=MAX_AREAS).rev().find_map(|places| {\n+        let areas: Vec<Vec<String>> = scopes\n+            .iter()\n+            .map(|scope| style::scope_areas(scope, &ctx.subjects, &ctx.history_files, places))\n+            .collect();\n+        if areas.iter().all(Vec::is_empty) {\n+            return None;\n+        }\n+        let listed: Vec<String> = scopes\n+            .iter()\n+            .zip(&areas)\n+            .map(|(scope, areas)| {\n+                if areas.is_empty() {\n+                    (*scope).to_owned()\n+                } else {\n+                    format!(\"{scope} ({})\", areas.join(\", \"))\n+                }\n+            })\n+            .collect();\n+        let map = listed.join(\", \");\n+        (map.chars().count() <= MAX_MAP_CHARS).then_some(map)\n+    })\n }\n"
+      },
+      {
+        "path": "src/prompt/tests.rs",
+        "old_path": null,
+        "lines": [
+          56,
+          0
+        ],
+        "hunks": "@@ -521 +521,57 @@ fn the_map_is_recorded_only_when_asked() {\n }\n+\n+/// Eight scopes whose commits touched three places each, `depth` directories deep.\n+fn deep_monorepo(depth: usize) -> RepoContext {\n+    let dir = |scope: usize, place: usize| {\n+        let mut path = String::from(\"packages/manager/apps\");\n+        for level in 0..depth {\n+            path.push_str(&format!(\"/area{scope}_{place}_{level}\"));\n+        }\n+        path.push_str(\"/file.ts\");\n+        path\n+    };\n+    let subjects: Vec<String> = (0..8).map(|n| format!(\"feat(scope{n}): change\")).collect();\n+    let files: Vec<Vec<String>> = (0..8)\n+        .map(|n| (0..3).map(|place| dir(n, place)).collect())\n+        .collect();\n+    let subjects: Vec<&str> = subjects.iter().map(String::as_str).collect();\n+    context(&subjects, None).with_history_files(files)\n+}\n+\n+#[test]\n+fn a_long_map_shows_fewer_places_per_scope() {\n+    // The map of the scopes' line, and how many places each scope has in it.\n+    let map_of = |depth| {\n+        let system = build(&deep_monorepo(depth), &files(), &map()).system;\n+        let line = system\n+            .lines()\n+            .find(|l| l.contains(\"where their commits went: \"))\n+            .unwrap_or_else(|| panic!(\"no map in {system}\"))\n+            .to_owned();\n+        let map = line\n+            .split_once(\"went: \")\n+            .and_then(|(_, rest)| rest.split_once(\". Use a scope\"))\n+            .map(|(map, _)| map.to_owned())\n+            .unwrap();\n+        let places = map.matches(\"packages/manager/apps/\").count() / 8;\n+        (map, places)\n+    };\n+    let (short, places) = map_of(1);\n+    assert_eq!(places, 3, \"{short}\");\n+    let (medium, places) = map_of(3);\n+    assert!((1..3).contains(&places), \"{places} places in {medium}\");\n+    assert!(medium.chars().count() <= 1000, \"{medium}\");\n+}\n+\n+#[test]\n+fn a_map_too_long_even_with_one_place_falls_back_to_the_names() {\n+    let prompt = build(&deep_monorepo(12), &files(), &map());\n+    assert!(\n+        prompt.system.contains(\n+            \"- Scopes used here: scope0, scope1, scope2, scope3, scope4, scope5, scope6, scope7. \\\n+             Omit the scope if none fits.\\n\"\n+        ),\n+        \"{}\",\n+        prompt.system\n+    );\n+}\n"
+      },
+      {
+        "path": "src/prompt/types.rs",
+        "old_path": null,
+        "lines": [
+          4,
+          0
+        ],
+        "hunks": "@@ -16,2 +16,6 @@ pub(super) const MAX_LISTED: usize = 8;\n pub(super) const MAX_AREAS: usize = 3;\n+/// The longest map, in characters (about 250 tokens): the server reserves\n+/// room for a prompt a half longer than the budget, and a monorepo's deep\n+/// paths would use more. Beyond it the map shows fewer places per scope.\n+pub(super) const MAX_MAP_CHARS: usize = 1000;\n \n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(prompt): add a map to show where each scope's commits went",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, feat, test, refactor.\n- Scopes used here: training, fixtures, prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ntest(fixtures): trace the data tools' new option answered as documentation\nfeat(training): pass --scopes to make-examples and compare\nfeat(prompt): add --scopes map to show where each scope's commits went\ndocs(training): add the S0 control and the commands of H13's first arms\ndocs(training): plan v0.4 as H13, with the criteria fixed beforehand\n",
+          "user": "Files changed:\ndocs/architecture.md | +2 -1\nsrc/prompt/system.rs | +27 -21\nsrc/prompt/tests.rs | +56 -0\nsrc/prompt/types.rs | +4 -0\n\nDiff:\n--- src/prompt/system.rs\n@@ -9,3 +9,3 @@ use crate::style::{self, Convention, Language, Style, TicketStyle};\n use super::effective_style;\n-use super::types::{MAX_AREAS, MAX_LISTED, PromptOptions, PromptScopes};\n+use super::types::{MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptOptions, PromptScopes};\n \n@@ -150,3 +150,4 @@ fn names(ranked: &[(String, usize)]) -> String {\n /// map and the history has the paths of at least one of them; `None` falls\n-/// back to the plain list (older traces, empty commits).\n[... 53 more lines]\n--- src/prompt/tests.rs\n@@ -521 +521,57 @@ fn the_map_is_recorded_only_when_asked() {\n }\n+\n+/// Eight scopes whose commits touched three places each, `depth` directories deep.\n+fn deep_monorepo(depth: usize) -> RepoContext {\n+    let dir = |scope: usize, place: usize| {\n+        let mut path = String::from(\"packages/manager/apps\");\n+        for level in 0..depth {\n+            path.push_str(&format!(\"/area{scope}_{place}_{level}\"));\n+        }\n+        path.push_str(\"/file.ts\");\n+        path\n+    };\n[... 45 more lines]\n--- src/prompt/types.rs\n@@ -16,2 +16,6 @@ pub(super) const MAX_LISTED: usize = 8;\n pub(super) const MAX_AREAS: usize = 3;\n+/// The longest map, in characters (about 250 tokens): the server reserves\n+/// room for a prompt a half longer than the budget, and a monorepo's deep\n+/// paths would use more. Beyond it the map shows fewer places per scope.\n+pub(super) const MAX_MAP_CHARS: usize = 1000;\n \n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(prompt): add a map to show where each scope's commits went",
+        "rejected": null
+      }
+    ]
+  }
+}
