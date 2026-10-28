@@ -441,3 +441,7 @@ real_change conventional-en-map-cap-as-copy 37875ea 'feat(prompt): add a map to 
 
 # A change of a script, its test, a sheet of ratings and docs: the reply was the file-list fallback.
 real_change conventional-en-type-review-as-fallback 23682a5 'feat(training): add type_review.py, test_type_review.py'
+
+# A new metric in the scoring tool, its test and a line of the training guide: the type was docs and the
+# description vague.
+real_change conventional-en-type-groups-as-docs 14df4c3 'docs(training): add a few more metrics to the training guide'
