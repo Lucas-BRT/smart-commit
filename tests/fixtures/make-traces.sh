@@ -438,3 +438,6 @@ real_change conventional-en-tools-option-as-docs 0fa700e 'docs(training): explai
 # A cap on the size of the scope map added the commit before, answered with that
 # commit's own subject (a copied history subject).
 real_change conventional-en-map-cap-as-copy 37875ea 'feat(prompt): add a map to show where each scope'"'"'s commits went'
+
+# A change of a script, its test, a sheet of ratings and docs: the reply was the file-list fallback.
+real_change conventional-en-type-review-as-fallback 23682a5 'feat(training): add type_review.py, test_type_review.py'
