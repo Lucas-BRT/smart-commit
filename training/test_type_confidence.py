@@ -80,6 +80,8 @@ def test_the_menu_is_the_one_the_product_offers() -> None:
     assert offer([], [], 0.5) is None
     many = [["feat", 0.3], ["fix", 0.25], ["docs", 0.2], ["chore", 0.15], ["refactor", 0.07], ["test", 0.03]]
     assert offer(many, [], 0.5) == ["feat", "fix", "docs", "chore"]            # at most four
+    assert offer(many, [], 0.5, cap=3) == ["feat", "fix", "docs"]
+    assert offer([["feat", 0.4], ["fix", 0.35], ["docs", 0.25]], [], 0.5, cap=1) is None     # one is nothing to choose
 
 
 def test_an_adaptive_menu_offers_two_when_the_model_is_split_between_them() -> None:
@@ -104,6 +106,7 @@ def test_menus_count_the_asks_the_lines_and_the_type_right() -> None:
     row = next(r for r in menus(cases) if r["below"] == 0.5)
     assert row["present"] == {"asked": 0.5, "lines": 4.0, "type_right": 0.75}    # asked: both; sure: docs right, fix wrong
     assert row["adaptive"] == {"asked": 0.5, "lines": 2.0, "type_right": 0.5}    # the chore falls outside the two
+    assert row["cap3"] == {"asked": 0.5, "lines": 3.0, "type_right": 0.5}        # and outside the three likeliest
 
 
 if __name__ == "__main__":

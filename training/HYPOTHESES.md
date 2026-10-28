@@ -1148,8 +1148,27 @@ by at most 0.010 and the menu is at least 0.3 lines shorter, for both v0.3 model
   to 0.31 lines, under it in five of six rows. The present menu already shows 3.6 to 3.9 lines because most asks
   are not split, and the split ones are a minority of the asked commits.
 - **Verdict.** Not built: a gain of a fraction of a line is not worth a rule that loses acceptable choices. The
-  menu is long because the doubt is mostly diffuse; what could shorten it is a cap on the number of types (the
-  three likeliest hold 0.89 to 0.93 of the real types), not tried here.
+  menu is long because the doubt is mostly diffuse.
+
+*A cap of three types.* The three likeliest types hold 0.89 to 0.93 of the real ones, so offering at most three
+shortens every menu. Fixed before reading it, on the same held-out set and asks: worth offering if the type right
+falls by at most 0.010 and the menu is at least 0.5 lines shorter, for both v0.3 models and the three limits.
+
+| eval-v1 | ask below | present: lines, type right | at most three: lines, type right |
+|---|---|---|---|
+| 1.5B v0.3 | 0.5 | 3.83, 0.788 | 3.00, 0.780 |
+| | 0.6 | 3.78, 0.824 | 2.99, 0.816 |
+| | 0.7 | 3.62, 0.880 | 2.94, 0.868 |
+| 0.5B v0.3 | 0.5 | 3.90, 0.780 | 3.00, 0.760 |
+| | 0.6 | 3.76, 0.836 | 2.98, 0.812 |
+| | 0.7 | 3.67, 0.888 | 2.95, 0.860 |
+
+- **The menu is 0.7 to 0.9 lines shorter, as wanted, and the type right falls too much:** 0.008 to 0.012 for the
+  1.5B (over the limit at 0.7) and 0.020 to 0.028 for the 0.5B, 2 to 7 commits of 250. On `val1-h4` it falls
+  0.008 to 0.020.
+- **Verdict.** Not built. The fourth type is the right one often enough (the 0.5B's third and fourth hold
+  about a tenth of the real types it is unsure of) that cutting it costs more than the line saves. The present
+  menu, up to four, stays.
 
 ## Ideas not tried yet
 

@@ -152,9 +152,12 @@ def listed_types(system: str) -> list[str]:
     return []
 
 
-def offer(dist: list, allowed: list[str], below: float, adaptive: bool = False) -> list[str] | None:
+def offer(
+    dist: list, allowed: list[str], below: float, adaptive: bool = False, cap: int = MAX_OFFERED
+) -> list[str] | None:
     """The types to offer (`ask::types_to_offer`), or None when the model is sure enough or has nothing to
-    choose between; `adaptive` offers only the two likeliest when the model is split between them."""
+    choose between; `adaptive` offers only the two likeliest when the model is split between them; `cap` is the
+    most types offered."""
     kept = [(k, p) for k, p in dist if not allowed or k in allowed]
     total = sum(p for _, p in kept)
     if total <= 0:
@@ -162,7 +165,7 @@ def offer(dist: list, allowed: list[str], below: float, adaptive: bool = False) 
     kept = [(k, p / total) for k, p in kept]
     if kept[0][1] >= below:
         return None
-    kept = [(k, p) for k, p in kept if p >= MIN_OFFERED][:MAX_OFFERED]
+    kept = [(k, p) for k, p in kept if p >= MIN_OFFERED][:cap]
     if len(kept) < 2:
         return None
     if adaptive and kept[0][1] + kept[1][1] >= SPLIT_MASS and kept[0][1] - kept[1][1] < SPLIT_GAP:
@@ -176,11 +179,11 @@ def menus(cases: list[dict]) -> list[dict]:
     out = []
     for below in ASK_BELOW:
         row = {"below": below}
-        for name, adaptive in (("present", False), ("adaptive", True)):
+        for name, adaptive, cap in (("present", False, MAX_OFFERED), ("adaptive", True, MAX_OFFERED), ("cap3", False, 3)):
             asked = right = lines = 0
             for c in cases:
                 top = c["dist"][0][0] if c["dist"] else None
-                shown = offer(c["dist"], c.get("allowed", []), below, adaptive)
+                shown = offer(c["dist"], c.get("allowed", []), below, adaptive, cap)
                 if shown is None:
                     right += top == c["real"]
                 else:
@@ -269,9 +272,13 @@ def report_menus(paths: list[Path]) -> None:
         data = json.loads(path.read_text())
         print(f"== {path.stem} ({len(data['cases'])} commits)")
         for row in menus(data["cases"]):
-            p, a = row["present"], row["adaptive"]
+            p = row["present"]
             print(f"  ask below {row['below']:.2f}: asks {p['asked']:.3f}; present {p['lines']:.2f} lines, type right "
-                  f"{p['type_right']:.3f}; adaptive {a['lines']:.2f} lines, type right {a['type_right']:.3f}")
+                  f"{p['type_right']:.3f}", end="")
+            for name in ("adaptive", "cap3"):
+                m = row[name]
+                print(f"; {name} {m['lines']:.2f} lines, type right {m['type_right']:.3f}", end="")
+            print()
 
 
 def main() -> None:
