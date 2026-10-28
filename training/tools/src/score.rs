@@ -8,6 +8,10 @@
 //!   rejects that and retries, so copied alone hides it)
 //! - type_match: same Conventional type as the real subject (conventional
 //!   set), with spellings of one type folded (`tests` is `test`)
+//! - type_group: the type is in the real type's group ({chore, build, ci},
+//!   {refactor, perf, style}), type_behaviour: also with `feat` and `fix` as
+//!   one; the same type can be a `fix` or a `feat`, a `chore` or a `build`, and
+//!   type_match counts only the repository's choice (H13)
 //! - type_macro_f1: the F1 of each real type, averaged over the types, with
 //!   each type's precision, recall and F1 in type_scores: type_match is
 //!   dominated by `fix`, the most frequent type
@@ -270,6 +274,18 @@ pub fn per_type(pairs: &Pairs) -> (Value, f64) {
     (Value::Object(scores), round3(macro_f1))
 }
 
+/// The group a type is in, for `type_group` (and `type_behaviour`, which also
+/// puts `feat` and `fix` together): the types a repository uses for the same
+/// change. A type in no group is its own.
+pub fn type_group(kind: &str, behaviour: bool) -> &str {
+    match kind {
+        "feat" | "fix" if behaviour => "feat",
+        "chore" | "build" | "ci" => "chore",
+        "refactor" | "perf" | "style" => "refactor",
+        other => fold_type(other),
+    }
+}
+
 /// The report sections a case counts in.
 pub fn groups(m: &Value) -> Vec<String> {
     let mut keys = vec![m["set"].as_str().unwrap_or("").to_owned(), "all".to_owned()];
@@ -340,10 +356,19 @@ pub fn row_of(m: &Value, t: &Value) -> Vec<(&'static str, Metric)> {
     }
     if m["set"] == "conventional" {
         let real_type = fold_type(m["type"].as_str().unwrap_or("")).to_owned();
+        let written = conventional_type(subject);
         row.push((
             "type_match",
-            Yes(conventional_type(subject).as_deref() == Some(real_type.as_str())),
+            Yes(written.as_deref() == Some(real_type.as_str())),
         ));
+        for (name, behaviour) in [("type_group", false), ("type_behaviour", true)] {
+            row.push((
+                name,
+                Yes(written.as_deref().is_some_and(|w| {
+                    type_group(w, behaviour) == type_group(&real_type, behaviour)
+                })),
+            ));
+        }
         let scopes: BTreeSet<&str> = history
             .iter()
             .filter_map(|h| SCOPE.captures(h).map(|s| s.get(1).expect("group").as_str()))

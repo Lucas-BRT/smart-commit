@@ -182,6 +182,12 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
   scope_fits, word_f1, and two cheap faithfulness checks, `unsupported`
   (specifics found nowhere in the input) and `ungrounded` (a description
   with no word from the diff); `sc-training score`'s docstring defines them.
+  `type_match` counts only the repository's own type as right, and its noise
+  (labels, seeds) is larger than the gains tried so far, so a comparison also
+  reads `type_group` (a `build` for a `chore` counts) and `type_behaviour`
+  (and `feat` for `fix`); `training/type_review.py` adds a plain classifier's
+  plausibility, intervals and a sheet of mistakes to rate by hand
+  ([H13](../training/HYPOTHESES.md)).
 - Always report the base model's scores on the same set and binary.
 - Two versions of a model or a prompt answer the same cases: compare them
   case by case with `sc-training score EVAL_DIR NEW.jsonl --against OLD.jsonl`,
@@ -284,7 +290,8 @@ What is published is one model per size smart-commit offers, named
    version (`LucasBRT/smart-commit-1.5b-v0.1`): the merged safetensors, the
    Q4_K_M GGUF and a model card with the base model (`base_model:` in its
    metadata), the dataset, the prompt format (smart-commit's), the
-   evaluation against the base model, and the limitations (languages).
+   evaluation against the base model (with `type_group` and `type_behaviour`
+   beside `type_match`), and the limitations (languages).
    The weights are Apache-2.0, like the base model. CommitChronicle has no
    single licence (`license: other`): it gathers commits from repositories
    under MIT, Apache-2.0 and BSD-3-Clause and asks that uses follow their

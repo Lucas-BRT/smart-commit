@@ -24,9 +24,11 @@ use crate::jsonl;
 use crate::score::{self, SCOPE, evidence, novel_words};
 
 /// Metrics where a case flagged is a case right, and where it is a case wrong.
-const GOOD: [&str; 6] = [
+const GOOD: [&str; 8] = [
     "first_try",
     "type_match",
+    "type_group",
+    "type_behaviour",
     "scope_known",
     "scope_fits",
     "exact",
@@ -39,8 +41,10 @@ const BAD: [&str; 5] = [
     "first_copied",
     "copied",
 ];
-const SHOWN: [&str; 13] = [
+const SHOWN: [&str; 15] = [
     "type_match",
+    "type_group",
+    "type_behaviour",
     "type_macro_f1",
     "scope_known",
     "scoped",

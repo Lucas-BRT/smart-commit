@@ -187,3 +187,57 @@ fn values_print_like_python() {
         "{'a': [1, 0.5, None, True], \"it's\": 'x'}"
     );
 }
+
+#[test]
+fn types_are_grouped_as_a_repository_may_choose_between_them() {
+    assert_eq!(type_group("build", false), type_group("ci", false));
+    assert_eq!(type_group("perf", false), type_group("style", false));
+    assert_eq!(type_group("tests", false), "test");
+    assert_ne!(type_group("feat", false), type_group("fix", false));
+    assert_eq!(type_group("feat", true), type_group("fix", true));
+    assert_ne!(type_group("feat", true), type_group("docs", true));
+    assert_ne!(type_group("chore", true), type_group("refactor", true));
+    assert_eq!(type_group("revert", true), "revert");
+}
+
+#[test]
+fn a_type_of_the_same_group_counts_for_the_group_and_not_for_the_match() {
+    let real = |kind: &str| {
+        json!({"repo": "r", "hash": "h", "target": format!("{kind}: x"), "type": kind,
+               "history": 1, "set": "conventional"})
+    };
+    let cases = [
+        ("chore", "ci: b", (false, true, true)),
+        ("feat", "fix: b", (false, false, true)),
+        ("docs", "fix: b", (false, false, false)),
+        ("fix", "fix: b", (true, true, true)),
+        ("fix", "Update b", (false, false, false)),
+    ];
+    for (kind, written, (exact, group, behaviour)) in cases {
+        let row = row_of(&real(kind), &trace(written));
+        let get = |name: &str| row.iter().find(|(k, _)| *k == name).map(|(_, v)| *v);
+        assert_eq!(
+            get("type_match"),
+            Some(Metric::Yes(exact)),
+            "{kind} {written}"
+        );
+        assert_eq!(
+            get("type_group"),
+            Some(Metric::Yes(group)),
+            "{kind} {written}"
+        );
+        assert_eq!(
+            get("type_behaviour"),
+            Some(Metric::Yes(behaviour)),
+            "{kind} {written}"
+        );
+    }
+    // A free-style commit has no type to match.
+    let free =
+        json!({"repo": "r", "hash": "h", "target": "x", "type": null, "history": 1, "set": "free"});
+    assert!(
+        row_of(&free, &trace("x"))
+            .iter()
+            .all(|(k, _)| !k.starts_with("type_"))
+    );
+}
