@@ -7,6 +7,18 @@ use crate::style::{self, Language};
 /// word of its own, to count as a copy of it.
 const NEAR_COPY_SHARE: f64 = 0.6;
 
+/// Words no subject ends with: a reply that stops after one was cut off.
+/// `in`, `on`, `up`, `off` and `out` end real subjects ("log in", "turn
+/// off"), and so do pronouns, so they are not here.
+const DANGLING_ENGLISH: &[&str] = &[
+    "the", "a", "an", "of", "to", "for", "with", "from", "by", "and", "or", "into", "than", "that",
+    "which", "as", "at",
+];
+const DANGLING_PORTUGUESE: &[&str] = &[
+    "o", "a", "os", "as", "um", "uma", "de", "do", "da", "dos", "das", "em", "no", "na", "nos",
+    "nas", "para", "com", "por", "e", "ou", "que", "ao", "aos",
+];
+
 /// Git's prepared message as subject and body.
 pub fn prepared_message(text: &str) -> CommitMessage {
     let (subject, body) = text.split_once('\n').unwrap_or((text, ""));
@@ -53,4 +65,24 @@ pub fn in_other_language(subject: &str, language: Language, history: &[String]) 
         (language, theirs),
         (Language::Portuguese, Language::English) | (Language::English, Language::Portuguese)
     ) && !history.iter().any(|h| style::language_of(h) == theirs)
+}
+
+/// Whether `subject` stops in the middle of a sentence: its last word is an
+/// article, a preposition or a conjunction of `language` (or of English,
+/// which commits mix in). A word in backticks or quotes, or with a digit, is
+/// a name and not one of them.
+pub fn cut_off(subject: &str, language: Language) -> bool {
+    let description = subject
+        .split_once(':')
+        .filter(|(head, _)| !head.contains(' '))
+        .map_or(subject, |(_, rest)| rest);
+    let Some(last) = description.split_whitespace().last() else {
+        return false;
+    };
+    if !last.chars().all(char::is_alphabetic) {
+        return false;
+    }
+    let last = last.to_lowercase();
+    DANGLING_ENGLISH.contains(&last.as_str())
+        || (language == Language::Portuguese && DANGLING_PORTUGUESE.contains(&last.as_str()))
 }

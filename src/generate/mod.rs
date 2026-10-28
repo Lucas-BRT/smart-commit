@@ -21,7 +21,7 @@ use crate::style::Language;
 
 pub use ask::{MAX_OFFERED, TypeAsk, offer_types, types_to_offer};
 pub use notes::{avoid_note, retry_note};
-pub use retry::{copied_from, in_other_language, prepared_message};
+pub use retry::{copied_from, cut_off, in_other_language, prepared_message};
 pub use rules::by_rules;
 
 /// The first try plus one retry that says what was wrong.
@@ -166,6 +166,9 @@ pub fn generate_asked(
                 if known && retry::in_other_language(&message.subject, language, &ctx.subjects) {
                     return Err(SanitizeError::WrongLanguage(message.subject));
                 }
+                if retry::cut_off(&message.subject, language) {
+                    return Err(SanitizeError::CutOff(message.subject));
+                }
                 Ok(message)
             });
         match checked {
@@ -202,7 +205,8 @@ pub fn generate_asked(
         Some(
             SanitizeError::CopiedHistory(_)
             | SanitizeError::WrongLanguage(_)
-            | SanitizeError::TurnedDown(_),
+            | SanitizeError::TurnedDown(_)
+            | SanitizeError::CutOff(_),
         ) => message::sanitize_within(&a.raw, convention, options.subject_max)
             .ok()
             .map(|m| m.subject),

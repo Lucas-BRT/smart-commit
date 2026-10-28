@@ -84,10 +84,10 @@
   },
   "generation": {
     "message": {
-      "subject": "feat(training): measure how often the set of types is a subset of the",
-      "body": null
+      "subject": "feat(training): update 3 files in training/",
+      "body": "- training/HYPOTHESES.md\n- training/test_type_confidence.py\n- training/type_confidence.py"
     },
-    "source": "model",
+    "source": "fallback",
     "attempts": [
       {
         "prompt": {
@@ -95,7 +95,17 @@
           "user": "Files changed:\ntraining/HYPOTHESES.md | +36 -0\ntraining/test_type_confidence.py | +44 -1\ntraining/type_confidence.py | +70 -0\n\nDiff:\n--- training/type_confidence.py\n@@ -17,2 +17,3 @@ probabilities, from the first token of the reply (llama-server, `top_logprobs`,\n     python -I type_confidence.py menus OUT.json...\n+    python -I type_confidence.py sets CALIBRATION.json TEST.json\n \n@@ -23,2 +24,7 @@ real type when it is offered.\n \n+`sets` offers, instead of a fixed number of types, the smallest prefix of the likeliest ones that holds a mass `q`\n+(conformal prediction sets), asking when it has two types or more. `q` is the CONFORMAL level of the mass above\n+the real type on CALIBRATION, so a share `1 - alpha` of the commits has the real type in the set; TEST shows the\n+coverage, the share asked and the lines the sets really have.\n+\n `collect` starts the llama-server of the project (`$LLAMA_SERVER`, or the one smart-commit downloaded) on the GPU\n@@ -197,2 +203,48 @@ def menus(cases: list[dict]) -> list[dict]:\n \n+def ranked(dist: list, allowed: list[str]) -> list[tuple[str, float]]:\n+    \"\"\"The types the repository uses, likeliest first, adding up to 1 (as `offer` does).\"\"\"\n+    kept = [(k, p) for k, p in dist if not allowed or k in allowed]\n+    total = sum(p for _, p in kept)\n+    return [(k, p / total) for k, p in kept] if total > 0 else []\n+\n+\n+def mass_above(case: dict) -> float:\n+    \"\"\"The probability of the types ranked above the real one (1 when it is not among them).\"\"\"\n+    above = 0.0\n+    for kind, p in ranked(case[\"dist\"], case.get(\"allowed\", [])):\n+        if kind == case[\"real\"]:\n+            return above\n+        above += p\n+    return 1.0\n+\n+\n[... 54 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
         },
         "raw": "feat(training): measure how often the set of types is a subset of the",
-        "rejected": null
+        "rejected": {
+          "cut_off": "feat(training): measure how often the set of types is a subset of the"
+        }
+      },
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, test, refactor.\n- Scopes used here: training. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(training): measure how often the fourth type is the only right one\nfeat(training): simulate a menu of at most three types and record it fails\nfeat(training): simulate an adaptive type menu and record that it fails\nfeat(training): measure how far the confidence in the type can be trusted\ntest: add a trace of a docs type for a scoring tool change\n",
+          "user": "Files changed:\ntraining/HYPOTHESES.md | +36 -0\ntraining/test_type_confidence.py | +44 -1\ntraining/type_confidence.py | +70 -0\n\nDiff:\n--- training/type_confidence.py\n@@ -17,2 +17,3 @@ probabilities, from the first token of the reply (llama-server, `top_logprobs`,\n     python -I type_confidence.py menus OUT.json...\n+    python -I type_confidence.py sets CALIBRATION.json TEST.json\n \n@@ -23,2 +24,7 @@ real type when it is offered.\n \n+`sets` offers, instead of a fixed number of types, the smallest prefix of the likeliest ones that holds a mass `q`\n+(conformal prediction sets), asking when it has two types or more. `q` is the CONFORMAL level of the mass above\n+the real type on CALIBRATION, so a share `1 - alpha` of the commits has the real type in the set; TEST shows the\n+coverage, the share asked and the lines the sets really have.\n+\n `collect` starts the llama-server of the project (`$LLAMA_SERVER`, or the one smart-commit downloaded) on the GPU\n@@ -197,2 +203,48 @@ def menus(cases: list[dict]) -> list[dict]:\n \n+def ranked(dist: list, allowed: list[str]) -> list[tuple[str, float]]:\n+    \"\"\"The types the repository uses, likeliest first, adding up to 1 (as `offer` does).\"\"\"\n+    kept = [(k, p) for k, p in dist if not allowed or k in allowed]\n+    total = sum(p for _, p in kept)\n+    return [(k, p / total) for k, p in kept] if total > 0 else []\n+\n+\n+def mass_above(case: dict) -> float:\n+    \"\"\"The probability of the types ranked above the real one (1 when it is not among them).\"\"\"\n[... 62 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n\nYour previous reply was rejected because \"feat(training): measure how often the set of types is a subset of the\" stops in the middle of a sentence; finish it. Reply again with only the commit message in the `type(scope): description` format.\n"
+        },
+        "raw": "",
+        "rejected": "empty"
       }
     ]
   }
