@@ -445,3 +445,7 @@ real_change conventional-en-type-review-as-fallback 23682a5 'feat(training): add
 # A new metric in the scoring tool, its test and a line of the training guide: the type was docs and the
 # description vague.
 real_change conventional-en-type-groups-as-docs 14df4c3 'docs(training): add a few more metrics to the training guide'
+
+# A script's conformal sets, their tests and the notes on the result: the reply was cut off in the middle of a
+# sentence.
+real_change conventional-en-conformal-sets-as-cut-off e3907a1 'feat(training): measure how often the set of types is a subset of the'

@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "tool_version": "0.12.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of e3907a1",
+      "docs(training): measure how often the fourth type is the only right one",
+      "feat(training): simulate a menu of at most three types and record it fails",
+      "feat(training): simulate an adaptive type menu and record that it fails",
+      "feat(training): measure how far the confidence in the type can be trusted",
+      "test: add a trace of a docs type for a scoring tool change",
+      "feat(training): score the type by group and by behaviour"
+    ],
+    "history_files": [
+      [
+        "training/HYPOTHESES.md",
+        "training/test_type_confidence.py",
+        "training/type_confidence.py"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/HYPOTHESES.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/test_type_confidence.py",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/type_confidence.py",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/HYPOTHESES.md",
+        "old_path": null,
+        "lines": [
+          36,
+          0
+        ],
+        "hunks": "@@ -1173,2 +1173,38 @@ falls by at most 0.010 and the menu is at least 0.5 lines shorter, for both v0.3\n \n+**A, a menu whose size follows the doubt (conformal prediction sets; tried, not shipped).** Instead of up to four\n+types, offer the smallest prefix of the likeliest types that holds a mass `q`, and ask when it has two or more.\n+`q` is the `ceil((n + 1)(1 - alpha))`-th smallest probability above the real type on a calibration set\n+(`val1-h4`), which makes the real type fall in the set in at least `1 - alpha` of commits of the same kind. The\n+model does not write the list: a list written as text has no probabilities to calibrate, and there is no\n+training signal for a set (a commit has one label). Fixed before the numbers, on `eval-v1` (not used to\n+calibrate): for each v0.3 model, the alpha whose share asked is closest to the present menu asking below 0.6\n+must have a type right (the real type is in the set) at least 0.004 under the present one and a menu at least\n+0.3 lines shorter.\n+\n+- **The guarantee holds on other repositories.** For every alpha from 0.04 to 0.30 the coverage on eval-v1 is\n+  at or above `1 - alpha` for both models (0.10: 0.928 and 0.948 against 0.90; 0.20: 0.800 and 0.860 against\n+  0.80).\n+- **The pre-registered criterion fails.** At 0.28 asked the 1.5B's sets reach a type right of 0.768, 0.056 under\n+  the present menu at 0.6 (0.824); the 0.5B, at 0.41 asked, 0.776 against 0.836. The menus are 1.6 to 1.7 lines shorter,\n+  but the type right is what was asked to hold.\n+- **Exploratory, at the same type right** (interpolated on eval-v1; lines a person reads per commit = share\n+  asked × lines of the menu):\n+\n+| model | present: asks, lines per commit | sets at the same type right: asks, lines per commit |\n+|---|---|---|\n+| 1.5B v0.3, 0.788 | 0.160, 0.61 | 0.324, 0.68 (+12%) |\n+| 1.5B v0.3, 0.824 | 0.272, 1.03 | 0.410, 0.89 (−14%) |\n+| 1.5B v0.3, 0.880 | 0.412, 1.49 | 0.553, 1.30 (−13%) |\n+| 0.5B v0.3, 0.780 | 0.248, 0.97 | 0.420, 0.92 (−5%) |\n+| 0.5B v0.3, 0.836 | 0.388, 1.46 | 0.547, 1.23 (−16%) |\n+| 0.5B v0.3, 0.888 | 0.544, 2.00 | 0.712, 1.76 (−12%) |\n+\n+  The sets read 5% to 16% fewer lines (one point is 12% more) but interrupt 14 to 18 points more of the commits,\n+  because a set of two asks for what the present rule treats as sure enough. Which is better depends on what an\n+  interruption costs against a line, which is not measured here, and 250 commits make a 10% difference noise.\n+- **Verdict.** Not built. What the sets give is a knob that means something (`model.ask_type_below` is a\n+  confidence, a coverage is a promise: \"the right type is on the menu in 90% of the commits\"), at the price of\n+  asking in 80% of the commits for it. If the knob is wanted, the next test is the person: how long a choice takes\n+  with two types and with four, and how many interruptions they accept.\n+\n ## Ideas not tried yet\n"
+      },
+      {
+        "path": "training/test_type_confidence.py",
+        "old_path": null,
+        "lines": [
+          44,
+          1
+        ],
+        "hunks": "@@ -10,3 +10,6 @@ from pathlib import Path\n sys.path.insert(0, str(Path(__file__).parent))\n-from type_confidence import auroc, ece, from_logprobs, listed_types, menus, offer, score, type_of  # noqa: E402\n+from type_confidence import (  # noqa: E402\n+    auroc, conformal_level, ece, from_logprobs, listed_types, mass_above, menus, offer, prediction_set, ranked, score,\n+    sets, type_of,\n+)\n \n@@ -111,2 +114,42 @@ def test_menus_count_the_asks_the_lines_and_the_type_right() -> None:\n \n+def test_the_mass_above_the_real_type_counts_only_the_types_the_repository_uses() -> None:\n+    dist = [[\"feat\", 0.5], [\"fix\", 0.3], [\"docs\", 0.2]]\n+    assert mass_above({\"real\": \"feat\", \"dist\": dist}) == 0.0\n+    assert abs(mass_above({\"real\": \"fix\", \"dist\": dist}) - 0.5) < 1e-9\n+    assert abs(mass_above({\"real\": \"docs\", \"dist\": dist}) - 0.8) < 1e-9\n+    assert mass_above({\"real\": \"chore\", \"dist\": dist}) == 1.0                     # not among them\n+    only = {\"real\": \"fix\", \"dist\": dist, \"allowed\": [\"fix\", \"docs\"]}              # feat is not used here\n+    assert mass_above(only) == 0.0 and abs(ranked(dist, [\"fix\", \"docs\"])[0][1] - 0.6) < 1e-9\n+    assert mass_above({\"real\": \"fix\", \"dist\": []}) == 1.0\n+\n+\n+def test_the_conformal_level_is_a_quantile_of_the_scores() -> None:\n+    # Nine commits whose real type has this mass above it (a two-type distribution gives 0 or the first's mass).\n+    masses = [0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.8, 1.0]\n+    cases = [{\"real\": \"b\" if m else \"a\", \"dist\": [[\"a\", m], [\"b\", 1 - m]]} for m in masses]\n+    assert conformal_level(cases, 0.1) == 1.0        # ceil(10 * 0.9) = 9th of 9\n+    assert conformal_level(cases, 0.2) == 0.8        # 8th\n+    assert conformal_level(cases, 0.5) == 0.5        # 5th\n+    assert conformal_level(cases, 0.99) == 0.0       # the 1st\n+\n+\n+def test_a_prediction_set_grows_with_the_level() -> None:\n+    case = {\"real\": \"fix\", \"dist\": [[\"feat\", 0.5], [\"fix\", 0.3], [\"docs\", 0.2]]}\n+    assert prediction_set(case, 0.0) == [\"feat\"]\n+    assert prediction_set(case, 0.49) == [\"feat\"]\n+    assert prediction_set(case, 0.51) == [\"feat\", \"fix\"]\n+    assert prediction_set(case, 0.81) == [\"feat\", \"fix\", \"docs\"]\n+    assert prediction_set({\"real\": \"x\", \"dist\": []}, 1.0) == []\n+\n+\n+def test_sets_report_coverage_and_what_they_ask() -> None:\n+    sure = {\"real\": \"fix\", \"dist\": [[\"fix\", 0.95], [\"feat\", 0.05]]}\n+    split = {\"real\": \"feat\", \"dist\": [[\"fix\", 0.5], [\"feat\", 0.4], [\"docs\", 0.1]]}\n+    got = sets([sure, split, split], [sure, split], 0.4)                       # scores 0, 0.5, 0.5: level 0.5\n+    assert got[\"level\"] == 0.5\n+    assert got[\"coverage\"] == 1.0 and got[\"asked\"] == 0.5 and got[\"lines\"] == 2.0   # the split one asks with fix and feat\n+    low = sets([sure, sure, split], [sure, split], 0.5)                        # scores 0, 0, 0.5: level 0\n+    assert low[\"level\"] == 0.0 and low[\"coverage\"] == 0.5 and low[\"asked\"] == 0.0 and low[\"lines\"] == 0.0\n+\n+\n if __name__ == \"__main__\":\n"
+      },
+      {
+        "path": "training/type_confidence.py",
+        "old_path": null,
+        "lines": [
+          70,
+          0
+        ],
+        "hunks": "@@ -17,2 +17,3 @@ probabilities, from the first token of the reply (llama-server, `top_logprobs`,\n     python -I type_confidence.py menus OUT.json...\n+    python -I type_confidence.py sets CALIBRATION.json TEST.json\n \n@@ -23,2 +24,7 @@ real type when it is offered.\n \n+`sets` offers, instead of a fixed number of types, the smallest prefix of the likeliest ones that holds a mass `q`\n+(conformal prediction sets), asking when it has two types or more. `q` is the CONFORMAL level of the mass above\n+the real type on CALIBRATION, so a share `1 - alpha` of the commits has the real type in the set; TEST shows the\n+coverage, the share asked and the lines the sets really have.\n+\n `collect` starts the llama-server of the project (`$LLAMA_SERVER`, or the one smart-commit downloaded) on the GPU\n@@ -197,2 +203,48 @@ def menus(cases: list[dict]) -> list[dict]:\n \n+def ranked(dist: list, allowed: list[str]) -> list[tuple[str, float]]:\n+    \"\"\"The types the repository uses, likeliest first, adding up to 1 (as `offer` does).\"\"\"\n+    kept = [(k, p) for k, p in dist if not allowed or k in allowed]\n+    total = sum(p for _, p in kept)\n+    return [(k, p / total) for k, p in kept] if total > 0 else []\n+\n+\n+def mass_above(case: dict) -> float:\n+    \"\"\"The probability of the types ranked above the real one (1 when it is not among them).\"\"\"\n+    above = 0.0\n+    for kind, p in ranked(case[\"dist\"], case.get(\"allowed\", [])):\n+        if kind == case[\"real\"]:\n+            return above\n+        above += p\n+    return 1.0\n+\n+\n+def conformal_level(calibration: list[dict], alpha: float) -> float:\n+    \"\"\"The ceil((n + 1) * (1 - alpha))-th smallest mass above the real type: sets that keep the types whose\n+    mass above is at most this hold the real type in at least 1 - alpha of exchangeable commits.\"\"\"\n+    scores = sorted(mass_above(c) for c in calibration)\n+    rank = math.ceil((len(scores) + 1) * (1 - alpha))\n+    return scores[min(rank, len(scores)) - 1]\n+\n+\n+def prediction_set(case: dict, level: float) -> list[str]:\n+    \"\"\"The types whose probability above them is at most `level` (the likeliest is always in).\"\"\"\n+    out, above = [], 0.0\n+    for kind, p in ranked(case[\"dist\"], case.get(\"allowed\", [])):\n+        if above <= level:\n+            out.append(kind)\n+        above += p\n+    return out\n+\n+\n+def sets(calibration: list[dict], test: list[dict], alpha: float) -> dict:\n+    \"\"\"Coverage, share asked (sets of two types or more) and mean lines of those, on `test`.\"\"\"\n+    level = conformal_level(calibration, alpha)\n+    shown = [prediction_set(c, level) for c in test]\n+    asked = [s for s in shown if len(s) >= 2]\n+    return {\n+        \"alpha\": alpha, \"level\": level, \"coverage\": sum(c[\"real\"] in s for c, s in zip(test, shown)) / len(test),\n+        \"asked\": len(asked) / len(test), \"lines\": sum(map(len, asked)) / len(asked) if asked else 0.0,\n+    }\n+\n+\n def server_binary() -> str:\n@@ -283,2 +335,18 @@ def report_menus(paths: list[Path]) -> None:\n \n+ALPHAS = [0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25, 0.30]\n+\n+\n+def report_sets(calibration: Path, test: Path) -> None:\n+    cal = json.loads(calibration.read_text())[\"cases\"]\n+    held = json.loads(test.read_text())[\"cases\"]\n+    print(f\"== calibrated on {calibration.stem}, read on {test.stem}\")\n+    for below, present in zip(ASK_BELOW, menus(held)):\n+        p = present[\"present\"]\n+        print(f\"  present, ask below {below:.2f}: asks {p['asked']:.3f}, {p['lines']:.2f} lines, type right {p['type_right']:.3f}\")\n+    for alpha in ALPHAS:\n+        r = sets(cal, held, alpha)\n+        print(f\"  sets alpha {alpha:.2f}: level {r['level']:.3f}, asks {r['asked']:.3f}, {r['lines']:.2f} lines, \"\n+              f\"type right (coverage) {r['coverage']:.3f}\")\n+\n+\n def main() -> None:\n@@ -294,2 +362,4 @@ def main() -> None:\n         report([Path(a) for a in args[1:]])\n+    elif args[:1] == [\"sets\"]:\n+        report_sets(Path(args[1]), Path(args[2]))\n     elif args[:1] == [\"menus\"]:\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(training): measure how often the set of types is a subset of the",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, test, refactor.\n- Scopes used here: training. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(training): measure how often the fourth type is the only right one\nfeat(training): simulate a menu of at most three types and record it fails\nfeat(training): simulate an adaptive type menu and record that it fails\nfeat(training): measure how far the confidence in the type can be trusted\ntest: add a trace of a docs type for a scoring tool change\n",
+          "user": "Files changed:\ntraining/HYPOTHESES.md | +36 -0\ntraining/test_type_confidence.py | +44 -1\ntraining/type_confidence.py | +70 -0\n\nDiff:\n--- training/type_confidence.py\n@@ -17,2 +17,3 @@ probabilities, from the first token of the reply (llama-server, `top_logprobs`,\n     python -I type_confidence.py menus OUT.json...\n+    python -I type_confidence.py sets CALIBRATION.json TEST.json\n \n@@ -23,2 +24,7 @@ real type when it is offered.\n \n+`sets` offers, instead of a fixed number of types, the smallest prefix of the likeliest ones that holds a mass `q`\n+(conformal prediction sets), asking when it has two types or more. `q` is the CONFORMAL level of the mass above\n+the real type on CALIBRATION, so a share `1 - alpha` of the commits has the real type in the set; TEST shows the\n+coverage, the share asked and the lines the sets really have.\n+\n `collect` starts the llama-server of the project (`$LLAMA_SERVER`, or the one smart-commit downloaded) on the GPU\n@@ -197,2 +203,48 @@ def menus(cases: list[dict]) -> list[dict]:\n \n+def ranked(dist: list, allowed: list[str]) -> list[tuple[str, float]]:\n+    \"\"\"The types the repository uses, likeliest first, adding up to 1 (as `offer` does).\"\"\"\n+    kept = [(k, p) for k, p in dist if not allowed or k in allowed]\n+    total = sum(p for _, p in kept)\n+    return [(k, p / total) for k, p in kept] if total > 0 else []\n+\n+\n+def mass_above(case: dict) -> float:\n+    \"\"\"The probability of the types ranked above the real one (1 when it is not among them).\"\"\"\n+    above = 0.0\n+    for kind, p in ranked(case[\"dist\"], case.get(\"allowed\", [])):\n+        if kind == case[\"real\"]:\n+            return above\n+        above += p\n+    return 1.0\n+\n+\n[... 54 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(training): measure how often the set of types is a subset of the",
+        "rejected": null
+      }
+    ]
+  }
+}
