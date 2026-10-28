@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "tool_version": "0.12.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 0fa700e",
+      "feat(prompt): add --scopes map to show where each scope's commits went",
+      "docs(training): add the S0 control and the commands of H13's first arms",
+      "Merge branch 'docs/h13-v04-plan'",
+      "docs(training): plan v0.4 as H13, with the criteria fixed beforehand",
+      "fix(ci): silence shellcheck on the fixture reply that has backticks",
+      "chore: release 0.12.0"
+    ],
+    "history_files": [
+      [
+        "training/tools/src/compare.rs",
+        "training/tools/src/compare_tests.rs",
+        "training/tools/src/examples.rs",
+        "training/tools/src/examples_tests.rs",
+        "training/tools/src/main.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "training/tools/src/compare.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/compare_tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/examples.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/examples_tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/main.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "training/tools/src/compare.rs",
+        "old_path": null,
+        "lines": [
+          11,
+          1
+        ],
+        "hunks": "@@ -96,2 +96,3 @@ pub struct Options {\n     pub diff: String,\n+    pub scopes: String,\n     pub device: String,\n@@ -159,2 +160,4 @@ pub fn run_eval(\n             &options.diff,\n+            \"--scopes\",\n+            &options.scopes,\n         ])\n@@ -197,4 +200,11 @@ fn fingerprint(gguf: &Path, options: &Options) -> Result<String> {\n         .map_or(0, |d| d.as_secs());\n+    // Named only when it is not the list, so the keys of traces made before\n+    // the option existed still match.\n+    let scopes = if options.scopes == \"list\" {\n+        String::new()\n+    } else {\n+        format!(\" scopes={}\", options.scopes)\n+    };\n     Ok(format!(\n-        \"{} {} {modified} rules={} diff={} device={}\\n\",\n+        \"{} {} {modified} rules={} diff={}{scopes} device={}\\n\",\n         path.display(),\n"
+      },
+      {
+        "path": "training/tools/src/compare_tests.rs",
+        "old_path": null,
+        "lines": [
+          21,
+          1
+        ],
+        "hunks": "@@ -96,2 +96,3 @@ fn options(dir: &Path, set: &Path, binary: &Path) -> Options {\n         diff: \"plain\".into(),\n+        scopes: \"list\".into(),\n         device: \"vulkan\".into(),\n@@ -355,2 +356,21 @@ fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again(\n     assert_eq!(runs(dir.path()), 3);\n+    // The scopes are one of the settings, and the list is not named in the key, so\n+    // the traces made before the option existed are still the list's.\n+    let mapped = Options {\n+        scopes: \"map\".into(),\n+        ..other\n+    };\n+    assert!(run_eval(&binary, &bad, &inputs, &out, &mapped).unwrap());\n+    assert!(!run_eval(&binary, &bad, &inputs, &out, &mapped).unwrap());\n+    assert_eq!(runs(dir.path()), 4);\n+    let key = std::fs::read_to_string(out.with_extension(\"key\")).unwrap();\n+    assert!(key.contains(\" scopes=map \"), \"{key}\");\n+    let other = Options {\n+        scopes: \"list\".into(),\n+        ..mapped\n+    };\n+    assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());\n+    let key = std::fs::read_to_string(out.with_extension(\"key\")).unwrap();\n+    assert!(!key.contains(\"scopes=\"), \"{key}\");\n+    assert_eq!(runs(dir.path()), 5);\n     // Traces made before keys existed are taken as they are, and marked.\n@@ -359,3 +379,3 @@ fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again(\n     assert!(out.with_extension(\"key\").exists());\n-    assert_eq!(runs(dir.path()), 3);\n+    assert_eq!(runs(dir.path()), 5);\n }\n"
+      },
+      {
+        "path": "training/tools/src/examples.rs",
+        "old_path": null,
+        "lines": [
+          10,
+          4
+        ],
+        "hunks": "@@ -5,4 +5,4 @@\n //! smart-commit's own defaults could shape them, and writes `examples.jsonl`:\n-//! `{\"system\", \"user\", \"target\", \"repo\", \"hash\", \"set\"}` per line. `--rules`\n-//! and `--diff` are always passed, never left to smart-commit's defaults: the\n+//! `{\"system\", \"user\", \"target\", \"repo\", \"hash\", \"set\"}` per line. `--rules`,\n+//! `--diff` and `--scopes` are always passed, never left to smart-commit's defaults: the\n //! default file list became `annotated` after every model was trained on the\n@@ -32,3 +32,9 @@ fn lines_of(path: &Path) -> Result<Vec<String>> {\n /// how many examples.\n-pub fn make_examples(dir: &Path, binary: &Path, rules: &str, diff: &str) -> Result<usize> {\n+pub fn make_examples(\n+    dir: &Path,\n+    binary: &Path,\n+    rules: &str,\n+    diff: &str,\n+    scopes: &str,\n+) -> Result<usize> {\n     let config_home = tempfile::TempDir::new()?;\n@@ -40,3 +46,3 @@ pub fn make_examples(dir: &Path, binary: &Path, rules: &str, diff: &str) -> Resu\n         .arg(dir.join(\"inputs.jsonl\"))\n-        .args([\"--rules\", rules, \"--diff\", diff])\n+        .args([\"--rules\", rules, \"--diff\", diff, \"--scopes\", scopes])\n         .output()\n"
+      },
+      {
+        "path": "training/tools/src/examples_tests.rs",
+        "old_path": null,
+        "lines": [
+          11,
+          6
+        ],
+        "hunks": "@@ -70,3 +70,3 @@ fn the_examples_carry_the_prompt_the_target_without_its_period_and_where_it_came\n     assert_eq!(\n-        make_examples(dir.path(), &fake_prompt_binary(), \"full\", \"plain\").unwrap(),\n+        make_examples(dir.path(), &fake_prompt_binary(), \"full\", \"plain\", \"list\").unwrap(),\n         4\n@@ -102,7 +102,11 @@ fn the_examples_carry_the_prompt_the_target_without_its_period_and_where_it_came\n #[test]\n-fn rules_and_the_file_list_are_always_passed_and_nothing_of_the_environment_is() {\n+fn rules_the_file_list_and_scopes_are_always_passed_and_nothing_of_the_environment_is() {\n     let dir = tempfile::TempDir::new().unwrap();\n     write_set(dir.path(), &[\"feat: a\"]);\n-    for (rules, diff) in [(\"full\", \"plain\"), (\"omitted\", \"annotated\")] {\n-        make_examples(dir.path(), &fake_prompt_binary(), rules, diff).unwrap();\n+    for (rules, diff, scopes) in [\n+        (\"full\", \"plain\", \"list\"),\n+        (\"omitted\", \"annotated\", \"list\"),\n+        (\"full\", \"annotated\", \"map\"),\n+    ] {\n+        make_examples(dir.path(), &fake_prompt_binary(), rules, diff, scopes).unwrap();\n         let system = examples(dir.path())[0][\"system\"]\n@@ -113,3 +117,3 @@ fn rules_and_the_file_list_are_always_passed_and_nothing_of_the_environment_is()\n             system.starts_with(&format!(\n-                \"prompt --inputs {} --rules {rules} --diff {diff} \",\n+                \"prompt --inputs {} --rules {rules} --diff {diff} --scopes {scopes} \",\n                 dir.path().join(\"inputs.jsonl\").display()\n@@ -132,3 +136,3 @@ fn a_prompt_for_every_case_or_an_error() {\n     std::fs::write(dir.path().join(\"meta.jsonl\"), \"{}\\n\").unwrap();\n-    let err = make_examples(dir.path(), &fake_prompt_binary(), \"full\", \"plain\")\n+    let err = make_examples(dir.path(), &fake_prompt_binary(), \"full\", \"plain\", \"list\")\n         .unwrap_err()\n@@ -141,2 +145,3 @@ fn a_prompt_for_every_case_or_an_error() {\n         \"plain\",\n+        \"list\",\n     )\n"
+      },
+      {
+        "path": "training/tools/src/main.rs",
+        "old_path": null,
+        "lines": [
+          10,
+          1
+        ],
+        "hunks": "@@ -147,2 +147,6 @@ enum Command {\n         diff: String,\n+        /// `map` shows where each scope's commits went (H4b), and needs\n+        /// inputs with the history's paths.\n+        #[arg(long, default_value = \"list\")]\n+        scopes: String,\n     },\n@@ -179,2 +183,4 @@ enum Command {\n         diff: String,\n+        #[arg(long, default_value = \"list\")]\n+        scopes: String,\n         #[arg(long, default_value = \"vulkan\")]\n@@ -372,4 +378,5 @@ fn run(cli: Cli) -> Result<()> {\n             diff,\n+            scopes,\n         } => {\n-            let n = examples::make_examples(&dir, &binary, &rules, &diff)?;\n+            let n = examples::make_examples(&dir, &binary, &rules, &diff, &scopes)?;\n             eprintln!(\"{n} examples in {}\", dir.join(\"examples.jsonl\").display());\n@@ -427,2 +434,3 @@ fn run(cli: Cli) -> Result<()> {\n             diff,\n+            scopes,\n             device,\n@@ -441,2 +449,3 @@ fn run(cli: Cli) -> Result<()> {\n                 diff,\n+                scopes,\n                 device,\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs(training): explain how to use the --scopes option",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: docs, chore, feat, fix, refactor.\n- Scopes used here: training, ci, prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(prompt): add --scopes map to show where each scope's commits went\ndocs(training): add the S0 control and the commands of H13's first arms\ndocs(training): plan v0.4 as H13, with the criteria fixed beforehand\nfix(ci): silence shellcheck on the fixture reply that has backticks\nchore: release 0.12.0\n",
+          "user": "Files changed:\ntraining/tools/src/compare.rs | +11 -1\ntraining/tools/src/compare_tests.rs | +21 -1\ntraining/tools/src/examples.rs | +10 -4\ntraining/tools/src/examples_tests.rs | +11 -6\ntraining/tools/src/main.rs | +10 -1\n\nDiff:\n--- training/tools/src/compare.rs\n@@ -96,2 +96,3 @@ pub struct Options {\n     pub diff: String,\n+    pub scopes: String,\n     pub device: String,\n@@ -159,2 +160,4 @@ pub fn run_eval(\n             &options.diff,\n+            \"--scopes\",\n[... 15 more lines]\n--- training/tools/src/compare_tests.rs\n@@ -96,2 +96,3 @@ fn options(dir: &Path, set: &Path, binary: &Path) -> Options {\n         diff: \"plain\".into(),\n+        scopes: \"list\".into(),\n         device: \"vulkan\".into(),\n[... 27 more lines]\n--- training/tools/src/examples.rs\n@@ -5,4 +5,4 @@\n //! smart-commit's own defaults could shape them, and writes `examples.jsonl`:\n-//! `{\"system\", \"user\", \"target\", \"repo\", \"hash\", \"set\"}` per line. `--rules`\n-//! and `--diff` are always passed, never left to smart-commit's defaults: the\n[... 19 more lines]\n--- training/tools/src/main.rs\n@@ -147,2 +147,6 @@ enum Command {\n         diff: String,\n+        /// `map` shows where each scope's commits went (H4b), and needs\n+        /// inputs with the history's paths.\n+        #[arg(long, default_value = \"list\")]\n[... 22 more lines]\n\n(5 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs(training): explain how to use the --scopes option",
+        "rejected": null
+      }
+    ]
+  }
+}

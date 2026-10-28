@@ -145,6 +145,10 @@ enum Command {
         /// model so far was trained on `plain`.
         #[arg(long, default_value = "plain")]
         diff: String,
+        /// `map` shows where each scope's commits went (H4b), and needs
+        /// inputs with the history's paths.
+        #[arg(long, default_value = "list")]
+        scopes: String,
     },
     /// Nested subsets of an examples file, for a learning curve:
     /// `PREFIX-N.jsonl` for each size.
@@ -177,6 +181,8 @@ enum Command {
         rules: String,
         #[arg(long, default_value = "plain")]
         diff: String,
+        #[arg(long, default_value = "list")]
+        scopes: String,
         #[arg(long, default_value = "vulkan")]
         device: String,
         /// Print this many cases side by side, half Conventional.
@@ -370,8 +376,9 @@ fn run(cli: Cli) -> Result<()> {
             binary,
             rules,
             diff,
+            scopes,
         } => {
-            let n = examples::make_examples(&dir, &binary, &rules, &diff)?;
+            let n = examples::make_examples(&dir, &binary, &rules, &diff, &scopes)?;
             eprintln!("{n} examples in {}", dir.join("examples.jsonl").display());
             Ok(())
         }
@@ -425,6 +432,7 @@ fn run(cli: Cli) -> Result<()> {
             candidates,
             rules,
             diff,
+            scopes,
             device,
             read,
         } => {
@@ -439,6 +447,7 @@ fn run(cli: Cli) -> Result<()> {
                     .collect::<Result<_>>()?,
                 rules,
                 diff,
+                scopes,
                 device,
                 read,
             })?;

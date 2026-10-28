@@ -24,9 +24,11 @@ use crate::jsonl;
 use crate::score::{self, SCOPE, evidence, novel_words};
 
 /// Metrics where a case flagged is a case right, and where it is a case wrong.
-const GOOD: [&str; 6] = [
+const GOOD: [&str; 8] = [
     "first_try",
     "type_match",
+    "type_group",
+    "type_behaviour",
     "scope_known",
     "scope_fits",
     "exact",
@@ -39,8 +41,10 @@ const BAD: [&str; 5] = [
     "first_copied",
     "copied",
 ];
-const SHOWN: [&str; 13] = [
+const SHOWN: [&str; 15] = [
     "type_match",
+    "type_group",
+    "type_behaviour",
     "type_macro_f1",
     "scope_known",
     "scoped",
@@ -60,31 +64,49 @@ const GROUPS: [&str; 2] = ["conventional", "free"];
 pub struct Model {
     pub name: String,
     pub gguf: PathBuf,
+    /// The `--scopes` of this model's prompt when it is not the run's: a model
+    /// trained with the map (`NAME:map=GGUF`) is read with it, the others
+    /// with the names.
+    pub scopes: Option<String>,
 }
 
 impl Model {
-    /// `NAME=GGUF`.
+    /// `NAME=GGUF`, or `NAME:SCOPES=GGUF` with `list` or `map`.
     pub fn parse(text: &str) -> Result<Self> {
         let (name, gguf) = text
             .split_once('=')
             .filter(|(name, gguf)| !name.is_empty() && !gguf.is_empty())
             .with_context(|| format!("{text:?} is not NAME=GGUF"))?;
+        let (name, scopes) = match name.split_once(':') {
+            Some((name, scopes)) => {
+                ensure!(
+                    ["list", "map"].contains(&scopes),
+                    "{scopes:?} is not `list` or `map`, in {text:?}"
+                );
+                (name, Some(scopes.to_owned()))
+            }
+            None => (name, None),
+        };
         // The name is a file name of the traces and a key of the summary: it
         // cannot walk out of the directory, nor be `real`, whose key holds the
         // real commits' habits.
         ensure!(
-            name.chars()
-                .all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
+            !name.is_empty()
+                && name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
                 && name != "real",
             "{name:?} is not a name for a model: letters, digits, `.`, `_` and `-`, and not `real`"
         );
         Ok(Self {
             name: name.to_owned(),
             gguf: gguf.into(),
+            scopes,
         })
     }
 }
 
+#[derive(Clone)]
 pub struct Options {
     pub out: PathBuf,
     /// `smart-commit`.
@@ -94,6 +116,7 @@ pub struct Options {
     pub candidates: Vec<Model>,
     pub rules: String,
     pub diff: String,
+    pub scopes: String,
     pub device: String,
     /// How many cases to print side by side, half of each set; 0 for none.
     pub read: usize,
@@ -157,6 +180,8 @@ pub fn run_eval(
             &options.rules,
             "--diff",
             &options.diff,
+            "--scopes",
+            &options.scopes,
         ])
         .env("XDG_CONFIG_HOME", config_home.path())
         .env("SMART_COMMIT_GGUF", &gguf)
@@ -195,8 +220,15 @@ fn fingerprint(gguf: &Path, options: &Options) -> Result<String> {
         .modified()?
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
+    // Named only when it is not the list, so the keys of traces made before
+    // the option existed still match.
+    let scopes = if options.scopes == "list" {
+        String::new()
+    } else {
+        format!(" scopes={}", options.scopes)
+    };
     Ok(format!(
-        "{} {} {modified} rules={} diff={} device={}\n",
+        "{} {} {modified} rules={} diff={}{scopes} device={}\n",
         path.display(),
         meta.len(),
         options.rules,
@@ -414,12 +446,19 @@ pub fn compare(options: &Options) -> Result<(String, Value)> {
                 .out
                 .join(set_name)
                 .join(format!("{}.jsonl", model.name));
+            let own = Options {
+                scopes: model
+                    .scopes
+                    .clone()
+                    .unwrap_or_else(|| options.scopes.clone()),
+                ..options.clone()
+            };
             if run_eval(
                 &options.binary,
                 &model.gguf,
                 &set.join("inputs.jsonl"),
                 &path,
-                options,
+                &own,
             )? {
                 eprintln!("{set_name}: {} evaluated", model.name);
             }

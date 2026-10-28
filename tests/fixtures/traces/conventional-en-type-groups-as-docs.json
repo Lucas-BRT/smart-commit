@@ -1,0 +1,117 @@
+{
+  "format": 1,
+  "tool_version": "0.12.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 14df4c3",
+      "docs(training): record that a type-and-files rule does not pay in H13",
+      "test: add a trace of a file-list fallback on a training script change",
+      "feat(training): score the commit type beyond the repository's label",
+      "feat(training): probe the type with the history of the same files",
+      "feat(training): probe the commit type with a plain classifier, and record C",
+      "docs(training): record S2 and the seed replicate of H13"
+    ],
+    "history_files": [
+      [
+        "docs/training.md",
+        "training/tools/src/compare.rs",
+        "training/tools/src/score.rs",
+        "training/tools/src/score_tests.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/training.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/compare.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/score.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "training/tools/src/score_tests.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/training.md",
+        "old_path": null,
+        "lines": [
+          8,
+          1
+        ],
+        "hunks": "@@ -184,2 +184,8 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with\n   with no word from the diff); `sc-training score`'s docstring defines them.\n+  `type_match` counts only the repository's own type as right, and its noise\n+  (labels, seeds) is larger than the gains tried so far, so a comparison also\n+  reads `type_group` (a `build` for a `chore` counts) and `type_behaviour`\n+  (and `feat` for `fix`); `training/type_review.py` adds a plain classifier's\n+  plausibility, intervals and a sheet of mistakes to rate by hand\n+  ([H13](../training/HYPOTHESES.md)).\n - Always report the base model's scores on the same set and binary.\n@@ -286,3 +292,4 @@ What is published is one model per size smart-commit offers, named\n    metadata), the dataset, the prompt format (smart-commit's), the\n-   evaluation against the base model, and the limitations (languages).\n+   evaluation against the base model (with `type_group` and `type_behaviour`\n+   beside `type_match`), and the limitations (languages).\n    The weights are Apache-2.0, like the base model. CommitChronicle has no\n"
+      },
+      {
+        "path": "training/tools/src/compare.rs",
+        "old_path": null,
+        "lines": [
+          6,
+          2
+        ],
+        "hunks": "@@ -26,5 +26,7 @@ use crate::score::{self, SCOPE, evidence, novel_words};\n /// Metrics where a case flagged is a case right, and where it is a case wrong.\n-const GOOD: [&str; 6] = [\n+const GOOD: [&str; 8] = [\n     \"first_try\",\n     \"type_match\",\n+    \"type_group\",\n+    \"type_behaviour\",\n     \"scope_known\",\n@@ -41,4 +43,6 @@ const BAD: [&str; 5] = [\n ];\n-const SHOWN: [&str; 13] = [\n+const SHOWN: [&str; 15] = [\n     \"type_match\",\n+    \"type_group\",\n+    \"type_behaviour\",\n     \"type_macro_f1\",\n"
+      },
+      {
+        "path": "training/tools/src/score.rs",
+        "old_path": null,
+        "lines": [
+          26,
+          1
+        ],
+        "hunks": "@@ -10,2 +10,6 @@\n //!   set), with spellings of one type folded (`tests` is `test`)\n+//! - type_group: the type is in the real type's group ({chore, build, ci},\n+//!   {refactor, perf, style}), type_behaviour: also with `feat` and `fix` as\n+//!   one; the same type can be a `fix` or a `feat`, a `chore` or a `build`, and\n+//!   type_match counts only the repository's choice (H13)\n //! - type_macro_f1: the F1 of each real type, averaged over the types, with\n@@ -272,2 +276,14 @@ pub fn per_type(pairs: &Pairs) -> (Value, f64) {\n \n+/// The group a type is in, for `type_group` (and `type_behaviour`, which also\n+/// puts `feat` and `fix` together): the types a repository uses for the same\n+/// change. A type in no group is its own.\n+pub fn type_group(kind: &str, behaviour: bool) -> &str {\n+    match kind {\n+        \"feat\" | \"fix\" if behaviour => \"feat\",\n+        \"chore\" | \"build\" | \"ci\" => \"chore\",\n+        \"refactor\" | \"perf\" | \"style\" => \"refactor\",\n+        other => fold_type(other),\n+    }\n+}\n+\n /// The report sections a case counts in.\n@@ -342,6 +358,15 @@ pub fn row_of(m: &Value, t: &Value) -> Vec<(&'static str, Metric)> {\n         let real_type = fold_type(m[\"type\"].as_str().unwrap_or(\"\")).to_owned();\n+        let written = conventional_type(subject);\n         row.push((\n             \"type_match\",\n-            Yes(conventional_type(subject).as_deref() == Some(real_type.as_str())),\n+            Yes(written.as_deref() == Some(real_type.as_str())),\n         ));\n+        for (name, behaviour) in [(\"type_group\", false), (\"type_behaviour\", true)] {\n+            row.push((\n+                name,\n+                Yes(written.as_deref().is_some_and(|w| {\n+                    type_group(w, behaviour) == type_group(&real_type, behaviour)\n+                })),\n+            ));\n+        }\n         let scopes: BTreeSet<&str> = history\n"
+      },
+      {
+        "path": "training/tools/src/score_tests.rs",
+        "old_path": null,
+        "lines": [
+          54,
+          0
+        ],
+        "hunks": "@@ -189 +189,55 @@ fn values_print_like_python() {\n }\n+\n+#[test]\n+fn types_are_grouped_as_a_repository_may_choose_between_them() {\n+    assert_eq!(type_group(\"build\", false), type_group(\"ci\", false));\n+    assert_eq!(type_group(\"perf\", false), type_group(\"style\", false));\n+    assert_eq!(type_group(\"tests\", false), \"test\");\n+    assert_ne!(type_group(\"feat\", false), type_group(\"fix\", false));\n+    assert_eq!(type_group(\"feat\", true), type_group(\"fix\", true));\n+    assert_ne!(type_group(\"feat\", true), type_group(\"docs\", true));\n+    assert_ne!(type_group(\"chore\", true), type_group(\"refactor\", true));\n+    assert_eq!(type_group(\"revert\", true), \"revert\");\n+}\n+\n+#[test]\n+fn a_type_of_the_same_group_counts_for_the_group_and_not_for_the_match() {\n+    let real = |kind: &str| {\n+        json!({\"repo\": \"r\", \"hash\": \"h\", \"target\": format!(\"{kind}: x\"), \"type\": kind,\n+               \"history\": 1, \"set\": \"conventional\"})\n+    };\n+    let cases = [\n+        (\"chore\", \"ci: b\", (false, true, true)),\n+        (\"feat\", \"fix: b\", (false, false, true)),\n+        (\"docs\", \"fix: b\", (false, false, false)),\n+        (\"fix\", \"fix: b\", (true, true, true)),\n+        (\"fix\", \"Update b\", (false, false, false)),\n+    ];\n+    for (kind, written, (exact, group, behaviour)) in cases {\n+        let row = row_of(&real(kind), &trace(written));\n+        let get = |name: &str| row.iter().find(|(k, _)| *k == name).map(|(_, v)| *v);\n+        assert_eq!(\n+            get(\"type_match\"),\n+            Some(Metric::Yes(exact)),\n+            \"{kind} {written}\"\n+        );\n+        assert_eq!(\n+            get(\"type_group\"),\n+            Some(Metric::Yes(group)),\n+            \"{kind} {written}\"\n+        );\n+        assert_eq!(\n+            get(\"type_behaviour\"),\n+            Some(Metric::Yes(behaviour)),\n+            \"{kind} {written}\"\n+        );\n+    }\n+    // A free-style commit has no type to match.\n+    let free =\n+        json!({\"repo\": \"r\", \"hash\": \"h\", \"target\": \"x\", \"type\": null, \"history\": 1, \"set\": \"free\"});\n+    assert!(\n+        row_of(&free, &trace(\"x\"))\n+            .iter()\n+            .all(|(k, _)| !k.starts_with(\"type_\"))\n+    );\n+}\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "docs(training): add a few more metrics to the training guide",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, test, refactor.\n- Scopes used here: training. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\ndocs(training): record that a type-and-files rule does not pay in H13\ntest: add a trace of a file-list fallback on a training script change\nfeat(training): score the commit type beyond the repository's label\nfeat(training): probe the type with the history of the same files\nfeat(training): probe the commit type with a plain classifier, and record C\n",
+          "user": "Files changed:\ndocs/training.md | +8 -1\ntraining/tools/src/compare.rs | +6 -2\ntraining/tools/src/score.rs | +26 -1\ntraining/tools/src/score_tests.rs | +54 -0\n\nDiff:\n--- training/tools/src/compare.rs\n@@ -26,5 +26,7 @@ use crate::score::{self, SCOPE, evidence, novel_words};\n /// Metrics where a case flagged is a case right, and where it is a case wrong.\n-const GOOD: [&str; 6] = [\n+const GOOD: [&str; 8] = [\n     \"first_try\",\n     \"type_match\",\n+    \"type_group\",\n+    \"type_behaviour\",\n     \"scope_known\",\n@@ -41,4 +43,6 @@ const BAD: [&str; 5] = [\n ];\n-const SHOWN: [&str; 13] = [\n+const SHOWN: [&str; 15] = [\n     \"type_match\",\n+    \"type_group\",\n+    \"type_behaviour\",\n     \"type_macro_f1\",\n--- training/tools/src/score.rs\n@@ -10,2 +10,6 @@\n //!   set), with spellings of one type folded (`tests` is `test`)\n+//! - type_group: the type is in the real type's group ({chore, build, ci},\n+//!   {refactor, perf, style}), type_behaviour: also with `feat` and `fix` as\n+//!   one; the same type can be a `fix` or a `feat`, a `chore` or a `build`, and\n+//!   type_match counts only the repository's choice (H13)\n //! - type_macro_f1: the F1 of each real type, averaged over the types, with\n[... 32 more lines]\n--- training/tools/src/score_tests.rs\n@@ -189 +189,55 @@ fn values_print_like_python() {\n }\n+\n+#[test]\n+fn types_are_grouped_as_a_repository_may_choose_between_them() {\n+    assert_eq!(type_group(\"build\", false), type_group(\"ci\", false));\n+    assert_eq!(type_group(\"perf\", false), type_group(\"style\", false));\n+    assert_eq!(type_group(\"tests\", false), \"test\");\n+    assert_ne!(type_group(\"feat\", false), type_group(\"fix\", false));\n+    assert_eq!(type_group(\"feat\", true), type_group(\"fix\", true));\n[... 46 more lines]\n\n(3 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "docs(training): add a few more metrics to the training guide",
+        "rejected": null
+      }
+    ]
+  }
+}

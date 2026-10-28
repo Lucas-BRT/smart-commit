@@ -420,6 +420,58 @@ fn prompt_from_invalid_inputs_names_the_line() {
 }
 
 #[test]
+fn the_scope_map_is_for_evaluation_and_replays() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let mut inputs: serde_json::Value = serde_json::from_str(&inputs).unwrap();
+    inputs["subjects"] = serde_json::json!(["feat(cli): add context", "fix(git): read branch"]);
+    inputs["history_files"] = serde_json::json!([["src/cli/args.rs"], ["src/git.rs"]]);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n")).unwrap();
+    let path = file.to_str().unwrap();
+
+    let output = smart_commit(&["prompt", "--inputs", path], dir.path());
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    let list = prompt["system"].as_str().unwrap();
+    assert!(list.contains("Scopes used here: cli, git."), "{list}");
+
+    let output = smart_commit(&["prompt", "--inputs", path, "--scopes", "map"], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    let map = prompt["system"].as_str().unwrap();
+    assert!(
+        map.contains("with where their commits went: cli (src/cli/), git (src/)."),
+        "{map}"
+    );
+
+    // The option is recorded, so the trace replays with the same prompt.
+    let output = smart_commit(
+        &[
+            "eval",
+            path,
+            "--scopes",
+            "map",
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat(cli): add the entry point",
+        ],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let trace = dir.path().join("trace.json");
+    std::fs::write(&trace, stdout(&output).lines().next().unwrap()).unwrap();
+    let output = smart_commit(&["replay", trace.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(
+        stdout(&output).starts_with("reproduced:"),
+        "{}",
+        stdout(&output)
+    );
+}
+
+#[test]
 fn eval_writes_a_replayable_trace_per_input() {
     let repo = staged_repo();
     let (inputs, _) = recorded_inputs(&repo);

@@ -12,6 +12,7 @@ case "$SMART_COMMIT_GGUF" in
   *) echo "error: expected an absolute path, got $SMART_COMMIT_GGUF" >&2; exit 1;;
 esac
 echo x >> "$(dirname "$2")/runs"
+echo "$*" >> "$(dirname "$2")/args"
 case "$(basename "$SMART_COMMIT_GGUF")" in
   good.gguf) s="fix: add a";;
   broken.gguf) echo "error: no such model" >&2; exit 1;;
@@ -87,13 +88,16 @@ fn options(dir: &Path, set: &Path, binary: &Path) -> Options {
         baseline: Model {
             name: "sft".into(),
             gguf: dir.join("good.gguf"),
+            scopes: None,
         },
         candidates: vec![Model {
             name: "dpo".into(),
             gguf: dir.join("bad.gguf"),
+            scopes: None,
         }],
         rules: "full".into(),
         diff: "plain".into(),
+        scopes: "list".into(),
         device: "vulkan".into(),
         read: 0,
     }
@@ -117,9 +121,48 @@ fn a_model_is_a_name_and_a_file() {
         (model.name.as_str(), model.gguf.to_str().unwrap()),
         ("b01", "runs/b01/model.gguf")
     );
+    assert_eq!(model.scopes, None);
     for bad in ["", "b01", "=x.gguf", "b01="] {
         assert!(Model::parse(bad).is_err(), "{bad:?}");
     }
+}
+
+#[test]
+fn a_model_can_be_read_with_its_own_scopes() {
+    // A path may hold an `@` or a `:`; only the name carries the scopes.
+    let model = Model::parse("s2:map=models/qwen@abc/m.gguf").unwrap();
+    assert_eq!(model.name, "s2");
+    assert_eq!(model.scopes.as_deref(), Some("map"));
+    assert_eq!(model.gguf.to_str().unwrap(), "models/qwen@abc/m.gguf");
+    assert_eq!(
+        Model::parse("s1:list=m.gguf").unwrap().scopes.as_deref(),
+        Some("list")
+    );
+    for bad in ["s2:maps=m.gguf", "s2:=m.gguf", ":map=m.gguf"] {
+        assert!(Model::parse(bad).is_err(), "{bad:?}");
+    }
+}
+
+#[test]
+fn each_model_gets_its_scopes_and_the_others_the_runs() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let set = write_set(dir.path());
+    let binary = fake_smart_commit();
+    let mut options = options(dir.path(), &set, &binary);
+    options.candidates[0].scopes = Some("map".into());
+    compare(&options).unwrap();
+    // One line of arguments per model, in the order they ran: the baseline then the candidate.
+    let args = std::fs::read_to_string(set.join("args")).unwrap();
+    let lines: Vec<&str> = args.lines().collect();
+    assert_eq!(lines.len(), 2, "{args}");
+    assert!(lines[0].contains("--scopes list"), "{args}");
+    assert!(lines[1].contains("--scopes map"), "{args}");
+    // The key of the candidate's traces names the map, the baseline's does not.
+    let key = |name: &str| {
+        std::fs::read_to_string(options.out.join("val").join(format!("{name}.key"))).unwrap()
+    };
+    assert!(key("dpo").contains(" scopes=map "), "{}", key("dpo"));
+    assert!(!key("sft").contains("scopes="), "{}", key("sft"));
 }
 
 #[test]
@@ -353,11 +396,30 @@ fn traces_of_another_model_or_other_settings_under_the_same_name_are_made_again(
     assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
     assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
     assert_eq!(runs(dir.path()), 3);
+    // The scopes are one of the settings, and the list is not named in the key, so
+    // the traces made before the option existed are still the list's.
+    let mapped = Options {
+        scopes: "map".into(),
+        ..other
+    };
+    assert!(run_eval(&binary, &bad, &inputs, &out, &mapped).unwrap());
+    assert!(!run_eval(&binary, &bad, &inputs, &out, &mapped).unwrap());
+    assert_eq!(runs(dir.path()), 4);
+    let key = std::fs::read_to_string(out.with_extension("key")).unwrap();
+    assert!(key.contains(" scopes=map "), "{key}");
+    let other = Options {
+        scopes: "list".into(),
+        ..mapped
+    };
+    assert!(run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
+    let key = std::fs::read_to_string(out.with_extension("key")).unwrap();
+    assert!(!key.contains("scopes="), "{key}");
+    assert_eq!(runs(dir.path()), 5);
     // Traces made before keys existed are taken as they are, and marked.
     std::fs::remove_file(out.with_extension("key")).unwrap();
     assert!(!run_eval(&binary, &bad, &inputs, &out, &other).unwrap());
     assert!(out.with_extension("key").exists());
-    assert_eq!(runs(dir.path()), 3);
+    assert_eq!(runs(dir.path()), 5);
 }
 
 #[test]
@@ -375,6 +437,7 @@ fn a_model_name_cannot_leave_its_directory_nor_repeat_nor_be_real() {
     options.candidates = vec![Model {
         name: "sft".into(),
         gguf: dir.path().join("bad.gguf"),
+        scopes: None,
     }];
     let err = compare(&options).unwrap_err().to_string();
     assert!(err.contains("two models are named \"sft\""), "{err}");

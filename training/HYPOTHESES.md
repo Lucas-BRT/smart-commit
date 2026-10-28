@@ -861,9 +861,10 @@ recipe then on the 1.5B; DPO last, on the best SFT model. Each arm is
 
 | Arm | What changes | Question |
 |---|---|---|
-| S1 | trained on `--diff annotated` | does the list it is used with beat the one it was trained on? |
+| S0 | the v0.1 recipe (`--diff plain`) with today's prompt | the control: the prompt changed since v0.1 (the diff budget, the types listed), so S1 against v0.1 would mix both |
+| S1 | trained on `--diff annotated` (S0's data, only the file list differs: 15,957 of the 40,000 examples have annotations) | does the list it is used with beat the one it was trained on? |
 | S2 | S1 + the scope map of H4b | does the map fix the scope without costing the diff's share of the prompt? |
-| S3 | S2 + labels: the commits whose type the diff cannot tell, found by where the SFT model and the real type disagree on the training set, left out or relabelled after a reading; rare types (`perf`, `refactor`, `docs`, `build`) raised | do cleaner and more even labels move the type, as in H3? |
+| S3 (not run as written, see below) | S2 + labels: the commits whose type the diff cannot tell, found by where the SFT model and the real type disagree on the training set, left out or relabelled after a reading; rare types (`perf`, `refactor`, `docs`, `build`) raised | do cleaner and more even labels move the type, as in H3? |
 | D1 | DPO (H12's recipe) on the best of S1–S3, pairs mined from it, the type failure weighted in the pairs while the marginals still match | does DPO keep what the SFT arm gained and still remove the failures? |
 | C | only if S and D fail on the type: a separate type classifier (the first token's loss, or a small model on the diff) to choose the type before the message, which the product already supports (`type_choice`, the typed start) | is the type a different problem from the message? |
 
@@ -882,14 +883,198 @@ less, `first_copied` at 0.01 or less and `first_try` at 0.99 or more,
 falls with significance, `type_match` on eval-short (47) does not fall with
 significance, the mean subject is at most a column longer than the v0.3's,
 and a reading of 30 messages side by side shows no new habit. The arms S1
-to S3 are chosen on `data/val1` by the same measures against the v0.1 of
-the same size read on the same list, never on eval-v1, which is read once,
-for the recipe that goes to the 1.5B and again for the final models. If the
+to S3 are chosen on `data/val1` by the same measures, S1 against S0 (both read
+with the annotated list), S2 and S3 against the arm before, never on eval-v1,
+which is read once, for the recipe that goes to the 1.5B and again for the final models. If the
 type does not rise, the result goes here as it is, and C is decided then, not
 before; Kaggle's quota does not go further on S and D.
 
-*Cost.* The 0.5B arms are SFT runs like H3's; time on Kaggle's T4s is
-measured on the first arm and written here before the others start.
+*Cost.* The 0.5B arms are SFT runs like H3's: v0.1's 40k run took 2.45 h on
+one T4, and S0 and S1 run together, one on each of the session's two T4s.
+Their validation loss is logged on one set (S1's, annotated) and is not
+compared between the two: the arms are compared on `data/val1` with
+`sc-training compare`. The time of each arm is written here when it ends.
+
+**S0 and S1 (first result).** The same 40k commits of v0.1, `--rules full`, QLoRA as v0.1, one seed,
+one on each T4 of a session (2.48 h and 2.39 h, 2.0 h of the session; the quota 6.98 → 8.99 of 30 h).
+`data/val1-h4` (250 Conventional + 250 free; the paths of the history are in it and the lists ignore
+them), `--rules full --diff annotated`, S1 paired against S0, Conventional:
+
+| | type_match | type_macro_f1 | scope_known | ungrounded | first_copied | first_try | fallback | word_f1 | novel |
+|---|---|---|---|---|---|---|---|---|---|
+| S0 (plain) | 0.632 | 0.426 | 0.884 | 0.088 | 0.048 | 0.948 | 0.028 | 0.317 | 0.138 |
+| S1 (annotated) | 0.628 | 0.426 | 0.884 | 0.080 | 0.056 | 0.944 | 0.028 | 0.320 | 0.135 |
+| paired | +9/−10, p = 1.0 | | +2/−2 | +9/−11, p = 0.82 | +5/−3 | +4/−5 | +5/−5 | | |
+
+- **Training on the annotated list does not move the type** (nor anything else) on `val1-h4`: S1 is not
+  better than S0 by the criteria above. On the 14 + 29 commit scenarios S1 loses a type match and
+  `type_macro_f1` (0.564 → 0.485), one case. The list helps models that never saw it (H11), and
+  gains nothing from being trained on, at 0.5B.
+- **Where the type is wrong** (S1, `val1-h4`, 93 of 250): `feat` written `fix` 19 times, `fix` written
+  `feat` 9 (together 30% of the errors); `chore` is on one side of 31 (`chore` → `fix` 11); `perf` (10
+  real) is never written and `refactor` 3 times for 9 real; `fix` is written 98 times for 75 real. The
+  training data has 131 `perf` of 24,000 Conventional commits (0.5%; 4% in `val1`) and 2,398 `refactor`.
+  Part of the errors is the labels (`fix`/`feat`/`chore` for the same change); the rare types are not
+  written at all.
+- **Consequence for S2.** S2 is compared with S1 (the list the product uses); the type should not move
+  with the map, which is about the scope (`scope_known` is already 0.88), so S2 is read on `scope_fits`,
+  and on the type only to see that it does not fall.
+- **S3 as written is not run.** The first form it took, raising the rare types, looked at the
+  frequencies: in the 625,467 typed commits of `train-all` `perf` is 0.49% and `style` 0.98%, and the
+  training set has 0.5% and 1.2%: the model was trained on the natural shares. `perf` is 4% of `val1`
+  and 2% of eval-v1 (5 of 250), a property of those samples; raising it to 4% would fit the model to
+  them and make it write `perf` where the repositories rarely have it, which is what H8 found with the
+  other cap (the boundary moves). `refactor` is 10% of the training data and written a third of the
+  times it should be: not a matter of frequency either. Cleaner labels (dropping the commits whose type
+  the diff cannot tell) stay for later, since they need a model's disagreement with the real type and
+  a reading, and nothing here says how many there are.
+- **S0r.** The second T4 of S2's session runs S0 again with `--seed 1`: how much `type_match` moves
+  with the seed alone, which every difference between arms (a few cases of 250) has to be read against.
+
+**S2 and S0r (second result).** S2 (the annotated list and the scope map, 40k commits with the paths of
+their history) and S0 again on seed 1, the two T4s of one session (2.53 h and 2.45 h; the quota 8.99 →
+11.57 of 30 h). `data/val1-h4` and `data/scenarios-eval`, `--rules full --diff annotated`, S2 read with
+the map and the others with the names (`compare`'s `NAME:map=GGUF`), Conventional:
+
+| val1-h4 | type_match | type_macro_f1 | scope_known | scope_fits | ungrounded | first_try | word_f1 | novel |
+|---|---|---|---|---|---|---|---|---|
+| S0 | 0.632 | 0.426 | 0.884 | 0.700 | 0.088 | 0.948 | 0.317 | 0.138 |
+| S0r (seed 1) | 0.624 | 0.466 | 0.884 | 0.692 | 0.100 | 0.944 | 0.323 | 0.146 |
+| S1 | 0.628 | 0.426 | 0.884 | 0.708 | 0.080 | 0.944 | 0.320 | 0.135 |
+| S2 | 0.636 | 0.440 | 0.896 | 0.700 | 0.080 | 0.956 | 0.320 | 0.116 |
+
+- **The seed alone moves the type as much as the arms do.** S0r against S0: `type_match` +10/−12 cases,
+  `type_macro_f1` +0.040, `scope_fits` +1/−3, `ungrounded` +8/−5. Every difference between S0, S1 and S2
+  is inside that.
+- **S2 against S1** (the arm before it): `scope_fits` 0.700 against 0.708 (+2/−4, p = 0.69),
+  `scope_known` +5/−2 (p = 0.45), `type_match` +9/−7. The map does not improve the scope at 0.5B on this
+  set, where `scope_fits` is already 0.70 and the real subjects 0.752 (H4). On the free commits S2 copies
+  an earlier subject in 6 more cases and 1 fewer (p = 0.125), the one movement worth watching.
+- **Against the criteria fixed above:** neither S1 nor S2 is better than the arm before it, and eval-v1
+  is not read: there is no recipe to carry to the 1.5B. The type stays where H1 left it, 0.63 at 0.5B on
+  this set.
+- **What this says about the type.** More data (H3), no rules (H6), no type cap (H8), DPO (H12), the list
+  it is used with (S1) and the scope map (S2) leave the 0.5B's `type_match` between 0.62 and 0.67, and the
+  seed alone moves it by 2 points. The errors are `fix`/`feat`/`chore` for the same change in a third of
+  the cases each; the next steps in the plan are the DPO with the type weighed in the pairs (D1) and,
+  failing it, a type chosen apart from the message (C), which the product can already ask the user for.
+
+**C, probed before building it.** A plain classifier on the same signals (`type_probe.py`: the paths, the file
+statuses, the words of the added and removed lines, the line counts and the types the history uses; TF-IDF
+and a logistic regression, seconds on the CPU), trained on up to 200,000 Conventional commits of `train-all`
+(751 repositories, none of the evaluation ones, at most 500 per repository) and read on the 250 Conventional
+commits of `data/val1-h4`, like the models:
+
+| training commits | type_match | type_macro_f1 |
+|---|---|---|
+| 24,000 | 0.576–0.580 | 0.376–0.387 |
+| 80,000 | 0.608–0.612 | 0.388–0.390 |
+| 200,000 | 0.604–0.612 | 0.390–0.397 |
+
+- **It stops at 0.61, whatever the data.** The models read on the same set write 0.620 (0.5B v0.3) and 0.648
+  (1.5B v0.3): a bag of words nearly matches a language model on this task, so the signals in the diff and
+  the history do not say more than that, and the rest is the labels.
+- **They are right in different cases, and a combination does not use it.** The classifier and the 1.5B v0.3
+  agree on 68% of the commits; at least one is right in 74% (an upper bound, not a result). Letting the
+  classifier override the model when it is sure changes at most 7 commits (confidence ≥ 0.6, never higher)
+  and gains 2 (0.648 → 0.656), where one more is noise.
+- **Verdict on C.** A separate type chosen by a classifier of this kind would not raise the type: the 0.5B's
+  and the 1.5B's 0.62–0.65 are near what these signals give. A stronger classifier (an encoder fine-tuned on
+  the diff) is not excluded, but nothing here suggests that the room is large.
+
+**The types of the commits on the same files, probed too.** The prompt gives the last subjects and (with
+`--scopes map`) where each scope was used, but never the type of the past commits that touched the files being
+committed. `type_probe.py --by-file` adds them as features (`same:` the files were touched, `near:` the
+directory was, `latest:` the most recent commit on the files), from the history's file lists:
+
+| features | type_match (80,000 commits, alpha 1e-5 / 1e-6) | type_macro_f1 |
+|---|---|---|
+| paths, status, words, history types | 0.612 / 0.592 | 0.388 / 0.385 |
+| plus the types by file | 0.592 / 0.608 | 0.384 / 0.400 |
+
+- **No gain.** 164 of the 250 commits have a past commit on the same files, but the type of the latest one
+  equals the commit's in only 75 of them (46%), less than the model gets: in a repository the type follows
+  what the change does, not where it is.
+- **Verdict.** The history by file is not a lever for the type either, so no prompt or training arm is built
+  on it. The signals the prompt already carries are used up; what remains is the label.
+
+**The type, measured against more than the label.** `type_match` counts the repository's own type as the only
+right one. `type_review.py` reads the traces of `compare-v04c` (the 250 Conventional commits of `data/val1-h4`)
+and adds measures that tolerate an answer the label did not choose; the groups and the threshold were fixed
+before reading any number: {chore, build, ci}, {refactor, perf, style}, {test, tests}; `behaviour` also merges
+`feat` and `fix`; `plausible` is the label's type or one a plain classifier (`type_probe.py`, 200,000 commits)
+gives at least 0.15 of the probability. Brackets are 95% bootstrap intervals (2,000 resamples).
+
+| model | strict | group | behaviour | plausible | type in the history or the label's |
+|---|---|---|---|---|---|
+| 1.5B v0.3 | 0.648 [0.59, 0.71] | 0.660 | 0.752 [0.70, 0.80] | 0.904 [0.86, 0.94] | 0.964 |
+| 0.5B v0.3 | 0.620 [0.56, 0.68] | 0.636 | 0.764 [0.71, 0.81] | 0.916 [0.88, 0.95] | 0.980 |
+| 1.5B v0.1 | 0.636 [0.58, 0.69] | 0.644 | 0.748 [0.70, 0.80] | 0.900 [0.86, 0.94] | 0.972 |
+| S0 | 0.628 [0.57, 0.69] | 0.648 | 0.756 [0.70, 0.80] | 0.920 [0.88, 0.95] | 0.972 |
+| S1 | 0.628 [0.57, 0.69] | 0.648 | 0.760 [0.71, 0.81] | 0.936 [0.90, 0.96] | 0.980 |
+| S2 | 0.636 [0.58, 0.70] | 0.652 | 0.748 [0.70, 0.80] | 0.940 [0.91, 0.97] | 0.980 |
+| a type drawn from the real mix | – | 0.221 | – | 0.512 | – |
+
+- **The models are indistinguishable on every one of them**, as on the strict one: the intervals overlap
+  everywhere, and the pairs differ by a handful of commits (the 1.5B v0.3 is right where S2 is not in 23
+  commits and the other way in 20).
+- **About 10 points of the strict error are `feat` against `fix`** (0.65 to 0.75 when they count as one); the
+  groups of unlike types move it by 1–2 points. The most frequent mistakes of the 1.5B v0.3 are `feat` written
+  `fix` (16 of 88), `feat` written `chore` (8) and `fix` written `feat` (7).
+- **The label is a type the history does not use in only 4% of the commits** (3 to 6%), so the models are not
+  asked for a type they cannot know; with the label in the history the strict match is 0.66, with the label
+  outside it 0.30 (10 commits, wide).
+- **In 15% of the commits all six models agree on a type that is not the label** (10 to 19%), and at least
+  one of them has the label in 76%: a floor for how often the repository's type is the odd one out, and
+  a ceiling on what picking among these models could gain.
+- **The mix of types is close to the real one** (half the L1 distance 0.10–0.13), as the earlier error matrix
+  showed: `perf` and `refactor` are written too little, `fix` and `chore` too much.
+
+*Rated by hand.* 60 of the 1.5B v0.3's 88 mistakes, up to four of each (real type, written type) pair so that
+the rare ones show (`ratings-h13-type.json`, with the hash of each commit; the hunks for reading them are
+rebuilt by `type_review.py --sheet`). Each got `A` if a maintainer reading the diff could reasonably have used
+the written type, `N` if the type misdescribes the change, `?` if the excerpt (350 characters a file) does not
+say, as for new files. **The rater is Claude, not a person**: the ratings have the bias of a language model
+reading short excerpts, and a human second opinion on a sample is still to be done.
+
+| rating | commits |
+|---|---|
+| A (acceptable) | 28 |
+| N (misdescribes) | 16 |
+| ? (cannot tell) | 16 |
+
+- **64% of the decided mistakes are acceptable** (28 of 44); weighted by how often each pair happens, 67%.
+  The `N` are mostly a type that contradicts what the diff does (a new capability written `fix`, a
+  removed parameter written `fix` where `refactor` fits, `docs` or `test` on a commit that also changes code,
+  a reply with no type).
+- **Counting the acceptable ones, the type is right in 0.81 to 0.92 of the commits** (the 162 exact, plus the
+  41 acceptable mistakes of the 88, plus the 26 that cannot be told for the upper figure), against 0.648
+  for the label alone.
+- **Verdict.** The type of the models is not as bad as the label says, and it does not differ between them. The
+  strict `type_match` cannot tell the arms apart because its noise (labels and seeds) is larger than any
+  gain they had, which is why none of the earlier arms stood out. A model change would be judged by `plausible`
+  and `behaviour` together with the strict match, and the `N` that remain (about 8% of the commits by the
+  weighted estimate, and another 10% that cannot be told) are what there is left to fix.
+
+**A rule between the type and the files, and the replies with no type (looked at, not built).** Fixed before the
+numbers: `docs` only if every changed file is documentation (`.md`, `.mdx`, `.rst`, `.txt`, a `docs/` directory,
+README, LICENSE, CHANGELOG), `test` only if every file is a test (`test/`, `spec/`, `*.test.*`, `*.spec.*`,
+`.bats`, snapshots). On the 250 commits of `data/val1-h4`:
+
+- **Real labels.** When every file is documentation the label is `docs` in 27 of 29; when every file is a test it
+  is `test` in 10 of 16. The docs rule agrees with how repositories write, the test rule does not.
+- **The models break the docs rule in 4 to 10 commits each** (10 for the 1.5B v0.3, 5 for the 0.5B). The label is
+  `docs` in 2 of the 10, and among the other 8 several are types a maintainer could use (a story file, JSDoc
+  comments, a docs package under `packages/*-docs/`, which the paths do not show). Only about 4 are plain
+  mistakes (`docs` for a README plus a code change, for the stories of a test, for typings). A veto that
+  retries would fix at most those 4, 1.6% of the commits, and would also hit commits like the ones rated `A`,
+  with a retry whose answer is not known to be better. The reverse (all files documentation and the model
+  writes another type) happens once for the 1.5B, and the label was `docs`: too rare to matter.
+- **Replies with no type: 2 or 3 commits per model, always the same ones.** They come from repositories whose
+  history is not Conventional (`fix/small_talk_skill: ...`, `add jenkinsfile`), where the model follows the
+  history, as the prompt asks, or the file-list fallback of an unusable reply. This is not a defect.
+- **Verdict.** Neither pays: a type-and-files rule would gain a few commits at most, with the risk of losing
+  acceptable ones, and the replies with no type follow the repository's own style. No product change.
 
 ## Ideas not tried yet
 

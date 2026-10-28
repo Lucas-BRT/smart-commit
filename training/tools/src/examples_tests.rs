@@ -68,7 +68,7 @@ fn the_examples_carry_the_prompt_the_target_without_its_period_and_where_it_came
         &["feat: add x.", "fix: handle y...", "docs: z", "fix: w. "],
     );
     assert_eq!(
-        make_examples(dir.path(), &fake_prompt_binary(), "full", "plain").unwrap(),
+        make_examples(dir.path(), &fake_prompt_binary(), "full", "plain", "list").unwrap(),
         4
     );
     let got = examples(dir.path());
@@ -100,18 +100,22 @@ fn the_examples_carry_the_prompt_the_target_without_its_period_and_where_it_came
 }
 
 #[test]
-fn rules_and_the_file_list_are_always_passed_and_nothing_of_the_environment_is() {
+fn rules_the_file_list_and_scopes_are_always_passed_and_nothing_of_the_environment_is() {
     let dir = tempfile::TempDir::new().unwrap();
     write_set(dir.path(), &["feat: a"]);
-    for (rules, diff) in [("full", "plain"), ("omitted", "annotated")] {
-        make_examples(dir.path(), &fake_prompt_binary(), rules, diff).unwrap();
+    for (rules, diff, scopes) in [
+        ("full", "plain", "list"),
+        ("omitted", "annotated", "list"),
+        ("full", "annotated", "map"),
+    ] {
+        make_examples(dir.path(), &fake_prompt_binary(), rules, diff, scopes).unwrap();
         let system = examples(dir.path())[0]["system"]
             .as_str()
             .unwrap()
             .to_owned();
         assert!(
             system.starts_with(&format!(
-                "prompt --inputs {} --rules {rules} --diff {diff} ",
+                "prompt --inputs {} --rules {rules} --diff {diff} --scopes {scopes} ",
                 dir.path().join("inputs.jsonl").display()
             )),
             "{system}"
@@ -130,7 +134,7 @@ fn a_prompt_for_every_case_or_an_error() {
     let dir = tempfile::TempDir::new().unwrap();
     write_set(dir.path(), &["feat: a", "feat: b"]);
     std::fs::write(dir.path().join("meta.jsonl"), "{}\n").unwrap();
-    let err = make_examples(dir.path(), &fake_prompt_binary(), "full", "plain")
+    let err = make_examples(dir.path(), &fake_prompt_binary(), "full", "plain", "list")
         .unwrap_err()
         .to_string();
     assert!(err.contains("2 prompts for 1 cases"), "{err}");
@@ -139,6 +143,7 @@ fn a_prompt_for_every_case_or_an_error() {
         Path::new("/no/such/smart-commit"),
         "full",
         "plain",
+        "list",
     )
     .unwrap_err()
     .to_string();

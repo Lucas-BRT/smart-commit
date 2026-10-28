@@ -177,7 +177,9 @@ comes from the settings, e.g. `SMART_COMMIT_GGUF`. `prompt` and `eval` take
 without them; otherwise the model in use decides (see
 [architecture](architecture.md#prompt)). They also take `--diff plain`, the
 file list without the annotations (status, renames, whitespace-only and
-comment-only changes), the format the v0.2 fine-tunes were trained on.
+comment-only changes), the format the v0.2 fine-tunes were trained on, and
+`--scopes map`, which shows each scope with the places its commits touched
+instead of the names alone, for a model trained that way.
 
 ## Devices
 

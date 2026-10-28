@@ -413,3 +413,165 @@ fn large_diff_fits_the_prompt_budget() {
     assert!(used <= options.max_prompt_tokens, "{used}");
     assert!(prompt.user.contains("partly shown"));
 }
+
+fn map() -> PromptOptions {
+    PromptOptions {
+        scopes: PromptScopes::Map,
+        ..PromptOptions::default()
+    }
+}
+
+fn training_history() -> RepoContext {
+    let paths = |p: &[&str]| p.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    context(
+        &[
+            "feat(training): add train.py",
+            "docs(training): record results",
+            "fix(cli): parse -C",
+            "feat(training): add score.py",
+        ],
+        None,
+    )
+    .with_history_files(vec![
+        paths(&["training/train.py"]),
+        paths(&["docs/training.md", "training/HYPOTHESES.md"]),
+        paths(&["src/main.rs", "tests/cli.rs"]),
+        paths(&["training/score.py"]),
+    ])
+}
+
+#[test]
+fn scopes_show_where_their_commits_went() {
+    let prompt = build(&training_history(), &files(), &map());
+    insta::assert_snapshot!(prompt.system);
+}
+
+#[test]
+fn the_map_is_told_the_same_way_when_the_rules_are_omitted() {
+    let options = PromptOptions {
+        rules: PromptRules::Omitted,
+        ..map()
+    };
+    let prompt = build(&training_history(), &files(), &options);
+    assert!(
+        prompt
+            .system
+            .contains("- Scopes used here, with where their commits went: training (training/, docs/), cli (src/, tests/)."),
+        "{}",
+        prompt.system
+    );
+}
+
+#[test]
+fn scopes_without_history_files_are_listed_even_when_the_map_is_asked() {
+    let subjects = ["feat(cli): add context", "fix(git): read branch"];
+    let list = "- Scopes used here: cli, git. Omit the scope if none fits.\n";
+    // Older traces have no paths, and empty commits touch none.
+    let without = context(&subjects, None);
+    let empty = context(&subjects, None).with_history_files(vec![vec![], vec![]]);
+    for ctx in [without, empty] {
+        let prompt = build(&ctx, &files(), &map());
+        assert!(prompt.system.contains(list), "{}", prompt.system);
+    }
+}
+
+#[test]
+fn a_scope_without_places_is_listed_alone_in_the_map() {
+    let subjects = ["feat(cli): add context", "fix(git): read branch"];
+    let ctx =
+        context(&subjects, None).with_history_files(vec![vec!["src/cli.rs".to_string()], vec![]]);
+    let prompt = build(&ctx, &files(), &map());
+    assert!(
+        prompt
+            .system
+            .contains("with where their commits went: cli (src/), git. Use a scope"),
+        "{}",
+        prompt.system
+    );
+}
+
+#[test]
+fn the_map_does_not_take_room_from_the_diff() {
+    let big: Vec<FileDiff> = (0..50)
+        .map(|n| FileDiff {
+            path: format!("src/module_{n}.rs"),
+            old_path: None,
+            lines: Some((60, 0)),
+            hunks: format!(
+                "@@ -0,0 +1,60 @@\n{}",
+                "+let value = compute();\n".repeat(60)
+            ),
+        })
+        .collect();
+    let ctx = training_history();
+    let listed = build(&ctx, &big, &PromptOptions::default());
+    let mapped = build(&ctx, &big, &map());
+    assert!(mapped.system.len() > listed.system.len());
+    assert_eq!(mapped.user, listed.user);
+}
+
+#[test]
+fn the_map_is_recorded_only_when_asked() {
+    let json = serde_json::to_string(&PromptOptions::default()).unwrap();
+    assert!(!json.contains("\"scopes\""), "{json}");
+    let json = serde_json::to_string(&map()).unwrap();
+    assert!(json.contains("\"scopes\":\"map\""), "{json}");
+    let read: PromptOptions = serde_json::from_str(&json).unwrap();
+    assert_eq!(read, map());
+}
+
+/// Eight scopes whose commits touched three places each, `depth` directories deep.
+fn deep_monorepo(depth: usize) -> RepoContext {
+    let dir = |scope: usize, place: usize| {
+        let mut path = String::from("packages/manager/apps");
+        for level in 0..depth {
+            path.push_str(&format!("/area{scope}_{place}_{level}"));
+        }
+        path.push_str("/file.ts");
+        path
+    };
+    let subjects: Vec<String> = (0..8).map(|n| format!("feat(scope{n}): change")).collect();
+    let files: Vec<Vec<String>> = (0..8)
+        .map(|n| (0..3).map(|place| dir(n, place)).collect())
+        .collect();
+    let subjects: Vec<&str> = subjects.iter().map(String::as_str).collect();
+    context(&subjects, None).with_history_files(files)
+}
+
+#[test]
+fn a_long_map_shows_fewer_places_per_scope() {
+    // The map of the scopes' line, and how many places each scope has in it.
+    let map_of = |depth| {
+        let system = build(&deep_monorepo(depth), &files(), &map()).system;
+        let line = system
+            .lines()
+            .find(|l| l.contains("where their commits went: "))
+            .unwrap_or_else(|| panic!("no map in {system}"))
+            .to_owned();
+        let map = line
+            .split_once("went: ")
+            .and_then(|(_, rest)| rest.split_once(". Use a scope"))
+            .map(|(map, _)| map.to_owned())
+            .unwrap();
+        let places = map.matches("packages/manager/apps/").count() / 8;
+        (map, places)
+    };
+    let (short, places) = map_of(1);
+    assert_eq!(places, 3, "{short}");
+    let (medium, places) = map_of(3);
+    assert!((1..3).contains(&places), "{places} places in {medium}");
+    assert!(medium.chars().count() <= 1000, "{medium}");
+}
+
+#[test]
+fn a_map_too_long_even_with_one_place_falls_back_to_the_names() {
+    let prompt = build(&deep_monorepo(12), &files(), &map());
+    assert!(
+        prompt.system.contains(
+            "- Scopes used here: scope0, scope1, scope2, scope3, scope4, scope5, scope6, scope7. \
+             Omit the scope if none fits.\n"
+        ),
+        "{}",
+        prompt.system
+    );
+}

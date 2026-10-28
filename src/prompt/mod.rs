@@ -11,7 +11,9 @@ mod user;
 mod tests;
 
 pub use system::listed_types;
-pub use types::{DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptOptions, PromptRules};
+pub use types::{
+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptOptions, PromptRules, PromptScopes,
+};
 
 use crate::context::RepoContext;
 use crate::diff::{self, CompactDiff, FileDiff};
@@ -46,13 +48,26 @@ pub fn build_with_note(
     note: Option<&str>,
 ) -> Prompt {
     let system = system::system_message(ctx, options);
+    // The scope map is extra: the diff is sized as if the scopes were only
+    // listed, so a model trained with the map sees as much of it as one
+    // trained without.
+    let sized = match options.scopes {
+        PromptScopes::List => None,
+        PromptScopes::Map => Some(system::system_message(
+            ctx,
+            &PromptOptions {
+                scopes: PromptScopes::List,
+                ..options.clone()
+            },
+        )),
+    };
     // Sized with the truncation note at its longest, which large diffs
     // will need.
     let empty = CompactDiff {
         truncated: usize::MAX,
         ..CompactDiff::default()
     };
-    let fixed = diff::estimate_tokens(&system)
+    let fixed = diff::estimate_tokens(sized.as_ref().unwrap_or(&system))
         + diff::estimate_tokens(&user::user_message(&empty, note))
         + TEMPLATE_OVERHEAD_TOKENS;
     let budget = options.max_prompt_tokens.saturating_sub(fixed);

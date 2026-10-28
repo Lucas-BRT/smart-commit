@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Args, ValueEnum};
 use smart_commit::backend::device::Target;
-use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules};
+use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules, PromptScopes};
 
 #[derive(Debug, Args)]
 pub(super) struct GenerateArgs {
@@ -57,6 +57,11 @@ pub(super) struct PromptArgs {
     /// [default: annotated]
     #[arg(long, value_enum)]
     diff: Option<DiffArg>,
+    /// The scopes the repository uses: their names, or each with the
+    /// places its commits touched, for a model trained on that
+    /// [default: names]
+    #[arg(long, value_enum)]
+    scopes: Option<ScopesArg>,
 }
 
 impl PromptArgs {
@@ -65,6 +70,12 @@ impl PromptArgs {
             options.rules = match rules {
                 RulesArg::Full => PromptRules::Full,
                 RulesArg::Omitted => PromptRules::Omitted,
+            };
+        }
+        if let Some(scopes) = self.scopes {
+            options.scopes = match scopes {
+                ScopesArg::List => PromptScopes::List,
+                ScopesArg::Map => PromptScopes::Map,
             };
         }
         if let Some(diff) = self.diff {
@@ -80,6 +91,12 @@ impl PromptArgs {
 enum DiffArg {
     Plain,
     Annotated,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ScopesArg {
+    List,
+    Map,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

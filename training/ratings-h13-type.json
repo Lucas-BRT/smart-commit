@@ -1,0 +1,681 @@
+[
+ {
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "a5ff572816f71c8f9b16c7ad952e28fc8ddc8e95",
+  "real": "style(Modal): update typings and propTypes usage",
+  "model": "docs(Modal): add docs for modal components",
+  "files": [
+   "src/modules/Modal/Modal.js",
+   "src/modules/Modal/ModalActions.js",
+   "src/modules/Modal/ModalContent.js",
+   "src/modules/Modal/ModalDescription.js"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "ccbe2c719a089b2ea5c506a455281b8775884d2f",
+  "real": "fix: correct test check",
+  "model": "test: update logs test",
+  "files": [
+   "tests/unit/logs.bats"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "b6bf22812b9393e7146381cb8295a7aa07516c6a",
+  "real": "fix: add bash",
+  "model": "chore: add dockerfiles for tests",
+  "files": [
+   "tests/apps/dockerfile-dokku-scale/Dockerfile",
+   "tests/apps/dockerfile-noexpose/Dockerfile",
+   "tests/apps/dockerfile-procfile-bad/Dockerfile",
+   "tests/apps/dockerfile-procfile/Dockerfile"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "97750f8b28e78e95dc9cc7f7bd9ef374b3df8a12",
+  "real": "chore: minor updates to tests",
+  "model": "tests: fix git clone tests",
+  "files": [
+   "tests/unit/git_3.bats"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "17119ed39b63500be17b9f188ed71ce8386767c3",
+  "real": "feat: OZW_NETWORK_KEY env var",
+  "model": "fix: use network key from env if not provided in config",
+  "files": [
+   "lib/ZwaveClient.js"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "8a193ca50af4723c1acf4d9222834c92a851078f",
+  "real": "fix(docker): run new build:full command to build zwave-js",
+  "model": "chore(docker): fix build command in Dockerfile",
+  "files": [
+   "docker/Dockerfile.contrib"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "daybrush/moveable",
+  "hash": "10fb3ff38009465480a4c627e81c2149c2d9f729",
+  "real": "test: test delta value by request",
+  "model": "feat: add request with delta",
+  "files": [
+   "packages/react-moveable/stories/7-Request/0-Request.stories.tsx",
+   "packages/react-moveable/stories/7-Request/3-ResizableDelta.stories.tsx",
+   "packages/react-moveable/stories/7-Request/4-ResizableGroup.stories.tsx",
+   "packages/react-moveable/stories/7-Request/apps/ResizableDeltaApp.tsx"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "46107eec193549531ac574eca468b2262eb3ac4d",
+  "real": "build: setup install config",
+  "model": "chore(docs): upgrade nuxt to 2.0",
+  "files": [
+   "package.json",
+   "packages/chakra-ui-docs/nuxt.config.js",
+   "packages/chakra-ui-docs/package.json",
+   "yarn.lock"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "e9e51b2fdc879a66d8df08504a0955c9c21e3e27",
+  "real": "perf(scrollbar): scrollbar update when slot changed",
+  "model": "feat(scrollbar): add scrollbar component",
+  "files": [
+   "package.json",
+   "src/components/Scrollbar/src/Scrollbar.vue",
+   "yarn.lock"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "e4f31ad6b6e5ece41604d00dc5fca9ffc84a1ad5",
+  "real": "style(List): update typings and remove propTypes",
+  "model": "docs(List): add docs for List components",
+  "files": [
+   "src/elements/Icon/index.d.ts",
+   "src/elements/List/List.js",
+   "src/elements/List/ListContent.js",
+   "src/elements/List/ListDescription.js"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "ea32544e37cd5da656ffbe751838b48b19f22b60",
+  "real": "feat: set the debconf value for the global hostname",
+  "model": "fix: set hostname for dokku",
+  "files": [
+   "docker/etc/my_init.d/10_dokku_init"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "8fa6015b1afb7bd6a1890cdf696b3f2986929b61",
+  "real": "chore: change to setup syntax",
+  "model": "ci: add yarn cache",
+  "files": [
+   ".github/workflows/ftp-schedule.yml",
+   "package.json",
+   "src/components/Basic/src/BasicArrow.vue",
+   "src/components/Basic/src/BasicTitle.vue"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "89e5da2e79bef737ad22138e8ab93146d391b178",
+  "real": "feat: autotests",
+  "model": "add jenkinsfile and fix runtests.sh",
+  "files": [
+   "Jenkinsfile",
+   "tests/runtests.sh"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "9ab58d6f332ab8c4c04f10e6831a5b457c44fed3",
+  "real": "feat: cleanup output and only ever generate latest docs for a version",
+  "model": "chore: silence git clone",
+  "files": [
+   "contrib/build-docs",
+   "contrib/write-mkdocs",
+   "docs/_build/entrypoint"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "b0c00fbcc1d8e08f5e5c3cfee3e64a68b181a864",
+  "real": "fix(switch): add change action to story",
+  "model": "docs(switch): add action to switch story",
+  "files": [
+   "stories/46-Switch.stories.js"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "e8fe6a929be025a889ddec624ff9c2729313c818",
+  "real": "perf(icon): icon and SvgIcon integration",
+  "model": "feat(icon): add icon component",
+  "files": [
+   "src/components/Icon/src/index.vue"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "336532fe6d25d6e43c1b6454c1bf7a3e00f6c980",
+  "real": "refactor: change confidence rs api, remove legacy rs",
+  "model": "fix: response selector get text and confidence",
+  "files": [
+   "core/connectors.py",
+   "models/response_selector.py"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "f8a87eeb3b0b68e5bb5c794c5d68004f26510f09",
+  "real": "refactor(style prop utils): changed cleanProps to forwardProps util",
+  "model": "feat(build): added root to app and cleaned props",
+  "files": [
+   "src/App.vue",
+   "src/components/Box/index.js",
+   "src/components/Button/index.js",
+   "src/components/Icon/index.js"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "5e56d06641126b5502a65d099b9a0b9e2c3a38c5",
+  "real": "feat: use memory reservation in docker-compose.yml",
+  "model": "fix: increase docker memory limits",
+  "files": [
+   "docker-compose.yml"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "5c15a4fa0c3e21284990b550eb032501a3916b15",
+  "real": "fix: change default hass birth/will topic",
+  "model": "docs: update mqtt client to reflect new default will topic",
+  "files": [
+   "README.md",
+   "lib/MqttClient.js"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "filebrowser/filebrowser",
+  "hash": "23a3ef069ede469cbd5d32af6ff0ead8a9522b08",
+  "real": "refactor: Optimize prompts component",
+  "model": "fix: use current component instead of show",
+  "files": [
+   "frontend/src/components/prompts/Prompts.vue"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "a95a69e6fc7c1242f3cdaf4674e1e2a9f58b6d9e",
+  "real": "fix: ensure all the scheduler hooks are output in event logs",
+  "model": "feat: add event plugins for scheduler events",
+  "files": [
+   "plugins/20_events/pre-restore",
+   "plugins/20_events/scheduler-deploy",
+   "plugins/20_events/scheduler-docker-cleanup",
+   "plugins/20_events/scheduler-run"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "aee613034fa13c986018ae11d23dcacc679a088f",
+  "real": "refactor(mock): remove third-party images",
+  "model": "chore(mock): add some random data for table demo",
+  "files": [
+   "mock/demo/table-demo.ts"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "4baf90a5c87493939830129efaa146624faabbcc",
+  "real": "perf: optimize tab switching speed",
+  "model": "fix: fix tab switching stuck after routing change",
+  "files": [
+   "src/design/color.less",
+   "src/layouts/default/index.less",
+   "src/layouts/default/multitabs/index.tsx",
+   "src/router/guard/index.ts"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "f958a5aca4d11c0f6b9e19344ee4cac8bde2ea54",
+  "real": "fix: docs deps",
+  "model": "chore: updated package.json",
+  "files": [
+   "packages/chakra-ui-docs/package.json"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "dc629463597470480e7ba78108d8de5405c035e0",
+  "real": "refactor(image): optimize Image and Avatar for ssr",
+  "model": "fix: prevent image from being invoked on server-side",
+  "files": [
+   "packages/chakra-ui-core/src/Avatar/index.js",
+   "packages/chakra-ui-core/src/Image/index.js"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "9671e9b1415ff326b767abef957dfa2e6c68e687",
+  "real": "feat: promote layouts",
+  "model": "docs: update docs page",
+  "files": [
+   "packages/chakra-ui-core/src/CSSReset/index.js",
+   "packages/chakra-ui-docs/css/page.css",
+   "packages/chakra-ui-docs/layouts/default.vue"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "9d9b880f59c6d3669d008b631a73c02525e5a1e8",
+  "real": "fix: correct counts",
+  "model": "tests: fix nginx vhost test",
+  "files": [
+   "tests/unit/nginx-vhosts_6.bats"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "19854180d27499e9ab25d1dd93be364faebc07a2",
+  "real": "chore: defer file-contributions tasks",
+  "model": "docs: enable file contributors in docs",
+  "files": [
+   "packages/chakra-ui-docs/layouts/default.vue"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "c748bfed99f692557ccdeb85ab2c1376409b397d",
+  "real": "style(Form): convert component to stateless",
+  "model": "refactor(Form): refactor to functional component",
+  "files": [
+   "src/collections/Form/Form.d.ts",
+   "src/collections/Form/Form.js"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "ab1d223f01368a73f62f0c79f587f7ce7d1e3954",
+  "real": "chore: drop serialport, use Driver.enumerateSerialPorts()",
+  "model": "fix: serialport driver not working",
+  "files": [
+   "app.ts",
+   "package.json",
+   "yarn.lock"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "3c8126e36de56aca15e12995684fd053cdd79046",
+  "real": "test('alert-dialog'): add aria tests for Alert Dialog component",
+  "model": "chore(tests): update alert dialog snapshot",
+  "files": [
+   "packages/chakra-ui-core/src/AlertDialog/tests/__snapshots__/AlertDialog.test.js.snap"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "filebrowser/filebrowser",
+  "hash": "ecd0b2ee0da7a3fff20980919823829aef110121",
+  "real": "chore: update Material Icons",
+  "model": "fix: fix font loading issue",
+  "files": [
+   "frontend/package-lock.json",
+   "frontend/package.json",
+   "frontend/src/css/fonts.css"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "20af6407b7cafd15280b11a787ef00ea51ba3a0d",
+  "real": "test(button): change spinner signature",
+  "model": "fix(spinner): fixed spinner test and added data attribute",
+  "files": [
+   "packages/chakra-ui-core/src/CButton/tests/CButton.test.js",
+   "packages/chakra-ui-core/src/CSpinner/CSpinner.js"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "3f12c2ab9a65f701458334b3f5db1183ae742f3c",
+  "real": "feat: and nodeFilter setting support",
+  "model": "fix(ui): add node filter to zwave client",
+  "files": [
+   "lib/ZwaveClient.js",
+   "package-lock.json",
+   "package.json"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "4b561b064b8e41c0ce3c423ecc1cd4eec5ae59c3",
+  "real": "feat: small talk can not continue on last script uttr",
+  "model": "fix/small_talk_skill: add check for last uttr in small talk script",
+  "files": [
+   "skills/small_talk_skill/server.py"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "cf840e3e73b9572de0ba7bf7b32d83f6a353a8ad",
+  "real": "perf: image compression configuration optimization",
+  "model": "chore: update imagemin plugin",
+  "files": [
+   "build/vite/plugin/imagemin.ts",
+   "package.json",
+   "yarn.lock"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "a6ef771fcce14c3644c965afaa69b3a17d0a7087",
+  "real": "fix(pop-confirm): fix event working unexpected",
+  "model": "feat(dropdown): add a new prop for dropdown component",
+  "files": [
+   "src/components/Dropdown/src/Dropdown.vue"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "367f6bd5e8d74a3740bfdcc2bc99ae55f92792d1",
+  "real": "fix: add missing source calls",
+  "model": "refactor: move list and default to internal-functions",
+  "files": [
+   "plugins/plugin/subcommands/default",
+   "plugins/plugin/subcommands/list",
+   "plugins/storage/functions",
+   "plugins/storage/internal-functions"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "daybrush/moveable",
+  "hash": "28ef3ad317c5cbdc940f43d5654634162e5f322e",
+  "real": "fix: fix next size offset for scalable",
+  "model": "feat: add snap size to group",
+  "files": [
+   "packages/react-moveable/src/App.tsx",
+   "packages/react-moveable/src/react-moveable/ables/Snappable.tsx"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "7fe2f8593c9ceac0e10c0b057b79d7e7ec09b442",
+  "real": "refactor: remove unused IS_HEROKUISH_CONTAINER argument",
+  "model": "fix: remove the isHerokuishContainer parameter from the function",
+  "files": [
+   "plugins/checks/subcommands/run",
+   "plugins/common/functions",
+   "plugins/network/network.go",
+   "plugins/network/src/triggers/network-get-ipaddr/network-get-ipaddr.go"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "c620f8279f1056ddab84b3907fb50b3af4fe9247",
+  "real": "perf: set cache default time",
+  "model": "fix: persistent type error",
+  "files": [
+   "src/settings/cipherSetting.ts",
+   "src/utils/helper/persistent.ts"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "1706ce31b933763728ab214d35f85f18cef4af3c",
+  "real": "feat: run tests only for dev and PRs",
+  "model": "chore: remove travis config file",
+  "files": [
+   ".travis.yml"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "filebrowser/filebrowser",
+  "hash": "68bfbe5103b48e48197ef4c2af5556ae2d2501ed",
+  "real": "feat: readd caddy to this repo",
+  "model": "chore: add parser package",
+  "files": [
+   "caddy/filemanager/filemanager.go",
+   "caddy/hugo/hugo.go",
+   "caddy/jekyll/jekyll.go",
+   "caddy/parser/parser.go"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "bba1930a2d2550ec65797f13e97903afcdc33de3",
+  "real": "refactor(iconbutton): change to functional component",
+  "model": "feat(button): add click and mouseover events to CButton",
+  "files": [
+   "packages/chakra-ui-core/src/CBadge/tests/CBadge.test.js",
+   "packages/chakra-ui-core/src/CButton/CButton.js",
+   "packages/chakra-ui-core/src/CButton/tests/__snapshots__/CButton.test.js.snap",
+   "packages/chakra-ui-core/src/CDivider/tests/CDivider.test.js"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "d3d620f4fc75dd69270e4d090a71d426701272ef",
+  "real": "perf(utils): mitt default export is changed from Class to Function",
+  "model": "feat(menu): refactor the mitt api of simple menu component,fix",
+  "files": [
+   "package.json",
+   "src/components/SimpleMenu/src/components/Menu.vue",
+   "src/components/SimpleMenu/src/components/SubMenuItem.vue",
+   "src/components/SimpleMenu/src/components/useSimpleMenuContext.ts"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "daybrush/moveable",
+  "hash": "a551205467518afe08faf5d1f2ecc2973693c7ce",
+  "real": "fix: fix handbook",
+  "model": "docs: fix resize event in handbook",
+  "files": [
+   "handbook/handbook.md"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "8168146d1a5fb34d1aa040a892d67a25fcbef31c",
+  "real": "feat(Flag): include \"england\" as a valid value",
+  "model": "docs(Flag): add England to flag example",
+  "files": [
+   "docs/src/examples/elements/Flag/Types/FlagExampleTable.js",
+   "src/elements/Flag/Flag.js"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "ef46db5d6b4e2c75ac19d1f49d61d2abccf86b99",
+  "real": "chore: switch to node:4-alpine",
+  "model": "fix: use node:4-alpine for tests",
+  "files": [
+   ".circleci/config.yml",
+   "tests/apps/dockerfile-dokku-scale/Dockerfile",
+   "tests/apps/dockerfile-noexpose/Dockerfile",
+   "tests/apps/dockerfile-procfile-bad/Dockerfile"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "560412d202456f91d475fc3a7dbc291b3943fa24",
+  "real": "fix(readme): changed to",
+  "model": "docs: update readme for vue",
+  "files": [
+   "README.md"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "e034d1bacc5501a83188d20129951422bc127e3b",
+  "real": "perf: remove optional chain",
+  "model": "fix: fix tinymce component",
+  "files": [
+   "src/components/Authority/index.ts",
+   "src/components/Basic/index.ts",
+   "src/components/Basic/src/BasicHelp.less",
+   "src/components/Button/types.ts"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "4c0ecc743421a13460090e27ac2c99de73f5f5e2",
+  "real": "chore: use ModernAutoControlled component",
+  "model": "refactor(AutoControlledComponent): rename",
+  "files": [
+   "src/addons/Pagination/Pagination.js",
+   "src/addons/Portal/Portal.js",
+   "src/collections/Menu/Menu.js",
+   "src/modules/Accordion/AccordionAccordion.js"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "dokku/dokku",
+  "hash": "2fd53a7a01b15a9eff64508c57ad20c9c063f661",
+  "real": "fix: allow default trace function to work",
+  "model": "test: add unit test for trace command",
+  "files": [
+   "dokku",
+   "tests/unit/40_trace.bats"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "250e55e26bf5a4c24a844f17414ba359883dffc3",
+  "real": "feat: required services",
+  "model": "chore: update pipeline config",
+  "files": [
+   "pipeline_conf.json"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "49948f786dcd7bc6615d42a2767334f9b96b3e39",
+  "real": "docs: documentation for tag component",
+  "model": "feat(tag): add tag component",
+  "files": [
+   "packages/chakra-ui-docs/docs/tag.mdx"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "daybrush/moveable",
+  "hash": "89f1be148cd406afa6df6a5db75c58da4fa6b466",
+  "real": "test: test nested moveable",
+  "model": "docs: add nested target and stop click event propagation",
+  "files": [
+   "packages/react-moveable/stories/99-Tests/Deafult.stories.tsx",
+   "packages/react-moveable/stories/99-Tests/ReactClickApp.tsx",
+   "packages/react-moveable/stories/99-Tests/ReactNestedTargetApp.tsx",
+   "packages/react-moveable/stories/9Z-etc/0-Default.stories.tsx"
+  ],
+  "rating": "N"
+ },
+ {
+  "repo": "daybrush/moveable",
+  "hash": "7d48018418a7708de4dc2e223a5eeafa5934a3b9",
+  "real": "test: test caculateMatrixStack",
+  "model": "fix: fix caculateMatrixStack for null target",
+  "files": [
+   "packages/react-moveable/src/react-moveable/utils.ts",
+   "packages/react-moveable/test/unit/utils.spec.tsx"
+  ],
+  "rating": "A"
+ },
+ {
+  "repo": "filebrowser/filebrowser",
+  "hash": "1e5ced67370ce8b14d1f03fda31327d305450c77",
+  "real": "fix: remove spaces before command output",
+  "model": "feat: add search component",
+  "files": [
+   "src/components/Search.vue"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "deeppavlov/dream",
+  "hash": "d0dd6e42993c279f680edbdb1eaee1326b1313ec",
+  "real": "fix: remove some linkto questions for music skill",
+  "model": "feat/common/music: add music class",
+  "files": [
+   "common/music.py"
+  ],
+  "rating": "?"
+ },
+ {
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "06e1d3879be187f99f5142e054884e1c09ac8dfa",
+  "real": "fix: fix require error",
+  "model": "chore: fix vite plugin",
+  "files": [
+   "build/vite/plugin/index.ts"
+  ],
+  "rating": "A"
+ }
+]
