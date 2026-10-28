@@ -1171,6 +1171,42 @@ falls by at most 0.010 and the menu is at least 0.5 lines shorter, for both v0.3
   cutting it costs more than the line saves. The present
   menu, up to four, stays.
 
+**A, a menu whose size follows the doubt (conformal prediction sets; tried, not shipped).** Instead of up to four
+types, offer the smallest prefix of the likeliest types that holds a mass `q`, and ask when it has two or more.
+`q` is the `ceil((n + 1)(1 - alpha))`-th smallest probability above the real type on a calibration set
+(`val1-h4`), which makes the real type fall in the set in at least `1 - alpha` of commits of the same kind. The
+model does not write the list: a list written as text has no probabilities to calibrate, and there is no
+training signal for a set (a commit has one label). Fixed before the numbers, on `eval-v1` (not used to
+calibrate): for each v0.3 model, the alpha whose share asked is closest to the present menu asking below 0.6
+must have a type right (the real type is in the set) at least 0.004 under the present one and a menu at least
+0.3 lines shorter.
+
+- **The guarantee holds on other repositories.** For every alpha from 0.04 to 0.30 the coverage on eval-v1 is
+  at or above `1 - alpha` for both models (0.10: 0.928 and 0.948 against 0.90; 0.20: 0.800 and 0.860 against
+  0.80).
+- **The pre-registered criterion fails.** At 0.28 asked the 1.5B's sets reach a type right of 0.768, 0.056 under
+  the present menu at 0.6 (0.824); the 0.5B, at 0.41 asked, 0.776 against 0.836. The menus are 1.6 to 1.7 lines shorter,
+  but the type right is what was asked to hold.
+- **Exploratory, at the same type right** (interpolated on eval-v1; lines a person reads per commit = share
+  asked × lines of the menu):
+
+| model | present: asks, lines per commit | sets at the same type right: asks, lines per commit |
+|---|---|---|
+| 1.5B v0.3, 0.788 | 0.160, 0.61 | 0.324, 0.68 (+12%) |
+| 1.5B v0.3, 0.824 | 0.272, 1.03 | 0.410, 0.89 (−14%) |
+| 1.5B v0.3, 0.880 | 0.412, 1.49 | 0.553, 1.30 (−13%) |
+| 0.5B v0.3, 0.780 | 0.248, 0.97 | 0.420, 0.92 (−5%) |
+| 0.5B v0.3, 0.836 | 0.388, 1.46 | 0.547, 1.23 (−16%) |
+| 0.5B v0.3, 0.888 | 0.544, 2.00 | 0.712, 1.76 (−12%) |
+
+  The sets read 5% to 16% fewer lines (one point is 12% more) but interrupt 14 to 18 points more of the commits,
+  because a set of two asks for what the present rule treats as sure enough. Which is better depends on what an
+  interruption costs against a line, which is not measured here, and 250 commits make a 10% difference noise.
+- **Verdict.** Not built. What the sets give is a knob that means something (`model.ask_type_below` is a
+  confidence, a coverage is a promise: "the right type is on the menu in 90% of the commits"), at the price of
+  asking in 80% of the commits for it. If the knob is wanted, the next test is the person: how long a choice takes
+  with two types and with four, and how many interruptions they accept.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by

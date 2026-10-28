@@ -8,7 +8,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from type_confidence import auroc, ece, from_logprobs, listed_types, menus, offer, score, type_of  # noqa: E402
+from type_confidence import (  # noqa: E402
+    auroc, conformal_level, ece, from_logprobs, listed_types, mass_above, menus, offer, prediction_set, ranked, score,
+    sets, type_of,
+)
 
 
 def test_tokens_are_read_like_the_product_reads_them() -> None:
@@ -107,6 +110,46 @@ def test_menus_count_the_asks_the_lines_and_the_type_right() -> None:
     assert row["present"] == {"asked": 0.5, "lines": 4.0, "type_right": 0.75}    # asked: both; sure: docs right, fix wrong
     assert row["adaptive"] == {"asked": 0.5, "lines": 2.0, "type_right": 0.5}    # the chore falls outside the two
     assert row["cap3"] == {"asked": 0.5, "lines": 3.0, "type_right": 0.5}        # and outside the three likeliest
+
+
+def test_the_mass_above_the_real_type_counts_only_the_types_the_repository_uses() -> None:
+    dist = [["feat", 0.5], ["fix", 0.3], ["docs", 0.2]]
+    assert mass_above({"real": "feat", "dist": dist}) == 0.0
+    assert abs(mass_above({"real": "fix", "dist": dist}) - 0.5) < 1e-9
+    assert abs(mass_above({"real": "docs", "dist": dist}) - 0.8) < 1e-9
+    assert mass_above({"real": "chore", "dist": dist}) == 1.0                     # not among them
+    only = {"real": "fix", "dist": dist, "allowed": ["fix", "docs"]}              # feat is not used here
+    assert mass_above(only) == 0.0 and abs(ranked(dist, ["fix", "docs"])[0][1] - 0.6) < 1e-9
+    assert mass_above({"real": "fix", "dist": []}) == 1.0
+
+
+def test_the_conformal_level_is_a_quantile_of_the_scores() -> None:
+    # Nine commits whose real type has this mass above it (a two-type distribution gives 0 or the first's mass).
+    masses = [0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.8, 1.0]
+    cases = [{"real": "b" if m else "a", "dist": [["a", m], ["b", 1 - m]]} for m in masses]
+    assert conformal_level(cases, 0.1) == 1.0        # ceil(10 * 0.9) = 9th of 9
+    assert conformal_level(cases, 0.2) == 0.8        # 8th
+    assert conformal_level(cases, 0.5) == 0.5        # 5th
+    assert conformal_level(cases, 0.99) == 0.0       # the 1st
+
+
+def test_a_prediction_set_grows_with_the_level() -> None:
+    case = {"real": "fix", "dist": [["feat", 0.5], ["fix", 0.3], ["docs", 0.2]]}
+    assert prediction_set(case, 0.0) == ["feat"]
+    assert prediction_set(case, 0.49) == ["feat"]
+    assert prediction_set(case, 0.51) == ["feat", "fix"]
+    assert prediction_set(case, 0.81) == ["feat", "fix", "docs"]
+    assert prediction_set({"real": "x", "dist": []}, 1.0) == []
+
+
+def test_sets_report_coverage_and_what_they_ask() -> None:
+    sure = {"real": "fix", "dist": [["fix", 0.95], ["feat", 0.05]]}
+    split = {"real": "feat", "dist": [["fix", 0.5], ["feat", 0.4], ["docs", 0.1]]}
+    got = sets([sure, split, split], [sure, split], 0.4)                       # scores 0, 0.5, 0.5: level 0.5
+    assert got["level"] == 0.5
+    assert got["coverage"] == 1.0 and got["asked"] == 0.5 and got["lines"] == 2.0   # the split one asks with fix and feat
+    low = sets([sure, sure, split], [sure, split], 0.5)                        # scores 0, 0, 0.5: level 0
+    assert low["level"] == 0.0 and low["coverage"] == 0.5 and low["asked"] == 0.0 and low["lines"] == 0.0
 
 
 if __name__ == "__main__":

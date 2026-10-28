@@ -15,11 +15,17 @@ probabilities, from the first token of the reply (llama-server, `top_logprobs`, 
     python -I type_confidence.py collect SET_DIR TRACES.jsonl GGUF OUT.json [--port N]
     python -I type_confidence.py report OUT.json...
     python -I type_confidence.py menus OUT.json...
+    python -I type_confidence.py sets CALIBRATION.json TEST.json
 
 `menus` compares the menu `model.ask_type` shows (up to MAX_OFFERED types) with an adaptive one that offers only
 the two likeliest when the model is split between them (together at least SPLIT_MASS, apart by less than
 SPLIT_GAP), on the same asks: the share asked, the lines of the menu, and the type right if the person picks the
 real type when it is offered.
+
+`sets` offers, instead of a fixed number of types, the smallest prefix of the likeliest ones that holds a mass `q`
+(conformal prediction sets), asking when it has two types or more. `q` is the CONFORMAL level of the mass above
+the real type on CALIBRATION, so a share `1 - alpha` of the commits has the real type in the set; TEST shows the
+coverage, the share asked and the lines the sets really have.
 
 `collect` starts the llama-server of the project (`$LLAMA_SERVER`, or the one smart-commit downloaded) on the GPU
 and asks for one token of each Conventional commit's first prompt. Standard library only.
@@ -195,6 +201,52 @@ def menus(cases: list[dict]) -> list[dict]:
     return out
 
 
+def ranked(dist: list, allowed: list[str]) -> list[tuple[str, float]]:
+    """The types the repository uses, likeliest first, adding up to 1 (as `offer` does)."""
+    kept = [(k, p) for k, p in dist if not allowed or k in allowed]
+    total = sum(p for _, p in kept)
+    return [(k, p / total) for k, p in kept] if total > 0 else []
+
+
+def mass_above(case: dict) -> float:
+    """The probability of the types ranked above the real one (1 when it is not among them)."""
+    above = 0.0
+    for kind, p in ranked(case["dist"], case.get("allowed", [])):
+        if kind == case["real"]:
+            return above
+        above += p
+    return 1.0
+
+
+def conformal_level(calibration: list[dict], alpha: float) -> float:
+    """The ceil((n + 1) * (1 - alpha))-th smallest mass above the real type: sets that keep the types whose
+    mass above is at most this hold the real type in at least 1 - alpha of exchangeable commits."""
+    scores = sorted(mass_above(c) for c in calibration)
+    rank = math.ceil((len(scores) + 1) * (1 - alpha))
+    return scores[min(rank, len(scores)) - 1]
+
+
+def prediction_set(case: dict, level: float) -> list[str]:
+    """The types whose probability above them is at most `level` (the likeliest is always in)."""
+    out, above = [], 0.0
+    for kind, p in ranked(case["dist"], case.get("allowed", [])):
+        if above <= level:
+            out.append(kind)
+        above += p
+    return out
+
+
+def sets(calibration: list[dict], test: list[dict], alpha: float) -> dict:
+    """Coverage, share asked (sets of two types or more) and mean lines of those, on `test`."""
+    level = conformal_level(calibration, alpha)
+    shown = [prediction_set(c, level) for c in test]
+    asked = [s for s in shown if len(s) >= 2]
+    return {
+        "alpha": alpha, "level": level, "coverage": sum(c["real"] in s for c, s in zip(test, shown)) / len(test),
+        "asked": len(asked) / len(test), "lines": sum(map(len, asked)) / len(asked) if asked else 0.0,
+    }
+
+
 def server_binary() -> str:
     if os.environ.get("LLAMA_SERVER"):
         return os.environ["LLAMA_SERVER"]
@@ -281,6 +333,22 @@ def report_menus(paths: list[Path]) -> None:
             print()
 
 
+ALPHAS = [0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25, 0.30]
+
+
+def report_sets(calibration: Path, test: Path) -> None:
+    cal = json.loads(calibration.read_text())["cases"]
+    held = json.loads(test.read_text())["cases"]
+    print(f"== calibrated on {calibration.stem}, read on {test.stem}")
+    for below, present in zip(ASK_BELOW, menus(held)):
+        p = present["present"]
+        print(f"  present, ask below {below:.2f}: asks {p['asked']:.3f}, {p['lines']:.2f} lines, type right {p['type_right']:.3f}")
+    for alpha in ALPHAS:
+        r = sets(cal, held, alpha)
+        print(f"  sets alpha {alpha:.2f}: level {r['level']:.3f}, asks {r['asked']:.3f}, {r['lines']:.2f} lines, "
+              f"type right (coverage) {r['coverage']:.3f}")
+
+
 def main() -> None:
     args = sys.argv[1:]
     port = 8099
@@ -292,6 +360,8 @@ def main() -> None:
         collect(Path(args[1]), Path(args[2]), Path(args[3]), Path(args[4]), port)
     elif args[:1] == ["report"]:
         report([Path(a) for a in args[1:]])
+    elif args[:1] == ["sets"]:
+        report_sets(Path(args[1]), Path(args[2]))
     elif args[:1] == ["menus"]:
         report_menus([Path(a) for a in args[1:]])
     else:
