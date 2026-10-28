@@ -998,6 +998,64 @@ directory was, `latest:` the most recent commit on the files), from the history'
 - **Verdict.** The history by file is not a lever for the type either, so no prompt or training arm is built
   on it. The signals the prompt already carries are used up; what remains is the label.
 
+**The type, measured against more than the label.** `type_match` counts the repository's own type as the only
+right one. `type_review.py` reads the traces of `compare-v04c` (the 250 Conventional commits of `data/val1-h4`)
+and adds measures that tolerate an answer the label did not choose; the groups and the threshold were fixed
+before reading any number: {chore, build, ci}, {refactor, perf, style}, {test, tests}; `behaviour` also merges
+`feat` and `fix`; `plausible` is the label's type or one a plain classifier (`type_probe.py`, 200,000 commits)
+gives at least 0.15 of the probability. Brackets are 95% bootstrap intervals (2,000 resamples).
+
+| model | strict | group | behaviour | plausible | type in the history or the label's |
+|---|---|---|---|---|---|
+| 1.5B v0.3 | 0.648 [0.59, 0.71] | 0.660 | 0.752 [0.70, 0.80] | 0.904 [0.86, 0.94] | 0.964 |
+| 0.5B v0.3 | 0.620 [0.56, 0.68] | 0.636 | 0.764 [0.71, 0.81] | 0.916 [0.88, 0.95] | 0.980 |
+| 1.5B v0.1 | 0.636 [0.58, 0.69] | 0.644 | 0.748 [0.70, 0.80] | 0.900 [0.86, 0.94] | 0.972 |
+| S0 | 0.628 [0.57, 0.69] | 0.648 | 0.756 [0.70, 0.80] | 0.920 [0.88, 0.95] | 0.972 |
+| S1 | 0.628 [0.57, 0.69] | 0.648 | 0.760 [0.71, 0.81] | 0.936 [0.90, 0.96] | 0.980 |
+| S2 | 0.636 [0.58, 0.70] | 0.652 | 0.748 [0.70, 0.80] | 0.940 [0.91, 0.97] | 0.980 |
+| a type drawn from the real mix | – | 0.221 | – | 0.512 | – |
+
+- **The models are indistinguishable on every one of them**, as on the strict one: the intervals overlap
+  everywhere, and the pairs differ by a handful of commits (the 1.5B v0.3 is right where S2 is not in 23
+  commits and the other way in 20).
+- **About 10 points of the strict error are `feat` against `fix`** (0.65 to 0.75 when they count as one); the
+  groups of unlike types move it by 1–2 points. The most frequent mistakes of the 1.5B v0.3 are `feat` written
+  `fix` (16 of 88), `feat` written `chore` (8) and `fix` written `feat` (7).
+- **The label is a type the history does not use in only 4% of the commits** (3 to 6%), so the models are not
+  asked for a type they cannot know; with the label in the history the strict match is 0.66, with the label
+  outside it 0.30 (10 commits, wide).
+- **In 15% of the commits all six models agree on a type that is not the label** (10 to 19%), and at least
+  one of them has the label in 76%: a floor for how often the repository's type is the odd one out, and
+  a ceiling on what picking among these models could gain.
+- **The mix of types is close to the real one** (half the L1 distance 0.10–0.13), as the earlier error matrix
+  showed: `perf` and `refactor` are written too little, `fix` and `chore` too much.
+
+*Rated by hand.* 60 of the 1.5B v0.3's 88 mistakes, up to four of each (real type, written type) pair so that
+the rare ones show (`ratings-h13-type.json`, with the hash of each commit; the hunks for reading them are
+rebuilt by `type_review.py --sheet`). Each got `A` if a maintainer reading the diff could reasonably have used
+the written type, `N` if the type misdescribes the change, `?` if the excerpt (350 characters a file) does not
+say, as for new files. **The rater is Claude, not a person**: the ratings have the bias of a language model
+reading short excerpts, and a human second opinion on a sample is still to be done.
+
+| rating | commits |
+|---|---|
+| A (acceptable) | 28 |
+| N (misdescribes) | 16 |
+| ? (cannot tell) | 16 |
+
+- **64% of the decided mistakes are acceptable** (28 of 44); weighted by how often each pair happens, 67%.
+  The `N` are mostly a type that contradicts what the diff does (a new capability written `fix`, a
+  removed parameter written `fix` where `refactor` fits, `docs` or `test` on a commit that also changes code,
+  a reply with no type).
+- **Counting the acceptable ones, the type is right in 0.81 to 0.92 of the commits** (the 162 exact, plus the
+  41 acceptable mistakes of the 88, plus the 26 that cannot be told for the upper figure), against 0.648
+  for the label alone.
+- **Verdict.** The type of the models is not as bad as the label says, and it does not differ between them. The
+  strict `type_match` cannot tell the arms apart because its noise (labels and seeds) is larger than any
+  gain they had, which is why none of the earlier arms stood out. A model change would be judged by `plausible`
+  and `behaviour` together with the strict match, and the `N` that remain (about 8% of the commits by the
+  weighted estimate, and another 10% that cannot be told) are what there is left to fix.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
