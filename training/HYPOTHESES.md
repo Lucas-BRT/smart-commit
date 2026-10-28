@@ -1166,8 +1166,9 @@ falls by at most 0.010 and the menu is at least 0.5 lines shorter, for both v0.3
 - **The menu is 0.7 to 0.9 lines shorter, as wanted, and the type right falls too much:** 0.008 to 0.012 for the
   1.5B (over the limit at 0.7) and 0.020 to 0.028 for the 0.5B, 2 to 7 commits of 250. On `val1-h4` it falls
   0.008 to 0.020.
-- **Verdict.** Not built. The fourth type is the right one often enough (the 0.5B's third and fourth hold
-  about a tenth of the real types it is unsure of) that cutting it costs more than the line saves. The present
+- **Verdict.** Not built. The fourth type is the real one (and the only place it is offered) in 3% to 8%
+  of the commits asked (2 of 40 and 3 of 103 for the 1.5B, 5 of 62 and 7 of 136 for the 0.5B), often enough that
+  cutting it costs more than the line saves. The present
   menu, up to four, stays.
 
 ## Ideas not tried yet
