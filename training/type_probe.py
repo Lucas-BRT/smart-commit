@@ -6,7 +6,7 @@ of `sc-training select` and read on the Conventional commits of an evaluation se
 models: `type_match` and `type_macro_f1`. It tells whether the type has headroom a separate
 classifier could use, or whether the labels are the limit.
 
-    uv run --locked --with scikit-learn python -I type_probe.py TRAIN_DIR EVAL_DIR [N] [PREDICTIONS]
+    uv run --locked --with scikit-learn python -I type_probe.py [--by-file] TRAIN_DIR EVAL_DIR [N] [PREDICTIONS]
 
 `scikit-learn` is not in uv.lock: this is a probe, not part of the training. With PREDICTIONS,
 the classifier's types for the evaluation set go to that file as JSON, and its probabilities to
@@ -34,8 +34,31 @@ def bucket(n: int) -> int:
     return 0 if n <= 0 else int(math.log2(n)) + 1
 
 
-def tokens(inputs: dict) -> list[str]:
-    """The features of one commit, as strings to hash."""
+def by_file_tokens(inputs: dict, files: list[str]) -> list[str]:
+    """The types of the past commits that touched the same files (`same:`) or the same
+    directories (`near:`); the history's file lists run parallel to its subjects."""
+    subjects = inputs.get("subjects") or []
+    touched = inputs.get("history_files") or []
+    dirs = {f.rsplit("/", 1)[0] if "/" in f else "" for f in files}
+    out = []
+    latest = True
+    for subject, past in zip(subjects, touched):
+        kind = type_of(subject)
+        if not kind:
+            continue
+        if set(past) & set(files):
+            out.append(f"same:{kind}")
+            if latest:
+                out.append(f"latest:{kind}")
+                latest = False
+        elif dirs & {f.rsplit("/", 1)[0] if "/" in f else "" for f in past}:
+            out.append(f"near:{kind}")
+    return out
+
+
+def tokens(inputs: dict, by_file: bool = False) -> list[str]:
+    """The features of one commit, as strings to hash (`by_file`: and the types of the past
+    commits on the same files)."""
     out = []
     staged = {s["path"]: s["status"] for s in inputs.get("staged") or []}
     out.append(f"nfiles:{bucket(len(inputs['files']))}")
@@ -61,6 +84,8 @@ def tokens(inputs: dict) -> list[str]:
     history = collections.Counter(t for t in map(type_of, inputs.get("subjects") or []) if t)
     for kind, n in history.items():
         out.extend([f"hist:{kind}"] * min(n, 5))
+    if by_file:
+        out.extend(by_file_tokens(inputs, [f["path"] for f in inputs["files"]]))
     return out
 
 
@@ -71,7 +96,7 @@ def conventional_type(meta: dict) -> str | None:
     return (meta.get("type") or "").lower() or None
 
 
-def load(inputs_path: Path, meta_path: Path, limit: int | None = None):
+def load(inputs_path: Path, meta_path: Path, limit: int | None = None, by_file: bool = False):
     """The hashed features and the types, a chunk at a time: the inputs do not fit in memory."""
     import scipy.sparse as sp
     from sklearn.feature_extraction import FeatureHasher
@@ -83,7 +108,7 @@ def load(inputs_path: Path, meta_path: Path, limit: int | None = None):
             kind = conventional_type(json.loads(meta_line))
             if not kind:
                 continue
-            batch.append(tokens(json.loads(line)))
+            batch.append(tokens(json.loads(line), by_file))
             types.append(kind)
             if len(batch) == CHUNK:
                 chunks.append(hasher.transform(batch))
@@ -101,11 +126,13 @@ def main() -> None:
     from sklearn.linear_model import SGDClassifier
     from sklearn.metrics import f1_score
 
+    by_file = "--by-file" in sys.argv
+    sys.argv = [a for a in sys.argv if a != "--by-file"]
     train, evaluation = Path(sys.argv[1]), Path(sys.argv[2])
     limit = int(sys.argv[3]) if len(sys.argv) > 3 else None
     out = Path(sys.argv[4]) if len(sys.argv) > 4 else None
-    x_train, y_train = load(train / "inputs.jsonl", train / "meta.jsonl", limit)
-    x_eval, y_eval = load(evaluation / "inputs.jsonl", evaluation / "meta.jsonl")
+    x_train, y_train = load(train / "inputs.jsonl", train / "meta.jsonl", limit, by_file)
+    x_eval, y_eval = load(evaluation / "inputs.jsonl", evaluation / "meta.jsonl", by_file=by_file)
     print(f"train {len(y_train)} commits, eval {len(y_eval)}", flush=True)
     tfidf = TfidfTransformer(sublinear_tf=True)
     x_train = tfidf.fit_transform(x_train)

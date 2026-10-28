@@ -982,6 +982,22 @@ commits of `data/val1-h4`, like the models:
   and the 1.5B's 0.62–0.65 are near what these signals give. A stronger classifier (an encoder fine-tuned on
   the diff) is not excluded, but nothing here suggests that the room is large.
 
+**The types of the commits on the same files, probed too.** The prompt gives the last subjects and (with
+`--scopes map`) where each scope was used, but never the type of the past commits that touched the files being
+committed. `type_probe.py --by-file` adds them as features (`same:` the files were touched, `near:` the
+directory was, `latest:` the most recent commit on the files), from the history's file lists:
+
+| features | type_match (80,000 commits, alpha 1e-5 / 1e-6) | type_macro_f1 |
+|---|---|---|
+| paths, status, words, history types | 0.612 / 0.592 | 0.388 / 0.385 |
+| plus the types by file | 0.592 / 0.608 | 0.384 / 0.400 |
+
+- **No gain.** 164 of the 250 commits have a past commit on the same files, but the type of the latest one
+  equals the commit's in only 75 of them (46%), less than the model gets: in a repository the type follows
+  what the change does, not where it is.
+- **Verdict.** The history by file is not a lever for the type either, so no prompt or training arm is built
+  on it. The signals the prompt already carries are used up; what remains is the label.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from type_probe import bucket, conventional_type, tokens, type_of  # noqa: E402
+from type_probe import bucket, by_file_tokens, conventional_type, tokens, type_of  # noqa: E402
 
 
 def test_types_are_read_like_the_models_are_scored() -> None:
@@ -45,6 +45,19 @@ def test_a_commit_is_its_paths_status_words_and_history() -> None:
     assert not any(t.startswith("hist:update") for t in got)
     many = {"files": [], "subjects": ["fix: x"] * 9}
     assert tokens(many).count("hist:fix") == 5
+
+
+def test_the_history_by_file_tells_same_files_from_the_same_directory() -> None:
+    inputs = {
+        "subjects": ["docs: a", "fix: b", "update c", "feat: d", "fix: e"],
+        "history_files": [["src/x.rs"], ["README.md"], ["src/a.rs"], ["src/a.rs"], ["lib/z.rs"]],
+    }
+    got = by_file_tokens(inputs, ["src/a.rs"])
+    # `docs` touched another file of `src/`, `fix: b` another directory, `update c` is no type,
+    # `feat: d` touched the file, `fix: e` another directory.
+    assert got == ["near:docs", "same:feat", "latest:feat"]
+    assert by_file_tokens({"subjects": ["fix: a"]}, ["a"]) == []
+    assert not any(t.startswith("same:") for t in tokens({"files": [], "subjects": ["fix: a"]}, by_file=True))
 
 
 if __name__ == "__main__":
