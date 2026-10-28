@@ -1076,6 +1076,48 @@ README, LICENSE, CHANGELOG), `test` only if every file is a test (`test/`, `spec
 - **Verdict.** Neither pays: a type-and-files rule would gain a few commits at most, with the risk of losing
   acceptable ones, and the replies with no type follow the repository's own style. No product change.
 
+**A, how far the model's confidence in the type can be trusted.** `model.ask_type` asks the person when the
+probability of the type a reply starts with is low; `docs/measurements.md` measured it for the 1.5B v0.1 on eval-v1
+(AUROC 0.720). The models that are recommended now are the DPO ones (v0.3), and DPO tends to make a model surer
+than it is right, so `type_confidence.py` reads the same probabilities (first token, `top_logprobs`, the prompts
+of the traces of `compare-v04c`, `vulkan` on the RTX) for the 250 Conventional commits of `data/val1-h4`.
+Decided before the numbers: calibrated enough if ECE ≤ 0.08 and AUROC ≥ 0.70 with the share right rising with the
+confidence; mis-calibrated if ECE > 0.12 or AUROC < 0.65, which would mean retuning `model.ask_type_below` and
+training the type with soft labels; in between, only recorded.
+
+| model | top1 | top2 | top3 | ECE | AUROC [95%] | right below 0.5 / 0.5–0.7 / 0.7–0.9 / 0.9+ |
+|---|---|---|---|---|---|---|
+| 1.5B v0.1 | 0.644 | 0.832 | 0.928 | 0.036 | 0.775 [0.71, 0.83] | 0.384 / 0.589 / 0.828 / 0.925 |
+| 1.5B v0.3 | 0.652 | 0.828 | 0.924 | 0.085 | 0.764 [0.71, 0.82] | 0.439 / 0.464 / 0.770 / 0.937 |
+| 0.5B v0.1 | 0.644 | 0.820 | 0.888 | 0.068 | 0.765 [0.70, 0.82] | 0.368 / 0.667 / 0.841 / 0.968 |
+| 0.5B v0.3 | 0.616 | 0.824 | 0.904 | 0.063 | 0.795 [0.73, 0.85] | 0.318 / 0.529 / 0.773 / 0.974 |
+| 0.5B S1 | 0.648 | 0.816 | 0.892 | 0.060 | 0.771 [0.71, 0.83] | 0.333 / 0.643 / 0.781 / 0.939 |
+
+Asking below a confidence (share of commits asked, then the type right if the person picks the author's type
+when it is among the three likeliest):
+
+| model | below 0.5 | below 0.6 | below 0.7 |
+|---|---|---|---|
+| 1.5B v0.1 | 29% → 0.780 | 48% → 0.848 | 58% → 0.880 |
+| 1.5B v0.3 | 23% → 0.740 | 38% → 0.804 | 50% → 0.860 |
+| 0.5B v0.3 | 26% → 0.732 | 43% → 0.796 | 54% → 0.836 |
+
+- **The confidence is informative in all five and no model is mis-calibrated by the criteria.** AUROC is 0.76 to
+  0.80 (0.72 for the 1.5B v0.1 on eval-v1), the share right rises with the confidence for each, and the ECE is
+  0.04 to 0.09 (the 1.5B v0.3 is the one above 0.08: in between). The ECE of 250 commits is biased upward by
+  resampling (the intervals do not centre on the estimate), so the differences between models are within noise.
+- **DPO did not damage the confidence.** The 1.5B v0.3 is a little worse in the 0.5–0.7 band (0.464 right where
+  0.5 to 0.7 is claimed) and as sure as before at 0.9 and above; asking at the same share of commits gains
+  the same (23% asked reach 0.740 where the v0.1 reaches 0.780 at 29%; by interpolation both are near 0.81 at 38%).
+- **Two types cover 0.82–0.83 and three cover 0.89–0.93**, so offering up to four types (as the product does) leaves
+  little outside the offer.
+- **Verdict.** Nothing to retune and no reason to train the type with soft labels on this evidence: the models
+  already know when they are unsure, and asking is where the type gains (0.65 to 0.74 at 23% asked, 0.86 at
+  50%). The 0.50 default asks about a quarter of the commits.
+- **Limits.** One set (250 commits, `val1-h4`; the earlier figures are eval-v1), the person who always picks the
+  author's type, `vulkan` only. In 234 of the 250 commits the likeliest first token is the type the reply
+  ended with (the other 16 are retries and replies with no type).
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
