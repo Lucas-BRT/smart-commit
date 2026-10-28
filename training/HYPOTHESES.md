@@ -1056,6 +1056,26 @@ reading short excerpts, and a human second opinion on a sample is still to be do
   and `behaviour` together with the strict match, and the `N` that remain (about 8% of the commits by the
   weighted estimate, and another 10% that cannot be told) are what there is left to fix.
 
+**A rule between the type and the files, and the replies with no type (looked at, not built).** Fixed before the
+numbers: `docs` only if every changed file is documentation (`.md`, `.mdx`, `.rst`, `.txt`, a `docs/` directory,
+README, LICENSE, CHANGELOG), `test` only if every file is a test (`test/`, `spec/`, `*.test.*`, `*.spec.*`,
+`.bats`, snapshots). On the 250 commits of `data/val1-h4`:
+
+- **Real labels.** When every file is documentation the label is `docs` in 27 of 29; when every file is a test it
+  is `test` in 10 of 16. The docs rule agrees with how repositories write, the test rule does not.
+- **The models break the docs rule in 4 to 10 commits each** (10 for the 1.5B v0.3, 5 for the 0.5B). The label is
+  `docs` in 2 of the 10, and among the other 8 several are types a maintainer could use (a story file, JSDoc
+  comments, a docs package under `packages/*-docs/`, which the paths do not show). Only about 4 are plain
+  mistakes (`docs` for a README plus a code change, for the stories of a test, for typings). A veto that
+  retries would fix at most those 4, 1.6% of the commits, and would also hit commits like the ones rated `A`,
+  with a retry whose answer is not known to be better. The reverse (all files documentation and the model
+  writes another type) happens once for the 1.5B, and the label was `docs`: too rare to matter.
+- **Replies with no type: 2 or 3 commits per model, always the same ones.** They come from repositories whose
+  history is not Conventional (`fix/small_talk_skill: ...`, `add jenkinsfile`), where the model follows the
+  history, as the prompt asks, or the file-list fallback of an unusable reply. This is not a defect.
+- **Verdict.** Neither pays: a type-and-files rule would gain a few commits at most, with the risk of losing
+  acceptable ones, and the replies with no type follow the repository's own style. No product change.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
