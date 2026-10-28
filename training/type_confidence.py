@@ -14,6 +14,12 @@ probabilities, from the first token of the reply (llama-server, `top_logprobs`, 
 
     python -I type_confidence.py collect SET_DIR TRACES.jsonl GGUF OUT.json [--port N]
     python -I type_confidence.py report OUT.json...
+    python -I type_confidence.py menus OUT.json...
+
+`menus` compares the menu `model.ask_type` shows (up to MAX_OFFERED types) with an adaptive one that offers only
+the two likeliest when the model is split between them (together at least SPLIT_MASS, apart by less than
+SPLIT_GAP), on the same asks: the share asked, the lines of the menu, and the type right if the person picks the
+real type when it is offered.
 
 `collect` starts the llama-server of the project (`$LLAMA_SERVER`, or the one smart-commit downloaded) on the GPU
 and asks for one token of each Conventional commit's first prompt. Standard library only.
@@ -36,6 +42,10 @@ BANDS = [0.5, 0.7, 0.9]
 ASK_BELOW = [0.5, 0.6, 0.7]
 BOOTSTRAPS = 1000
 SEED = 7
+MAX_OFFERED = 4
+MIN_OFFERED = 0.02
+SPLIT_MASS = 0.85
+SPLIT_GAP = 0.25
 NLL_FLOOR = 1e-4
 
 
@@ -134,6 +144,54 @@ def interval(cases: list[dict], measure: str) -> tuple[float, float]:
     return values[int(0.025 * BOOTSTRAPS)], values[int(0.975 * BOOTSTRAPS) - 1]
 
 
+def listed_types(system: str) -> list[str]:
+    """The types the system message lists as used in the repository (none: every type is allowed)."""
+    for line in system.splitlines():
+        if line.startswith("- Types used here:"):
+            return [t.strip(" .") for t in line.split(":", 1)[1].split(",") if t.strip(" .")]
+    return []
+
+
+def offer(dist: list, allowed: list[str], below: float, adaptive: bool = False) -> list[str] | None:
+    """The types to offer (`ask::types_to_offer`), or None when the model is sure enough or has nothing to
+    choose between; `adaptive` offers only the two likeliest when the model is split between them."""
+    kept = [(k, p) for k, p in dist if not allowed or k in allowed]
+    total = sum(p for _, p in kept)
+    if total <= 0:
+        return None
+    kept = [(k, p / total) for k, p in kept]
+    if kept[0][1] >= below:
+        return None
+    kept = [(k, p) for k, p in kept if p >= MIN_OFFERED][:MAX_OFFERED]
+    if len(kept) < 2:
+        return None
+    if adaptive and kept[0][1] + kept[1][1] >= SPLIT_MASS and kept[0][1] - kept[1][1] < SPLIT_GAP:
+        kept = kept[:2]
+    return [k for k, _ in kept]
+
+
+def menus(cases: list[dict]) -> list[dict]:
+    """For each ASK_BELOW: the asks, the mean lines and the type right of the present menu and the adaptive one."""
+    n = len(cases)
+    out = []
+    for below in ASK_BELOW:
+        row = {"below": below}
+        for name, adaptive in (("present", False), ("adaptive", True)):
+            asked = right = lines = 0
+            for c in cases:
+                top = c["dist"][0][0] if c["dist"] else None
+                shown = offer(c["dist"], c.get("allowed", []), below, adaptive)
+                if shown is None:
+                    right += top == c["real"]
+                else:
+                    asked += 1
+                    lines += len(shown)
+                    right += c["real"] in shown
+            row[name] = {"asked": asked / n, "lines": lines / asked if asked else 0.0, "type_right": right / n}
+        out.append(row)
+    return out
+
+
 def server_binary() -> str:
     if os.environ.get("LLAMA_SERVER"):
         return os.environ["LLAMA_SERVER"]
@@ -180,7 +238,7 @@ def collect(set_dir: Path, traces: Path, gguf: Path, out: Path, port: int) -> No
             prompt = json.loads(line)["generation"]["attempts"][0]["prompt"]
             real = metas[index]["type"].lower()
             cases.append({
-                "line": index, "real": "test" if real == "tests" else real,
+                "line": index, "real": "test" if real == "tests" else real, "allowed": listed_types(prompt["system"]),
                 "dist": [[k, p] for k, p in from_logprobs(ask(port, prompt["system"], prompt["user"]))],
             })
         out.write_text(json.dumps({"gguf": gguf.name, "cases": cases}))
@@ -206,6 +264,16 @@ def report(paths: list[Path]) -> None:
             print(f"  ask below {a['below']:.2f}: asks {a['asked']:.3f}, type right {a['type_right']:.3f}")
 
 
+def report_menus(paths: list[Path]) -> None:
+    for path in paths:
+        data = json.loads(path.read_text())
+        print(f"== {path.stem} ({len(data['cases'])} commits)")
+        for row in menus(data["cases"]):
+            p, a = row["present"], row["adaptive"]
+            print(f"  ask below {row['below']:.2f}: asks {p['asked']:.3f}; present {p['lines']:.2f} lines, type right "
+                  f"{p['type_right']:.3f}; adaptive {a['lines']:.2f} lines, type right {a['type_right']:.3f}")
+
+
 def main() -> None:
     args = sys.argv[1:]
     port = 8099
@@ -217,6 +285,8 @@ def main() -> None:
         collect(Path(args[1]), Path(args[2]), Path(args[3]), Path(args[4]), port)
     elif args[:1] == ["report"]:
         report([Path(a) for a in args[1:]])
+    elif args[:1] == ["menus"]:
+        report_menus([Path(a) for a in args[1:]])
     else:
         sys.exit(__doc__)
 

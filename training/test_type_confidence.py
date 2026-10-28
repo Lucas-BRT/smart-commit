@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from type_confidence import auroc, ece, from_logprobs, score, type_of  # noqa: E402
+from type_confidence import auroc, ece, from_logprobs, listed_types, menus, offer, score, type_of  # noqa: E402
 
 
 def test_tokens_are_read_like_the_product_reads_them() -> None:
@@ -62,6 +62,48 @@ def test_score_counts_what_it_says() -> None:
     # Brier of the first case: (1-0.9)^2 + 0.1^2 = 0.02, over the 11 types (the rest are 0)
     assert abs(score(cases[:1])["brier"] - 0.02) < 1e-9
     assert abs(score(cases[:1])["nll"] - (-math.log(0.9))) < 1e-9
+
+
+def test_the_types_listed_in_the_prompt_are_the_allowed_ones() -> None:
+    system = "Rules:\n- Types used here: fix, feat, titus, refactor.\n- Add a body"
+    assert listed_types(system) == ["fix", "feat", "titus", "refactor"]
+    assert listed_types("Rules:\n- nothing") == []
+
+
+def test_the_menu_is_the_one_the_product_offers() -> None:
+    unsure = [["feat", 0.45], ["fix", 0.35], ["refactor", 0.15], ["docs", 0.05]]
+    assert offer(unsure, [], 0.5) == ["feat", "fix", "refactor", "docs"]
+    assert offer([["fix", 0.92], ["feat", 0.08]], [], 0.5) is None            # sure enough
+    assert offer([["feat", 0.5], ["fix", 0.5]], [], 0.5) is None              # exactly at the limit is sure
+    assert offer([["feat", 0.5], ["revert", 0.3], ["fix", 0.2]], ["feat", "fix"], 0.8) == ["feat", "fix"]
+    assert offer([["feat", 0.4]], [], 0.5) is None                            # nothing to choose between
+    assert offer([], [], 0.5) is None
+    many = [["feat", 0.3], ["fix", 0.25], ["docs", 0.2], ["chore", 0.15], ["refactor", 0.07], ["test", 0.03]]
+    assert offer(many, [], 0.5) == ["feat", "fix", "docs", "chore"]            # at most four
+
+
+def test_an_adaptive_menu_offers_two_when_the_model_is_split_between_them() -> None:
+    split = [["feat", 0.48], ["fix", 0.40], ["docs", 0.08], ["chore", 0.04]]
+    assert offer(split, [], 0.5, adaptive=True) == ["feat", "fix"]
+    assert offer(split, [], 0.5) == ["feat", "fix", "docs", "chore"]
+    spread = [["feat", 0.4], ["fix", 0.3], ["docs", 0.2], ["chore", 0.1]]       # the two do not hold 0.85
+    assert offer(spread, [], 0.5, adaptive=True) == ["feat", "fix", "docs", "chore"]
+    apart = [["feat", 0.6], ["fix", 0.3], ["docs", 0.1]]                        # together 0.9, but 0.3 apart
+    assert offer(apart, [], 0.7, adaptive=True) == ["feat", "fix", "docs"]
+    wide = [["feat", 0.49], ["fix", 0.44], ["docs", 0.07]]                      # together 0.93, apart by 0.05: split
+    assert offer(wide, [], 0.5, adaptive=True) == ["feat", "fix"]
+
+
+def test_menus_count_the_asks_the_lines_and_the_type_right() -> None:
+    cases = [
+        {"real": "fix", "allowed": [], "dist": [["feat", 0.48], ["fix", 0.40], ["docs", 0.08], ["chore", 0.04]]},
+        {"real": "chore", "allowed": [], "dist": [["feat", 0.48], ["fix", 0.40], ["docs", 0.08], ["chore", 0.04]]},
+        {"real": "docs", "allowed": [], "dist": [["docs", 0.95], ["fix", 0.05]]},
+        {"real": "fix", "allowed": [], "dist": [["docs", 0.95], ["fix", 0.05]]},
+    ]
+    row = next(r for r in menus(cases) if r["below"] == 0.5)
+    assert row["present"] == {"asked": 0.5, "lines": 4.0, "type_right": 0.75}    # asked: both; sure: docs right, fix wrong
+    assert row["adaptive"] == {"asked": 0.5, "lines": 2.0, "type_right": 0.5}    # the chore falls outside the two
 
 
 if __name__ == "__main__":

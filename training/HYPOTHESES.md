@@ -1118,6 +1118,39 @@ when it is among the three likeliest):
   author's type, `vulkan` only. In 234 of the 250 commits the likeliest first token is the type the reply
   ended with (the other 16 are retries and replies with no type).
 
+**A, two kinds of doubt, and a menu for the split one (tried, not shipped).** The confidence in the likeliest
+type does not tell a model split between two types from one with no idea. On `data/val1-h4` (exploratory, 10 to
+48 commits a model): when the two likeliest types hold at least 0.85 together and are less than 0.25 apart, the
+real type is one of the two in 0.89 to 0.95 of the commits (the likeliest alone is right in 0.50 to 0.69); when
+they hold less than 0.70 it is one of the two in 0.45 to 0.62 only. Margin and entropy predict a right type no
+better than the plain confidence (AUROC 0.74 to 0.79 against 0.76 to 0.80). When five models give the
+likeliest type, 171 of 250 commits get the same one from all (right 0.75); in 68 they split between two types,
+the majority is right 0.40 and one of them 0.75.
+
+*Test.* An adaptive menu offers only those two types when the model is split, and the present menu otherwise
+(up to four types). Fixed before the held-out set was read (`eval-v1`, 250 Conventional commits, where the rule
+was not tuned): worth offering if the type right (the person picks the author's type when it is offered) falls
+by at most 0.010 and the menu is at least 0.3 lines shorter, for both v0.3 models and asking below 0.5, 0.6 and
+0.7. `type_confidence.py menus`, `vulkan`, with the types the prompt lists as allowed:
+
+| set | model | ask below | asked | present: lines, type right | adaptive: lines, type right |
+|---|---|---|---|---|---|
+| eval-v1 | 1.5B v0.3 | 0.5 | 0.160 | 3.83, 0.788 | 3.70, 0.784 |
+| | | 0.6 | 0.272 | 3.78, 0.824 | 3.57, 0.816 |
+| | | 0.7 | 0.412 | 3.62, 0.880 | 3.49, 0.872 |
+| | 0.5B v0.3 | 0.5 | 0.248 | 3.90, 0.780 | 3.69, 0.776 |
+| | | 0.6 | 0.388 | 3.76, 0.836 | 3.45, 0.824 |
+| | | 0.7 | 0.544 | 3.67, 0.888 | 3.45, 0.876 |
+
+(On `val1-h4`, where the rule was found, the menu is 0.27 to 0.46 lines shorter and the type right falls 0 to 0.004.)
+
+- **It fails on both counts.** The 0.5B loses 0.012 at 0.6 and 0.7, over the limit, and the menus shrink by 0.13
+  to 0.31 lines, under it in five of six rows. The present menu already shows 3.6 to 3.9 lines because most asks
+  are not split, and the split ones are a minority of the asked commits.
+- **Verdict.** Not built: a gain of a fraction of a line is not worth a rule that loses acceptable choices. The
+  menu is long because the doubt is mostly diffuse; what could shorten it is a cap on the number of types (the
+  three likeliest hold 0.89 to 0.93 of the real types), not tried here.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
