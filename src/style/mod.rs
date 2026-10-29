@@ -14,7 +14,7 @@ mod parse;
 mod ticket;
 mod types;
 
-pub use detect::{detect, scope_areas};
+pub use detect::{detect, scope_areas, similar_examples};
 pub use gitmoji::is_gitmoji;
 pub use language::{language_of, words};
 pub use parse::parse_conventional;

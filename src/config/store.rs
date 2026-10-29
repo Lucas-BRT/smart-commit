@@ -14,7 +14,7 @@ use crate::backend::llamacpp::{LlamaCppOptions, LlamaDevice};
 use crate::models::{self, Model};
 use crate::paths;
 use crate::prompt::{
-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptOptions, PromptRules, PromptScopes,
+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes,
 };
 use crate::style::{Convention, Language};
 
@@ -435,6 +435,8 @@ impl Settings {
                 .map_or(PromptRules::Full, models::prompt_rules),
             // No model in use was trained on the map (training H4b).
             scopes: PromptScopes::List,
+            // Only for evaluation (training H14).
+            examples: PromptExamples::Recent,
             subject_max: self.subject_max,
             // Measured on eval-v1 with the v0.2 fine-tunes and the base
             // models: better types for all four (training H11).

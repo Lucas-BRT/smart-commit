@@ -86,7 +86,11 @@ From the last `style.history_depth` (30) subjects, merges excluded:
   (also right after the convention prefix) or elsewhere.
 - **Examples:** up to 5 recent, distinct subjects of 8 to 100 characters
   that follow the convention. `fixup!`, `squash!`, `amend!`, reverts and WIP
-  are left out.
+  are left out. `--examples similar` (in `prompt` and `eval` only) puts first
+  the commits that touched the staged files, or a file of their directory,
+  or of their top-level directory (up to 5, `mixed`: up to 3), completes with
+  the recent ones, and shows them in the history's order, to evaluate
+  whether similar changes teach the style better; it is recorded in traces.
 
 ## Fitting the diff
 

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Args, ValueEnum};
 use smart_commit::backend::device::Target;
-use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules, PromptScopes};
+use smart_commit::prompt::{DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes};
 
 #[derive(Debug, Args)]
 pub(super) struct GenerateArgs {
@@ -62,6 +62,11 @@ pub(super) struct PromptArgs {
     /// [default: names]
     #[arg(long, value_enum)]
     scopes: Option<ScopesArg>,
+    /// The subjects shown as examples of the style: the most recent, or
+    /// those of the commits that touched the closest files, to evaluate
+    /// that [default: recent]
+    #[arg(long, value_enum)]
+    examples: Option<ExamplesArg>,
 }
 
 impl PromptArgs {
@@ -78,6 +83,13 @@ impl PromptArgs {
                 ScopesArg::Map => PromptScopes::Map,
             };
         }
+        if let Some(examples) = self.examples {
+            options.examples = match examples {
+                ExamplesArg::Recent => PromptExamples::Recent,
+                ExamplesArg::Similar => PromptExamples::Similar,
+                ExamplesArg::Mixed => PromptExamples::Mixed,
+            };
+        }
         if let Some(diff) = self.diff {
             options.diff = match diff {
                 DiffArg::Plain => DiffFormat::Plain,
@@ -91,6 +103,13 @@ impl PromptArgs {
 enum DiffArg {
     Plain,
     Annotated,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ExamplesArg {
+    Recent,
+    Similar,
+    Mixed,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

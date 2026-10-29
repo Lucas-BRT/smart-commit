@@ -4,6 +4,7 @@ use super::types::TEMPLATE_OVERHEAD_TOKENS;
 use super::*;
 use crate::context::RepoContext;
 use crate::diff::{self, FileDiff};
+use crate::git::{ChangeStatus, FileChange};
 use crate::style;
 
 fn context(subjects: &[&str], branch: Option<&str>) -> RepoContext {
@@ -518,6 +519,107 @@ fn the_map_is_recorded_only_when_asked() {
     assert!(json.contains("\"scopes\":\"map\""), "{json}");
     let read: PromptOptions = serde_json::from_str(&json).unwrap();
     assert_eq!(read, map());
+}
+
+fn examples_history() -> RepoContext {
+    let paths = |p: &[&str]| p.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    let subjects = [
+        "feat(cli): add the context flag",
+        "fix(cli): parse the option list",
+        "docs: describe the context flag",
+        "test(cli): cover the option list",
+        "chore: bump the pinned versions",
+        "fix(git): read the branch name",
+    ];
+    let ctx = RepoContext::new(
+        PathBuf::from("/repo"),
+        None,
+        subjects.iter().map(|s| s.to_string()).collect(),
+        vec![FileChange {
+            status: ChangeStatus::Modified,
+            path: "src/git.rs".into(),
+            old_path: None,
+        }],
+    );
+    ctx.with_history_files(vec![
+        paths(&["src/cli/args.rs"]),
+        paths(&["src/cli/args.rs"]),
+        paths(&["README.md"]),
+        paths(&["tests/cli.rs"]),
+        paths(&["Cargo.lock"]),
+        paths(&["src/git.rs"]),
+    ])
+}
+
+fn examples(kind: PromptExamples) -> PromptOptions {
+    PromptOptions {
+        examples: kind,
+        ..PromptOptions::default()
+    }
+}
+
+#[test]
+fn the_examples_are_the_recent_ones_unless_asked() {
+    let ctx = examples_history();
+    let recent = build(&ctx, &files(), &PromptOptions::default()).system;
+    assert!(
+        recent.contains("feat(cli): add the context flag"),
+        "{recent}"
+    );
+    assert!(
+        recent.contains("chore: bump the pinned versions"),
+        "{recent}"
+    );
+    // The sixth commit is the only one that touched the staged file.
+    assert!(
+        !recent.contains("fix(git): read the branch name"),
+        "{recent}"
+    );
+
+    let similar = build(&ctx, &files(), &examples(PromptExamples::Similar)).system;
+    assert!(
+        similar.contains("fix(git): read the branch name"),
+        "{similar}"
+    );
+    // The same number of examples, so the oldest recent one made room.
+    assert!(
+        !similar.contains("chore: bump the pinned versions"),
+        "{similar}"
+    );
+    let shown = |system: &str| {
+        system
+            .split("Recent subjects from this repository, follow their style:\n")
+            .nth(1)
+            .map_or(0, |examples| examples.lines().count())
+    };
+    assert_eq!((shown(&recent), shown(&similar)), (5, 5));
+    // At most three close ones: the same here, as one commit is close.
+    let mixed = build(&ctx, &files(), &examples(PromptExamples::Mixed)).system;
+    assert_eq!(mixed, similar);
+}
+
+#[test]
+fn without_the_files_of_the_history_the_examples_are_the_recent_ones() {
+    let ctx = RepoContext::new(
+        PathBuf::from("/repo"),
+        None,
+        examples_history().subjects,
+        Vec::new(),
+    );
+    assert_eq!(
+        build(&ctx, &files(), &examples(PromptExamples::Similar)),
+        build(&ctx, &files(), &PromptOptions::default())
+    );
+}
+
+#[test]
+fn the_examples_are_recorded_only_when_asked() {
+    let json = serde_json::to_string(&PromptOptions::default()).unwrap();
+    assert!(!json.contains("\"examples\""), "{json}");
+    let json = serde_json::to_string(&examples(PromptExamples::Similar)).unwrap();
+    assert!(json.contains("\"examples\":\"similar\""), "{json}");
+    let read: PromptOptions = serde_json::from_str(&json).unwrap();
+    assert_eq!(read, examples(PromptExamples::Similar));
 }
 
 /// Eight scopes whose commits touched three places each, `depth` directories deep.
