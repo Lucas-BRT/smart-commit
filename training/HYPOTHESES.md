@@ -1207,6 +1207,51 @@ must have a type right (the real type is in the set) at least 0.004 under the pr
   asking in 80% of the commits for it. If the knob is wanted, the next test is the person: how long a choice takes
   with two types and with four, and how many interruptions they accept.
 
+### H14. Examples chosen by the files they touched teach the style better — no gain without training
+
+**Claim.** The prompt shows the five most recent subjects of the repository as examples of its style. The commits
+that touched the files being committed should say more about how this change is described (vocabulary, scope,
+level of detail) than the last five commits, which may be about anything (retrieval-augmented generation, RACE
+and CoRaCMG in the literature, with the diffs of the similar commits, which our data do not keep).
+
+**Design.** `--examples similar|mixed` (`prompt` and `eval` only): for each staged path, a past commit scores 3
+if it touched that path, 2 if a file of its directory, 1 if a file of its top-level directory; the best-scoring
+commits (similar: up to 5, mixed: up to 3; ties to the more recent) are shown, completed with the most recent
+ones to the same five examples, in the history's order, so the prompt keeps its size. The rest of the prompt
+and the models are as in `compare-v04c`: the 1.5B and 0.5B v0.3, annotated, full rules, `vulkan`, 500 commits of
+`data/val1-h4` (250 Conventional and 250 free), no retraining. Fixed before the numbers: worth it if, for both
+models, `word_f1` rises by at least 0.015 with the 95% bootstrap interval of the paired difference
+(`paired_f1.py`) above 0, `first_copied` and `ungrounded` rise by at most 0.01 and `type_match` falls by at most
+0.01; if it passes, one read on `eval-v1`.
+
+**Result** (arm minus control, the control being the traces of `compare-v04c`):
+
+| model, arm | `word_f1` all [95%] | Conventional | free | `type_match` | `first_copied` (conv., free) | `ungrounded` (conv., free) |
+|---|---|---|---|---|---|---|
+| 1.5B, similar | +0.009 [−0.003, +0.021] | +0.019 [+0.001, +0.038] | −0.001 | −0.020 | 0, +0.008 | 0, +0.008 |
+| 1.5B, mixed | +0.003 [−0.007, +0.012] | +0.003 | +0.002 | −0.012 | 0, +0.004 | +0.004, 0 |
+| 0.5B, similar | +0.005 [−0.006, +0.015] | +0.005 | +0.004 | +0.004 | 0, 0 | 0, +0.004 |
+| 0.5B, mixed | +0.006 [−0.002, +0.014] | +0.008 | +0.004 | −0.008 | 0, 0 | 0, +0.004 |
+
+- **It fails.** No arm raises `word_f1` by 0.015 with an interval above 0 in both models: the 0.5B gains 0.005 to
+  0.006 (the interval holds 0 for all and the Conventional set). The 1.5B with `similar` is the only arm that
+  clears the bar, and only on the Conventional set (+0.019, interval just above 0), where it loses 0.020 of
+  `type_match` (0.648 to 0.628, over the 0.01 allowed). The free set, where the history is least
+  informative, does not move.
+- **The type does not gain either**: `type_group` and `type_behaviour` move with `type_match` (1.5B, similar:
+  −0.024 and −0.016), so the commits that touched the same files do not say what type this one is, which the
+  probe of the types by file (H13) had shown.
+- **No new failures**: `first_copied`, `ungrounded`, `fallback` and `first_try` stay within 0.01 (a hundredth is
+  two or three commits of 250).
+- **Limits.** The models were trained with the recent examples, so a prompt they were not trained on may
+  understate the gain; and this is the cheap form of retrieval, which shows only the subjects of the similar
+  commits. What RACE and CoRaCMG retrieve is the diff and the message, which needs history diffs (the data keep
+  subjects and file lists) and a model trained to read them: that is the form not tested.
+- **Verdict.** Not adopted; the product keeps the most recent examples. The option stays for evaluation, like
+  `--scopes map`. If retrieval is tried again, it needs the diffs of the history in the data and a model trained
+  on them, which is a project of its own (and of the prompt budget: 1024 tokens leave little room for a second
+  diff).
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
