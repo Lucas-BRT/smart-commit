@@ -472,6 +472,91 @@ fn the_scope_map_is_for_evaluation_and_replays() {
 }
 
 #[test]
+fn similar_examples_are_for_evaluation_and_replay() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let mut inputs: serde_json::Value = serde_json::from_str(&inputs).unwrap();
+    // The staged file is main.rs, which only the oldest commit touched.
+    inputs["subjects"] = serde_json::json!([
+        "feat(cli): add the context flag",
+        "fix(cli): parse the option list",
+        "docs: describe the context flag",
+        "test(cli): cover the option list",
+        "chore: bump the pinned versions",
+        "feat(entry): add the entry point"
+    ]);
+    inputs["history_files"] = serde_json::json!([
+        ["src/cli/args.rs"],
+        ["src/cli/args.rs"],
+        ["README.md"],
+        ["tests/cli.rs"],
+        ["Cargo.lock"],
+        ["main.rs"]
+    ]);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n")).unwrap();
+    let path = file.to_str().unwrap();
+
+    let system = |extra: &[&str]| {
+        let mut args = vec!["prompt", "--inputs", path];
+        args.extend_from_slice(extra);
+        let output = smart_commit(&args, dir.path());
+        assert!(output.status.success(), "{}", stderr(&output));
+        let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+        prompt["system"].as_str().unwrap().to_owned()
+    };
+    let recent = system(&[]);
+    assert!(
+        recent.contains("chore: bump the pinned versions"),
+        "{recent}"
+    );
+    assert!(
+        !recent.contains("feat(entry): add the entry point"),
+        "{recent}"
+    );
+    assert_eq!(system(&["--examples", "recent"]), recent);
+    for kind in ["similar", "mixed"] {
+        let similar = system(&["--examples", kind]);
+        assert!(
+            similar.contains("feat(entry): add the entry point"),
+            "{similar}"
+        );
+        assert!(
+            !similar.contains("chore: bump the pinned versions"),
+            "{similar}"
+        );
+    }
+
+    // The option is recorded, so the trace replays with the same prompt.
+    let output = smart_commit(
+        &[
+            "eval",
+            path,
+            "--examples",
+            "similar",
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat(cli): add the entry point",
+        ],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let line = stdout(&output).lines().next().unwrap().to_owned();
+    assert!(line.contains("\"examples\":\"similar\""), "{line}");
+    let trace = dir.path().join("trace.json");
+    std::fs::write(&trace, line).unwrap();
+    let output = smart_commit(&["replay", trace.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(
+        stdout(&output).starts_with("reproduced:"),
+        "{}",
+        stdout(&output)
+    );
+}
+
+#[test]
 fn eval_writes_a_replayable_trace_per_input() {
     let repo = staged_repo();
     let (inputs, _) = recorded_inputs(&repo);

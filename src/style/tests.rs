@@ -4,6 +4,180 @@ mod tests {
     use crate::style::language::description_of;
     use crate::style::*;
 
+    fn paths(lists: &[&[&str]]) -> Vec<Vec<String>> {
+        lists
+            .iter()
+            .map(|p| p.iter().map(|s| s.to_string()).collect())
+            .collect()
+    }
+
+    fn strings(list: &[&str]) -> Vec<String> {
+        list.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn examples_are_the_commits_that_touched_the_closest_files() {
+        // Most recent first. The staged file is src/cli/args.rs.
+        let subjects = strings(&[
+            "docs: describe the readme",            // README.md: no relation
+            "fix(core): handle the empty diff",     // src/core/diff.rs: same top directory
+            "feat(cli): add the examples flag",     // src/cli/session.rs: same directory
+            "chore: update the lockfile please",    // Cargo.lock: no relation
+            "feat(cli): parse the scopes option",   // src/cli/args.rs: the same file
+            "test(cli): cover the cli arguments",   // tests/cli.rs: no relation
+            "refactor(cli): split the args module", // src/cli/args.rs, src/cli/mod.rs: the same file
+        ]);
+        let files = paths(&[
+            &["README.md"],
+            &["src/core/diff.rs"],
+            &["src/cli/session.rs"],
+            &["Cargo.lock"],
+            &["src/cli/args.rs"],
+            &["tests/cli.rs"],
+            &["src/cli/args.rs", "src/cli/mod.rs"],
+        ]);
+        let staged = ["src/cli/args.rs"];
+        // The two commits of the same file (4, 6), the one of the directory (2), the one of the top
+        // directory (1): four close ones, and the most recent (0) completes five; in history order.
+        assert_eq!(
+            similar_examples(&subjects, &files, &staged, Convention::Conventional, 5),
+            [
+                "docs: describe the readme",
+                "fix(core): handle the empty diff",
+                "feat(cli): add the examples flag",
+                "feat(cli): parse the scopes option",
+                "refactor(cli): split the args module",
+            ]
+        );
+        // At most two close ones, the same file (4, 6), then the most recent (0, 1, 2).
+        assert_eq!(
+            similar_examples(&subjects, &files, &staged, Convention::Conventional, 2),
+            [
+                "docs: describe the readme",
+                "fix(core): handle the empty diff",
+                "feat(cli): add the examples flag",
+                "feat(cli): parse the scopes option",
+                "refactor(cli): split the args module",
+            ]
+        );
+        // One close one: the most recent of the two with the same file (4), then the most recent.
+        assert_eq!(
+            similar_examples(&subjects, &files, &staged, Convention::Conventional, 1),
+            [
+                "docs: describe the readme",
+                "fix(core): handle the empty diff",
+                "feat(cli): add the examples flag",
+                "chore: update the lockfile please",
+                "feat(cli): parse the scopes option",
+            ]
+        );
+    }
+
+    #[test]
+    fn examples_for_unrelated_files_are_the_recent_ones() {
+        let subjects = strings(&[
+            "feat(cli): add the first flag",
+            "fix(cli): parse the second flag",
+            "docs: describe the readme file",
+        ]);
+        let files = paths(&[&["src/a.rs"], &["src/b.rs"], &["README.md"]]);
+        let recent = detect(&subjects).examples;
+        assert_eq!(
+            similar_examples(
+                &subjects,
+                &files,
+                &["mise.toml"],
+                Convention::Conventional,
+                5
+            ),
+            recent
+        );
+        // Without the files of the history (older traces), too.
+        assert_eq!(
+            similar_examples(&subjects, &[], &["src/a.rs"], Convention::Conventional, 5),
+            recent
+        );
+        assert!(similar_examples(&[], &[], &["a"], Convention::Conventional, 5).is_empty());
+    }
+
+    #[test]
+    fn similar_examples_keep_the_filters_of_the_recent_ones() {
+        // Noise, a repeat, a subject out of the convention and a too short one are not examples, close or not.
+        let subjects = strings(&[
+            "Merge branch 'main' into feature",
+            "fix(cli): parse the second flag",
+            "fix(cli): parse the second flag",
+            "update stuff in cli please",
+            "fix: x",
+            "feat(cli): add the first flag",
+        ]);
+        let files = paths(&[
+            &["src/cli/a.rs"],
+            &["src/cli/a.rs"],
+            &["src/cli/a.rs"],
+            &["src/cli/a.rs"],
+            &["src/cli/a.rs"],
+            &["src/cli/b.rs"],
+        ]);
+        assert_eq!(
+            similar_examples(
+                &subjects,
+                &files,
+                &["src/cli/a.rs"],
+                Convention::Conventional,
+                5
+            ),
+            [
+                "fix(cli): parse the second flag",
+                "feat(cli): add the first flag"
+            ]
+        );
+        // A free convention keeps what is not conventional (but still not noise).
+        assert_eq!(
+            similar_examples(&subjects, &files, &["src/cli/a.rs"], Convention::Free, 5)
+                .iter()
+                .filter(|s| s.starts_with("update"))
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn a_file_at_the_root_is_close_only_to_itself() {
+        let subjects = strings(&[
+            "chore: bump the tool versions",
+            "docs: describe the readme file",
+        ]);
+        let files = paths(&[&["mise.toml"], &["README.md"]]);
+        // `mise.toml` and `README.md` have no directory in common beyond the root.
+        assert_eq!(
+            similar_examples(
+                &subjects,
+                &files,
+                &["mise.toml"],
+                Convention::Conventional,
+                1
+            ),
+            [
+                "chore: bump the tool versions",
+                "docs: describe the readme file"
+            ]
+        );
+        assert_eq!(
+            similar_examples(
+                &subjects,
+                &files,
+                &["README.md"],
+                Convention::Conventional,
+                1
+            ),
+            [
+                "chore: bump the tool versions",
+                "docs: describe the readme file"
+            ]
+        );
+    }
+
     #[test]
     fn scope_areas_rank_places_once_per_commit() {
         let subjects = [

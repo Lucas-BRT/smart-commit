@@ -7,17 +7,36 @@ use crate::message;
 use crate::style::{self, Convention, Language, Style, TicketStyle};
 
 use super::effective_style;
-use super::types::{MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptOptions, PromptScopes};
+use super::types::{
+    MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptExamples, PromptOptions, PromptScopes,
+};
 
-fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &String> {
-    style
+fn examples_for(ctx: &RepoContext, convention: Convention, options: &PromptOptions) -> Vec<String> {
+    let similar = match options.examples {
+        PromptExamples::Recent => None,
+        PromptExamples::Similar => Some(usize::MAX),
+        PromptExamples::Mixed => Some(3),
+    };
+    if let Some(similar) = similar {
+        let staged: Vec<&str> = ctx.staged.iter().map(|c| c.path.as_str()).collect();
+        return style::similar_examples(
+            &ctx.subjects,
+            &ctx.history_files,
+            &staged,
+            convention,
+            similar,
+        );
+    }
+    ctx.style
         .examples
         .iter()
-        .filter(move |example| match convention {
+        .filter(|example| match convention {
             Convention::Conventional => style::parse_conventional(example).is_some(),
             Convention::Gitmoji => style::is_gitmoji(example),
             Convention::Free | Convention::Unknown => true,
         })
+        .cloned()
+        .collect()
 }
 
 /// The types the system message lists as used in the repository: the most
@@ -123,7 +142,9 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri
         rule("Add a body only if the reason for the change is not obvious.");
     }
 
-    let mut examples = examples_for(style, convention).peekable();
+    let mut examples = examples_for(ctx, convention, options)
+        .into_iter()
+        .peekable();
     if examples.peek().is_some() {
         text.push_str(if full {
             "\nRecent subjects from this repository, follow their style:\n"

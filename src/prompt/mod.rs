@@ -12,7 +12,8 @@ mod tests;
 
 pub use system::listed_types;
 pub use types::{
-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptOptions, PromptRules, PromptScopes,
+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptExamples, PromptOptions, PromptRules,
+    PromptScopes,
 };
 
 use crate::context::RepoContext;

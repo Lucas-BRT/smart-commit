@@ -86,7 +86,11 @@ From the last `style.history_depth` (30) subjects, merges excluded:
   (also right after the convention prefix) or elsewhere.
 - **Examples:** up to 5 recent, distinct subjects of 8 to 100 characters
   that follow the convention. `fixup!`, `squash!`, `amend!`, reverts and WIP
-  are left out.
+  are left out. `--examples similar` (in `prompt` and `eval` only) puts first
+  the commits that touched the staged files, or a file of their directory,
+  or of their top-level directory (up to 5, `mixed`: up to 3), completes with
+  the recent ones, and shows them in the history's order, to evaluate
+  whether similar changes teach the style better; it is recorded in traces.
 
 ## Fitting the diff
 
@@ -179,12 +183,16 @@ message the user turned down in the review, or clearly in
 another language than the repository's (all its known words English in a
 Portuguese repository, or the reverse; a mix is kept, as such
 repositories often write; a language that is only the default, with no
-history to tell, is not enforced). With greedy
+history to tell, is not enforced), or cut off: its
+last word is an article, a preposition or a conjunction (`the`, `of`, `to`,
+`for`, `and`, in Portuguese also `de`, `para`, `e`), as when the model stops
+mid-sentence; `in`, `off` and a word in backticks end real subjects and are
+not counted. With greedy
 decoding, repeating the same prompt would give the same reply. If the retry
 is rejected too, the message is built from the file list (for example
 `chore: update 3 files in src/`, with the files in the body), in the
 repository's language and convention, and a warning says so. When the last
-reply was rejected for what it said (a copy, another language) rather than
+reply was rejected for what it said (a copy, another language, a cut-off) rather than
 its form, the fallback keeps its scope, and its type unless the files tell
 one (all docs, tests or config): models often pick the right type even
 when they copy, and the file list's guess for code is `chore`. Backend errors

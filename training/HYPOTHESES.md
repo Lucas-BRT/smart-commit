@@ -1076,6 +1076,182 @@ README, LICENSE, CHANGELOG), `test` only if every file is a test (`test/`, `spec
 - **Verdict.** Neither pays: a type-and-files rule would gain a few commits at most, with the risk of losing
   acceptable ones, and the replies with no type follow the repository's own style. No product change.
 
+**A, how far the model's confidence in the type can be trusted.** `model.ask_type` asks the person when the
+probability of the type a reply starts with is low; `docs/measurements.md` measured it for the 1.5B v0.1 on eval-v1
+(AUROC 0.720). The models that are recommended now are the DPO ones (v0.3), and DPO tends to make a model surer
+than it is right, so `type_confidence.py` reads the same probabilities (first token, `top_logprobs`, the prompts
+of the traces of `compare-v04c`, `vulkan` on the RTX) for the 250 Conventional commits of `data/val1-h4`.
+Decided before the numbers: calibrated enough if ECE ≤ 0.08 and AUROC ≥ 0.70 with the share right rising with the
+confidence; mis-calibrated if ECE > 0.12 or AUROC < 0.65, which would mean retuning `model.ask_type_below` and
+training the type with soft labels; in between, only recorded.
+
+| model | top1 | top2 | top3 | ECE | AUROC [95%] | right below 0.5 / 0.5–0.7 / 0.7–0.9 / 0.9+ |
+|---|---|---|---|---|---|---|
+| 1.5B v0.1 | 0.644 | 0.832 | 0.928 | 0.036 | 0.775 [0.71, 0.83] | 0.384 / 0.589 / 0.828 / 0.925 |
+| 1.5B v0.3 | 0.652 | 0.828 | 0.924 | 0.085 | 0.764 [0.71, 0.82] | 0.439 / 0.464 / 0.770 / 0.937 |
+| 0.5B v0.1 | 0.644 | 0.820 | 0.888 | 0.068 | 0.765 [0.70, 0.82] | 0.368 / 0.667 / 0.841 / 0.968 |
+| 0.5B v0.3 | 0.616 | 0.824 | 0.904 | 0.063 | 0.795 [0.73, 0.85] | 0.318 / 0.529 / 0.773 / 0.974 |
+| 0.5B S1 | 0.648 | 0.816 | 0.892 | 0.060 | 0.771 [0.71, 0.83] | 0.333 / 0.643 / 0.781 / 0.939 |
+
+Asking below a confidence (share of commits asked, then the type right if the person picks the author's type
+when it is among the three likeliest):
+
+| model | below 0.5 | below 0.6 | below 0.7 |
+|---|---|---|---|
+| 1.5B v0.1 | 29% → 0.780 | 48% → 0.848 | 58% → 0.880 |
+| 1.5B v0.3 | 23% → 0.740 | 38% → 0.804 | 50% → 0.860 |
+| 0.5B v0.3 | 26% → 0.732 | 43% → 0.796 | 54% → 0.836 |
+
+- **The confidence is informative in all five and no model is mis-calibrated by the criteria.** AUROC is 0.76 to
+  0.80 (0.72 for the 1.5B v0.1 on eval-v1), the share right rises with the confidence for each, and the ECE is
+  0.04 to 0.09 (the 1.5B v0.3 is the one above 0.08: in between). The ECE of 250 commits is biased upward by
+  resampling (the intervals do not centre on the estimate), so the differences between models are within noise.
+- **DPO did not damage the confidence.** The 1.5B v0.3 is a little worse in the 0.5–0.7 band (0.464 right where
+  0.5 to 0.7 is claimed) and as sure as before at 0.9 and above; asking at the same share of commits gains
+  the same (23% asked reach 0.740 where the v0.1 reaches 0.780 at 29%; by interpolation both are near 0.81 at 38%).
+- **Two types cover 0.82–0.83 and three cover 0.89–0.93**, so offering up to four types (as the product does) leaves
+  little outside the offer.
+- **Verdict.** Nothing to retune and no reason to train the type with soft labels on this evidence: the models
+  already know when they are unsure, and asking is where the type gains (0.65 to 0.74 at 23% asked, 0.86 at
+  50%). The 0.50 default asks about a quarter of the commits.
+- **Limits.** One set (250 commits, `val1-h4`; the earlier figures are eval-v1), the person who always picks the
+  author's type, `vulkan` only. In 234 of the 250 commits the likeliest first token is the type the reply
+  ended with (the other 16 are retries and replies with no type).
+
+**A, two kinds of doubt, and a menu for the split one (tried, not shipped).** The confidence in the likeliest
+type does not tell a model split between two types from one with no idea. On `data/val1-h4` (exploratory, 10 to
+48 commits a model): when the two likeliest types hold at least 0.85 together and are less than 0.25 apart, the
+real type is one of the two in 0.89 to 0.95 of the commits (the likeliest alone is right in 0.50 to 0.69); when
+they hold less than 0.70 it is one of the two in 0.45 to 0.62 only. Margin and entropy predict a right type no
+better than the plain confidence (AUROC 0.74 to 0.79 against 0.76 to 0.80). When five models give the
+likeliest type, 171 of 250 commits get the same one from all (right 0.75); in 68 they split between two types,
+the majority is right 0.40 and one of them 0.75.
+
+*Test.* An adaptive menu offers only those two types when the model is split, and the present menu otherwise
+(up to four types). Fixed before the held-out set was read (`eval-v1`, 250 Conventional commits, where the rule
+was not tuned): worth offering if the type right (the person picks the author's type when it is offered) falls
+by at most 0.010 and the menu is at least 0.3 lines shorter, for both v0.3 models and asking below 0.5, 0.6 and
+0.7. `type_confidence.py menus`, `vulkan`, with the types the prompt lists as allowed:
+
+| set | model | ask below | asked | present: lines, type right | adaptive: lines, type right |
+|---|---|---|---|---|---|
+| eval-v1 | 1.5B v0.3 | 0.5 | 0.160 | 3.83, 0.788 | 3.70, 0.784 |
+| | | 0.6 | 0.272 | 3.78, 0.824 | 3.57, 0.816 |
+| | | 0.7 | 0.412 | 3.62, 0.880 | 3.49, 0.872 |
+| | 0.5B v0.3 | 0.5 | 0.248 | 3.90, 0.780 | 3.69, 0.776 |
+| | | 0.6 | 0.388 | 3.76, 0.836 | 3.45, 0.824 |
+| | | 0.7 | 0.544 | 3.67, 0.888 | 3.45, 0.876 |
+
+(On `val1-h4`, where the rule was found, the menu is 0.27 to 0.46 lines shorter and the type right falls 0 to 0.004.)
+
+- **It fails on both counts.** The 0.5B loses 0.012 at 0.6 and 0.7, over the limit, and the menus shrink by 0.13
+  to 0.31 lines, under it in five of six rows. The present menu already shows 3.6 to 3.9 lines because most asks
+  are not split, and the split ones are a minority of the asked commits.
+- **Verdict.** Not built: a gain of a fraction of a line is not worth a rule that loses acceptable choices. The
+  menu is long because the doubt is mostly diffuse.
+
+*A cap of three types.* The three likeliest types hold 0.89 to 0.93 of the real ones, so offering at most three
+shortens every menu. Fixed before reading it, on the same held-out set and asks: worth offering if the type right
+falls by at most 0.010 and the menu is at least 0.5 lines shorter, for both v0.3 models and the three limits.
+
+| eval-v1 | ask below | present: lines, type right | at most three: lines, type right |
+|---|---|---|---|
+| 1.5B v0.3 | 0.5 | 3.83, 0.788 | 3.00, 0.780 |
+| | 0.6 | 3.78, 0.824 | 2.99, 0.816 |
+| | 0.7 | 3.62, 0.880 | 2.94, 0.868 |
+| 0.5B v0.3 | 0.5 | 3.90, 0.780 | 3.00, 0.760 |
+| | 0.6 | 3.76, 0.836 | 2.98, 0.812 |
+| | 0.7 | 3.67, 0.888 | 2.95, 0.860 |
+
+- **The menu is 0.7 to 0.9 lines shorter, as wanted, and the type right falls too much:** 0.008 to 0.012 for the
+  1.5B (over the limit at 0.7) and 0.020 to 0.028 for the 0.5B, 2 to 7 commits of 250. On `val1-h4` it falls
+  0.008 to 0.020.
+- **Verdict.** Not built. The fourth type is the real one (and the only place it is offered) in 3% to 8%
+  of the commits asked (2 of 40 and 3 of 103 for the 1.5B, 5 of 62 and 7 of 136 for the 0.5B), often enough that
+  cutting it costs more than the line saves. The present
+  menu, up to four, stays.
+
+**A, a menu whose size follows the doubt (conformal prediction sets; tried, not shipped).** Instead of up to four
+types, offer the smallest prefix of the likeliest types that holds a mass `q`, and ask when it has two or more.
+`q` is the `ceil((n + 1)(1 - alpha))`-th smallest probability above the real type on a calibration set
+(`val1-h4`), which makes the real type fall in the set in at least `1 - alpha` of commits of the same kind. The
+model does not write the list: a list written as text has no probabilities to calibrate, and there is no
+training signal for a set (a commit has one label). Fixed before the numbers, on `eval-v1` (not used to
+calibrate): for each v0.3 model, the alpha whose share asked is closest to the present menu asking below 0.6
+must have a type right (the real type is in the set) at least 0.004 under the present one and a menu at least
+0.3 lines shorter.
+
+- **The guarantee holds on other repositories.** For every alpha from 0.04 to 0.30 the coverage on eval-v1 is
+  at or above `1 - alpha` for both models (0.10: 0.928 and 0.948 against 0.90; 0.20: 0.800 and 0.860 against
+  0.80).
+- **The pre-registered criterion fails.** At 0.28 asked the 1.5B's sets reach a type right of 0.768, 0.056 under
+  the present menu at 0.6 (0.824); the 0.5B, at 0.41 asked, 0.776 against 0.836. The menus are 1.6 to 1.7 lines shorter,
+  but the type right is what was asked to hold.
+- **Exploratory, at the same type right** (interpolated on eval-v1; lines a person reads per commit = share
+  asked × lines of the menu):
+
+| model | present: asks, lines per commit | sets at the same type right: asks, lines per commit |
+|---|---|---|
+| 1.5B v0.3, 0.788 | 0.160, 0.61 | 0.324, 0.68 (+12%) |
+| 1.5B v0.3, 0.824 | 0.272, 1.03 | 0.410, 0.89 (−14%) |
+| 1.5B v0.3, 0.880 | 0.412, 1.49 | 0.553, 1.30 (−13%) |
+| 0.5B v0.3, 0.780 | 0.248, 0.97 | 0.420, 0.92 (−5%) |
+| 0.5B v0.3, 0.836 | 0.388, 1.46 | 0.547, 1.23 (−16%) |
+| 0.5B v0.3, 0.888 | 0.544, 2.00 | 0.712, 1.76 (−12%) |
+
+  The sets read 5% to 16% fewer lines (one point is 12% more) but interrupt 14 to 18 points more of the commits,
+  because a set of two asks for what the present rule treats as sure enough. Which is better depends on what an
+  interruption costs against a line, which is not measured here, and 250 commits make a 10% difference noise.
+- **Verdict.** Not built. What the sets give is a knob that means something (`model.ask_type_below` is a
+  confidence, a coverage is a promise: "the right type is on the menu in 90% of the commits"), at the price of
+  asking in 80% of the commits for it. If the knob is wanted, the next test is the person: how long a choice takes
+  with two types and with four, and how many interruptions they accept.
+
+### H14. Examples chosen by the files they touched teach the style better — no gain without training
+
+**Claim.** The prompt shows the five most recent subjects of the repository as examples of its style. The commits
+that touched the files being committed should say more about how this change is described (vocabulary, scope,
+level of detail) than the last five commits, which may be about anything (retrieval-augmented generation, RACE
+and CoRaCMG in the literature, with the diffs of the similar commits, which our data do not keep).
+
+**Design.** `--examples similar|mixed` (`prompt` and `eval` only): for each staged path, a past commit scores 3
+if it touched that path, 2 if a file of its directory, 1 if a file of its top-level directory; the best-scoring
+commits (similar: up to 5, mixed: up to 3; ties to the more recent) are shown, completed with the most recent
+ones to the same five examples, in the history's order, so the prompt keeps its size. The rest of the prompt
+and the models are as in `compare-v04c`: the 1.5B and 0.5B v0.3, annotated, full rules, `vulkan`, 500 commits of
+`data/val1-h4` (250 Conventional and 250 free), no retraining. Fixed before the numbers: worth it if, for both
+models, `word_f1` rises by at least 0.015 with the 95% bootstrap interval of the paired difference
+(`paired_f1.py`) above 0, `first_copied` and `ungrounded` rise by at most 0.01 and `type_match` falls by at most
+0.01; if it passes, one read on `eval-v1`.
+
+**Result** (arm minus control, the control being the traces of `compare-v04c`):
+
+| model, arm | `word_f1` all [95%] | Conventional | free | `type_match` | `first_copied` (conv., free) | `ungrounded` (conv., free) |
+|---|---|---|---|---|---|---|
+| 1.5B, similar | +0.009 [−0.003, +0.021] | +0.019 [+0.001, +0.038] | −0.001 | −0.020 | 0, +0.008 | 0, +0.008 |
+| 1.5B, mixed | +0.003 [−0.007, +0.012] | +0.003 | +0.002 | −0.012 | 0, +0.004 | +0.004, 0 |
+| 0.5B, similar | +0.005 [−0.006, +0.015] | +0.005 | +0.004 | +0.004 | 0, 0 | 0, +0.004 |
+| 0.5B, mixed | +0.006 [−0.002, +0.014] | +0.008 | +0.004 | −0.008 | 0, 0 | 0, +0.004 |
+
+- **It fails.** No arm raises `word_f1` by 0.015 with an interval above 0 in both models: the 0.5B gains 0.005 to
+  0.006 (the interval holds 0 for all and the Conventional set). The 1.5B with `similar` is the only arm that
+  clears the bar, and only on the Conventional set (+0.019, interval just above 0), where it loses 0.020 of
+  `type_match` (0.648 to 0.628, over the 0.01 allowed). The free set, where the history is least
+  informative, does not move.
+- **The type does not gain either**: `type_group` and `type_behaviour` move with `type_match` (1.5B, similar:
+  −0.024 and −0.016), so the commits that touched the same files do not say what type this one is, which the
+  probe of the types by file (H13) had shown.
+- **No new failures**: `first_copied`, `ungrounded`, `fallback` and `first_try` stay within 0.01 (a hundredth is
+  two or three commits of 250).
+- **Limits.** The models were trained with the recent examples, so a prompt they were not trained on may
+  understate the gain; and this is the cheap form of retrieval, which shows only the subjects of the similar
+  commits. What RACE and CoRaCMG retrieve is the diff and the message, which needs history diffs (the data keep
+  subjects and file lists) and a model trained to read them: that is the form not tested.
+- **Verdict.** Not adopted; the product keeps the most recent examples. The option stays for evaluation, like
+  `--scopes map`. If retrieval is tried again, it needs the diffs of the history in the data and a model trained
+  on them, which is a project of its own (and of the prompt budget: 1024 tokens leave little room for a second
+  diff).
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by

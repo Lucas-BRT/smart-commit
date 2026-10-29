@@ -46,6 +46,28 @@ impl PromptRules {
     }
 }
 
+/// Which of the repository's subjects the prompt shows as examples.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PromptExamples {
+    /// The most recent ones.
+    #[default]
+    Recent,
+    /// The commits that touched the files closest to the staged ones, then
+    /// the most recent, to evaluate whether similar changes teach the style
+    /// better (training H14): the same number of examples, so the prompt
+    /// keeps its size.
+    Similar,
+    /// As `Similar` with at most three, and the rest the most recent.
+    Mixed,
+}
+
+impl PromptExamples {
+    pub fn is_recent(&self) -> bool {
+        *self == Self::Recent
+    }
+}
+
 /// How the scopes the repository uses are shown.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -109,6 +131,9 @@ pub struct PromptOptions {
     /// Left out of traces when a list, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptScopes::is_list")]
     pub scopes: PromptScopes,
+    /// Left out of traces when recent, so older traces still read the same.
+    #[serde(default, skip_serializing_if = "PromptExamples::is_recent")]
+    pub examples: PromptExamples,
     /// The longest subject, in columns (`style.subject_max`). Left out of
     /// traces when 72, so older traces, which have none, read the same.
     #[serde(
@@ -135,6 +160,7 @@ impl Default for PromptOptions {
             language: None,
             rules: PromptRules::Full,
             scopes: PromptScopes::List,
+            examples: PromptExamples::Recent,
             subject_max: message::SUBJECT_MAX,
             diff: DiffFormat::Annotated,
         }

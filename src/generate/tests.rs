@@ -203,6 +203,116 @@ mod tests {
     }
 
     #[test]
+    fn a_subject_cut_off_in_the_middle_of_a_sentence_is_retried() {
+        // Real use: a reply that stopped after an article and passed (the
+        // trace conventional-en-conformal-sets-as-cut-off).
+        let mock = MockBackend::new([
+            "feat(git): measure how often the set of types is a subset of the",
+            "feat(git): measure how often the type menu holds the real type",
+        ]);
+        let generation = run(CONVENTIONAL, &mock);
+        assert_eq!(generation.source, Source::Model);
+        assert_eq!(
+            generation.message.subject,
+            "feat(git): measure how often the type menu holds the real type"
+        );
+        assert_eq!(
+            generation.attempts[0].rejected,
+            Some(SanitizeError::CutOff(
+                "feat(git): measure how often the set of types is a subset of the".into()
+            ))
+        );
+        assert!(mock.prompts()[1].user.ends_with(
+            "Your previous reply was rejected because \"feat(git): measure how often the set of \
+             types is a subset of the\" stops in the middle of a sentence; finish it. Reply \
+             again with only the commit message in the `type(scope): description` format.\n"
+        ));
+    }
+
+    #[test]
+    fn cutting_off_twice_falls_back_and_keeps_the_type_and_scope() {
+        let mock = MockBackend::new(["fix(git): handle the", "fix(git): handle detached HEAD and"]);
+        let generation = run(CONVENTIONAL, &mock);
+        assert_eq!(generation.source, Source::Fallback);
+        assert!(
+            generation
+                .attempts
+                .iter()
+                .all(|a| matches!(a.rejected, Some(SanitizeError::CutOff(_))))
+        );
+        assert_eq!(generation.message.subject, "fix(git): update src/git.rs");
+    }
+
+    #[test]
+    fn a_subject_that_ends_like_a_whole_sentence_is_not_cut_off() {
+        // Particles and names end real subjects: `in`, `off`, a word in backticks, a name with a digit.
+        for subject in [
+            "fix(git): log in",
+            "fix(git): turn the pager off",
+            "fix(git): read `the`",
+            "fix(git): handle HEAD~1",
+            "fix(git): bump to v1",
+            "fix(git): handle HEAD when detached",
+            "chore: update docs",
+        ] {
+            let mock = MockBackend::new([subject]);
+            let generation = run(CONVENTIONAL, &mock);
+            assert_eq!(generation.attempts.len(), 1, "{subject}");
+            assert_eq!(generation.message.subject, subject);
+        }
+    }
+
+    #[test]
+    fn what_ends_a_sentence_depends_on_the_language() {
+        use crate::generate::cut_off;
+        for dangling in [
+            "fix: handle the",
+            "fix(git): add support for",
+            "feat: read a",
+            "feat!: split A and",
+            "Update the",
+            "fix: handle a path with",
+            "Fix: HANDLE THE",
+            "docs(readme): note that",
+        ] {
+            assert!(cut_off(dangling, Language::English), "{dangling}");
+        }
+        for whole in [
+            "fix: handle detached HEAD",
+            "fix: log in",
+            "fix: turn the cache off",
+            "fix: opt-in",
+            "fix: handle `a`",
+            "fix: handle 'the'",
+            "fix: handle the.",
+            "",
+            "fix:",
+            "fix: ",
+        ] {
+            assert!(!cut_off(whole, Language::English), "{whole}");
+        }
+        // "de", "e" or "o" end a Portuguese sentence only when it is cut.
+        assert!(cut_off(
+            "fix: corrige o total do pedido de",
+            Language::Portuguese
+        ));
+        assert!(cut_off("feat: adiciona suporte a", Language::Portuguese));
+        assert!(!cut_off(
+            "fix: corrige o total do pedido",
+            Language::Portuguese
+        ));
+        assert!(!cut_off(
+            "fix: corrige o total do pedido de",
+            Language::English
+        ));
+        // English words still count in a Portuguese repository.
+        assert!(cut_off("fix: corrige the", Language::Portuguese));
+        // A colon inside the description is not the type's.
+        assert!(!cut_off("fix: handle the case: foo", Language::English));
+        assert!(cut_off("Update the thing: and", Language::English));
+    }
+
+    #[test]
     fn a_subject_that_only_resembles_the_history_is_kept() {
         let mock = MockBackend::new(["fix(git): handle detached HEAD in hooks"]);
         let generation = run(CONVENTIONAL, &mock);

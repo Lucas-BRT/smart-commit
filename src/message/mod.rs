@@ -59,6 +59,10 @@ pub enum SanitizeError {
     /// enough.
     #[error("subject repeats a message the user turned down: {0:?}")]
     TurnedDown(String),
+    /// The subject stops in the middle of a sentence, after an article, a
+    /// preposition or a conjunction: a reply cut off by the token limit.
+    #[error("subject ends in the middle of a sentence: {0:?}")]
+    CutOff(String),
 }
 
 pub fn sanitize(raw: &str, convention: Convention) -> Result<CommitMessage, SanitizeError> {
