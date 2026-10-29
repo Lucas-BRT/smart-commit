@@ -449,3 +449,7 @@ real_change conventional-en-type-groups-as-docs 14df4c3 'docs(training): add a f
 # A script's conformal sets, their tests and the notes on the result: the reply was cut off in the middle of a
 # sentence.
 real_change conventional-en-conformal-sets-as-cut-off e3907a1 'feat(training): measure how often the set of types is a subset of the'
+
+# A prompt option that picks which history subjects are shown as examples, with its tests and docs: the reply
+# said examples were added.
+real_change conventional-en-examples-option-as-add-examples 08c6b2c 'feat(prompt): add examples to the prompt'

@@ -1,0 +1,237 @@
+{
+  "format": 1,
+  "tool_version": "0.12.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "default_language": "english",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 08c6b2c",
+      "feat(generate): retry when a subject ends in the middle of a sentence",
+      "test: add a trace of a subject cut off in the middle of a sentence",
+      "feat(training): simulate conformal prediction sets for the type menu",
+      "docs(training): measure how often the fourth type is the only right one",
+      "feat(training): simulate a menu of at most three types and record it fails",
+      "feat(training): simulate an adaptive type menu and record that it fails"
+    ],
+    "history_files": [
+      [
+        "docs/architecture.md",
+        "docs/usage.md",
+        "src/cli/args.rs",
+        "src/config/store.rs",
+        "src/prompt/mod.rs",
+        "src/prompt/system.rs",
+        "src/prompt/tests.rs",
+        "src/prompt/types.rs",
+        "src/style/detect.rs",
+        "src/style/mod.rs",
+        "src/style/tests.rs",
+        "tests/cli.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/usage.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/args.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/store.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/system.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/types.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/detect.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/cli.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          5,
+          1
+        ],
+        "hunks": "@@ -88,3 +88,7 @@ From the last `style.history_depth` (30) subjects, merges excluded:\n   that follow the convention. `fixup!`, `squash!`, `amend!`, reverts and WIP\n-  are left out.\n+  are left out. `--examples similar` (in `prompt` and `eval` only) puts first\n+  the commits that touched the staged files, or a file of their directory,\n+  or of their top-level directory (up to 5, `mixed`: up to 3), completes with\n+  the recent ones, and shows them in the history's order, to evaluate\n+  whether similar changes teach the style better; it is recorded in traces.\n \n"
+      },
+      {
+        "path": "docs/usage.md",
+        "old_path": null,
+        "lines": [
+          4,
+          1
+        ],
+        "hunks": "@@ -181,3 +181,6 @@ comment-only changes), the format the v0.2 fine-tunes were trained on, and\n `--scopes map`, which shows each scope with the places its commits touched\n-instead of the names alone, for a model trained that way.\n+instead of the names alone, for a model trained that way. `--examples\n+similar` (or `mixed`) picks the example subjects among the commits that\n+touched files close to the staged ones instead of the most recent, to\n+evaluate that.\n \n"
+      },
+      {
+        "path": "src/cli/args.rs",
+        "old_path": null,
+        "lines": [
+          20,
+          1
+        ],
+        "hunks": "@@ -7,3 +7,3 @@ use clap::{Args, ValueEnum};\n use smart_commit::backend::device::Target;\n-use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules, PromptScopes};\n+use smart_commit::prompt::{DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes};\n \n@@ -64,2 +64,7 @@ pub(super) struct PromptArgs {\n     scopes: Option<ScopesArg>,\n+    /// The subjects shown as examples of the style: the most recent, or\n+    /// those of the commits that touched the closest files, to evaluate\n+    /// that [default: recent]\n+    #[arg(long, value_enum)]\n+    examples: Option<ExamplesArg>,\n }\n@@ -80,2 +85,9 @@ impl PromptArgs {\n         }\n+        if let Some(examples) = self.examples {\n+            options.examples = match examples {\n+                ExamplesArg::Recent => PromptExamples::Recent,\n+                ExamplesArg::Similar => PromptExamples::Similar,\n+                ExamplesArg::Mixed => PromptExamples::Mixed,\n+            };\n+        }\n         if let Some(diff) = self.diff {\n@@ -95,2 +107,9 @@ enum DiffArg {\n \n+#[derive(Debug, Clone, Copy, ValueEnum)]\n+enum ExamplesArg {\n+    Recent,\n+    Similar,\n+    Mixed,\n+}\n+\n #[derive(Debug, Clone, Copy, ValueEnum)]\n"
+      },
+      {
+        "path": "src/config/store.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          1
+        ],
+        "hunks": "@@ -16,3 +16,3 @@ use crate::paths;\n use crate::prompt::{\n-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptOptions, PromptRules, PromptScopes,\n+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes,\n };\n@@ -437,2 +437,4 @@ impl Settings {\n             scopes: PromptScopes::List,\n+            // Only for evaluation (training H14).\n+            examples: PromptExamples::Recent,\n             subject_max: self.subject_max,\n"
+      },
+      {
+        "path": "src/prompt/mod.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -14,3 +14,4 @@ pub use system::listed_types;\n pub use types::{\n-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptOptions, PromptRules, PromptScopes,\n+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptExamples, PromptOptions, PromptRules,\n+    PromptScopes,\n };\n"
+      },
+      {
+        "path": "src/prompt/system.rs",
+        "old_path": null,
+        "lines": [
+          26,
+          5
+        ],
+        "hunks": "@@ -9,9 +9,26 @@ use crate::style::{self, Convention, Language, Style, TicketStyle};\n use super::effective_style;\n-use super::types::{MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptOptions, PromptScopes};\n+use super::types::{\n+    MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptExamples, PromptOptions, PromptScopes,\n+};\n \n-fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &String> {\n-    style\n+fn examples_for(ctx: &RepoContext, convention: Convention, options: &PromptOptions) -> Vec<String> {\n+    let similar = match options.examples {\n+        PromptExamples::Recent => None,\n+        PromptExamples::Similar => Some(usize::MAX),\n+        PromptExamples::Mixed => Some(3),\n+    };\n+    if let Some(similar) = similar {\n+        let staged: Vec<&str> = ctx.staged.iter().map(|c| c.path.as_str()).collect();\n+        return style::similar_examples(\n+            &ctx.subjects,\n+            &ctx.history_files,\n+            &staged,\n+            convention,\n+            similar,\n+        );\n+    }\n+    ctx.style\n         .examples\n         .iter()\n-        .filter(move |example| match convention {\n+        .filter(|example| match convention {\n             Convention::Conventional => style::parse_conventional(example).is_some(),\n@@ -20,2 +37,4 @@ fn examples_for(style: &Style, convention: Convention) -> impl Iterator<Item = &\n         })\n+        .cloned()\n+        .collect()\n }\n@@ -125,3 +144,5 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri\n \n-    let mut examples = examples_for(style, convention).peekable();\n+    let mut examples = examples_for(ctx, convention, options)\n+        .into_iter()\n+        .peekable();\n     if examples.peek().is_some() {\n"
+      },
+      {
+        "path": "src/prompt/tests.rs",
+        "old_path": null,
+        "lines": [
+          102,
+          0
+        ],
+        "hunks": "@@ -6,2 +6,3 @@ use crate::context::RepoContext;\n use crate::diff::{self, FileDiff};\n+use crate::git::{ChangeStatus, FileChange};\n use crate::style;\n@@ -522,2 +523,103 @@ fn the_map_is_recorded_only_when_asked() {\n \n+fn examples_history() -> RepoContext {\n+    let paths = |p: &[&str]| p.iter().map(|s| s.to_string()).collect::<Vec<_>>();\n+    let subjects = [\n+        \"feat(cli): add the context flag\",\n+        \"fix(cli): parse the option list\",\n+        \"docs: describe the context flag\",\n+        \"test(cli): cover the option list\",\n+        \"chore: bump the pinned versions\",\n+        \"fix(git): read the branch name\",\n+    ];\n+    let ctx = RepoContext::new(\n+        PathBuf::from(\"/repo\"),\n+        None,\n+        subjects.iter().map(|s| s.to_string()).collect(),\n+        vec![FileChange {\n+            status: ChangeStatus::Modified,\n+            path: \"src/git.rs\".into(),\n+            old_path: None,\n+        }],\n+    );\n+    ctx.with_history_files(vec![\n+        paths(&[\"src/cli/args.rs\"]),\n+        paths(&[\"src/cli/args.rs\"]),\n+        paths(&[\"README.md\"]),\n+        paths(&[\"tests/cli.rs\"]),\n+        paths(&[\"Cargo.lock\"]),\n+        paths(&[\"src/git.rs\"]),\n+    ])\n+}\n+\n+fn examples(kind: PromptExamples) -> PromptOptions {\n+    PromptOptions {\n+        examples: kind,\n+        ..PromptOptions::default()\n+    }\n+}\n+\n+#[test]\n+fn the_examples_are_the_recent_ones_unless_asked() {\n+    let ctx = examples_history();\n+    let recent = build(&ctx, &files(), &PromptOptions::default()).system;\n+    assert!(\n+        recent.contains(\"feat(cli): add the context flag\"),\n+        \"{recent}\"\n+    );\n+    assert!(\n+        recent.contains(\"chore: bump the pinned versions\"),\n+        \"{recent}\"\n+    );\n+    // The sixth commit is the only one that touched the staged file.\n+    assert!(\n+        !recent.contains(\"fix(git): read the branch name\"),\n+        \"{recent}\"\n+    );\n+\n+    let similar = build(&ctx, &files(), &examples(PromptExamples::Similar)).system;\n+    assert!(\n+        similar.contains(\"fix(git): read the branch name\"),\n+        \"{similar}\"\n+    );\n+    // The same number of examples, so the oldest recent one made room.\n+    assert!(\n+        !similar.contains(\"chore: bump the pinned versions\"),\n+        \"{similar}\"\n+    );\n+    let shown = |system: &str| {\n+        system\n+            .split(\"Recent subjects from this repository, follow their style:\\n\")\n+            .nth(1)\n+            .map_or(0, |examples| examples.lines().count())\n+    };\n+    assert_eq!((shown(&recent), shown(&similar)), (5, 5));\n+    // At most three close ones: the same here, as one commit is close.\n+    let mixed = build(&ctx, &files(), &examples(PromptExamples::Mixed)).system;\n+    assert_eq!(mixed, similar);\n+}\n+\n+#[test]\n+fn without_the_files_of_the_history_the_examples_are_the_recent_ones() {\n+    let ctx = RepoContext::new(\n+        PathBuf::from(\"/repo\"),\n+        None,\n+        examples_history().subjects,\n+        Vec::new(),\n+    );\n+    assert_eq!(\n+        build(&ctx, &files(), &examples(PromptExamples::Similar)),\n+        build(&ctx, &files(), &PromptOptions::default())\n+    );\n+}\n+\n+#[test]\n+fn the_examples_are_recorded_only_when_asked() {\n+    let json = serde_json::to_string(&PromptOptions::default()).unwrap();\n+    assert!(!json.contains(\"\\\"examples\\\"\"), \"{json}\");\n+    let json = serde_json::to_string(&examples(PromptExamples::Similar)).unwrap();\n+    assert!(json.contains(\"\\\"examples\\\":\\\"similar\\\"\"), \"{json}\");\n+    let read: PromptOptions = serde_json::from_str(&json).unwrap();\n+    assert_eq!(read, examples(PromptExamples::Similar));\n+}\n+\n /// Eight scopes whose commits touched three places each, `depth` directories deep.\n"
+      },
+      {
+        "path": "src/prompt/types.rs",
+        "old_path": null,
+        "lines": [
+          26,
+          0
+        ],
+        "hunks": "@@ -48,2 +48,24 @@ impl PromptRules {\n \n+/// Which of the repository's subjects the prompt shows as examples.\n+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]\n+#[serde(rename_all = \"snake_case\")]\n+pub enum PromptExamples {\n+    /// The most recent ones.\n+    #[default]\n+    Recent,\n+    /// The commits that touched the files closest to the staged ones, then\n+    /// the most recent, to evaluate whether similar changes teach the style\n+    /// better (training H14): the same number of examples, so the prompt\n+    /// keeps its size.\n+    Similar,\n+    /// As `Similar` with at most three, and the rest the most recent.\n+    Mixed,\n+}\n+\n+impl PromptExamples {\n+    pub fn is_recent(&self) -> bool {\n+        *self == Self::Recent\n+    }\n+}\n+\n /// How the scopes the repository uses are shown.\n@@ -111,2 +133,5 @@ pub struct PromptOptions {\n     pub scopes: PromptScopes,\n+    /// Left out of traces when recent, so older traces still read the same.\n+    #[serde(default, skip_serializing_if = \"PromptExamples::is_recent\")]\n+    pub examples: PromptExamples,\n     /// The longest subject, in columns (`style.subject_max`). Left out of\n@@ -137,2 +162,3 @@ impl Default for PromptOptions {\n             scopes: PromptScopes::List,\n+            examples: PromptExamples::Recent,\n             subject_max: message::SUBJECT_MAX,\n"
+      },
+      {
+        "path": "src/style/detect.rs",
+        "old_path": null,
+        "lines": [
+          86,
+          10
+        ],
+        "hunks": "@@ -90,2 +90,14 @@ fn detect_convention(subjects: &[&str]) -> Convention {\n \n+/// Whether a subject can show the repository's style: it follows the\n+/// convention, is no noise (merges, version bumps) and is neither too short\n+/// nor too long.\n+fn fits_example(subject: &str, convention: Convention) -> bool {\n+    let fits_convention = match convention {\n+        Convention::Conventional => parse_conventional(subject).is_some(),\n+        Convention::Gitmoji => is_gitmoji(subject),\n+        Convention::Free | Convention::Unknown => true,\n+    };\n+    fits_convention && !is_noise(subject) && EXAMPLE_LEN.contains(&subject.chars().count())\n+}\n+\n fn pick_examples(subjects: &[&str], convention: Convention) -> Vec<String> {\n@@ -96,12 +108,3 @@ fn pick_examples(subjects: &[&str], convention: Convention) -> Vec<String> {\n         }\n-        let fits_convention = match convention {\n-            Convention::Conventional => parse_conventional(subject).is_some(),\n-            Convention::Gitmoji => is_gitmoji(subject),\n-            Convention::Free | Convention::Unknown => true,\n-        };\n-        if fits_convention\n-            && !is_noise(subject)\n-            && EXAMPLE_LEN.contains(&subject.chars().count())\n-            && !examples.iter().any(|e| e == subject)\n-        {\n+        if fits_example(subject, convention) && !examples.iter().any(|e| e == subject) {\n             examples.push((*subject).to_owned());\n@@ -112,2 +115,75 @@ fn pick_examples(subjects: &[&str], convention: Convention) -> Vec<String> {\n \n+/// How close the files of a past commit are to the staged ones: for each\n+/// staged path, 3 if the commit touched it, else 2 if it touched a file of\n+/// its directory, else 1 if one of its top-level directory.\n+fn closeness(staged: &[&str], past: &[String]) -> usize {\n+    let top = |path: &str| path.split('/').next().unwrap_or_default().to_owned();\n+    staged\n+        .iter()\n+        .map(|s| {\n+            past.iter()\n+                .map(|f| {\n+                    if f == s {\n+                        3\n+                    } else if area(f) == area(s) {\n+                        2\n+                    } else if f.contains('/') && s.contains('/') && top(f) == top(s) {\n+                        1\n+                    } else {\n+                        0\n+                    }\n+                })\n+                .max()\n+                .unwrap_or(0)\n+        })\n+        .sum()\n+}\n+\n+/// The examples for a change to the `staged` paths, in the order of the\n+/// history: up to `similar` of the commits that touched the closest files\n+/// (those that touched none are not \"similar\"), completed with the most\n+/// recent ones to as many as [`pick_examples`] gives. `files` holds the\n+/// paths of each of `subjects`; without them (traces written before they\n+/// were collected) it is the recent ones.\n+pub fn similar_examples(\n+    subjects: &[String],\n+    files: &[Vec<String>],\n+    staged: &[&str],\n+    convention: Convention,\n+    similar: usize,\n+) -> Vec<String> {\n+    let recent: Vec<&str> = subjects.iter().map(String::as_str).collect();\n+    if files.len() != subjects.len() {\n+        return pick_examples(&recent, convention);\n+    }\n+    let mut eligible: Vec<usize> = Vec::new();\n+    for (i, subject) in subjects.iter().enumerate() {\n+        if fits_example(subject, convention) && !eligible.iter().any(|&j| subjects[j] == *subject) {\n+            eligible.push(i);\n+        }\n+    }\n+    let mut ranked: Vec<(usize, usize)> = eligible\n+        .iter()\n+        .map(|&i| (closeness(staged, &files[i]), i))\n+        .filter(|&(score, _)| score > 0)\n+        .collect();\n+    // Closest first, the more recent among equals.\n+    ranked.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));\n+    let mut chosen: Vec<usize> = ranked\n+        .into_iter()\n+        .take(similar.min(MAX_EXAMPLES))\n+        .map(|(_, i)| i)\n+        .collect();\n+    for &i in &eligible {\n+        if chosen.len() == MAX_EXAMPLES {\n+            break;\n+        }\n+        if !chosen.contains(&i) {\n+            chosen.push(i);\n+        }\n+    }\n+    chosen.sort_unstable();\n+    chosen.into_iter().map(|i| subjects[i].clone()).collect()\n+}\n+\n /// Subjects git writes for us (autosquash markers, reverts) and\n"
+      },
+      {
+        "path": "src/style/mod.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -16,3 +16,3 @@ mod types;\n \n-pub use detect::{detect, scope_areas};\n+pub use detect::{detect, scope_areas, similar_examples};\n pub use gitmoji::is_gitmoji;\n"
+      },
+      {
+        "path": "src/style/tests.rs",
+        "old_path": null,
+        "lines": [
+          174,
+          0
+        ],
+        "hunks": "@@ -6,2 +6,176 @@ mod tests {\n \n+    fn paths(lists: &[&[&str]]) -> Vec<Vec<String>> {\n+        lists\n+            .iter()\n+            .map(|p| p.iter().map(|s| s.to_string()).collect())\n+            .collect()\n+    }\n+\n+    fn strings(list: &[&str]) -> Vec<String> {\n+        list.iter().map(|s| s.to_string()).collect()\n+    }\n+\n+    #[test]\n+    fn examples_are_the_commits_that_touched_the_closest_files() {\n+        // Most recent first. The staged file is src/cli/args.rs.\n+        let subjects = strings(&[\n+            \"docs: describe the readme\",            // README.md: no relation\n+            \"fix(core): handle the empty diff\",     // src/core/diff.rs: same top directory\n+            \"feat(cli): add the examples flag\",     // src/cli/session.rs: same directory\n+            \"chore: update the lockfile please\",    // Cargo.lock: no relation\n+            \"feat(cli): parse the scopes option\",   // src/cli/args.rs: the same file\n+            \"test(cli): cover the cli arguments\",   // tests/cli.rs: no relation\n+            \"refactor(cli): split the args module\", // src/cli/args.rs, src/cli/mod.rs: the same file\n+        ]);\n+        let files = paths(&[\n+            &[\"README.md\"],\n+            &[\"src/core/diff.rs\"],\n+            &[\"src/cli/session.rs\"],\n+            &[\"Cargo.lock\"],\n+            &[\"src/cli/args.rs\"],\n+            &[\"tests/cli.rs\"],\n+            &[\"src/cli/args.rs\", \"src/cli/mod.rs\"],\n+        ]);\n+        let staged = [\"src/cli/args.rs\"];\n+        // The two commits of the same file (4, 6), the one of the directory (2), the one of the top\n+        // directory (1): four close ones, and the most recent (0) completes five; in history order.\n+        assert_eq!(\n+            similar_examples(&subjects, &files, &staged, Convention::Conventional, 5),\n+            [\n+                \"docs: describe the readme\",\n+                \"fix(core): handle the empty diff\",\n+                \"feat(cli): add the examples flag\",\n+                \"feat(cli): parse the scopes option\",\n+                \"refactor(cli): split the args module\",\n+            ]\n+        );\n+        // At most two close ones, the same file (4, 6), then the most recent (0, 1, 2).\n+        assert_eq!(\n+            similar_examples(&subjects, &files, &staged, Convention::Conventional, 2),\n+            [\n+                \"docs: describe the readme\",\n+                \"fix(core): handle the empty diff\",\n+                \"feat(cli): add the examples flag\",\n+                \"feat(cli): parse the scopes option\",\n+                \"refactor(cli): split the args module\",\n+            ]\n+        );\n+        // One close one: the most recent of the two with the same file (4), then the most recent.\n+        assert_eq!(\n+            similar_examples(&subjects, &files, &staged, Convention::Conventional, 1),\n+            [\n+                \"docs: describe the readme\",\n+                \"fix(core): handle the empty diff\",\n+                \"feat(cli): add the examples flag\",\n+                \"chore: update the lockfile please\",\n+                \"feat(cli): parse the scopes option\",\n+            ]\n+        );\n+    }\n+\n+    #[test]\n+    fn examples_for_unrelated_files_are_the_recent_ones() {\n+        let subjects = strings(&[\n+            \"feat(cli): add the first flag\",\n+            \"fix(cli): parse the second flag\",\n+            \"docs: describe the readme file\",\n+        ]);\n+        let files = paths(&[&[\"src/a.rs\"], &[\"src/b.rs\"], &[\"README.md\"]]);\n+        let recent = detect(&subjects).examples;\n+        assert_eq!(\n+            similar_examples(\n+                &subjects,\n+                &files,\n+                &[\"mise.toml\"],\n+                Convention::Conventional,\n+                5\n+            ),\n+            recent\n+        );\n+        // Without the files of the history (older traces), too.\n+        assert_eq!(\n+            similar_examples(&subjects, &[], &[\"src/a.rs\"], Convention::Conventional, 5),\n+            recent\n+        );\n+        assert!(similar_examples(&[], &[], &[\"a\"], Convention::Conventional, 5).is_empty());\n+    }\n+\n+    #[test]\n+    fn similar_examples_keep_the_filters_of_the_recent_ones() {\n+        // Noise, a repeat, a subject out of the convention and a too short one are not examples, close or not.\n+        let subjects = strings(&[\n+            \"Merge branch 'main' into feature\",\n+            \"fix(cli): parse the second flag\",\n+            \"fix(cli): parse the second flag\",\n+            \"update stuff in cli please\",\n+            \"fix: x\",\n+            \"feat(cli): add the first flag\",\n+        ]);\n+        let files = paths(&[\n+            &[\"src/cli/a.rs\"],\n+            &[\"src/cli/a.rs\"],\n+            &[\"src/cli/a.rs\"],\n+            &[\"src/cli/a.rs\"],\n+            &[\"src/cli/a.rs\"],\n+            &[\"src/cli/b.rs\"],\n+        ]);\n+        assert_eq!(\n+            similar_examples(\n+                &subjects,\n+                &files,\n+                &[\"src/cli/a.rs\"],\n+                Convention::Conventional,\n+                5\n+            ),\n+            [\n+                \"fix(cli): parse the second flag\",\n+                \"feat(cli): add the first flag\"\n+            ]\n+        );\n+        // A free convention keeps what is not conventional (but still not noise).\n+        assert_eq!(\n+            similar_examples(&subjects, &files, &[\"src/cli/a.rs\"], Convention::Free, 5)\n+                .iter()\n+                .filter(|s| s.starts_with(\"update\"))\n+                .count(),\n+            1\n+        );\n+    }\n+\n+    #[test]\n+    fn a_file_at_the_root_is_close_only_to_itself() {\n+        let subjects = strings(&[\n+            \"chore: bump the tool versions\",\n+            \"docs: describe the readme file\",\n+        ]);\n+        let files = paths(&[&[\"mise.toml\"], &[\"README.md\"]]);\n+        // `mise.toml` and `README.md` have no directory in common beyond the root.\n+        assert_eq!(\n+            similar_examples(\n+                &subjects,\n+                &files,\n+                &[\"mise.toml\"],\n+                Convention::Conventional,\n+                1\n+            ),\n+            [\n+                \"chore: bump the tool versions\",\n+                \"docs: describe the readme file\"\n+            ]\n+        );\n+        assert_eq!(\n+            similar_examples(\n+                &subjects,\n+                &files,\n+                &[\"README.md\"],\n+                Convention::Conventional,\n+                1\n+            ),\n+            [\n+                \"chore: bump the tool versions\",\n+                \"docs: describe the readme file\"\n+            ]\n+        );\n+    }\n+\n     #[test]\n"
+      },
+      {
+        "path": "tests/cli.rs",
+        "old_path": null,
+        "lines": [
+          85,
+          0
+        ],
+        "hunks": "@@ -473,2 +473,87 @@ fn the_scope_map_is_for_evaluation_and_replays() {\n \n+#[test]\n+fn similar_examples_are_for_evaluation_and_replay() {\n+    let repo = staged_repo();\n+    let (inputs, _) = recorded_inputs(&repo);\n+    let mut inputs: serde_json::Value = serde_json::from_str(&inputs).unwrap();\n+    // The staged file is main.rs, which only the oldest commit touched.\n+    inputs[\"subjects\"] = serde_json::json!([\n+        \"feat(cli): add the context flag\",\n+        \"fix(cli): parse the option list\",\n+        \"docs: describe the context flag\",\n+        \"test(cli): cover the option list\",\n+        \"chore: bump the pinned versions\",\n+        \"feat(entry): add the entry point\"\n+    ]);\n+    inputs[\"history_files\"] = serde_json::json!([\n+        [\"src/cli/args.rs\"],\n+        [\"src/cli/args.rs\"],\n+        [\"README.md\"],\n+        [\"tests/cli.rs\"],\n+        [\"Cargo.lock\"],\n+        [\"main.rs\"]\n+    ]);\n+    let dir = tempfile::TempDir::new().unwrap();\n+    let file = dir.path().join(\"inputs.jsonl\");\n+    std::fs::write(&file, format!(\"{inputs}\\n\")).unwrap();\n+    let path = file.to_str().unwrap();\n+\n+    let system = |extra: &[&str]| {\n+        let mut args = vec![\"prompt\", \"--inputs\", path];\n+        args.extend_from_slice(extra);\n+        let output = smart_commit(&args, dir.path());\n+        assert!(output.status.success(), \"{}\", stderr(&output));\n+        let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();\n+        prompt[\"system\"].as_str().unwrap().to_owned()\n+    };\n+    let recent = system(&[]);\n+    assert!(\n+        recent.contains(\"chore: bump the pinned versions\"),\n+        \"{recent}\"\n+    );\n+    assert!(\n+        !recent.contains(\"feat(entry): add the entry point\"),\n+        \"{recent}\"\n+    );\n+    assert_eq!(system(&[\"--examples\", \"recent\"]), recent);\n+    for kind in [\"similar\", \"mixed\"] {\n+        let similar = system(&[\"--examples\", kind]);\n+        assert!(\n+            similar.contains(\"feat(entry): add the entry point\"),\n+            \"{similar}\"\n+        );\n+        assert!(\n+            !similar.contains(\"chore: bump the pinned versions\"),\n+            \"{similar}\"\n+        );\n+    }\n+\n+    // The option is recorded, so the trace replays with the same prompt.\n+    let output = smart_commit(\n+        &[\n+            \"eval\",\n+            path,\n+            \"--examples\",\n+            \"similar\",\n+            \"--backend\",\n+            \"mock\",\n+            \"--mock-response\",\n+            \"feat(cli): add the entry point\",\n+        ],\n+        dir.path(),\n+    );\n+    assert!(output.status.success(), \"{}\", stderr(&output));\n+    let line = stdout(&output).lines().next().unwrap().to_owned();\n+    assert!(line.contains(\"\\\"examples\\\":\\\"similar\\\"\"), \"{line}\");\n+    let trace = dir.path().join(\"trace.json\");\n+    std::fs::write(&trace, line).unwrap();\n+    let output = smart_commit(&[\"replay\", trace.to_str().unwrap()], dir.path());\n+    assert!(output.status.success(), \"{}\", stderr(&output));\n+    assert!(\n+        stdout(&output).starts_with(\"reproduced:\"),\n+        \"{}\",\n+        stdout(&output)\n+    );\n+}\n+\n #[test]\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "feat(prompt): add examples to the prompt",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, test, refactor.\n- Scopes used here: training, generate. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(generate): retry when a subject ends in the middle of a sentence\ntest: add a trace of a subject cut off in the middle of a sentence\nfeat(training): simulate conformal prediction sets for the type menu\ndocs(training): measure how often the fourth type is the only right one\nfeat(training): simulate a menu of at most three types and record it fails\n",
+          "user": "Files changed:\ndocs/architecture.md | +5 -1\ndocs/usage.md | +4 -1\nsrc/cli/args.rs | +20 -1\nsrc/config/store.rs | +3 -1\nsrc/prompt/mod.rs | +2 -1\nsrc/prompt/system.rs | +26 -5\nsrc/prompt/tests.rs | +102 -0\nsrc/prompt/types.rs | +26 -0\nsrc/style/detect.rs | +86 -10\nsrc/style/mod.rs | +1 -1\nsrc/style/tests.rs | +174 -0\ntests/cli.rs | +85 -0\n\nDiff:\n--- src/cli/args.rs\n@@ -7,3 +7,3 @@ use clap::{Args, ValueEnum};\n use smart_commit::backend::device::Target;\n-use smart_commit::prompt::{DiffFormat, PromptOptions, PromptRules, PromptScopes};\n+use smart_commit::prompt::{DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes};\n[... 29 more lines]\n--- src/config/store.rs\n@@ -16,3 +16,3 @@ use crate::paths;\n use crate::prompt::{\n-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptOptions, PromptRules, PromptScopes,\n+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes,\n[... 6 more lines]\n--- src/prompt/mod.rs\n@@ -14,3 +14,4 @@ pub use system::listed_types;\n pub use types::{\n-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptOptions, PromptRules, PromptScopes,\n+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptExamples, PromptOptions, PromptRules,\n+    PromptScopes,\n };\n--- src/prompt/types.rs\n@@ -48,2 +48,24 @@ impl PromptRules {\n \n+/// Which of the repository's subjects the prompt shows as examples.\n+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]\n[... 31 more lines]\n--- src/style/mod.rs\n@@ -16,3 +16,3 @@ mod types;\n \n-pub use detect::{detect, scope_areas};\n+pub use detect::{detect, scope_areas, similar_examples};\n pub use gitmoji::is_gitmoji;\n\n(10 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "feat(prompt): add examples to the prompt",
+        "rejected": null
+      }
+    ]
+  }
+}
