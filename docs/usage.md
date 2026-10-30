@@ -49,6 +49,7 @@ Installer options (after `bash -s --` when piping):
 | `--prefix DIR` | install in `DIR/bin` and `DIR/share` |
 | `--no-setup` | only install; run `smart-commit setup` later |
 | `--update` | install only if the release is not the version installed, without the setup; llama.cpp follows the new release's build (what `smart-commit update` runs) |
+| `--verify` | also verify the download's build provenance with `gh` (see [Verify a download](#verify-a-download)) |
 | `--yes` | answer yes to the setup's questions |
 | `--uninstall` | remove smart-commit (models, caches and config are kept) |
 | `--purge` | `--uninstall`, plus the models, llama.cpp, the benchmark, the caches and the config |
@@ -90,6 +91,29 @@ git clone https://github.com/Lucas-BRT/smart-commit && cd smart-commit
 cargo build --release --locked      # the toolchain comes from rust-toolchain.toml
 target/release/smart-commit setup
 ```
+
+### Verify a download
+
+The installer always checks the archive against the release's `SHA256SUMS`.
+That file comes from the same place as the archive, so it proves the download
+is not corrupted; it does not prove who built it.
+
+Releases after 0.14.0 also carry a GitHub artifact attestation (signed build
+provenance, made by the release workflow). With the [GitHub CLI](https://cli.github.com):
+
+```bash
+gh attestation verify smart-commit-x86_64-unknown-linux-gnu.tar.gz --repo Lucas-BRT/smart-commit
+```
+
+or let the installer do it after the `SHA256SUMS` check, failing if `gh` is
+missing or the verification fails:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash -s -- --verify
+```
+
+Releases up to 0.14.0 have no attestation, so `--verify` with an older
+`--version` fails with "no attestation".
 
 ## Update
 

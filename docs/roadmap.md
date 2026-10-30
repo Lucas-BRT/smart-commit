@@ -2,6 +2,8 @@
 
 ## Done
 
+- Build provenance: the release workflow attests the assets (GitHub artifact
+  attestations), and `install.sh --verify` checks them with `gh`.
 - Repository style detection, diff compaction, prompt and sanitization.
 - CLI with retry and fallback, traces and `replay`.
 - A retry when the reply repeats a history subject, and lockfile-only
