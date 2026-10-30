@@ -20,14 +20,11 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from common import type_of  # noqa: E402
+
 WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]{1,24}")
-TYPE = re.compile(r"^([A-Za-z]+)(\([^)]*\))?!?:")
 CHUNK = 4000
-
-
-def type_of(subject: str | None) -> str | None:
-    m = TYPE.match(subject or "")
-    return m.group(1).lower() if m else None
 
 
 def bucket(n: int) -> int:

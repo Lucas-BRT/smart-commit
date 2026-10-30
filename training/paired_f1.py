@@ -12,10 +12,12 @@ The words are the lowercase runs of letters and digits, as `sc-training score` c
 
 import collections
 import json
-import random
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from common import bootstrap, bounds  # noqa: E402
 
 BOOTSTRAPS = 2000
 SEED = 7
@@ -40,9 +42,8 @@ def interval(diffs: list[float]) -> tuple[float, float, float]:
     n = len(diffs)
     if n == 0:
         return 0.0, 0.0, 0.0
-    rng = random.Random(SEED)
-    means = sorted(sum(diffs[rng.randrange(n)] for _ in range(n)) / n for _ in range(BOOTSTRAPS))
-    return sum(diffs) / n, means[int(0.025 * BOOTSTRAPS)], means[int(0.975 * BOOTSTRAPS) - 1]
+    lo, hi = bounds(bootstrap(diffs, lambda sample: sum(sample) / n, SEED, BOOTSTRAPS))
+    return sum(diffs) / n, lo, hi
 
 
 def compare(targets: list[str], sets: list[str], arm: list[str], control: list[str]) -> dict:

@@ -26,6 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from audit_types import batches_for, render_case  # noqa: E402
+from common import bootstrap, bounds  # noqa: E402
 
 PASSES = ("A", "B")
 BATCHES = 4
@@ -170,10 +171,8 @@ def net(outcomes: list[str]) -> float:
 
 
 def interval(outcomes: list[str]) -> tuple[float, float, float]:
-    rng = random.Random(SEED)
-    n = len(outcomes)
-    values = sorted(net([outcomes[rng.randrange(n)] for _ in range(n)]) for _ in range(BOOTSTRAPS)) if n else [0.0]
-    return net(outcomes), values[int(0.025 * len(values))], values[int(0.975 * len(values)) - 1]
+    values = bootstrap(outcomes, net, SEED, BOOTSTRAPS) if outcomes else [0.0]
+    return (net(outcomes), *bounds(values))
 
 
 def agreement(judgments: list[dict]) -> dict:
