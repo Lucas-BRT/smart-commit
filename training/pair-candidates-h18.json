@@ -1,0 +1,2706 @@
+{
+ "seed": 29,
+ "focus": "v03-1.5b",
+ "cases": [
+  {
+   "id": "c186",
+   "line": 1,
+   "comparisons": [
+    {
+     "id": "c186-1",
+     "other": "author",
+     "focus_text": "docs: update mqtt client to reflect new default will topic",
+     "other_text": "fix: change default hass birth/will topic",
+     "auto_tie": false
+    },
+    {
+     "id": "c186-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: update mqtt client to reflect new default will topic",
+     "other_text": "fix: fix MQTT topic for Hass 4.0.0",
+     "auto_tie": false
+    },
+    {
+     "id": "c186-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: update mqtt client to reflect new default will topic",
+     "other_text": "feat: use homeassistant/status as default MQTT topic for birth/will",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c126",
+   "line": 4,
+   "comparisons": [
+    {
+     "id": "c126-1",
+     "other": "author",
+     "focus_text": "chore: update package lock file",
+     "other_text": "feat: support multi state",
+     "auto_tie": false
+    },
+    {
+     "id": "c126-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: update package lock file",
+     "other_text": "chore: update react-compat-moveable package",
+     "auto_tie": false
+    },
+    {
+     "id": "c126-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: update package lock file",
+     "other_text": "fix: fix moveable version",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c678",
+   "line": 6,
+   "comparisons": [
+    {
+     "id": "c678-1",
+     "other": "author",
+     "focus_text": "chore(docs): upgrade nuxt to 2.0",
+     "other_text": "build: setup install config",
+     "auto_tie": false
+    },
+    {
+     "id": "c678-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore(docs): upgrade nuxt to 2.0",
+     "other_text": "chore: update chakra-ui-docs",
+     "auto_tie": false
+    },
+    {
+     "id": "c678-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore(docs): upgrade nuxt to 2.0",
+     "other_text": "chore(docs): upgrade to vue 3",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c460",
+   "line": 12,
+   "comparisons": [
+    {
+     "id": "c460-1",
+     "other": "author",
+     "focus_text": "fix(ui): add command class version to node details",
+     "other_text": "feat(ui): add cc version",
+     "auto_tie": false
+    },
+    {
+     "id": "c460-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix(ui): add command class version to node details",
+     "other_text": "fix(ui): add configuration CC group to node details",
+     "auto_tie": false
+    },
+    {
+     "id": "c460-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix(ui): add command class version to node details",
+     "other_text": "fix(ui): show command class version in node details",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c343",
+   "line": 13,
+   "comparisons": [
+    {
+     "id": "c343-1",
+     "other": "author",
+     "focus_text": "fix: fix app-json plugin function name",
+     "other_text": "fix: correct variable declaration",
+     "auto_tie": false
+    },
+    {
+     "id": "c343-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix app-json plugin function name",
+     "other_text": "fix: use correct image variable name in app-json",
+     "auto_tie": false
+    },
+    {
+     "id": "c343-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix app-json plugin function name",
+     "other_text": "fix: fix typo in app-json plugin",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c246",
+   "line": 14,
+   "comparisons": [
+    {
+     "id": "c246-1",
+     "other": "author",
+     "focus_text": "fix: fix app-json scale command",
+     "other_text": "fix: correct ps-can-scale guard",
+     "auto_tie": false
+    },
+    {
+     "id": "c246-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix app-json scale command",
+     "other_text": "fix: fix app-json scale command",
+     "auto_tie": true
+    },
+    {
+     "id": "c246-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix app-json scale command",
+     "other_text": "fix: only allow two arguments to ps-set-scale",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c203",
+   "line": 15,
+   "comparisons": [
+    {
+     "id": "c203-1",
+     "other": "author",
+     "focus_text": "chore: fix trailing space in ps:scale function",
+     "other_text": "chore: return early",
+     "auto_tie": false
+    },
+    {
+     "id": "c203-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: fix trailing space in ps:scale function",
+     "other_text": "chore: fix trailing space in ps function",
+     "auto_tie": false
+    },
+    {
+     "id": "c203-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: fix trailing space in ps:scale function",
+     "other_text": "chore: fix trailing space in function",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c975",
+   "line": 16,
+   "comparisons": [
+    {
+     "id": "c975-1",
+     "other": "author",
+     "focus_text": "fix: Parse raw values as buffer",
+     "other_text": "fix: Buffer support on write requests",
+     "auto_tie": false
+    },
+    {
+     "id": "c975-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: Parse raw values as buffer",
+     "other_text": "fix: handle raw payload in gateway",
+     "auto_tie": false
+    },
+    {
+     "id": "c975-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: Parse raw values as buffer",
+     "other_text": "fix: Fix raw values not being parsed correctly",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c502",
+   "line": 17,
+   "comparisons": [
+    {
+     "id": "c502-1",
+     "other": "author",
+     "focus_text": "fix: mark nodes as initialized",
+     "other_text": "fix: prevent reset poll timers on node status updates",
+     "auto_tie": false
+    },
+    {
+     "id": "c502-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: mark nodes as initialized",
+     "other_text": "fix: add inited flag to Z2MNode",
+     "auto_tie": false
+    },
+    {
+     "id": "c502-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: mark nodes as initialized",
+     "other_text": "fix: mark nodes as initialized when added to the client",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c644",
+   "line": 20,
+   "comparisons": [
+    {
+     "id": "c644-1",
+     "other": "author",
+     "focus_text": "fix: isListening instead of isBatteryPowered",
+     "other_text": "fix: use `isListening` node prop to distinguish battery from mains",
+     "auto_tie": false
+    },
+    {
+     "id": "c644-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: isListening instead of isBatteryPowered",
+     "other_text": "fix: use isListening instead of isBatteryPowered",
+     "auto_tie": false
+    },
+    {
+     "id": "c644-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: isListening instead of isBatteryPowered",
+     "other_text": "fix: isBatteryPowered -> isListening",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c506",
+   "line": 24,
+   "comparisons": [
+    {
+     "id": "c506-1",
+     "other": "author",
+     "focus_text": "fix: trim the image repo from the app image name",
+     "other_text": "fix: set correct variable for app image repo",
+     "auto_tie": false
+    },
+    {
+     "id": "c506-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: trim the image repo from the app image name",
+     "other_text": "fix: use correct image repo for deploying app image",
+     "auto_tie": false
+    },
+    {
+     "id": "c506-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: trim the image repo from the app image name",
+     "other_text": "fix: update plugins/common/common.go",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c188",
+   "line": 28,
+   "comparisons": [
+    {
+     "id": "c188-1",
+     "other": "author",
+     "focus_text": "feat: support pass drag area",
+     "other_text": "feat: add passDragArea prop",
+     "auto_tie": false
+    },
+    {
+     "id": "c188-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: support pass drag area",
+     "other_text": "feat: add passDragArea prop for dragArea",
+     "auto_tie": false
+    },
+    {
+     "id": "c188-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: support pass drag area",
+     "other_text": "feat: support pass drag area",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c492",
+   "line": 29,
+   "comparisons": [
+    {
+     "id": "c492-1",
+     "other": "author",
+     "focus_text": "fix: rule based selector bug",
+     "other_text": "fix: skill selector turn on 5th turn",
+     "auto_tie": false
+    },
+    {
+     "id": "c492-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: rule based selector bug",
+     "other_text": "fix: rule based selector utterance limit",
+     "auto_tie": false
+    },
+    {
+     "id": "c492-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: rule based selector bug",
+     "other_text": "fix: rule based selector bug",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c303",
+   "line": 31,
+   "comparisons": [
+    {
+     "id": "c303-1",
+     "other": "author",
+     "focus_text": "fix: remove unused check for app name",
+     "other_text": "fix: drop appName check in apps:report",
+     "auto_tie": false
+    },
+    {
+     "id": "c303-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: remove unused check for app name",
+     "other_text": "fix: remove app name check from rename command",
+     "auto_tie": false
+    },
+    {
+     "id": "c303-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: remove unused check for app name",
+     "other_text": "fix: remove unnecessary check for empty app name",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c470",
+   "line": 33,
+   "comparisons": [
+    {
+     "id": "c470-1",
+     "other": "author",
+     "focus_text": "feat(accordion): allow multiple items to be expanded at once",
+     "other_text": "feat(accordion): allow multiple",
+     "auto_tie": false
+    },
+    {
+     "id": "c470-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(accordion): allow multiple items to be expanded at once",
+     "other_text": "feat(accordion): add expand multiple items",
+     "auto_tie": false
+    },
+    {
+     "id": "c470-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(accordion): allow multiple items to be expanded at once",
+     "other_text": "feat(accordion): allow multiple items to be expanded at once",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c909",
+   "line": 35,
+   "comparisons": [
+    {
+     "id": "c909-1",
+     "other": "author",
+     "focus_text": "fix: fix dp formatter for text",
+     "other_text": "fix: list of segments with deepcopy",
+     "auto_tie": false
+    },
+    {
+     "id": "c909-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix dp formatter for text",
+     "other_text": "fix: fix dp_formatter text",
+     "auto_tie": false
+    },
+    {
+     "id": "c909-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix dp formatter for text",
+     "other_text": "fix: fix dp formatter to not overwrite text with annotations",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c271",
+   "line": 36,
+   "comparisons": [
+    {
+     "id": "c271-1",
+     "other": "author",
+     "focus_text": "fix: remove templates from server.py",
+     "other_text": "fix: flags=re.IGNORECASE to compile",
+     "auto_tie": false
+    },
+    {
+     "id": "c271-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: remove templates from server.py",
+     "other_text": "fix: spelling preprocessing templates",
+     "auto_tie": false
+    },
+    {
+     "id": "c271-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: remove templates from server.py",
+     "other_text": "feat: add new templates",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c201",
+   "line": 38,
+   "comparisons": [
+    {
+     "id": "c201-1",
+     "other": "author",
+     "focus_text": "fix: add image name to deploy command",
+     "other_text": "fix: set IMAGE variable correctly",
+     "auto_tie": false
+    },
+    {
+     "id": "c201-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: add image name to deploy command",
+     "other_text": "fix: use app image name in deploy command",
+     "auto_tie": false
+    },
+    {
+     "id": "c201-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: add image name to deploy command",
+     "other_text": "fix: get the image name from the app config",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c260",
+   "line": 43,
+   "comparisons": [
+    {
+     "id": "c260-1",
+     "other": "author",
+     "focus_text": "chore: fix vite plugin",
+     "other_text": "fix: fix require error",
+     "auto_tie": false
+    },
+    {
+     "id": "c260-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: fix vite plugin",
+     "other_text": "chore: add vite plugin for build",
+     "auto_tie": false
+    },
+    {
+     "id": "c260-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: fix vite plugin",
+     "other_text": "chore: fix the vite plugin build error",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c921",
+   "line": 44,
+   "comparisons": [
+    {
+     "id": "c921-1",
+     "other": "author",
+     "focus_text": "docs: add execute scene to mqtt guide",
+     "other_text": "docs: add example api request",
+     "auto_tie": false
+    },
+    {
+     "id": "c921-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: add execute scene to mqtt guide",
+     "other_text": "docs: add mqtt scene example",
+     "auto_tie": false
+    },
+    {
+     "id": "c921-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: add execute scene to mqtt guide",
+     "other_text": "docs(mqtt): add execute scene example",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c709",
+   "line": 49,
+   "comparisons": [
+    {
+     "id": "c709-1",
+     "other": "author",
+     "focus_text": "fix: stop inclusion on error",
+     "other_text": "fix: prevent stopInclusion/Exclusion to throw",
+     "auto_tie": false
+    },
+    {
+     "id": "c709-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: stop inclusion on error",
+     "other_text": "fix: stopInclusion and stopExclusion callbacks",
+     "auto_tie": false
+    },
+    {
+     "id": "c709-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: stop inclusion on error",
+     "other_text": "fix: stop inclusion and exclusion on error",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c121",
+   "line": 50,
+   "comparisons": [
+    {
+     "id": "c121-1",
+     "other": "author",
+     "focus_text": "feat: add bot utterance to state manager",
+     "other_text": "feat: reformat state schema",
+     "auto_tie": false
+    },
+    {
+     "id": "c121-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add bot utterance to state manager",
+     "other_text": "fix: fix state manager for bot response",
+     "auto_tie": false
+    },
+    {
+     "id": "c121-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add bot utterance to state manager",
+     "other_text": "feat: add bot utterance to state manager",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c333",
+   "line": 53,
+   "comparisons": [
+    {
+     "id": "c333-1",
+     "other": "author",
+     "focus_text": "docs: update readme",
+     "other_text": "docs: update docker iamge",
+     "auto_tie": false
+    },
+    {
+     "id": "c333-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: update readme",
+     "other_text": "docs: update readme",
+     "auto_tie": true
+    },
+    {
+     "id": "c333-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: update readme",
+     "other_text": "docs: update readme",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c535",
+   "line": 54,
+   "comparisons": [
+    {
+     "id": "c535-1",
+     "other": "author",
+     "focus_text": "tests: fix git clone tests",
+     "other_text": "chore: minor updates to tests",
+     "auto_tie": false
+    },
+    {
+     "id": "c535-2",
+     "other": "v03-0.5b",
+     "focus_text": "tests: fix git clone tests",
+     "other_text": "tests: fix git clone test",
+     "auto_tie": false
+    },
+    {
+     "id": "c535-3",
+     "other": "v01-1.5b",
+     "focus_text": "tests: fix git clone tests",
+     "other_text": "tests: fix git clone tests",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c692",
+   "line": 61,
+   "comparisons": [
+    {
+     "id": "c692-1",
+     "other": "author",
+     "focus_text": "fix: set hostname for dokku",
+     "other_text": "feat: set the debconf value for the global hostname",
+     "auto_tie": false
+    },
+    {
+     "id": "c692-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: set hostname for dokku",
+     "other_text": "fix: set hostname in my init script",
+     "auto_tie": false
+    },
+    {
+     "id": "c692-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: set hostname for dokku",
+     "other_text": "fix: set hostname for dokku",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c781",
+   "line": 63,
+   "comparisons": [
+    {
+     "id": "c781-1",
+     "other": "author",
+     "focus_text": "fix(table): fix table header style",
+     "other_text": "fix(table): cell content does not wrap",
+     "auto_tie": false
+    },
+    {
+     "id": "c781-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix(table): fix table header style",
+     "other_text": "fix(table): table style",
+     "auto_tie": false
+    },
+    {
+     "id": "c781-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix(table): fix table header style",
+     "other_text": "fix(table): fix table header background color",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c807",
+   "line": 64,
+   "comparisons": [
+    {
+     "id": "c807-1",
+     "other": "author",
+     "focus_text": "test: update logs test",
+     "other_text": "fix: correct test check",
+     "auto_tie": false
+    },
+    {
+     "id": "c807-2",
+     "other": "v03-0.5b",
+     "focus_text": "test: update logs test",
+     "other_text": "test: fix logs test for computed maxSize",
+     "auto_tie": false
+    },
+    {
+     "id": "c807-3",
+     "other": "v01-1.5b",
+     "focus_text": "test: update logs test",
+     "other_text": "test: update logs.bats",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c179",
+   "line": 68,
+   "comparisons": [
+    {
+     "id": "c179-1",
+     "other": "author",
+     "focus_text": "feat: add search component",
+     "other_text": "fix: remove spaces before command output",
+     "auto_tie": false
+    },
+    {
+     "id": "c179-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add search component",
+     "other_text": "feat: add search component",
+     "auto_tie": true
+    },
+    {
+     "id": "c179-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add search component",
+     "other_text": "feat: add search bar to inputs page",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c887",
+   "line": 70,
+   "comparisons": [
+    {
+     "id": "c887-1",
+     "other": "author",
+     "focus_text": "fix: add dff skills to link_to_skill2i_like_to_talk",
+     "other_text": "fix: update links from friendship skill",
+     "auto_tie": false
+    },
+    {
+     "id": "c887-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: add dff skills to link_to_skill2i_like_to_talk",
+     "other_text": "feat: add dff skills",
+     "auto_tie": false
+    },
+    {
+     "id": "c887-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: add dff skills to link_to_skill2i_like_to_talk",
+     "other_text": "fix: ask me something - ask linkto with conf 2",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c967",
+   "line": 71,
+   "comparisons": [
+    {
+     "id": "c967-1",
+     "other": "author",
+     "focus_text": "fix: ignore bad https port mapping in nginx build-config",
+     "other_text": "fix: ignore https mappings when no ssl certificate exists",
+     "auto_tie": false
+    },
+    {
+     "id": "c967-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: ignore bad https port mapping in nginx build-config",
+     "other_text": "fix: ignore https port mapping for nginx vhosts",
+     "auto_tie": false
+    },
+    {
+     "id": "c967-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: ignore bad https port mapping in nginx build-config",
+     "other_text": "fix: ignore bad https port mapping",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c831",
+   "line": 74,
+   "comparisons": [
+    {
+     "id": "c831-1",
+     "other": "author",
+     "focus_text": "docs: add other methods to getting started page",
+     "other_text": "docs: fix link in other-methods.md",
+     "auto_tie": false
+    },
+    {
+     "id": "c831-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: add other methods to getting started page",
+     "other_text": "docs: add other methods to getting started page",
+     "auto_tie": true
+    },
+    {
+     "id": "c831-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: add other methods to getting started page",
+     "other_text": "docs: add link to other methods",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c241",
+   "line": 77,
+   "comparisons": [
+    {
+     "id": "c241-1",
+     "other": "author",
+     "focus_text": "fix: fix moveable manager not work in IE",
+     "other_text": "fix: ignore document for firefox",
+     "auto_tie": false
+    },
+    {
+     "id": "c241-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix moveable manager not work in IE",
+     "other_text": "fix: fix moveable class check",
+     "auto_tie": false
+    },
+    {
+     "id": "c241-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix moveable manager not work in IE",
+     "other_text": "fix: fix moveable not work in IE",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c174",
+   "line": 78,
+   "comparisons": [
+    {
+     "id": "c174-1",
+     "other": "author",
+     "focus_text": "chore: remove Collapse component",
+     "other_text": "chore: improve Collapse",
+     "auto_tie": false
+    },
+    {
+     "id": "c174-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: remove Collapse component",
+     "other_text": "feat: add Collapse component",
+     "auto_tie": false
+    },
+    {
+     "id": "c174-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: remove Collapse component",
+     "other_text": "chore: improve Collapse exports",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c244",
+   "line": 79,
+   "comparisons": [
+    {
+     "id": "c244-1",
+     "other": "author",
+     "focus_text": "chore: add issue templates",
+     "other_text": "chore: remove title from issues template",
+     "auto_tie": false
+    },
+    {
+     "id": "c244-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: add issue templates",
+     "other_text": "chore: add issue templates",
+     "auto_tie": true
+    },
+    {
+     "id": "c244-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: add issue templates",
+     "other_text": "chore: add issue templates",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c206",
+   "line": 81,
+   "comparisons": [
+    {
+     "id": "c206-1",
+     "other": "author",
+     "focus_text": "tests: fix nginx vhost test",
+     "other_text": "fix: correct counts",
+     "auto_tie": false
+    },
+    {
+     "id": "c206-2",
+     "other": "v03-0.5b",
+     "focus_text": "tests: fix nginx vhost test",
+     "other_text": "tests: fix hsts test",
+     "auto_tie": false
+    },
+    {
+     "id": "c206-3",
+     "other": "v01-1.5b",
+     "focus_text": "tests: fix nginx vhost test",
+     "other_text": "tests: update count to 1 to handle the fact that now the nginx config is",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c753",
+   "line": 84,
+   "comparisons": [
+    {
+     "id": "c753-1",
+     "other": "author",
+     "focus_text": "feat(menu): added menu component",
+     "other_text": "feat(menu): added initial work on menu component",
+     "auto_tie": false
+    },
+    {
+     "id": "c753-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(menu): added menu component",
+     "other_text": "feat(menu): added menu component",
+     "auto_tie": true
+    },
+    {
+     "id": "c753-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(menu): added menu component",
+     "other_text": "feat(menu): added menu component",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c375",
+   "line": 85,
+   "comparisons": [
+    {
+     "id": "c375-1",
+     "other": "author",
+     "focus_text": "fix: fix the ports-set command",
+     "other_text": "fix: correct issue in proxy:ports-set invocation",
+     "auto_tie": false
+    },
+    {
+     "id": "c375-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix the ports-set command",
+     "other_text": "fix: ports set command is correct",
+     "auto_tie": false
+    },
+    {
+     "id": "c375-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix the ports-set command",
+     "other_text": "fix: fix typo in ports-set command",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c590",
+   "line": 86,
+   "comparisons": [
+    {
+     "id": "c590-1",
+     "other": "author",
+     "focus_text": "docs: add migration guide for 0.10 version",
+     "other_text": "docs: add links to migration guides",
+     "auto_tie": false
+    },
+    {
+     "id": "c590-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: add migration guide for 0.10 version",
+     "other_text": "docs: add migration guides for 0.8, 0.9 and 0.10",
+     "auto_tie": false
+    },
+    {
+     "id": "c590-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: add migration guide for 0.10 version",
+     "other_text": "docs: add migration guides to getting started page",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c520",
+   "line": 89,
+   "comparisons": [
+    {
+     "id": "c520-1",
+     "other": "author",
+     "focus_text": "feat: add usage endpoint",
+     "other_text": "feat: add disk usage information to the sidebar",
+     "auto_tie": false
+    },
+    {
+     "id": "c520-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add usage endpoint",
+     "other_text": "feat: disk usage",
+     "auto_tie": false
+    },
+    {
+     "id": "c520-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add usage endpoint",
+     "other_text": "feat: add usage endpoint",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c207",
+   "line": 90,
+   "comparisons": [
+    {
+     "id": "c207-1",
+     "other": "author",
+     "focus_text": "fix: add cobotqa to response selectors",
+     "other_text": "fix: revert to dev version",
+     "auto_tie": false
+    },
+    {
+     "id": "c207-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: add cobotqa to response selectors",
+     "other_text": "fix: add cobotqa to skill_names",
+     "auto_tie": false
+    },
+    {
+     "id": "c207-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: add cobotqa to response selectors",
+     "other_text": "feat: add cobotqa to response selectors",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c830",
+   "line": 92,
+   "comparisons": [
+    {
+     "id": "c830-1",
+     "other": "author",
+     "focus_text": "docs: Add link to zwave event info",
+     "other_text": "docs: Zwave events link",
+     "auto_tie": false
+    },
+    {
+     "id": "c830-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: Add link to zwave event info",
+     "other_text": "docs: Add link to zwave events docs",
+     "auto_tie": false
+    },
+    {
+     "id": "c830-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: Add link to zwave event info",
+     "other_text": "docs: Add link to zwave event info",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c694",
+   "line": 93,
+   "comparisons": [
+    {
+     "id": "c694-1",
+     "other": "author",
+     "focus_text": "docs: fix getting started page",
+     "other_text": "docs: added docs for using Chakra UI Vue CLI plugin",
+     "auto_tie": false
+    },
+    {
+     "id": "c694-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: fix getting started page",
+     "other_text": "docs: update docs for breakpoints",
+     "auto_tie": false
+    },
+    {
+     "id": "c694-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: fix getting started page",
+     "other_text": "docs: fix getting started page",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c914",
+   "line": 95,
+   "comparisons": [
+    {
+     "id": "c914-1",
+     "other": "author",
+     "focus_text": "feat: add translateZ prop to Default options",
+     "other_text": "feat: add translateZ props",
+     "auto_tie": false
+    },
+    {
+     "id": "c914-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add translateZ prop to Default options",
+     "other_text": "feat: add translateZ property to moveable",
+     "auto_tie": false
+    },
+    {
+     "id": "c914-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add translateZ prop to Default options",
+     "other_text": "feat: add translateZ prop",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c895",
+   "line": 98,
+   "comparisons": [
+    {
+     "id": "c895-1",
+     "other": "author",
+     "focus_text": "fix: remove the isHerokuishContainer parameter from the function",
+     "other_text": "refactor: remove unused IS_HEROKUISH_CONTAINER argument",
+     "auto_tie": false
+    },
+    {
+     "id": "c895-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: remove the isHerokuishContainer parameter from the function",
+     "other_text": "fix: remove common.GetContainerIpaddress",
+     "auto_tie": false
+    },
+    {
+     "id": "c895-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: remove the isHerokuishContainer parameter from the function",
+     "other_text": "fix: remove the isHerokuishContainer parameter from the trigger",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c775",
+   "line": 102,
+   "comparisons": [
+    {
+     "id": "c775-1",
+     "other": "author",
+     "focus_text": "chore: fix ci workflow",
+     "other_text": "fix: intsall ci dependencies in correct job",
+     "auto_tie": false
+    },
+    {
+     "id": "c775-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: fix ci workflow",
+     "other_text": "chore: remove ci-dependencies action",
+     "auto_tie": false
+    },
+    {
+     "id": "c775-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: fix ci workflow",
+     "other_text": "ci: fix order of actions",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c856",
+   "line": 103,
+   "comparisons": [
+    {
+     "id": "c856-1",
+     "other": "author",
+     "focus_text": "fix: correct the default value for config_export",
+     "other_text": "fix: revert guard and pass app arg to config_export",
+     "auto_tie": false
+    },
+    {
+     "id": "c856-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: correct the default value for config_export",
+     "other_text": "fix: use app export in config_export",
+     "auto_tie": false
+    },
+    {
+     "id": "c856-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: correct the default value for config_export",
+     "other_text": "fix: update plugins/config/functions",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c989",
+   "line": 104,
+   "comparisons": [
+    {
+     "id": "c989-1",
+     "other": "author",
+     "focus_text": "feat: add event plugins for scheduler events",
+     "other_text": "fix: ensure all the scheduler hooks are output in event logs",
+     "auto_tie": false
+    },
+    {
+     "id": "c989-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add event plugins for scheduler events",
+     "other_text": "chore: remove old scheduler plugins",
+     "auto_tie": false
+    },
+    {
+     "id": "c989-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add event plugins for scheduler events",
+     "other_text": "feat: implement event plugins for scheduler events",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c222",
+   "line": 106,
+   "comparisons": [
+    {
+     "id": "c222-1",
+     "other": "author",
+     "focus_text": "feat(build): add build scripts for ricebox and push to dockerhub",
+     "other_text": "fix: error at first sign",
+     "auto_tie": false
+    },
+    {
+     "id": "c222-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(build): add build scripts for ricebox and push to dockerhub",
+     "other_text": "feat(build): add build scripts",
+     "auto_tie": false
+    },
+    {
+     "id": "c222-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(build): add build scripts for ricebox and push to dockerhub",
+     "other_text": "feat(build): add build scripts",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c734",
+   "line": 107,
+   "comparisons": [
+    {
+     "id": "c734-1",
+     "other": "author",
+     "focus_text": "fix: router in layout menu and header",
+     "other_text": "fix: fix the disappearance of tab switching parameters",
+     "auto_tie": false
+    },
+    {
+     "id": "c734-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: router in layout menu and header",
+     "other_text": "feat: add push to tab",
+     "auto_tie": false
+    },
+    {
+     "id": "c734-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: router in layout menu and header",
+     "other_text": "perf: update 3 files in src/",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c307",
+   "line": 110,
+   "comparisons": [
+    {
+     "id": "c307-1",
+     "other": "author",
+     "focus_text": "chore: update imagemin plugin",
+     "other_text": "perf: image compression configuration optimization",
+     "auto_tie": false
+    },
+    {
+     "id": "c307-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: update imagemin plugin",
+     "other_text": "chore: update imagemin plugin",
+     "auto_tie": true
+    },
+    {
+     "id": "c307-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: update imagemin plugin",
+     "other_text": "chore: update imagemin to 12.0.0",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c272",
+   "line": 121,
+   "comparisons": [
+    {
+     "id": "c272-1",
+     "other": "author",
+     "focus_text": "fix: fix scheduler-docker-local command line arguments",
+     "other_text": "fix: do not require double quotes when issuing dokku run commands",
+     "auto_tie": false
+    },
+    {
+     "id": "c272-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix scheduler-docker-local command line arguments",
+     "other_text": "fix: fix docker local scheduler",
+     "auto_tie": false
+    },
+    {
+     "id": "c272-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix scheduler-docker-local command line arguments",
+     "other_text": "fix: fix scheduler-docker-local to support docker run and deploy",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c007",
+   "line": 122,
+   "comparisons": [
+    {
+     "id": "c007-1",
+     "other": "author",
+     "focus_text": "fix: correct process type variable name",
+     "other_text": "fix: correct variable name",
+     "auto_tie": false
+    },
+    {
+     "id": "c007-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: correct process type variable name",
+     "other_text": "fix: correct process-type argument name",
+     "auto_tie": false
+    },
+    {
+     "id": "c007-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: correct process type variable name",
+     "other_text": "fix: correct typo in process-type argument name",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c351",
+   "line": 128,
+   "comparisons": [
+    {
+     "id": "c351-1",
+     "other": "author",
+     "focus_text": "docs: fix typo in visibility example",
+     "other_text": "docs(VisibilityExampleUpdateOn): your description",
+     "auto_tie": false
+    },
+    {
+     "id": "c351-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: fix typo in visibility example",
+     "other_text": "docs: update visibility example update on label",
+     "auto_tie": false
+    },
+    {
+     "id": "c351-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: fix typo in visibility example",
+     "other_text": "docs: fix typo in visibility example",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c416",
+   "line": 129,
+   "comparisons": [
+    {
+     "id": "c416-1",
+     "other": "author",
+     "focus_text": "docs: add ps:set and ps:scale commands to docs",
+     "other_text": "docs: update docs for ps commands",
+     "auto_tie": false
+    },
+    {
+     "id": "c416-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: add ps:set and ps:scale commands to docs",
+     "other_text": "feat: add ps:scale command",
+     "auto_tie": false
+    },
+    {
+     "id": "c416-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: add ps:set and ps:scale commands to docs",
+     "other_text": "docs: add set and scale commands to process management page",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c226",
+   "line": 133,
+   "comparisons": [
+    {
+     "id": "c226-1",
+     "other": "author",
+     "focus_text": "fix(hass): fix some types in ZwaveClient.js",
+     "other_text": "fix: writeValue logs undefined valueId",
+     "auto_tie": false
+    },
+    {
+     "id": "c226-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix(hass): fix some types in ZwaveClient.js",
+     "other_text": "fix: fix ZwaveClient types",
+     "auto_tie": false
+    },
+    {
+     "id": "c226-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix(hass): fix some types in ZwaveClient.js",
+     "other_text": "fix(hass): fix some typos in ZwaveClient.js",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c791",
+   "line": 134,
+   "comparisons": [
+    {
+     "id": "c791-1",
+     "other": "author",
+     "focus_text": "feat: Add support for HRT4-ZW thermostat",
+     "other_text": "feat: HRT4-ZW device from Hortmann.",
+     "auto_tie": false
+    },
+    {
+     "id": "c791-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: Add support for HRT4-ZW thermostat",
+     "other_text": "feat: Add HRT4-ZW thermostat",
+     "auto_tie": false
+    },
+    {
+     "id": "c791-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: Add support for HRT4-ZW thermostat",
+     "other_text": "feat: Add support for HRT4-ZW thermostat",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c745",
+   "line": 136,
+   "comparisons": [
+    {
+     "id": "c745-1",
+     "other": "author",
+     "focus_text": "feat: add snap container",
+     "other_text": "feat: add snapContainer prop",
+     "auto_tie": false
+    },
+    {
+     "id": "c745-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add snap container",
+     "other_text": "feat: add snapContainer",
+     "auto_tie": false
+    },
+    {
+     "id": "c745-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add snap container",
+     "other_text": "feat: add snapContainer prop",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c946",
+   "line": 138,
+   "comparisons": [
+    {
+     "id": "c946-1",
+     "other": "author",
+     "focus_text": "feat(icon): add icon component",
+     "other_text": "perf(icon): icon and SvgIcon integration",
+     "auto_tie": false
+    },
+    {
+     "id": "c946-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(icon): add icon component",
+     "other_text": "feat(icon): add icon component",
+     "auto_tie": true
+    },
+    {
+     "id": "c946-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(icon): add icon component",
+     "other_text": "feat(icon): add icon component",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c551",
+   "line": 141,
+   "comparisons": [
+    {
+     "id": "c551-1",
+     "other": "author",
+     "focus_text": "fix: serialport driver not working",
+     "other_text": "chore: drop serialport, use Driver.enumerateSerialPorts()",
+     "auto_tie": false
+    },
+    {
+     "id": "c551-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: serialport driver not working",
+     "other_text": "chore: use serialport driver",
+     "auto_tie": false
+    },
+    {
+     "id": "c551-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: serialport driver not working",
+     "other_text": "fix: serialport bindings issue",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c355",
+   "line": 142,
+   "comparisons": [
+    {
+     "id": "c355-1",
+     "other": "author",
+     "focus_text": "chore: update golang version in ci",
+     "other_text": "chore: bump go to 1.14.6",
+     "auto_tie": false
+    },
+    {
+     "id": "c355-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: update golang version in ci",
+     "other_text": "chore: update golang image",
+     "auto_tie": false
+    },
+    {
+     "id": "c355-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: update golang version in ci",
+     "other_text": "chore: update golang version to 1.14.6",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c608",
+   "line": 143,
+   "comparisons": [
+    {
+     "id": "c608-1",
+     "other": "author",
+     "focus_text": "chore: add missing dependency in workflow",
+     "other_text": "chore: add missing `$`",
+     "auto_tie": false
+    },
+    {
+     "id": "c608-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: add missing dependency in workflow",
+     "other_text": "chore: update zwave-js version",
+     "auto_tie": false
+    },
+    {
+     "id": "c608-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: add missing dependency in workflow",
+     "other_text": "chore: fix update-zwave-js workflow",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c587",
+   "line": 146,
+   "comparisons": [
+    {
+     "id": "c587-1",
+     "other": "author",
+     "focus_text": "chore: updated package.json",
+     "other_text": "fix: docs deps",
+     "auto_tie": false
+    },
+    {
+     "id": "c587-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: updated package.json",
+     "other_text": "chore: update docs package",
+     "auto_tie": false
+    },
+    {
+     "id": "c587-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: updated package.json",
+     "other_text": "chore: updated build commands",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c540",
+   "line": 148,
+   "comparisons": [
+    {
+     "id": "c540-1",
+     "other": "author",
+     "focus_text": "fix: fix filename for archiving",
+     "other_text": "feat: put selected files in the root of the archive (closes",
+     "auto_tie": false
+    },
+    {
+     "id": "c540-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix filename for archiving",
+     "other_text": "fix: fix raw dir handler",
+     "auto_tie": false
+    },
+    {
+     "id": "c540-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix filename for archiving",
+     "other_text": "fix: fix archiving of files with leading slash",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c279",
+   "line": 153,
+   "comparisons": [
+    {
+     "id": "c279-1",
+     "other": "author",
+     "focus_text": "refactor(Form): refactor to functional component",
+     "other_text": "style(Form): convert component to stateless",
+     "auto_tie": false
+    },
+    {
+     "id": "c279-2",
+     "other": "v03-0.5b",
+     "focus_text": "refactor(Form): refactor to functional component",
+     "other_text": "refactor(Form): use functional component",
+     "auto_tie": false
+    },
+    {
+     "id": "c279-3",
+     "other": "v01-1.5b",
+     "focus_text": "refactor(Form): refactor to functional component",
+     "other_text": "fix(Form): make Form a stateless functional component",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c846",
+   "line": 154,
+   "comparisons": [
+    {
+     "id": "c846-1",
+     "other": "author",
+     "focus_text": "fix: use annotations correctly in utils",
+     "other_text": "fix: use get in common.utils",
+     "auto_tie": false
+    },
+    {
+     "id": "c846-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: use annotations correctly in utils",
+     "other_text": "fix: use annotations text for yes/no detection",
+     "auto_tie": false
+    },
+    {
+     "id": "c846-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: use annotations correctly in utils",
+     "other_text": "fix: use annotations correctly",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c277",
+   "line": 163,
+   "comparisons": [
+    {
+     "id": "c277-1",
+     "other": "author",
+     "focus_text": "feat(numberinput): add precision to number input",
+     "other_text": "feat(numberinput): rouding to precision",
+     "auto_tie": false
+    },
+    {
+     "id": "c277-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(numberinput): add precision to number input",
+     "other_text": "feat(numberinput): round to precision",
+     "auto_tie": false
+    },
+    {
+     "id": "c277-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(numberinput): add precision to number input",
+     "other_text": "feat(numberinput): add precision to stepper buttons",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c615",
+   "line": 169,
+   "comparisons": [
+    {
+     "id": "c615-1",
+     "other": "author",
+     "focus_text": "feat: add project setting for http request",
+     "other_text": "feat: projectSetting add closeMessageOnSwitch and removeAllHttpPending",
+     "auto_tie": false
+    },
+    {
+     "id": "c615-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add project setting for http request",
+     "other_text": "fix: fix axios cancel",
+     "auto_tie": false
+    },
+    {
+     "id": "c615-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add project setting for http request",
+     "other_text": "feat: add project setting for http request",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c726",
+   "line": 171,
+   "comparisons": [
+    {
+     "id": "c726-1",
+     "other": "author",
+     "focus_text": "fix: fix font loading issue",
+     "other_text": "chore: update Material Icons",
+     "auto_tie": false
+    },
+    {
+     "id": "c726-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: fix font loading issue",
+     "other_text": "chore: update frontend package.json",
+     "auto_tie": false
+    },
+    {
+     "id": "c726-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: fix font loading issue",
+     "other_text": "fix: fix font loading issue",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c311",
+   "line": 174,
+   "comparisons": [
+    {
+     "id": "c311-1",
+     "other": "author",
+     "focus_text": "docs: updated contributing.mdx and constraint-based-design.mdx",
+     "other_text": "docs: fixed typos in recent docs",
+     "auto_tie": false
+    },
+    {
+     "id": "c311-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs: updated contributing.mdx and constraint-based-design.mdx",
+     "other_text": "docs: fix contributing.md",
+     "auto_tie": false
+    },
+    {
+     "id": "c311-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs: updated contributing.mdx and constraint-based-design.mdx",
+     "other_text": "docs: fixed typos in contributing.mdx and constraint-based-design.mdx",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c566",
+   "line": 175,
+   "comparisons": [
+    {
+     "id": "c566-1",
+     "other": "author",
+     "focus_text": "chore: update dockerfile to use node 12 and ozw image",
+     "other_text": "feat: improve docker build performances",
+     "auto_tie": false
+    },
+    {
+     "id": "c566-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: update dockerfile to use node 12 and ozw image",
+     "other_text": "chore: update dockerfile",
+     "auto_tie": false
+    },
+    {
+     "id": "c566-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: update dockerfile to use node 12 and ozw image",
+     "other_text": "chore: update dockerfile to use node 12 and ozw 3.0",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c118",
+   "line": 180,
+   "comparisons": [
+    {
+     "id": "c118-1",
+     "other": "author",
+     "focus_text": "feat(i18n): move lang to helper",
+     "other_text": "perf(i18n): improve circular dependencies",
+     "auto_tie": false
+    },
+    {
+     "id": "c118-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(i18n): move lang to helper",
+     "other_text": "fix(i18n): fix i18n locale pool",
+     "auto_tie": false
+    },
+    {
+     "id": "c118-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(i18n): move lang to helper",
+     "other_text": "feat(i18n): move lang to helper",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c289",
+   "line": 183,
+   "comparisons": [
+    {
+     "id": "c289-1",
+     "other": "author",
+     "focus_text": "chore: fix docker image name",
+     "other_text": "chore: fix ghcr.io",
+     "auto_tie": false
+    },
+    {
+     "id": "c289-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: fix docker image name",
+     "other_text": "chore: fix docker image name",
+     "auto_tie": true
+    },
+    {
+     "id": "c289-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: fix docker image name",
+     "other_text": "chore: fix docker test and release",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c489",
+   "line": 185,
+   "comparisons": [
+    {
+     "id": "c489-1",
+     "other": "author",
+     "focus_text": "chore: remove automerge workflow",
+     "other_text": "chore: delete automerge",
+     "auto_tie": false
+    },
+    {
+     "id": "c489-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: remove automerge workflow",
+     "other_text": "chore: remove automerge workflow",
+     "auto_tie": true
+    },
+    {
+     "id": "c489-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: remove automerge workflow",
+     "other_text": "chore: remove automerge workflow",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c582",
+   "line": 191,
+   "comparisons": [
+    {
+     "id": "c582-1",
+     "other": "author",
+     "focus_text": "feat(switch): add model and nativeOn change event",
+     "other_text": "feat(switch): add v-model implementation",
+     "auto_tie": false
+    },
+    {
+     "id": "c582-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(switch): add model and nativeOn change event",
+     "other_text": "feat(switch): add switch component",
+     "auto_tie": false
+    },
+    {
+     "id": "c582-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(switch): add model and nativeOn change event",
+     "other_text": "feat(switch): add model and nativeOn change event",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c513",
+   "line": 194,
+   "comparisons": [
+    {
+     "id": "c513-1",
+     "other": "author",
+     "focus_text": "chore: set release-it node version to 14",
+     "other_text": "chore: try using nodejs 14 in release workflow",
+     "auto_tie": false
+    },
+    {
+     "id": "c513-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: set release-it node version to 14",
+     "other_text": "chore: update release-it node version",
+     "auto_tie": false
+    },
+    {
+     "id": "c513-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: set release-it node version to 14",
+     "other_text": "chore: set release-it to node 14",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c149",
+   "line": 196,
+   "comparisons": [
+    {
+     "id": "c149-1",
+     "other": "author",
+     "focus_text": "chore(docs): update nuxt config",
+     "other_text": "chore: repository house cleaning",
+     "auto_tie": false
+    },
+    {
+     "id": "c149-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore(docs): update nuxt config",
+     "other_text": "chore(docs): update nuxt config",
+     "auto_tie": true
+    },
+    {
+     "id": "c149-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore(docs): update nuxt config",
+     "other_text": "chore(docs): update package.json and nuxt.config.js",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c508",
+   "line": 199,
+   "comparisons": [
+    {
+     "id": "c508-1",
+     "other": "author",
+     "focus_text": "docs(Dropdown): fix `searchQuery` example",
+     "other_text": "docs(Dropdown): fix searchQuery example",
+     "auto_tie": false
+    },
+    {
+     "id": "c508-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs(Dropdown): fix `searchQuery` example",
+     "other_text": "docs(Dropdown): fix `handleSearchChange` signature",
+     "auto_tie": false
+    },
+    {
+     "id": "c508-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs(Dropdown): fix `searchQuery` example",
+     "other_text": "docs(Dropdown): fix `searchQuery` example",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c701",
+   "line": 200,
+   "comparisons": [
+    {
+     "id": "c701-1",
+     "other": "author",
+     "focus_text": "feat(scrollbar): add scrollbar component",
+     "other_text": "perf(scrollbar): scrollbar update when slot changed",
+     "auto_tie": false
+    },
+    {
+     "id": "c701-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(scrollbar): add scrollbar component",
+     "other_text": "chore: update scrollbar",
+     "auto_tie": false
+    },
+    {
+     "id": "c701-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(scrollbar): add scrollbar component",
+     "other_text": "feat(scrollbar): support scroll bar with vertical scroll",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c814",
+   "line": 202,
+   "comparisons": [
+    {
+     "id": "c814-1",
+     "other": "author",
+     "focus_text": "feat: Add DragArea ability",
+     "other_text": "feat: Add onClick event",
+     "auto_tie": false
+    },
+    {
+     "id": "c814-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: Add DragArea ability",
+     "other_text": "feat: Add DragArea and Origin to Moveable",
+     "auto_tie": false
+    },
+    {
+     "id": "c814-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: Add DragArea ability",
+     "other_text": "feat: Add DragArea",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c647",
+   "line": 205,
+   "comparisons": [
+    {
+     "id": "c647-1",
+     "other": "author",
+     "focus_text": "chore: remove Box component",
+     "other_text": "chore: improve Box exports",
+     "auto_tie": false
+    },
+    {
+     "id": "c647-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: remove Box component",
+     "other_text": "feat(box): add box component",
+     "auto_tie": false
+    },
+    {
+     "id": "c647-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: remove Box component",
+     "other_text": "chore: remove Box component",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c813",
+   "line": 206,
+   "comparisons": [
+    {
+     "id": "c813-1",
+     "other": "author",
+     "focus_text": "chore: add circleci tests",
+     "other_text": "chore: add testing step to ci",
+     "auto_tie": false
+    },
+    {
+     "id": "c813-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: add circleci tests",
+     "other_text": "chore: add test job to circleci",
+     "auto_tie": false
+    },
+    {
+     "id": "c813-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: add circleci tests",
+     "other_text": "chore: add tests to circleci",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c165",
+   "line": 208,
+   "comparisons": [
+    {
+     "id": "c165-1",
+     "other": "author",
+     "focus_text": "ci: updated nodejs workflow",
+     "other_text": "ci: unfreeze lockfile",
+     "auto_tie": false
+    },
+    {
+     "id": "c165-2",
+     "other": "v03-0.5b",
+     "focus_text": "ci: updated nodejs workflow",
+     "other_text": "ci: update nodejs workflow",
+     "auto_tie": false
+    },
+    {
+     "id": "c165-3",
+     "other": "v01-1.5b",
+     "focus_text": "ci: updated nodejs workflow",
+     "other_text": "ci: remove yarn lockfile",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c195",
+   "line": 213,
+   "comparisons": [
+    {
+     "id": "c195-1",
+     "other": "author",
+     "focus_text": "feat: add rect.origin and rect.beforeOrigin",
+     "other_text": "feat: add origin info to getRect method",
+     "auto_tie": false
+    },
+    {
+     "id": "c195-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add rect.origin and rect.beforeOrigin",
+     "other_text": "feat: add origin to MoveableManager",
+     "auto_tie": false
+    },
+    {
+     "id": "c195-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add rect.origin and rect.beforeOrigin",
+     "other_text": "feat: add origin to rectInfo",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c212",
+   "line": 216,
+   "comparisons": [
+    {
+     "id": "c212-1",
+     "other": "author",
+     "focus_text": "docs(Flag): add England to flag example",
+     "other_text": "feat(Flag): include \"england\" as a valid value",
+     "auto_tie": false
+    },
+    {
+     "id": "c212-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs(Flag): add England to flag example",
+     "other_text": "docs(Flag): add England flag",
+     "auto_tie": false
+    },
+    {
+     "id": "c212-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs(Flag): add England to flag example",
+     "other_text": "docs(Flag): Add England to list of countries",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c663",
+   "line": 217,
+   "comparisons": [
+    {
+     "id": "c663-1",
+     "other": "author",
+     "focus_text": "feat: add getRect method to MoveableGroup",
+     "other_text": "feat: add child rect info",
+     "auto_tie": false
+    },
+    {
+     "id": "c663-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add getRect method to MoveableGroup",
+     "other_text": "feat: add getRect method for MoveableGroup",
+     "auto_tie": false
+    },
+    {
+     "id": "c663-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add getRect method to MoveableGroup",
+     "other_text": "feat: add getRect method to MoveableGroup",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c703",
+   "line": 220,
+   "comparisons": [
+    {
+     "id": "c703-1",
+     "other": "author",
+     "focus_text": "fix: proxy dockerfile",
+     "other_text": "feat: proxy to gpu1 + configs for proxy services",
+     "auto_tie": false
+    },
+    {
+     "id": "c703-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: proxy dockerfile",
+     "other_text": "fix: add gpu1 proxy",
+     "auto_tie": false
+    },
+    {
+     "id": "c703-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: proxy dockerfile",
+     "other_text": "fix: proxy config",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c826",
+   "line": 221,
+   "comparisons": [
+    {
+     "id": "c826-1",
+     "other": "author",
+     "focus_text": "docs(ComponentDoc): fix component doc examples",
+     "other_text": "docs(src): update to card look",
+     "auto_tie": false
+    },
+    {
+     "id": "c826-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs(ComponentDoc): fix component doc examples",
+     "other_text": "docs(Icon): fix icon search example",
+     "auto_tie": false
+    },
+    {
+     "id": "c826-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs(ComponentDoc): fix component doc examples",
+     "other_text": "docs(Icon): fix icon search",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c448",
+   "line": 222,
+   "comparisons": [
+    {
+     "id": "c448-1",
+     "other": "author",
+     "focus_text": "fix: remove formatter from config",
+     "other_text": "chore: will use only cobot_qa_formatter",
+     "auto_tie": false
+    },
+    {
+     "id": "c448-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: remove formatter from config",
+     "other_text": "fix: fix formatter name in config.py",
+     "auto_tie": false
+    },
+    {
+     "id": "c448-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: remove formatter from config",
+     "other_text": "fix: remove unnecessary comments",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c135",
+   "line": 223,
+   "comparisons": [
+    {
+     "id": "c135-1",
+     "other": "author",
+     "focus_text": "feat: add warp option",
+     "other_text": "feat: Add Warpable",
+     "auto_tie": false
+    },
+    {
+     "id": "c135-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add warp option",
+     "other_text": "feat: Add warpable option",
+     "auto_tie": false
+    },
+    {
+     "id": "c135-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add warp option",
+     "other_text": "feat: warp support",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c417",
+   "line": 224,
+   "comparisons": [
+    {
+     "id": "c417-1",
+     "other": "author",
+     "focus_text": "fix: runtests.sh with test.yml",
+     "other_text": "feat: tests for lnsigo stand",
+     "auto_tie": false
+    },
+    {
+     "id": "c417-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: runtests.sh with test.yml",
+     "other_text": "fix: docker compose command for test",
+     "auto_tie": false
+    },
+    {
+     "id": "c417-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: runtests.sh with test.yml",
+     "other_text": "fix: news_api_skill error with test.yml including",
+     "auto_tie": false
+    }
+   ]
+  },
+  {
+   "id": "c526",
+   "line": 226,
+   "comparisons": [
+    {
+     "id": "c526-1",
+     "other": "author",
+     "focus_text": "fix: add many interesting questions to grounding",
+     "other_text": "feat: add curiosity ackn to grounding",
+     "auto_tie": false
+    },
+    {
+     "id": "c526-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: add many interesting questions to grounding",
+     "other_text": "fix: add many interesting questions to grounding skill",
+     "auto_tie": false
+    },
+    {
+     "id": "c526-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: add many interesting questions to grounding",
+     "other_text": "fix: add many interesting questions to grounding",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c987",
+   "line": 227,
+   "comparisons": [
+    {
+     "id": "c987-1",
+     "other": "author",
+     "focus_text": "feat: add view mode icons to the preview page",
+     "other_text": "feat: add gallery view mode",
+     "auto_tie": false
+    },
+    {
+     "id": "c987-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: add view mode icons to the preview page",
+     "other_text": "feat: add mosaic icon to listing",
+     "auto_tie": false
+    },
+    {
+     "id": "c987-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: add view mode icons to the preview page",
+     "other_text": "feat: add view mode icons to the preview page",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c588",
+   "line": 230,
+   "comparisons": [
+    {
+     "id": "c588-1",
+     "other": "author",
+     "focus_text": "feat(http): add get request method close",
+     "other_text": "perf: imporve axios logic",
+     "auto_tie": false
+    },
+    {
+     "id": "c588-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(http): add get request method close",
+     "other_text": "feat(api): add get api",
+     "auto_tie": false
+    },
+    {
+     "id": "c588-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(http): add get request method close",
+     "other_text": "feat(http): add get request method close",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c104",
+   "line": 232,
+   "comparisons": [
+    {
+     "id": "c104-1",
+     "other": "author",
+     "focus_text": "chore(mock): add some random data for table demo",
+     "other_text": "refactor(mock): remove third-party images",
+     "auto_tie": false
+    },
+    {
+     "id": "c104-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore(mock): add some random data for table demo",
+     "other_text": "test(table): add demo for table",
+     "auto_tie": false
+    },
+    {
+     "id": "c104-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore(mock): add some random data for table demo",
+     "other_text": "chore(mock): add some random data for table demo",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c722",
+   "line": 234,
+   "comparisons": [
+    {
+     "id": "c722-1",
+     "other": "author",
+     "focus_text": "feat(Dropdown): add closeOnChange prop to Dropdown",
+     "other_text": "feat(Dropdown): add closeOnChange prop",
+     "auto_tie": false
+    },
+    {
+     "id": "c722-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat(Dropdown): add closeOnChange prop to Dropdown",
+     "other_text": "feat(Dropdown): add `closeOnChange` prop",
+     "auto_tie": false
+    },
+    {
+     "id": "c722-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat(Dropdown): add closeOnChange prop to Dropdown",
+     "other_text": "feat(Dropdown): add closeOnChange prop to Dropdown",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c960",
+   "line": 238,
+   "comparisons": [
+    {
+     "id": "c960-1",
+     "other": "author",
+     "focus_text": "feat: support allMatrix",
+     "other_text": "feat: export getElementInfo function",
+     "auto_tie": false
+    },
+    {
+     "id": "c960-2",
+     "other": "v03-0.5b",
+     "focus_text": "feat: support allMatrix",
+     "other_text": "feat: add allMatrix",
+     "auto_tie": false
+    },
+    {
+     "id": "c960-3",
+     "other": "v01-1.5b",
+     "focus_text": "feat: support allMatrix",
+     "other_text": "feat: support allMatrix",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c603",
+   "line": 239,
+   "comparisons": [
+    {
+     "id": "c603-1",
+     "other": "author",
+     "focus_text": "docs(readme): add Netflix to internal apps",
+     "other_text": "docs(readme): Add Netflix EDX as a user",
+     "auto_tie": false
+    },
+    {
+     "id": "c603-2",
+     "other": "v03-0.5b",
+     "focus_text": "docs(readme): add Netflix to internal apps",
+     "other_text": "docs(README): add Netflix link to readme",
+     "auto_tie": false
+    },
+    {
+     "id": "c603-3",
+     "other": "v01-1.5b",
+     "focus_text": "docs(readme): add Netflix to internal apps",
+     "other_text": "docs(readme): add Netflix to internal apps",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c266",
+   "line": 240,
+   "comparisons": [
+    {
+     "id": "c266-1",
+     "other": "author",
+     "focus_text": "fix: increase docker memory limits",
+     "other_text": "feat: use memory reservation in docker-compose.yml",
+     "auto_tie": false
+    },
+    {
+     "id": "c266-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: increase docker memory limits",
+     "other_text": "fix: increase gpu memory limits",
+     "auto_tie": false
+    },
+    {
+     "id": "c266-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: increase docker memory limits",
+     "other_text": "fix: increase docker memory limits",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c548",
+   "line": 241,
+   "comparisons": [
+    {
+     "id": "c548-1",
+     "other": "author",
+     "focus_text": "fix: previewer loading spinner",
+     "other_text": "feat: add previewer title and loading indicator",
+     "auto_tie": false
+    },
+    {
+     "id": "c548-2",
+     "other": "v03-0.5b",
+     "focus_text": "fix: previewer loading spinner",
+     "other_text": "fix: loading spinner",
+     "auto_tie": false
+    },
+    {
+     "id": "c548-3",
+     "other": "v01-1.5b",
+     "focus_text": "fix: previewer loading spinner",
+     "other_text": "fix: previewer loading spinner",
+     "auto_tie": true
+    }
+   ]
+  },
+  {
+   "id": "c865",
+   "line": 245,
+   "comparisons": [
+    {
+     "id": "c865-1",
+     "other": "author",
+     "focus_text": "chore: update package version",
+     "other_text": "chore: update overlap-area",
+     "auto_tie": false
+    },
+    {
+     "id": "c865-2",
+     "other": "v03-0.5b",
+     "focus_text": "chore: update package version",
+     "other_text": "chore: update react-moveable",
+     "auto_tie": false
+    },
+    {
+     "id": "c865-3",
+     "other": "v01-1.5b",
+     "focus_text": "chore: update package version",
+     "other_text": "fix: fix min limit size",
+     "auto_tie": false
+    }
+   ]
+  }
+ ]
+}

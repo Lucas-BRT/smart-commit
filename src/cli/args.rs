@@ -5,7 +5,9 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Args, ValueEnum};
 use smart_commit::backend::device::Target;
-use smart_commit::prompt::{DiffFormat, PromptExamples, PromptOptions, PromptRules, PromptScopes};
+use smart_commit::prompt::{
+    DiffFormat, PromptExamples, PromptNames, PromptOptions, PromptRules, PromptScopes,
+};
 
 #[derive(Debug, Args)]
 pub(super) struct GenerateArgs {
@@ -67,6 +69,11 @@ pub(super) struct PromptArgs {
     /// that [default: recent]
     #[arg(long, value_enum)]
     examples: Option<ExamplesArg>,
+    /// A line with the functions, classes and the like the change
+    /// declares, and one with the comments it adds, read from every file
+    /// [default: off]
+    #[arg(long, value_enum)]
+    names: Option<NamesArg>,
 }
 
 impl PromptArgs {
@@ -90,6 +97,12 @@ impl PromptArgs {
                 ExamplesArg::Mixed => PromptExamples::Mixed,
             };
         }
+        if let Some(names) = self.names {
+            options.names = match names {
+                NamesArg::Off => PromptNames::Off,
+                NamesArg::On => PromptNames::On,
+            };
+        }
         if let Some(diff) = self.diff {
             options.diff = match diff {
                 DiffArg::Plain => DiffFormat::Plain,
@@ -103,6 +116,12 @@ impl PromptArgs {
 enum DiffArg {
     Plain,
     Annotated,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum NamesArg {
+    Off,
+    On,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

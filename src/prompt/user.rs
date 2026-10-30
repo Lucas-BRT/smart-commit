@@ -4,8 +4,11 @@ use std::fmt::Write as _;
 
 use crate::diff::CompactDiff;
 
-pub(super) fn user_message(diff: &CompactDiff, note: Option<&str>) -> String {
+pub(super) fn user_message(diff: &CompactDiff, names: Option<&str>, note: Option<&str>) -> String {
     let mut text = format!("Files changed:\n{}", diff.stat);
+    if let Some(names) = names {
+        let _ = write!(text, "\n{names}");
+    }
     if !diff.patch.is_empty() {
         let _ = write!(text, "\nDiff:\n{}", diff.patch);
     }

@@ -46,6 +46,25 @@ impl PromptRules {
     }
 }
 
+/// Whether the prompt lists the names the change declares and the comments it adds.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PromptNames {
+    /// Only the file list and the diff.
+    #[default]
+    Off,
+    /// A line of the functions, classes and the like the change declares and one of the comments it adds, read from
+    /// all the files and not only the hunks that fit (training H16). It is added to the prompt: the diff keeps the
+    /// room it has without it.
+    On,
+}
+
+impl PromptNames {
+    pub fn is_off(&self) -> bool {
+        *self == Self::Off
+    }
+}
+
 /// Which of the repository's subjects the prompt shows as examples.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -134,6 +153,9 @@ pub struct PromptOptions {
     /// Left out of traces when recent, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptExamples::is_recent")]
     pub examples: PromptExamples,
+    /// Left out of traces when off, so older traces still read the same.
+    #[serde(default, skip_serializing_if = "PromptNames::is_off")]
+    pub names: PromptNames,
     /// The longest subject, in columns (`style.subject_max`). Left out of
     /// traces when 72, so older traces, which have none, read the same.
     #[serde(
@@ -161,6 +183,7 @@ impl Default for PromptOptions {
             rules: PromptRules::Full,
             scopes: PromptScopes::List,
             examples: PromptExamples::Recent,
+            names: PromptNames::Off,
             subject_max: message::SUBJECT_MAX,
             diff: DiffFormat::Annotated,
         }

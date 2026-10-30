@@ -622,6 +622,116 @@ fn the_examples_are_recorded_only_when_asked() {
     assert_eq!(read, examples(PromptExamples::Similar));
 }
 
+fn names_on() -> PromptOptions {
+    PromptOptions {
+        names: PromptNames::On,
+        ..PromptOptions::default()
+    }
+}
+
+fn declaring() -> Vec<FileDiff> {
+    vec![FileDiff {
+        path: "src/git.rs".into(),
+        old_path: None,
+        lines: Some((3, 1)),
+        hunks: "@@ -80,3 +80,5 @@ impl Repo {\n-    fn branch(&self) {}\n+    fn current_branch(&self) -> String {\n\
+                +        // Falls back to the short hash on a detached HEAD.\n+    }\n"
+            .into(),
+    }]
+}
+
+#[test]
+fn the_names_are_a_line_between_the_files_and_the_diff() {
+    let ctx = context(&["feat: add history"], None);
+    let off = build(&ctx, &declaring(), &PromptOptions::default());
+    assert!(!off.user.contains("Names touched"), "{}", off.user);
+    let on = build(&ctx, &declaring(), &names_on());
+    let at = |needle: &str| {
+        on.user
+            .find(needle)
+            .unwrap_or_else(|| panic!("{needle} in {}", on.user))
+    };
+    assert!(at("Files changed:") < at("Names touched: Repo, branch, current_branch"));
+    assert!(
+        at("Names touched")
+            < at("Comments added: \"Falls back to the short hash on a detached HEAD.\"")
+    );
+    assert!(at("Comments added") < at("Diff:"));
+    // Only the user message gains the lines; the system message and the diff are the same, so a model gets as
+    // much of the diff as without them.
+    assert_eq!(on.system, off.system);
+    let without = on
+        .user
+        .replace("\nNames touched: Repo, branch, current_branch", "")
+        .replace(
+            "\nComments added: \"Falls back to the short hash on a detached HEAD.\"",
+            "",
+        );
+    assert_eq!(without, off.user);
+}
+
+#[test]
+fn a_change_that_names_nothing_gets_no_line() {
+    let ctx = context(&["feat: add history"], None);
+    let plain = vec![FileDiff {
+        path: "src/git.rs".into(),
+        old_path: None,
+        lines: Some((1, 1)),
+        hunks: "@@ -1 +1 @@\n-let a = 1;\n+let a = 2;\n".into(),
+    }];
+    assert_eq!(
+        build(&ctx, &plain, &names_on()),
+        build(&ctx, &plain, &PromptOptions::default())
+    );
+}
+
+#[test]
+fn the_names_come_from_the_files_the_budget_cut() {
+    // Fifty files of filler and, in the last one, the only declaration.
+    let mut files: Vec<FileDiff> = (0..49)
+        .map(|n| FileDiff {
+            path: format!("src/module_{n}.rs"),
+            old_path: None,
+            lines: Some((60, 0)),
+            hunks: format!(
+                "@@ -0,0 +1,60 @@\n{}",
+                "+let value = compute();\n".repeat(60)
+            ),
+        })
+        .collect();
+    files.push(FileDiff {
+        path: "src/zzz_last.rs".into(),
+        old_path: None,
+        lines: Some((60, 0)),
+        hunks: format!(
+            "@@ -0,0 +1,60 @@\n+fn only_in_the_last_file() {{}}\n{}",
+            "+let value = compute();\n".repeat(59)
+        ),
+    });
+    let ctx = context(&["feat: add a thing to the parser"], None);
+    let prompt = build(&ctx, &files, &names_on());
+    assert!(
+        prompt.user.contains("Names touched: only_in_the_last_file"),
+        "{}",
+        prompt.user
+    );
+    assert!(
+        !prompt.user.contains("+fn only_in_the_last_file"),
+        "the diff did not fit it:\n{}",
+        prompt.user
+    );
+}
+
+#[test]
+fn the_names_are_recorded_only_when_asked() {
+    let json = serde_json::to_string(&PromptOptions::default()).unwrap();
+    assert!(!json.contains("\"names\""), "{json}");
+    let json = serde_json::to_string(&names_on()).unwrap();
+    assert!(json.contains("\"names\":\"on\""), "{json}");
+    let read: PromptOptions = serde_json::from_str(&json).unwrap();
+    assert_eq!(read, names_on());
+}
+
 /// Eight scopes whose commits touched three places each, `depth` directories deep.
 fn deep_monorepo(depth: usize) -> RepoContext {
     let dir = |scope: usize, place: usize| {

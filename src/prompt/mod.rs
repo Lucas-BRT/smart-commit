@@ -3,6 +3,7 @@
 //! Instructions are written in English, which small models follow best,
 //! and ask for the message in the repository's own language.
 
+mod names;
 mod system;
 mod types;
 mod user;
@@ -12,8 +13,8 @@ mod tests;
 
 pub use system::listed_types;
 pub use types::{
-    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptExamples, PromptOptions, PromptRules,
-    PromptScopes,
+    DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, Prompt, PromptExamples, PromptNames, PromptOptions,
+    PromptRules, PromptScopes,
 };
 
 use crate::context::RepoContext;
@@ -69,13 +70,18 @@ pub fn build_with_note(
         ..CompactDiff::default()
     };
     let fixed = diff::estimate_tokens(sized.as_ref().unwrap_or(&system))
-        + diff::estimate_tokens(&user::user_message(&empty, note))
+        + diff::estimate_tokens(&user::user_message(&empty, None, note))
         + TEMPLATE_OVERHEAD_TOKENS;
     let budget = options.max_prompt_tokens.saturating_sub(fixed);
     let compacted = match options.diff {
         DiffFormat::Plain => diff::compact(files, budget),
         DiffFormat::Annotated => diff::compact_annotated(files, &ctx.staged, budget),
     };
-    let user = user::user_message(&compacted, note);
+    // The names are extra, like the scope map: read from every file, they are not taken from the diff's room.
+    let names = match options.names {
+        PromptNames::Off => None,
+        PromptNames::On => names::touched(files),
+    };
+    let user = user::user_message(&compacted, names.as_deref(), note);
     Prompt { system, user }
 }

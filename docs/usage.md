@@ -181,8 +181,9 @@ comment-only changes), the format the v0.2 fine-tunes were trained on, and
 `--scopes map`, which shows each scope with the places its commits touched
 instead of the names alone, for a model trained that way. `--examples
 similar` (or `mixed`) picks the example subjects among the commits that
-touched files close to the staged ones instead of the most recent, to
-evaluate that.
+touched files close to the staged ones instead of the most recent, and
+`--names on`, which adds a line with the functions, classes and the like the
+change declares and one with the comments it adds, to evaluate those.
 
 ## Devices
 

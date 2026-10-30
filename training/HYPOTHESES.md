@@ -1252,6 +1252,226 @@ models, `word_f1` rises by at least 0.015 with the 95% bootstrap interval of the
   on them, which is a project of its own (and of the prompt budget: 1024 tokens leave little room for a second
   diff).
 
+### H15. Three ways to sharpen the type without training — a cascade between the two sizes holds the quality; the other two do not
+
+**Where they come from.** The [Alien Space of Science](https://github.com/alejandrohdez00/alien-space-of-science)
+(Artiles et al., [arXiv 2603.01092](https://arxiv.org/abs/2603.01092)) scores combinations of the ideas ("atoms") of
+16,068 papers on LLMs by how coherent they are and how little the community explores them; we scored the 11,480
+triplets of 42 atoms close to our problem with the project's released models (CPU, no LLM, with a script of ours that
+is not kept: the combinations only suggested what to try, they are not a result), and searched [Lacuna](https://lacuna.tiptreesystems.com) (a read-only map of ML research,
+its MCP) for generated hypotheses on ambiguous labels, noisy targets and calibration. Combinations that repeat what we
+had done (conformal sets, calibration, DPO) came first; three were new, and cheap to try on the type distributions
+collected for H13 (`type_confidence.py collect`, first token of the reply, 250 Conventional commits of `val1-h4`
+to choose the weight and of `eval-v1` to read it, the v0.3 models, `vulkan`). The weights are chosen on `val1-h4`;
+`eval-v1` is read once. `type_fusion.py` has the three.
+
+**Criteria fixed before the numbers.** *Prior* and *fusion*: worth it if, for both models, `type_match` rises by at
+least 0.016 (4 commits of 250) over weight 0, the negative log-likelihood does not worsen and the ECE rises by at
+most 0.02. *Cascade*: the `tau` chosen on `val1-h4` as the one that makes the big model answer least while keeping
+`type_match` within 0.008 and `word_f1` within 0.010 of the big model alone; worth it if on `eval-v1` the big model
+answers at most half of the commits within the same margins.
+
+**1. The repository's use of each type as a prior** (`p(t) * ((count_t + 1) / (n + K)) ** lam`, the counts of the
+types in the history's subjects): not worth it. The 1.5B's best weight is 0 (`val1-h4`: 0.644, 0.632, 0.616, 0.624,
+0.608, 0.600 for 0, 0.25, 0.5, 0.75, 1, 1.5): the model already reads the history. The 0.5B chooses 0.25 and gains
+0.012 on `eval-v1` (0.668 to 0.680, +6/−3; NLL 1.030 to 1.019, ECE 0.046 to 0.036), under the 0.016.
+
+**2. A product of experts with a plain classifier** (`p(t) * (clf(t) + 0.001) ** w`, the classifier of H13, 0.612 on
+`val1-h4` and 0.628 on `eval-v1`): not worth it. On `eval-v1` the 1.5B (w = 1) falls from 0.692 to 0.680 (+8/−11),
+NLL 0.958 to 1.039, ECE 0.059 to 0.131; the 0.5B (w = 0.75) rises from 0.668 to 0.676 (+12/−10), NLL 1.030 to 1.048,
+ECE 0.046 to 0.090. The product is too sure of itself, and the choice on `val1-h4` does not carry over. The ranking of
+the confidence rises (AUROC 0.738 to 0.781 and 0.723 to 0.751), within the noise of 250 commits, and is not what was
+asked.
+
+**3. A cascade, the 0.5B v0.3 answering when it is at least `tau` sure of its type and the 1.5B v0.3 otherwise**:
+**passes**. `tau` = 0.5 on `val1-h4`. On `eval-v1`:
+
+| | the big model answers | `type_match` | `word_f1` |
+|---|---|---|---|
+| 0.5B alone (tau 0) | 0 | 0.676 | 0.354 |
+| cascade, tau 0.4 | 0.116 | 0.692 | 0.360 |
+| **cascade, tau 0.5 (chosen)** | **0.264** | **0.692** | **0.366** |
+| cascade, tau 0.6 | 0.400 | 0.692 | 0.370 |
+| cascade, tau 0.7 | 0.552 | 0.696 | 0.369 |
+| 1.5B alone | 1.000 | 0.696 | 0.366 |
+
+- **The loss is one commit and the words are the same**: 0.004 under the 1.5B in `type_match` and no difference in
+  `word_f1`, with the 1.5B answering 26% of the commits. With 250 commits a difference of 0.03 cannot be excluded,
+  and `tau` = 0.5 is on the edge of the margin on `val1-h4` (0.644 against 0.652).
+- **Measured on the machine** (`cascade_bench.py`: both servers loaded or started per message, the product's request
+  and flags; `eval-v1`'s Conventional commits, tau = 0.5; Ryzen 5 5500, RTX 3050 `vulkan` for 250 commits and the `cpu`
+  for the first 100; one round, so the differences of a few hundredths of a second are not claimed). The 1.5B answered
+  26.4% of the commits on `vulkan` and 27.0% on the `cpu`, as the offline count:
+
+| | `vulkan`, loaded | `vulkan`, started per message | `cpu`, loaded | `cpu`, started per message |
+|---|---|---|---|---|
+| 1.5B alone | 0.25 s | 2.37 s | 2.42 s | 2.93 s |
+| 0.5B alone | 0.13 s | | 1.16 s | |
+| cascade, single pass | **0.19 s (−23%)** | **1.96 s (−17%)**, p90 3.73 s against 2.45 s | **1.78 s (−27%)** | **2.32 s (−21%)** |
+| cascade, probe then reply | 0.24 s (−2%) | | 2.50 s (+3%) | |
+
+- **The single pass is the only form that pays**: the 0.5B writes the whole reply, asking for the probabilities of
+  its tokens (free: 0.126 s with and without), and the 1.5B is called only when the first token is under 0.5. The
+  probe-then-reply form, the way `model.ask_type` reads the confidence, reads the prompt twice (the product sends
+  `cache_prompt: false`) and saves nothing.
+- **On a GPU it does not matter**: with the model loaded a message takes 0.25 s and the cascade saves 0.06 s, which
+  no one notices. Started per message it saves 0.4 s on average but makes the escalated commits slower
+  (two loads), so the worst tenth gets worse. A first estimate, made from the "per message" times of
+  `docs/measurements.md` (2.3 s and 1.2 s on `vulkan`), gave 21% and 24% less; those times are mostly the model's
+  load (2.1 s of the 1.5B's 2.3 s), so the percentages came out alike but the seconds are not what a message takes.
+- **On the CPU it saves the most in seconds**: 0.64 s of 2.42 s with the models loaded (the prompt is read once, by the
+  0.5B, for 73% of the commits). The price is the 0.5B's memory beside the 1.5B's, and a second server.
+- **Quality, read from the replies' first lines**: the cascade's type matches 0.684 against the 1.5B's 0.692 and the
+  0.5B's 0.664 on `vulkan` (250 commits), as the offline 0.692 against 0.696; on the `cpu` subset (100) the three tie at
+  0.660.
+- **Verdict.** Not built. On the devices most people use (a GPU, or the NPU, where it cannot be done) there is
+  nothing to gain; on the `cpu` it is a 27% cut with the type held, and worth building only if that device matters
+  enough to keep two models loaded. If it is built it must be the single pass, with the confidence taken from the
+  first token's probabilities of the reply, and `tau` confirmed on a third set.
+
+### H16. Naming what changed in the prompt helps the description — no gain without training
+
+**Claim.** The prompt cuts the diff to its budget, and what is cut can hold the names the message should use. The
+paper [Brevity is the Soul of Wit](https://lacuna.tiptreesystems.com/work/brevity-is-the-soul-of-wit-condensing-code)
+condenses a change into a template with the summarised changes, the developers' comments and the key identifiers, and
+fine-tunes on it (found with Lacuna, H15). A line with the names the change declares, and one with the comments it
+adds, read from every file and not only the hunks that fit, should give the model what the budget took.
+
+**Design.** `--names on` (`prompt` and `eval` only): `Names touched:` lists up to 8 functions, classes, structs and
+the like that the hunk headers name or the changed lines declare, and `Comments added:` up to 2 comments of the added
+lines (70 characters), from every source, config and test file; lockfiles, generated files, documents and binaries
+give none. The lines come between the file list and the diff and are extra: the diff keeps its room. The models and
+the rest of the prompt are as in `compare-v04c` (the 1.5B and 0.5B v0.3, annotated, full rules, `vulkan`, the 500
+commits of `data/val1-h4`), without retraining. Fixed before the numbers: worth it if, for both models, `word_f1`
+(all 500 commits) rises by at least 0.015 with the 95% interval of the paired difference (`paired_f1.py`) above 0,
+`ungrounded`, `unsupported` and `first_copied` rise by at most 0.01 and `type_match` falls by at most 0.01; if it
+passes, one read on `eval-v1`.
+
+**Result** (arm minus control):
+
+| model | `word_f1` all [95%] | Conventional | free | `type_match` | `ungrounded` | `unsupported` | `first_copied` |
+|---|---|---|---|---|---|---|---|
+| 1.5B v0.3 | +0.002 [−0.005, +0.010] | +0.003 | +0.002 | **−0.016** | −0.004 | −0.002 | 0 |
+| 0.5B v0.3 | +0.002 [−0.005, +0.008] | +0.002 | +0.002 | +0.004 | 0 | +0.002 | 0 |
+
+- **It fails.** The words do not move (+0.002 in both models, the interval holds 0), and the 1.5B loses 0.016 of
+  `type_match`, over the 0.010 allowed (`type_group` −0.016 and `type_behaviour` −0.012 with it). Nothing worsens.
+  `eval-v1` is not read.
+- **The line was there and was read.** 278 of the 499 prompts that reach the model (56%) got a `Names touched` line
+  and 85 a `Comments added` line. A subject uses one of the names listed in 27% of those with the line against 20% for
+  the control (1.5B), and 32% against 27% (0.5B): the models take the names, and some take the comment whole
+  (`fix: strip certain args from DOCKER_ARGS` after the comment "strip certain args from DOCKER_ARGS").
+- **The authors do not use them as much.** The real subject uses one of the listed names in 44 of the 278 (16%). The
+  models now name things more often than the authors do, so the words they add are not the words the author wrote.
+  Even on those 278 commits `word_f1` moves +0.002 [−0.012, +0.016] (1.5B) and +0.003 [−0.008, +0.016] (0.5B); the
+  headroom is small and the line does not reach it.
+- **Limits.** The models were not trained with the line, which is how the paper used it; training with it is the form
+  not tested, and given the 16% a large gain is not to be expected. The extraction is plain text (declaration
+  keywords, hunk headers, comment markers), not a parser, and is English-centred in its comments.
+- **Verdict.** Not adopted; the product keeps the prompt as it is. The option stays for evaluation.
+
+### H17. An audit set of the acceptable types — the models are accepted as often as the repositories' own labels
+
+**Why.** `type_match` takes the repository's type as the only right one (H13). H13's hand rating of 60 mistakes was
+done by the model writing these notes, so it was an opinion. This builds a set that says, for a sample of commits,
+which types a reasonable maintainer would accept, written by two annotators who do not see the real subject.
+
+**Design** (`audit_types.py`, the annotators' instructions in `audit-annotator-prompt.md`, the result in
+`audit-types-h17.json`). 100 Conventional commits drawn at random (seed 17) from `data/val1-h4`: 33 `fix`, 29 `feat`,
+16 `chore`, 12 `docs`, 5 `perf`, 2 `refactor` and one each of `build`, `style` and `ci`, from **8 repositories**
+(`dokku` 20, `zwavejs2mqtt` 18, `chakra-ui-vue` 12, `dream` 12, `moveable` 11, `vben-admin` 10, `filebrowser` 10,
+`semantic-ui-react` 7). Two passes, A and B, by Opus subagents, each in 4 batches of 25 with another order and
+composition, the same instructions, and no repository name, hash, real subject or real type: only the 12 latest
+subjects of the history, the changed files and the diff (1,200 characters a file, 5,000 in all). For each case: the
+types they would accept, the best one, whether it is ambiguous, and a reason. One batch of pass A returned 24 of its 25
+cases and reported 25; the merge check found it, and a fresh agent with the same instructions annotated the case.
+
+**The annotators.**
+- They agree: the same accepted set in 78% of the cases, mean Jaccard 0.89, at least one type in common in all 100, the
+  same best type in 93% (kappa 0.92). Both are the same model, so the agreement says they are consistent, not that they
+  are right.
+- They find the change ambiguous in 62% (A) and 61% (B) of the cases and accept 1.72 and 1.70 types on average.
+
+**The repositories' own types.** The real type is in A's set in 77% of the cases and in B's in 75%; in either's in 79%
+[70%, 87%], in both's in 73%, and it is the best one in 58% and 59%. **In 21 of the 100 neither annotator accepts it.**
+In 12 of those the annotators read the change as `chore` or `build` and the author wrote `feat`, `fix`, `perf` or
+`refactor` (for example 3 `feat` and 2 `perf` for changes the annotators filed under build or chore).
+
+**The models** (their type is the first line of the reply in the traces of `compare-v04c`; 95% intervals by bootstrap
+of the cases):
+
+| model | `strict` (the real type) | `lenient` (one either accepts) | `agreed` (one both accept) |
+|---|---|---|---|
+| 1.5B v0.3 | 0.67 [0.57, 0.76] | **0.85** [0.78, 0.92] | 0.79 |
+| 0.5B v0.3 | 0.63 [0.53, 0.73] | 0.81 [0.74, 0.89] | 0.75 |
+| 1.5B v0.1 | 0.63 [0.53, 0.73] | 0.81 [0.73, 0.89] | 0.76 |
+| 0.5B S1 | 0.60 [0.50, 0.70] | 0.80 [0.72, 0.87] | 0.75 |
+
+- **The 1.5B v0.3's type is accepted in 85% of the commits, the repository's own in 79%.** In 21 cases the model's type
+  is accepted though it is not the real one; in 3 it is the real one and is not accepted. Of its 33 mistakes, 21 (64%)
+  are acceptable, as the 64% (67% weighted) of the 60 hand-rated mistakes of H13.
+- **The order of the models is the one of `type_match`** (the 1.5B v0.3 first, the S1 last), but the differences between
+  models are within the intervals, which the clustering in 8 repositories makes narrower than they should be.
+- **My ratings of H13 hold**: on the 20 cases that are in both, the 12 I rated `A` are all accepted by the annotators,
+  3 of my 4 `N` are rejected, and the `?` split 3 to 1: 15 of the 16 I could decide agree (94%).
+
+**Limits.** 100 commits from 8 repositories, and two annotators of one model that saw 12 subjects, the files and a cut
+diff, not the author's intent, the issue or the rest of the repository. A model that writes like the annotators may be
+favoured. The audit says which types are defensible, not which one the author meant.
+
+**Use.** Models are judged by `lenient` and `agreed` on this set beside `type_match`, and the 21 rejected labels say
+where the labels are noisy: changes to dependencies and configuration written as `feat`, `fix` or `perf`. A filter of
+the training labels that reads those is the untested form of cleaning them (B).
+
+### H18. A blind judge of the messages — as good as the authors' on average, less specific in a head-to-head
+
+**Why.** `word_f1` compares a message with what the author wrote, and authors write "fix typo" (H13, H17). To know where
+the room is in the descriptions, annotators who do not know who wrote a message say which of two is better.
+
+**Design** (`pair_judge.py`, the instructions in `pair-judge-prompt.md`, the data in `pair-judgments-h18.json` and the
+messages in `pair-candidates-h18.json`). The 100 commits of the audit set (H17). For each, the 1.5B v0.3's message is
+compared with the author's, with the 0.5B v0.3's and with the 1.5B v0.1's (`compare-v04c`); identical messages are a
+tie and are not asked (11 with the 0.5B, 32 with the v0.1, none with the authors). Two passes, A and B, by Opus
+subagents in 4 batches each, the messages as `X` and `Y` on a side chosen at random for each pass, no repository name,
+hash or origin. For each pair: the better one (or a tie), a score of 1 to 5 for each, and whether it states a detail
+the diff does not support. The criteria, in order: accuracy, specificity, type and scope, clarity. One batch of pass A
+returned 44 of its 63 comparisons while reporting 63; the merge check found it and a fresh agent judged the 19.
+
+**The judge.** The two passes give the same outcome in 90% of the 257 comparisons asked and in 94% of those both
+decided; the side does not decide (`X` wins 52% of the 479 decided comparisons). Both passes are the same model, so
+this is consistency, not truth, and they judge the same 100 commits: **the numbers below are 200 judgments per
+pairing, but the sample is 100 commits from 8 repositories**.
+
+| 1.5B v0.3 against | wins / ties / losses | net [95%] | score, its and the other's | states what the diff lacks, its and the other's |
+|---|---|---|---|---|
+| the author | 84 / 3 / 113 | −0.14 [−0.28, −0.01] | 3.10 and 3.15 | 0.21 and 0.23 |
+| the 1.5B v0.1 | 67 / 86 / 47 | +0.10 [−0.01, +0.21] | 3.04 and 2.77 | 0.22 and 0.35 |
+| the 0.5B v0.3 | 82 / 32 / 86 | −0.02 [−0.14, +0.10] | 3.13 and 3.03 | 0.19 and 0.14 |
+
+- **Against the author, the author is preferred more often** (57% of the decided: pass A 41 wins to 57 losses, pass B
+  43 to 56), **but the scores are the same** (3.10 and 3.15). The model's scores gather in 3 and 4 (1: 10, 2: 45, 3: 76,
+  4: 52, 5: 17), the authors' spread (1: 18, 2: 40, 3: 62, 4: 53, 5: 27): the authors write both the best and the worst
+  messages. In 100 commits the difference is suggestive, not established (per pass, about 42 wins to 57 losses).
+- **Where it loses**: `feat` (21 wins to 36 losses; `fix` 29 to 35, `chore` 12 to 20, `docs` 12 to 12) and in
+  `deeppavlov/dream` (7 to 17), `dokku` (17 to 23) and `chakra-ui-vue` (9 to 15); it wins or ties in `zwavejs2mqtt`
+  (20 to 16) and `vben-admin` (10 to 9). The judges' reasons in the losses are alike: the author's message **names the
+  mechanism** ("deepcopy", "the safe `.get` access", "stopInclusion/Exclusion") where the model's is generic. In the wins
+  the author's message states something the diff does not show (a "revert", a "previewer title").
+- **Both state what the diff lacks at the same rate** (the model's 0.21, the authors' 0.23: 26 cases only the model, 30
+  only the author, 16 both of the 200): the diff does not hold the author's intent.
+- **The judge puts the DPO model above the v0.1** (59% of the decided, score 3.04 against 2.77, 22% against 35%
+  stating what the diff lacks), as the failures DPO removed (H12) would say; the interval just touches 0.
+- **The 0.5B v0.3 and the 1.5B v0.3 are not told apart** (net −0.02, scores 3.13 and 3.03): in the judged quality of this
+  sample the larger model buys nothing, which agrees with the cascade of H15 (the 0.5B answers three of four commits).
+
+**Limits.** 100 commits, 8 repositories, one judge model, diffs cut at 5,000 characters and no intent. A judge that
+reads like the models may favour them, and still it prefers the authors. The mean score is 3 for everyone: by this
+rubric typical commit messages, the authors' too, are "acceptable but vague".
+
+**Use.** The room in the descriptions is specificity, naming what the change does, which is what the names line of H16
+tried to give; H14 and H16 were judged only by `word_f1`, which does not see it. The next test is to put those arms
+before this judge.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
