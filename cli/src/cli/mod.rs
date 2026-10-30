@@ -19,6 +19,7 @@ mod keep_loaded;
 mod load;
 mod logging;
 mod model;
+mod notice;
 mod session;
 mod settings;
 mod suggest;
@@ -184,6 +185,13 @@ fn parse() -> Cli {
 pub fn run() -> ExitCode {
     let cli = parse();
     logging::init(cli.verbose);
+    // The commands a person runs by hand; never the hook, nor what records
+    // or replays a run.
+    let notify = cli.generate.backend.trace.is_none()
+        && matches!(
+            cli.command,
+            None | Some(Command::Setup { .. } | Command::Device { .. } | Command::Model { .. })
+        );
     let result = match cli.command {
         Some(Command::Context { path }) => inspect::context(&path),
         Some(Command::Prompt {
@@ -230,7 +238,12 @@ pub fn run() -> ExitCode {
         None => suggest::run(&cli.generate),
     };
     match result {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => {
+            if notify {
+                notice::print();
+            }
+            ExitCode::SUCCESS
+        }
         Err(err) => {
             tracing::error!("{err:#}");
             ExitCode::FAILURE

@@ -9,7 +9,9 @@
 **smart-commit** writes git commit messages in the style of your repository
 with a small language model that runs entirely on your machine: on an Intel
 NPU, on a GPU (Intel, AMD or NVIDIA) or on the CPU. No account, no API key,
-and nothing leaves your computer.
+and nothing leaves your computer. (The one request it can make by itself, a
+daily look for a newer release, is off until you turn it on:
+[update notice](docs/usage.md#update-notice).)
 
 ```console
 $ git add -p

@@ -231,6 +231,16 @@ pub const KEYS: &[Key] = &[
         description: "Longest subject, in columns: the prompt asks for it, and longer replies \
                       end at the last phrase that fits.",
     },
+    Key {
+        name: "update.check",
+        kind: Kind::Choice(&["false", "true"]),
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_UPDATE_CHECK"),
+        description: "With `true`, at most once a day, an interactive command asks GitHub \
+                      (api.github.com, over HTTPS, with curl) for the latest release and \
+                      prints a line on stderr when it is newer than this one. The only \
+                      request smart-commit makes by itself; `false`: never.",
+    },
 ];
 
 pub fn key(name: &str) -> Result<&'static Key, ConfigError> {
