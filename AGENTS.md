@@ -48,7 +48,7 @@ CI runs all of these on every push, and they must pass before any commit:
 cargo fmt --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
-shellcheck install.sh scripts/*.sh cli/tests/fixtures/make-traces.sh cli/tests/scripts/*.sh   # 0.11.0, as CI
+shellcheck install.sh scripts/*.sh scripts/build/*.sh cli/tests/fixtures/make-traces.sh cli/tests/scripts/*.sh   # 0.11.0, as CI
 for test in cli/tests/scripts/test-*.sh; do "$test"; done   # test-install.sh needs Docker
 for test in training/test_*.py; do python3 -I "$test"; done  # test_train_dpo.py needs torch
 ```
@@ -146,8 +146,10 @@ someone else on another machine. [docs/reproducibility.md](docs/reproducibility.
 says what is pinned and how it is checked; what an agent must remember:
 
 - **Builds:** `rust-toolchain.toml` pins the toolchain, `Cargo.lock` is
-  versioned, CI uses `--locked`, releases are built in the container of
-  `scripts/build/Dockerfile`. Dependency updates get commits of their own.
+  versioned, CI uses `--locked`, releases are built in the image of
+  `scripts/build/Dockerfile`, pulled by digest from `scripts/build/IMAGE`
+  (change either with the **Build image** workflow and `scripts/build/ENV`,
+  see `docs/reproducibility.md`). Dependency updates get commits of their own.
 - **Generation:** greedy decoding with explicit parameters (`GenerationConfig`
   and what each backend sends), never library defaults. A retry must change
   the prompt deterministically.

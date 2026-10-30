@@ -16,6 +16,27 @@ pinned and how each guarantee is checked.
   out of the binary and debug info is stripped. The archive is made in the
   same container, because `tar` and `gzip` versions change the bytes too,
   with a fixed order, owner, file modes and dates (the commit's).
+  The image is published to GitHub's container registry and pinned by digest
+  in `scripts/build/IMAGE`, so `scripts/package.sh` pulls it: no `apt` and no
+  package snapshot on the way, only the registry. (Without a reference there,
+  `package.sh` builds the image from the Dockerfile, which needs
+  snapshot.ubuntu.com.) The build runs in two steps: the toolchain and the
+  crates are fetched with the network, then the release is compiled with
+  `--network none --offline`, so nothing can enter the binary but what
+  `Cargo.lock` names. Next to the tarball, `BUILDINFO` records the commit, the
+  image and the versions of the compiler, linker, glibc, `tar` and `gzip` it
+  was made with, and is listed in `SHA256SUMS`.
+- **Building your own package.** `scripts/package.sh --check-env` compares the
+  machine's compiler, linker, glibc, `tar` and `gzip` (and, on Debian and
+  Ubuntu, their packages) with `scripts/build/ENV`, which was made in the
+  image, and says which differ. With
+  `SMART_COMMIT_PACKAGE_HOST=1 scripts/package.sh` a machine that matches
+  builds without Docker. A match is not a proof, since a distribution can
+  patch a package without changing its version: the hash in the release's
+  `SHA256SUMS` is. To change the image (the Dockerfile, its snapshot date),
+  run the **Build image** workflow, put the digest it prints in
+  `scripts/build/IMAGE`, and regenerate `scripts/build/ENV` with
+  `docker run --rm -v $PWD/scripts/build:/b:ro IMAGE sh /b/env-report.sh`.
   CI keeps the container's toolchain and downloaded crates between runs
   (`SMART_COMMIT_BUILD_CACHE`), never its build, so the hash it prints is
   that of a build from scratch; two packagings with and without the cache

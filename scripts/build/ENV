@@ -1,0 +1,10 @@
+tool gcc 11.4.0
+tool ld 2.38
+tool glibc 2.35
+tool tar 1.34
+tool gzip 1.10
+package gcc-11 11.4.0-1ubuntu1~22.04.3
+package binutils 2.38-4ubuntu2.12
+package libc6-dev 2.35-0ubuntu3.15
+package tar 1.34+dfsg-1ubuntu0.1.22.04.6
+package gzip 1.10-4ubuntu4.2

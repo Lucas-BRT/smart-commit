@@ -100,6 +100,11 @@ cargo build --release --locked      # the toolchain comes from rust-toolchain.to
 target/release/smart-commit setup
 ```
 
+To build the release package itself, byte for byte, see
+[reproducibility](reproducibility.md): `scripts/package.sh`, and
+`scripts/package.sh --check-env` to see whether your machine can do it without
+Docker.
+
 ### Verify a download
 
 The installer always checks the archive against the release's `SHA256SUMS`.
