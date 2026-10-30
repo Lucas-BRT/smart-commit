@@ -557,6 +557,58 @@ fn similar_examples_are_for_evaluation_and_replay() {
 }
 
 #[test]
+fn the_names_line_is_for_evaluation_and_replays() {
+    let repo = staged_repo();
+    let (inputs, _) = recorded_inputs(&repo);
+    let dir = tempfile::TempDir::new().unwrap();
+    let file = dir.path().join("inputs.jsonl");
+    std::fs::write(&file, format!("{inputs}\n")).unwrap();
+    let path = file.to_str().unwrap();
+
+    let user = |extra: &[&str]| {
+        let mut args = vec!["prompt", "--inputs", path];
+        args.extend_from_slice(extra);
+        let output = smart_commit(&args, dir.path());
+        assert!(output.status.success(), "{}", stderr(&output));
+        let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+        prompt["user"].as_str().unwrap().to_owned()
+    };
+    let off = user(&[]);
+    assert!(!off.contains("Names touched"), "{off}");
+    assert_eq!(user(&["--names", "off"]), off);
+    let on = user(&["--names", "on"]);
+    assert!(on.contains("Names touched: main\n"), "{on}");
+    assert!(on.find("Names touched").unwrap() < on.find("Diff:").unwrap());
+
+    // The option is recorded, so the trace replays with the same prompt.
+    let output = smart_commit(
+        &[
+            "eval",
+            path,
+            "--names",
+            "on",
+            "--backend",
+            "mock",
+            "--mock-response",
+            "feat: add the entry point",
+        ],
+        dir.path(),
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    let line = stdout(&output).lines().next().unwrap().to_owned();
+    assert!(line.contains("\"names\":\"on\""), "{line}");
+    let trace = dir.path().join("trace.json");
+    std::fs::write(&trace, line).unwrap();
+    let output = smart_commit(&["replay", trace.to_str().unwrap()], dir.path());
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(
+        stdout(&output).starts_with("reproduced:"),
+        "{}",
+        stdout(&output)
+    );
+}
+
+#[test]
 fn eval_writes_a_replayable_trace_per_input() {
     let repo = staged_repo();
     let (inputs, _) = recorded_inputs(&repo);

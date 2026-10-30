@@ -91,6 +91,14 @@ From the last `style.history_depth` (30) subjects, merges excluded:
   or of their top-level directory (up to 5, `mixed`: up to 3), completes with
   the recent ones, and shows them in the history's order, to evaluate
   whether similar changes teach the style better; it is recorded in traces.
+- **Names touched:** `--names on` (in `prompt` and `eval` only) adds, between
+  the file list and the diff, a line `Names touched:` (up to 8 functions,
+  classes, structs and the like, in the order they appear, read from the hunk
+  headers and the changed lines of every source, config and test file, so
+  also from hunks the budget cut) and a line `Comments added:` (up to 2 added
+  comments of 70 characters). Lockfiles, generated files, documents and
+  binaries give none. The lines are added to the prompt: the diff keeps the
+  room it has without them. It is recorded in traces when set.
 
 ## Fitting the diff
 
