@@ -21,7 +21,18 @@ use smart_commit::tui::{self, Screen};
 use super::model::{self, Chosen};
 use super::settings::{env, hardware_sources, resolve};
 
-pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool, llamacpp_only: bool) -> Result<()> {
+pub(super) fn run(
+    yes: bool,
+    no_drivers: bool,
+    no_bench: bool,
+    llamacpp_only: bool,
+    dry_run: bool,
+) -> Result<()> {
+    if dry_run {
+        // Before anything that writes, such as setting invalid settings aside.
+        let exe = std::env::current_exe()?.canonicalize()?;
+        return dry_run_plan(&scripts_dir(&exe)?, no_drivers, no_bench);
+    }
     set_aside_invalid_settings()?;
     if llamacpp_only {
         let server = install_llamacpp(&mut |_| {})?;
@@ -53,6 +64,21 @@ fn install_llamacpp(progress: &mut dyn FnMut(u64)) -> Result<PathBuf> {
     )?)
 }
 
+/// `setup --dry-run`: the plan as text, in a terminal too, and nothing
+/// applied. Only the read-only checks run (`check-npu.sh`, `export-model.sh
+/// --check`, `setup-gpu.sh --dry-run`), the ones the real setup runs to plan.
+fn dry_run_plan(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {
+    let hw = Hardware::detect(&hardware_sources());
+    let model = resolve(None, Vec::new())?.settings().model;
+    let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;
+    let steps = setup::plan(&hw, &facts);
+    print!(
+        "{}",
+        setup::dry_run_text(&hw.inventory(), setup::not_needed(&hw), &steps)
+    );
+    Ok(())
+}
+
 /// `setup` without the full screen, for `--yes` and for output that is not a
 /// terminal: the hardware, the plan, then each step that is not done yet,
 /// asking before what needs sudo.
@@ -75,6 +101,7 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
     if let Some(why) = setup::not_needed(&hw) {
         println!("  {why}");
     }
+    let mut failed = false;
     for step in steps.iter().filter(|s| !s.installed) {
         match step.kind {
             StepKind::LlamaCpp => {
@@ -87,9 +114,12 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
                             println!("  devices seen by llama.cpp (besides the CPU):\n{devices}");
                         }
                     }
-                    Err(err) => println!(
-                        "  Could not install llama.cpp ({err:#}); run `smart-commit setup` again."
-                    ),
+                    Err(err) => {
+                        failed = true;
+                        println!(
+                            "  Could not install llama.cpp ({err:#}); run `smart-commit setup` again."
+                        );
+                    }
                 }
             }
             StepKind::Model => {
@@ -99,6 +129,7 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
                         println!("  checked against the pinned SHA-256: {}", file.display())
                     }
                     Err(err) => {
+                        failed = true;
                         println!(
                             "  Could not install {} ({err:#}); run `smart-commit setup` again.",
                             model.id
@@ -109,7 +140,7 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
             StepKind::GpuDrivers => {
                 println!("\n==> GPU drivers");
                 if ask("Set up the GPUs as planned above (may use sudo)?", yes) {
-                    run_script(
+                    failed |= !run_script(
                         &scripts.join("setup-gpu.sh"),
                         if yes { &["--yes"] } else { &[] },
                     );
@@ -120,12 +151,12 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
                     "Install the Intel NPU driver and OpenVINO (uses sudo)?",
                     yes,
                 ) {
-                    run_script(&scripts.join("setup-npu.sh"), &[]);
+                    failed |= !run_script(&scripts.join("setup-npu.sh"), &[]);
                 }
             }
             StepKind::Openvino => {
                 if ask("Install OpenVINO, for the Intel GPU (uses sudo)?", yes) {
-                    run_script(&scripts.join("setup-npu.sh"), &["--openvino-only"]);
+                    failed |= !run_script(&scripts.join("setup-npu.sh"), &["--openvino-only"]);
                 }
             }
             StepKind::ExportModel => {
@@ -136,6 +167,7 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
                     yes,
                 ) && !run_script(&scripts.join("export-model.sh"), &[])
                 {
+                    failed = true;
                     println!("  Could not export the model; run `smart-commit setup` again.");
                 }
             }
@@ -149,6 +181,7 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
             StepKind::Bench => {
                 println!("\n==> Benchmark");
                 if let Err(err) = super::benchmark::run_bench(false) {
+                    failed = true;
                     println!("  Nothing could run the model yet ({err:#}); see above.");
                 }
             }
@@ -161,14 +194,18 @@ fn plain(scripts: &Path, yes: bool, no_drivers: bool, no_bench: bool) -> Result<
         println!("\n==> {}: already set up", step.title);
     }
     println!("\n==> Done");
-    println!("  Generate a message:   git add -p && smart-commit");
-    println!("  Commit with it:       smart-commit --commit");
-    println!("  On every git commit:  smart-commit hook install");
-    println!(
-        "  Change the device:    smart-commit device use <npu|intel-gpu|vulkan|cpu|openvino-cpu|auto>"
-    );
+    if !failed {
+        print!("{NEXT_STEPS}");
+    }
     Ok(())
 }
+
+/// What to do once the setup worked.
+const NEXT_STEPS: &str = "\nNext:\n  \
+    git add -p                 choose what goes into the commit\n  \
+    smart-commit               print a message for what is staged\n  \
+    smart-commit --commit      review it, then commit\n  \
+    smart-commit hook install  fill in every `git commit` of this repository\n";
 
 /// Downloads `model` into the models directory, as `setup` does for the
 /// one in use.
@@ -386,6 +423,10 @@ fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {
         }
     }
     drop(screen);
+    let failed = view
+        .results()
+        .iter()
+        .any(|(_, state)| matches!(state, State::Failed(_)));
     println!("Setup:");
     for (title, state) in view.results() {
         let (word, why) = match state {
@@ -404,11 +445,9 @@ fn interactive(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {
     for note in notes {
         println!("{note}");
     }
-    println!(
-        "\nGenerate a message:   git add -p && smart-commit\n\
-         Commit with it:       smart-commit --commit\n\
-         On every git commit:  smart-commit hook install"
-    );
+    if !failed {
+        print!("{NEXT_STEPS}");
+    }
     Ok(())
 }
 

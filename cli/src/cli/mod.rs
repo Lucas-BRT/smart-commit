@@ -11,6 +11,7 @@ use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 mod args;
 mod benchmark;
 mod configure;
+mod doctor;
 mod git_hook;
 mod guided_setup;
 mod inspect;
@@ -19,6 +20,7 @@ mod keep_loaded;
 mod load;
 mod logging;
 mod model;
+mod notice;
 mod session;
 mod settings;
 mod suggest;
@@ -107,6 +109,13 @@ enum Command {
     },
     /// The CPU, GPUs and NPU of this machine, and the devices each gives.
     Hardware,
+    /// Check this installation (binary, git, settings, model, llama.cpp,
+    /// device, kept model, hook) and say how to fix what is wrong; offline.
+    Doctor {
+        /// Also hash the model file (slow for a model of several GB).
+        #[arg(long)]
+        thorough: bool,
+    },
     /// List the recommended models, or switch to another one or to a file.
     Model {
         #[command(subcommand)]
@@ -124,6 +133,10 @@ enum Command {
         /// Skip the benchmark.
         #[arg(long)]
         no_bench: bool,
+        /// Print the plan (what would be installed, what needs sudo, what
+        /// is downloaded) and change nothing.
+        #[arg(long, conflicts_with = "llamacpp_only")]
+        dry_run: bool,
         /// Only install the llama.cpp build this release pins (what an update
         /// runs).
         #[arg(long, hide = true)]
@@ -184,6 +197,13 @@ fn parse() -> Cli {
 pub fn run() -> ExitCode {
     let cli = parse();
     logging::init(cli.verbose);
+    // The commands a person runs by hand; never the hook, nor what records
+    // or replays a run.
+    let notify = cli.generate.backend.trace.is_none()
+        && matches!(
+            cli.command,
+            None | Some(Command::Setup { .. } | Command::Device { .. } | Command::Model { .. })
+        );
     let result = match cli.command {
         Some(Command::Context { path }) => inspect::context(&path),
         Some(Command::Prompt {
@@ -210,6 +230,13 @@ pub fn run() -> ExitCode {
         Some(Command::Config(command)) => configure::run(command),
         Some(Command::Bench { json }) => benchmark::run_bench(json),
         Some(Command::Device { command }) => benchmark::run_device(command),
+        Some(Command::Doctor { thorough }) => {
+            return if doctor::run(thorough) {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            };
+        }
         Some(Command::Model { command }) => model::run(command),
         Some(Command::Hardware) => {
             inspect::hardware();
@@ -219,8 +246,9 @@ pub fn run() -> ExitCode {
             yes,
             no_drivers,
             no_bench,
+            dry_run,
             llamacpp_only,
-        }) => guided_setup::run(yes, no_drivers, no_bench, llamacpp_only),
+        }) => guided_setup::run(yes, no_drivers, no_bench, llamacpp_only, dry_run),
         Some(Command::Server(command)) => keep_loaded::run(command),
         Some(Command::Update) => install::update(),
         Some(Command::Uninstall { yes, system }) => install::uninstall(yes, system),
@@ -230,7 +258,12 @@ pub fn run() -> ExitCode {
         None => suggest::run(&cli.generate),
     };
     match result {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => {
+            if notify {
+                notice::print();
+            }
+            ExitCode::SUCCESS
+        }
         Err(err) => {
             tracing::error!("{err:#}");
             ExitCode::FAILURE

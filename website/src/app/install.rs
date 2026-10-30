@@ -6,7 +6,7 @@ use topcoat::{
 
 use crate::ui::{
     INSTALL_CMD, doc_link, docs,
-    facts::{DEFAULT_MODEL, DEFAULT_MODEL_SIZE, VERSION},
+    facts::{DEFAULT_MODEL, DEFAULT_MODEL_SIZE, LLAMACPP_SIZE, MIN_GLIBC, PLATFORM, VERSION},
     page_head, terminal,
 };
 
@@ -28,6 +28,15 @@ pub async fn page() -> Result<impl View> {
             <p>"The default model is " <code>(DEFAULT_MODEL)</code> ", " (DEFAULT_MODEL_SIZE) ". Installing, updating and downloading models use the network; writing a message does not."</p>
             <p>"For a walkthrough, see the " <a href=(href!(super::tutorial::page))>"tutorial"</a> "."</p>
             <p class="dim">"Drivers are installed with " <code>"apt"</code> "; Ubuntu 24.04 and derivatives are tested."</p>
+        </section>
+
+        <section class="rail" aria-labelledby="requirements">
+            <h2 id="requirements">"Requirements"</h2>
+            <ul>
+                <li>"Platform: " (PLATFORM) ", with glibc " (MIN_GLIBC) " or newer, and git."</li>
+                <li>"Downloaded by the setup: the default model, " (DEFAULT_MODEL_SIZE) ", and the pinned llama.cpp build, " (LLAMACPP_SIZE) "."</li>
+                <li>"Models and llama.cpp go to " <code>"~/.local/share/smart-commit"</code> "; caches go to " <code>"~/.cache/smart-commit"</code> "."</li>
+            </ul>
         </section>
 
         <section class="rail" aria-labelledby="use">

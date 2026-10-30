@@ -138,9 +138,13 @@ fn auto_skips_the_devices_the_machine_lacks() {
     repo.commit("feat: init");
     repo.write("a.rs", "fn a() {}\n");
     repo.git(&["add", "a.rs"]);
-    let err = stderr(&home.run(&[], repo.path()));
-    assert!(err.contains("vulkan:") && err.contains("cpu:"), "{err}");
-    for absent in ["intel-gpu:", "npu:", "openvino-cpu:"] {
+    // `-v` logs each device that was tried and why it failed.
+    let err = stderr(&home.run(&["-v"], repo.path()));
+    assert!(
+        err.contains("target=vulkan ") && err.contains("target=cpu "),
+        "{err}"
+    );
+    for absent in ["target=intel-gpu", "target=npu", "target=openvino-cpu"] {
         assert!(!err.contains(absent), "{err}");
     }
 }
@@ -290,10 +294,11 @@ fn auto_tries_devices_in_benchmark_order() {
         (Target::Cpu, Some(4000.0)),
         (Target::Vulkan, Some(2400.0)),
     ]);
-    let err = stderr(&home.run(&[], repo.path()));
+    let err = stderr(&home.run(&["-v"], repo.path()));
     let order: Vec<&str> = err
         .lines()
-        .filter_map(|l| l.trim_start().split_once(':').map(|(d, _)| d))
+        .filter_map(|l| l.split_once("target="))
+        .filter_map(|(_, rest)| rest.split_whitespace().next())
         .filter(|d| Target::from_name(d).is_some())
         .collect();
     assert_eq!(

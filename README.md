@@ -9,7 +9,9 @@
 **smart-commit** writes git commit messages in the style of your repository
 with a small language model that runs entirely on your machine: on an Intel
 NPU, on a GPU (Intel, AMD or NVIDIA) or on the CPU. No account, no API key,
-and nothing leaves your computer.
+and nothing leaves your computer. (The one request it can make by itself, a
+daily look for a newer release, is off until you turn it on:
+[update notice](docs/usage.md#update-notice).)
 
 ```console
 $ git add -p
@@ -56,6 +58,9 @@ with a benchmark that shows which device will be used:
 (a Ryzen 5 5500 with an RTX 3050; the Intel-only devices are listed as
 unavailable there.)
 
+To read the plan before installing anything, use `--no-setup` and then
+`smart-commit setup --dry-run` ([usage](docs/usage.md#install)).
+
 Requirements: Linux on x86_64. Drivers are installed with `apt`
 (Ubuntu 24.04 and derivatives are tested); on other distributions the setup
 lists the packages to install. See the [usage guide](docs/usage.md) for the
@@ -78,7 +83,8 @@ downloaded, after listing it.
 | `smart-commit config list --show-origin` | show every setting and where it comes from |
 | `smart-commit context` / `prompt` | show the detected style and the exact prompt |
 | `smart-commit --trace FILE` / `replay FILE` | record and replay a generation |
-| `smart-commit setup` | install drivers and models, then benchmark |
+| `smart-commit setup` | install drivers and models, then benchmark (`--dry-run` only prints the plan) |
+| `smart-commit doctor` | check the installation (model, llama.cpp, device, hook, ...) and say how to fix what is wrong |
 | `smart-commit hardware` | list the CPU, GPUs and NPU, and the devices each gives |
 | `smart-commit server status` / `stop` | the model kept loaded between commits (`model.keep_loaded`) |
 

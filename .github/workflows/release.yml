@@ -8,9 +8,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 concurrency:
   group: release
   cancel-in-progress: false
@@ -22,6 +19,11 @@ jobs:
   release:
     # The oldest supported Ubuntu, so the binary runs on 22.04 and newer.
     runs-on: ubuntu-22.04
+    # id-token and attestations: the signed build provenance of the assets.
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -55,6 +57,11 @@ jobs:
         env:
           SMART_COMMIT_BUILD_CACHE: ${{ runner.temp }}/build-cache
         run: scripts/package.sh dist
+      # Users check it with `gh attestation verify FILE --repo Lucas-BRT/smart-commit`.
+      - if: steps.version.outputs.new == 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
       - if: steps.version.outputs.new == 'true'
         run: cargo run --release --locked -q -p smart-commit-tools -- release-notes "v${{ steps.version.outputs.version }}" >notes.md
       - if: steps.version.outputs.new == 'true'

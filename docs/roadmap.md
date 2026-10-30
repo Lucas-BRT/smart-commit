@@ -2,6 +2,8 @@
 
 ## Done
 
+- Build provenance: the release workflow attests the assets (GitHub artifact
+  attestations), and `install.sh --verify` checks them with `gh`.
 - Repository style detection, diff compaction, prompt and sanitization.
 - CLI with retry and fallback, traces and `replay`.
 - A retry when the reply repeats a history subject, and lockfile-only
@@ -25,6 +27,8 @@
 - Global and per-repository configuration; the setup removes global
   values a version cannot read (a model added by a newer build) instead of
   stopping.
+- `smart-commit setup --dry-run` prints the plan (sudo, downloads, steps
+  already done) without changing anything.
 - Installer, guided setup that lists the hardware first and installs only
   what each vendor's CPU, GPU and NPU need, reproducible model export and
   release packaging, automatic releases.
@@ -40,7 +44,11 @@
   subject or stops mid-sentence, and never a message the user turned down.
 - A file list with what the line counts do not say (status, renames,
   whitespace-only and comment-only changes), on by default.
-- `smart-commit update` and `smart-commit uninstall`.
+- `smart-commit update` and `smart-commit uninstall`, and an opt-in notice of
+  a newer release (`update.check`, off by default).
+- `smart-commit doctor`: one offline command that checks the binary on
+  `PATH`, git, the settings files, the model, llama.cpp, the device, the model
+  kept loaded and the hook, and says how to fix each problem.
 - The binary in modules (`cli/`, and the library's `backend/`, `diff/`,
   `models/`...), with `anyhow` and `tracing`, and `-v` for debug output.
 - The setup, the hardware inventory and the llama.cpp install in the binary
@@ -76,6 +84,7 @@ then the largest gains for their cost.
 | 16 | **OpenVINO 2026.4+** | When an NPU driver is validated with it. Newer runtimes also read the models the OpenVINO organisation publishes. |
 | 17 | **The fixed prompt prefix cached on disk** (only if a server that stays up is not wanted) | Without a server that stays up, llama-server can save a slot's KV cache to a file and restore it (`--slot-save-path`), about 28 KB per token for the 1.5B model, 7 MB for 250 tokens. It needs the prompt to start with the part that never changes (the rules), then the repository's part. Same reproducibility check as 12. Little left to cache if the trained model drops the rules (training H6). |
 | 18 | **DPO on the models' own samples** | Preference training on pairs the model sampled itself removes the replies that copy the history, invent a detail or fall back (on eval-v1, `ungrounded` 0.104 → 0.008, `first_try` 0.960 → 0.996) at no cost to the type or the scope, but does not improve the type significantly; see [training](../training/HYPOTHESES.md), H12. `smart-commit-0.5b-v0.3` and `smart-commit-1.5b-v0.3` are it; at 1.5B the type also rises a little (+11/−3, p = 0.057). Whether a version trained on the annotated file list (v0.4) takes it as a last step is open. |
+| 19 | **Install from the release's own `install.sh`** | Releases now carry `install.sh` as an asset (and in `SHA256SUMS`), so the script and the binary match. Once a published release has it, switch the documented command from `https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh` to `https://github.com/Lucas-BRT/smart-commit/releases/latest/download/install.sh` in `README.md`, `docs/usage.md` (the first `curl -fsSL` line, which the website reads) and the website, in one commit. Until then that URL answers 404. |
 
 ## Model candidates
 

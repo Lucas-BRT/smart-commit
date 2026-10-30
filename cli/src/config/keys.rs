@@ -231,6 +231,16 @@ pub const KEYS: &[Key] = &[
         description: "Longest subject, in columns: the prompt asks for it, and longer replies \
                       end at the last phrase that fits.",
     },
+    Key {
+        name: "update.check",
+        kind: Kind::Choice(&["false", "true"]),
+        scope: Scope::User,
+        env: Some("SMART_COMMIT_UPDATE_CHECK"),
+        description: "With `true`, at most once a day, an interactive command asks GitHub \
+                      (api.github.com, over HTTPS, with curl) for the latest release and \
+                      prints a line on stderr when it is newer than this one. The only \
+                      request smart-commit makes by itself; `false`: never.",
+    },
 ];
 
 pub fn key(name: &str) -> Result<&'static Key, ConfigError> {
@@ -312,6 +322,15 @@ pub(super) fn parse_item(key: &Key, item: &Item, home: Option<&str>) -> Result<V
                 value.to_string().trim()
             )),
         },
+        // A switch written as a TOML boolean (`check = true`) is the choice
+        // of that name, so the file reads the way one would write it.
+        (Kind::Choice(choices), Some(value))
+            if value
+                .as_bool()
+                .is_some_and(|on| choices.contains(&on.to_string().as_str())) =>
+        {
+            parse(key, &value.as_bool().unwrap_or_default().to_string(), home)
+        }
         (_, Some(value)) => match value.as_str() {
             Some(text) => parse(key, text, home),
             None => Err(format!(

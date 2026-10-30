@@ -144,6 +144,31 @@ impl Machine {
         Self { dir }
     }
 
+    /// Puts llama.cpp and the default model where the setup finds them, so
+    /// that it has nothing to download (the model is a sparse file of the
+    /// pinned size, with the sidecar that names the pinned hash).
+    fn install_everything(&self) {
+        let data = self.dir.path().join("data");
+        let server = smart_commit::paths::default_llama_server(|name| {
+            (name == "XDG_DATA_HOME").then(|| data.display().to_string())
+        })
+        .unwrap();
+        std::fs::create_dir_all(server.parent().unwrap()).unwrap();
+        std::fs::write(&server, "").unwrap();
+        let model = smart_commit::models::find(smart_commit::models::DEFAULT).unwrap();
+        let file = data.join("smart-commit/models").join(model.gguf.file);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::File::create(&file)
+            .unwrap()
+            .set_len(model.gguf.size)
+            .unwrap();
+        std::fs::write(
+            smart_commit::models::sidecar(&file),
+            format!("{}  {}\n", model.gguf.sha256, model.gguf.file),
+        )
+        .unwrap();
+    }
+
     fn binary(&self) -> PathBuf {
         self.dir.path().join("prefix/bin/smart-commit")
     }
@@ -318,6 +343,27 @@ fn steps_that_fail_are_reported_and_the_setup_goes_on() {
 }
 
 #[test]
+fn a_setup_that_worked_says_what_to_do_next() {
+    let _serial = serial();
+    let machine = Machine::new(amd_only);
+    machine.install_everything();
+    let out = machine.setup(&["--no-drivers", "--no-bench"]);
+    in_order(&out, "==> Done", "Next:");
+    has(&out, "git add -p");
+    has(&out, "smart-commit --commit");
+    has(&out, "smart-commit hook install");
+}
+
+#[test]
+fn a_setup_with_a_failed_step_does_not_say_what_to_do_next() {
+    let _serial = serial();
+    let out = Machine::new(amd_nvidia).setup(&["--no-bench", "--no-drivers"]);
+    has(&out, "==> Done");
+    lacks(&out, "Next:");
+    lacks(&out, "smart-commit hook install");
+}
+
+#[test]
 fn the_benchmark_runs_last_unless_the_render_group_is_pending() {
     let _serial = serial();
     let out = Machine::new(amd_only).setup(&["--no-drivers"]);
@@ -328,7 +374,6 @@ fn the_benchmark_runs_last_unless_the_render_group_is_pending() {
     );
     in_order(&out, "==> llama.cpp", "==> Benchmark");
     in_order(&out, "==> Benchmark", "==> Done");
-    has(&out, "smart-commit hook install");
 }
 
 #[test]
@@ -353,4 +398,120 @@ fn an_update_only_installs_llama_cpp() {
         "{err}"
     );
     assert!(!String::from_utf8_lossy(&output.stdout).contains("==> Hardware"));
+}
+
+/// Every path under `dir` with its content (a file's bytes, a link's target).
+fn tree(dir: &Path) -> std::collections::BTreeMap<PathBuf, String> {
+    fn walk(dir: &Path, out: &mut std::collections::BTreeMap<PathBuf, String>) {
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            let meta = std::fs::symlink_metadata(&path).unwrap();
+            let content = if meta.is_symlink() {
+                format!("-> {}", std::fs::read_link(&path).unwrap().display())
+            } else if meta.is_dir() {
+                walk(&path, out);
+                "dir".to_owned()
+            } else {
+                String::from_utf8_lossy(&std::fs::read(&path).unwrap()).into_owned()
+            };
+            out.insert(path, content);
+        }
+    }
+    let mut out = std::collections::BTreeMap::new();
+    walk(dir, &mut out);
+    out
+}
+
+impl Machine {
+    /// Runs `setup --dry-run` with `args`, with a `sudo`, `curl` and `wget`
+    /// first on the PATH that leave a mark when called; its output and
+    /// whether any of them was called.
+    fn dry_run(&self, args: &[&str]) -> (String, bool) {
+        use std::os::unix::fs::PermissionsExt;
+        let bin = self.dir.path().join("fake-bin");
+        let called = self.dir.path().join("fake-bin-called");
+        std::fs::create_dir_all(&bin).unwrap();
+        for name in ["sudo", "curl", "wget"] {
+            let path = bin.join(name);
+            std::fs::write(
+                &path,
+                format!("#!/bin/sh\necho {name} >> '{}'\nexit 1\n", called.display()),
+            )
+            .unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        let before = tree(self.dir.path());
+        let sysfs = self.dir.path().join("sys");
+        let path = format!(
+            "{}:{}",
+            bin.display(),
+            std::env::var("PATH").unwrap_or_default()
+        );
+        let mut command = Command::new(self.binary());
+        let output = common::isolate(&mut command)
+            .args(["setup", "--dry-run"])
+            .args(args)
+            .env("PATH", path)
+            .env("HOME", self.dir.path().join("home-not-created"))
+            .env("SMART_COMMIT_SYSFS", &sysfs)
+            .env("SMART_COMMIT_CPUINFO", sysfs.join("cpuinfo"))
+            .env(
+                "SMART_COMMIT_OPENVINO_DIR",
+                self.dir.path().join("no-openvino"),
+            )
+            .env("SMART_COMMIT_DPKG_QUERY", "false")
+            .env("XDG_DATA_HOME", self.dir.path().join("data"))
+            .env("XDG_CONFIG_HOME", self.dir.path().join("config"))
+            .stdin(Stdio::null())
+            .output()
+            .unwrap();
+        let text = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.status.success(), "dry run failed:\n{text}");
+        assert_eq!(tree(self.dir.path()), before, "the dry run wrote files");
+        (text, called.exists())
+    }
+}
+
+#[test]
+fn a_dry_run_prints_the_plan_and_changes_nothing() {
+    let _serial = serial();
+    let (out, called) = Machine::new(all_intel).dry_run(&[]);
+    has(&out, "==> Plan (dry run)");
+    has(&out, "CPU  Intel(R) Core(TM) Ultra 5 225H");
+    has(&out, "needs sudo: apt packages");
+    has(&out, "downloads: 31 MB");
+    has(&out, "Benchmark");
+    has(
+        &out,
+        "Nothing was changed. Run `smart-commit setup` to apply it.",
+    );
+    in_order(&out, "==> Hardware", "==> Plan (dry run)");
+    lacks(&out, "stub ");
+    lacks(&out, "==> llama.cpp");
+    lacks(&out, "==> Done");
+    assert!(!called, "sudo, curl or wget was run");
+}
+
+#[test]
+fn a_dry_run_with_no_drivers_has_no_sudo_step_and_accepts_yes() {
+    let _serial = serial();
+    let (out, called) = Machine::new(amd_nvidia).dry_run(&["--no-drivers", "--yes", "--no-bench"]);
+    lacks(&out, "GPU drivers");
+    assert_eq!(out.matches("needs sudo:").count(), 2, "{out}");
+    assert_eq!(out.matches("needs sudo: no").count(), 2, "{out}");
+    has(&out, "Total download: ");
+    assert!(!called);
+}
+
+#[test]
+fn a_dry_run_on_a_cpu_only_machine_adds_up_what_it_downloads() {
+    let _serial = serial();
+    let (out, _) = Machine::new(amd_only).dry_run(&["--no-bench"]);
+    has(&out, "Not needed: OpenVINO");
+    has(&out, "Total download: ");
+    lacks(&out, "needs sudo: apt");
 }

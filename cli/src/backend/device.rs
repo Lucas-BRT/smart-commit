@@ -87,6 +87,13 @@ pub enum DeviceError {
     Only(BackendError),
     #[error("no device could run the model:{}", list_failures(.0))]
     NoneWorked(Vec<(Target, BackendError)>),
+    /// Every device failed for want of a file nothing has installed yet:
+    /// said once, without the list (`-v` logs each device's reason).
+    #[error(
+        "smart-commit is not set up yet: no model or llama.cpp found.\n\
+         Run `smart-commit setup` to download them and pick the fastest device."
+    )]
+    NotSetUp,
 }
 
 fn list_failures(failures: &[(Target, BackendError)]) -> String {
@@ -211,6 +218,15 @@ pub fn load_first(
                 skipped.push((target, err));
             }
         }
+    }
+    // One candidate keeps its own error, which names the file: a fixed
+    // device is what the person asked for.
+    if skipped.len() > 1
+        && skipped
+            .iter()
+            .all(|(_, err)| matches!(err, BackendError::NotInstalled(_)))
+    {
+        return Err(DeviceError::NotSetUp);
     }
     match skipped.as_slice() {
         [(_, only)] => Err(DeviceError::Only(only.clone())),
@@ -424,5 +440,46 @@ mod tests {
         // One candidate: its error as is.
         let err = load_first(&[Target::Cpu], fail).err().unwrap();
         assert_eq!(err.to_string(), "backend unavailable: cpu missing");
+    }
+
+    fn missing(target: Target) -> Result<Box<dyn Backend>, BackendError> {
+        Err(BackendError::NotInstalled(format!("no model for {target}")))
+    }
+
+    #[test]
+    fn all_devices_missing_their_files_is_not_set_up() {
+        let err = load_first(&[Target::Vulkan, Target::Cpu], missing)
+            .err()
+            .unwrap();
+        assert_eq!(err, DeviceError::NotSetUp);
+        assert_eq!(
+            err.to_string(),
+            "smart-commit is not set up yet: no model or llama.cpp found.\n\
+             Run `smart-commit setup` to download them and pick the fastest device."
+        );
+        // One candidate: its own error, naming the file.
+        let err = load_first(&[Target::Cpu], missing).err().unwrap();
+        assert_eq!(err.to_string(), "backend unavailable: no model for cpu");
+    }
+
+    #[test]
+    fn a_mix_of_failures_keeps_the_list() {
+        let err = load_first(&[Target::Vulkan, Target::Cpu], |target| match target {
+            Target::Vulkan => missing(target),
+            _ => Err(BackendError::Unavailable("llama-server exited".into())),
+        })
+        .err()
+        .unwrap();
+        assert_eq!(
+            err.to_string(),
+            "no device could run the model:\n  vulkan: backend unavailable: no model for \
+             vulkan\n  cpu: backend unavailable: llama-server exited"
+        );
+    }
+
+    #[test]
+    fn no_candidates_is_not_reported_as_not_set_up() {
+        let err = load_first(&[], missing).err().unwrap();
+        assert!(matches!(err, DeviceError::NoneWorked(list) if list.is_empty()));
     }
 }

@@ -19,3 +19,4 @@ pub mod setup;
 pub mod style;
 pub mod trace;
 pub mod tui;
+pub mod update_notice;

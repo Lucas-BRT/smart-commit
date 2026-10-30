@@ -6,6 +6,17 @@
 curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ```
 
+Requirements: Linux on x86_64. glibc 2.35 or newer (Ubuntu 22.04+,
+Debian 12+, Fedora 36+; not Alpine or other musl systems), `git`, and about
+1.5 GB free in `~/.local/share` for the default model. The setup downloads the
+default model (1.1 GB) and the pinned llama.cpp build (31.6 MB); the model sizes
+are in [models](models.md). Models and llama.cpp go to
+`~/.local/share/smart-commit`, and the caches to `~/.cache/smart-commit`.
+Before downloading, the installer stops with a message that names the package
+to install when `git` is missing, and stops when the C library is older than
+2.35 or is not glibc; with low free disk space it only warns and goes on.
+`--update` only warns about a missing `git`, and `--uninstall` checks nothing.
+
 The installer downloads the latest release, checks it against the release's
 `SHA256SUMS` and installs it in `~/.local/bin` and `~/.local/share/smart-commit`,
 without `sudo`. It then runs `smart-commit setup`, which:
@@ -18,6 +29,12 @@ without `sudo`. It then runs `smart-commit setup`, which:
 3. installs it, asking before anything that uses `sudo`, and checks every
    download against its hash;
 4. benchmarks the devices and says which one will be used.
+
+When every step worked, the setup ends with a `Next:` block: `git add -p`,
+`smart-commit`, `smart-commit --commit` and `smart-commit hook install`. It
+is left out when a step failed. With `--no-setup`, the installer tells you to
+run `smart-commit setup` (with the full path when `~/.local/bin` is not on
+`PATH`).
 
 In a terminal, `smart-commit setup` is a full-screen interface: the hardware,
 then the plan, where Space turns each step on or off and `m` chooses another
@@ -36,18 +53,44 @@ Installer options (after `bash -s --` when piping):
 | `--prefix DIR` | install in `DIR/bin` and `DIR/share` |
 | `--no-setup` | only install; run `smart-commit setup` later |
 | `--update` | install only if the release is not the version installed, without the setup; llama.cpp follows the new release's build (what `smart-commit update` runs) |
+| `--verify` | also verify the download's build provenance with `gh` (see [Verify a download](#verify-a-download)) |
 | `--yes` | answer yes to the setup's questions |
 | `--uninstall` | remove smart-commit (models, caches and config are kept) |
 | `--purge` | `--uninstall`, plus the models, llama.cpp, the benchmark, the caches and the config |
 | `--system` | `--uninstall`, plus the OpenVINO that the setup installed (asks before using `sudo`) |
 
-The installer warns if `~/.local/bin` is not on your `PATH`. Running it
+If `~/.local/bin` (or the `--prefix` directory's `bin`) is not on your
+`PATH`, the installer prints the line to add for your shell (`export PATH=...`
+in `~/.bashrc`, `~/.zshrc` or `~/.profile`, `fish_add_path` in fish's
+`config.fish`) and says to open a new terminal or run it now. It never edits
+your profile files. Running it
 again upgrades in place: it only replaces the binary, the scripts and the
 docs, so the models, llama.cpp and the benchmark stay.
 
 `smart-commit setup` can run again at any time, for example after adding a
 GPU; `smart-commit hardware` only prints the hardware list. `--no-drivers`
 skips everything that needs `sudo`, and `--no-bench` skips the benchmark.
+
+To see the plan before anything is installed, install without the setup and
+ask for a dry run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash -s -- --no-setup
+smart-commit setup --dry-run
+```
+
+`smart-commit setup --dry-run` prints the hardware and the plan as text, in a
+terminal too: each step, whether it needs `sudo` and for what (apt packages,
+files in `/opt/intel` and `/etc/ld.so.conf.d`, the render group), what it
+downloads and how big (the sizes it knows: llama.cpp and the model; the total
+is printed only when every pending download has a known size), and which
+steps are already done and would be skipped. It ends with `Nothing was
+changed. Run `smart-commit setup` to apply it.` and changes nothing: no
+download, no file or directory written, no `sudo`. It only runs the
+read-only checks the setup itself uses to plan (`check-npu.sh`,
+`export-model.sh --check`, `setup-gpu.sh --dry-run`). It combines with
+`--no-drivers` (the plan then has no `sudo` step) and `--no-bench`; `--yes`
+is accepted and ignored.
 
 To build from source instead:
 
@@ -56,6 +99,29 @@ git clone https://github.com/Lucas-BRT/smart-commit && cd smart-commit
 cargo build --release --locked      # the toolchain comes from rust-toolchain.toml
 target/release/smart-commit setup
 ```
+
+### Verify a download
+
+The installer always checks the archive against the release's `SHA256SUMS`.
+That file comes from the same place as the archive, so it proves the download
+is not corrupted; it does not prove who built it.
+
+Releases after 0.14.0 also carry a GitHub artifact attestation (signed build
+provenance, made by the release workflow). With the [GitHub CLI](https://cli.github.com):
+
+```bash
+gh attestation verify smart-commit-x86_64-unknown-linux-gnu.tar.gz --repo Lucas-BRT/smart-commit
+```
+
+or let the installer do it after the `SHA256SUMS` check, failing if `gh` is
+missing or the verification fails:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash -s -- --verify
+```
+
+Releases up to 0.14.0 have no attestation, so `--verify` with an older
+`--version` fails with "no attestation".
 
 ## Update
 
@@ -70,6 +136,31 @@ when llama.cpp is installed it follows the build the new release pins (no
 `sudo`). It runs the `install.sh` that came with the release, so it works
 for installs made by `install.sh` from 0.7.0 on; 0.6.0 and older update once
 with `install.sh` itself, and a build from source with git and cargo.
+
+### Update notice
+
+Nothing tells you that a release is out unless you ask for it:
+
+```bash
+smart-commit config set update.check true
+```
+
+`update.check` is off by default, because smart-commit makes no request by
+itself otherwise. When it is on, at most once in 24 hours, `smart-commit`
+(bare or with `--commit`), `setup`, `device` and `model` run `curl` with a 2
+second limit against
+`https://api.github.com/repos/Lucas-BRT/smart-commit/releases/latest` and,
+if the release is newer than the one running, print one line on stderr:
+`note: smart-commit X.Y.Z is available (you have A.B.C); run smart-commit update`.
+GitHub sees the request over HTTPS (so your IP address) and the user agent
+`smart-commit/<version>`; nothing else is sent, no token or cookie. The
+answer and the time are kept in `$XDG_CACHE_HOME/smart-commit/update-check`.
+It never runs in the git hook, with `--trace`, `replay`, `eval` or `prompt`,
+or when stderr is not a terminal. A failure (no network, no `curl`, a reply
+that is not a release) is silent, shown as a `debug:` line with `-v`, never
+changes the exit code, and counts as a check, so an offline machine does not
+retry at every run. `SMART_COMMIT_UPDATE_CHECK=false` turns it off for one
+command.
 
 ## Everyday use
 
@@ -239,6 +330,46 @@ smart-commit config init                                       # a file with eve
 
 Every key is described in [configuration](configuration.md).
 
+## Diagnose an installation
+
+```bash
+smart-commit doctor             # check this installation, offline
+smart-commit doctor --thorough  # also hash the model file (minutes for a big model)
+```
+
+One line per finding, tagged `ok`, `warn` or `fail`, with the fix after
+` - ` when there is one. The exit code is 1 if anything failed and 0 otherwise:
+warnings do not change it. It checks, in this order:
+
+| Check | Looks at |
+|---|---|
+| `path` | the directory of the running binary is on `PATH` |
+| `git` | git runs; a version older than 2.20 is a warning |
+| `config` | the global and the repository files read fine; retired keys and old names of values are warnings |
+| `model` | the model files of the device in use exist: for a recommended GGUF, its size and `.sha256` record are the pinned ones (`--thorough` hashes it); for OpenVINO, the exported directory |
+| `llama.cpp` | `llama-server` is installed, and is the build this release pins |
+| `device` | the device in use (`model.device`, or for `auto` the fastest of the last benchmark), that this machine has it, and that a benchmark exists |
+| `server` | the models kept loaded and how long each has been idle; a directory whose server no longer answers is a warning |
+| `hook` | inside a repository: the `prepare-commit-msg` hook is installed, runs this binary and is not ignored by `core.hooksPath` |
+
+A run on an installed machine, inside a repository (paths shortened):
+
+```text
+ok    path       /home/me/.local/bin is on PATH
+ok    git        git 2.43
+ok    config     no files: the defaults apply
+ok    model      qwen2.5-coder-1.5b-instruct-q4_k_m.gguf: size and record match (--thorough hashes the file)
+ok    llama.cpp  /home/me/.local/share/smart-commit/llama.cpp/llama-b11381/llama-server
+ok    device     cpu (auto: no benchmark, the default order)
+warn  device     no benchmark yet - run `smart-commit bench`
+ok    server     none running: the next commit starts one
+warn  hook       not installed in this repository - `smart-commit hook install`
+```
+
+On a machine where the model was never downloaded, the `model` line is
+`fail` (`no GGUF model at … - `smart-commit setup` downloads it`) and the
+command exits with 1.
+
 ## Report a bad message
 
 ```bash
@@ -254,6 +385,7 @@ it, the case can become a test fixture.
 
 | Message | What to do |
 |---|---|
+| `smart-commit is not set up yet` | Nothing is installed yet (no model, no llama.cpp): `smart-commit setup`. `-v` shows what each device lacks |
 | `no device could run the model` | `smart-commit setup`; the message lists what each device lacks |
 | `no model in …`, `no GGUF model at …`, `no llama-server at …` | `smart-commit setup` downloads them; `smart-commit model use <id>` downloads a model |
 | `… has no OpenVINO version, which npu needs` | the model runs on `vulkan` and `cpu` only; `smart-commit model use qwen2.5-coder-1.5b` for the NPU |
@@ -261,6 +393,7 @@ it, the case can become a test fixture.
 | `model.device = gpu … is the old name of intel-gpu` | `smart-commit device use intel-gpu` (or `auto`) |
 | `cannot load the model on the NPU` | `~/.local/share/smart-commit/scripts/check-npu.sh`; after being added to the `render` group, log out and back in |
 | NVIDIA GPU `has no driver bound` | install a driver (`sudo ubuntu-drivers install`) or use nouveau, then `smart-commit setup` |
+| anything else, or you do not know what is wrong | `smart-commit doctor` checks the installation and says how to fix each problem |
 | the hook does nothing | it only acts on `git commit` without `-m`; `smart-commit hook install` reinstalls it |
 
 ## Uninstall

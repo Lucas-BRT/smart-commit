@@ -18,9 +18,11 @@ fn main() {
 /// The files of the product that the site takes its facts from. A change to
 /// one rebuilds the site; one whose shape no longer parses stops the build
 /// with a message, instead of the site going quietly out of date.
-const SOURCES: [&str; 5] = [
+const SOURCES: [&str; 7] = [
+    "install.sh",
     "cli/Cargo.toml",
     "cli/src/models/registry.rs",
+    "cli/src/backend/llamacpp/install.rs",
     "docs/devices.md",
     "docs/usage.md",
     "docs/roadmap.md",
@@ -37,7 +39,15 @@ fn facts() {
         println!("cargo:rerun-if-changed=../{name}");
         fs::read_to_string(root.join(name)).unwrap_or_else(|e| panic!("cannot read {name}: {e}"))
     };
-    let [manifest, registry, devices, usage, roadmap] = SOURCES.map(read);
+    let [
+        installer,
+        manifest,
+        registry,
+        llamacpp,
+        devices,
+        usage,
+        roadmap,
+    ] = SOURCES.map(read);
 
     let version = quoted_value(&manifest, "version").expect("cli/Cargo.toml has no version");
     let repository =
@@ -49,6 +59,12 @@ fn facts() {
         .expect("docs/usage.md has no install command");
 
     let mut out = String::new();
+    out += &format!("pub const MIN_GLIBC: &str = {:?};\n", min_glibc(&installer));
+    out += &format!("pub const PLATFORM: &str = {:?};\n", platform(&usage));
+    out += &format!(
+        "pub const LLAMACPP_SIZE: &str = {:?};\n",
+        archive_size(&llamacpp)
+    );
     out += &format!("pub const VERSION: &str = {version:?};\n");
     out += &format!("pub const REPO: &str = {repository:?};\n");
     out += &format!("pub const INSTALL_CMD: &str = {install:?};\n");
@@ -96,6 +112,41 @@ fn default_model(registry: &str) -> (String, String) {
         .parse()
         .expect("the size is a number");
     (id, format!("{:.1} GB", bytes as f64 / 1e9))
+}
+
+/// The oldest glibc the installer accepts, from its `MIN_GLIBC=2.35` line.
+fn min_glibc(installer: &str) -> String {
+    installer
+        .lines()
+        .find_map(|line| line.strip_prefix("MIN_GLIBC="))
+        .expect("install.sh has no MIN_GLIBC")
+        .to_owned()
+}
+
+/// The platform the guide requires, from its `Requirements: Linux on x86_64.`
+/// paragraph.
+fn platform(usage: &str) -> String {
+    usage
+        .lines()
+        .find_map(|line| line.strip_prefix("Requirements: ")?.split_once('.'))
+        .expect("docs/usage.md has no `Requirements:` line")
+        .0
+        .to_owned()
+}
+
+/// The size of the pinned llama.cpp archive, like `31.6 MB`.
+fn archive_size(install: &str) -> String {
+    let bytes: u64 = install
+        .lines()
+        .find_map(|line| {
+            line.strip_prefix("pub const ARCHIVE_SIZE: u64 = ")?
+                .strip_suffix(';')
+        })
+        .expect("llamacpp/install.rs has no ARCHIVE_SIZE")
+        .replace('_', "")
+        .parse()
+        .expect("ARCHIVE_SIZE is a number");
+    format!("{:.1} MB", bytes as f64 / 1e6)
 }
 
 /// The cells of a Markdown table row, trimmed.

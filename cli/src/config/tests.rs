@@ -127,6 +127,20 @@ fn unknown_keys_are_errors() {
 }
 
 #[test]
+fn a_switch_may_be_a_toml_boolean_or_its_name() {
+    let check = |text: &str| {
+        resolve(Some(text), None, HOME, vec![])
+            .unwrap()
+            .update_check()
+    };
+    assert!(check("[update]\ncheck = true\n"));
+    assert!(check("[update]\ncheck = \"true\"\n"));
+    assert!(!check("[update]\ncheck = false\n"));
+    // A boolean is no choice of a key that has no such choice.
+    assert!(resolve(Some("[model]\ndevice = true\n"), None, HOME, vec![]).is_err());
+}
+
+#[test]
 fn invalid_values_are_errors() {
     for (text, problem) in [
         (

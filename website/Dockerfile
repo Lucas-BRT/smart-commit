@@ -34,6 +34,7 @@ RUN mkdir -p cli/src tools/src training/tools/src website/src \
 # The sources. Their modification times can be older than the stubs above, so
 # they are touched, or Cargo would keep the stubs' build.
 # The product's files that build.rs takes the site's facts from:
+COPY install.sh ./
 COPY docs/devices.md docs/roadmap.md docs/usage.md docs/
 COPY cli/src cli/src
 COPY tools/src tools/src
