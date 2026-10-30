@@ -20,12 +20,7 @@ use anyhow::{Context as _, Result, bail, ensure};
 use serde_json::{Map, Value};
 
 use crate::pyjson;
-
-fn lines_of(path: &Path) -> Result<Vec<String>> {
-    let text =
-        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
-    Ok(text.lines().map(str::to_owned).collect())
-}
+use crate::pytext::read_lines as lines_of;
 
 /// Writes `DIR/examples.jsonl` from `DIR/inputs.jsonl` and `DIR/meta.jsonl`;
 /// how many examples.

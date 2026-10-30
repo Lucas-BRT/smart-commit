@@ -12,11 +12,12 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context as _, Result, bail};
+use anyhow::{Result, bail};
 use serde_json::{Value, json};
 
 use crate::build_inputs::keep_target;
 use crate::pyjson;
+use crate::pytext::read_lines as lines_of;
 use crate::score::{evidence, unsupported};
 
 pub struct Options {
@@ -57,16 +58,6 @@ impl<K: PartialEq + Clone> Counter<K> {
         all.sort_by_key(|entry| std::cmp::Reverse(entry.1));
         all
     }
-}
-
-fn lines_of(path: &Path) -> Result<Vec<String>> {
-    let text =
-        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
-    let mut lines: Vec<String> = text.split('\n').map(str::to_owned).collect();
-    if lines.last().is_some_and(String::is_empty) {
-        lines.pop();
-    }
-    Ok(lines)
 }
 
 fn rank(hash: &str) -> String {

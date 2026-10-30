@@ -19,6 +19,7 @@ use anyhow::{Context as _, Result, ensure};
 use serde_json::{Value, json};
 
 use crate::build_inputs::{conventional_type, fold_type};
+use crate::pytext::read_lines;
 use crate::score::{SCOPE, description, evidence, f1, ungrounded, unsupported};
 
 /// The longest subject, in columns, as in smart-commit.
@@ -224,9 +225,8 @@ pub struct Summary {
 }
 
 fn lines(path: &Path) -> Result<Vec<Value>> {
-    std::fs::read_to_string(path)
-        .with_context(|| format!("cannot read {}", path.display()))?
-        .lines()
+    read_lines(path)?
+        .iter()
         .map(|l| {
             serde_json::from_str(l).with_context(|| format!("{}: bad JSON line", path.display()))
         })
