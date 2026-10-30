@@ -1,8 +1,8 @@
 [package]
 name = "smart-commit-website"
 version = "0.1.0"
-edition = "2024"
-rust-version = "1.99"
+edition.workspace = true
+rust-version.workspace = true
 publish = false
 description = "Website for smart-commit, built with Topcoat"
 
