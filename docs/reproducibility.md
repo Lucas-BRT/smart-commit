@@ -16,6 +16,10 @@ pinned and how each guarantee is checked.
   out of the binary and debug info is stripped. The archive is made in the
   same container, because `tar` and `gzip` versions change the bytes too,
   with a fixed order, owner, file modes and dates (the commit's).
+  CI keeps the container's toolchain and downloaded crates between runs
+  (`SMART_COMMIT_BUILD_CACHE`), never its build, so the hash it prints is
+  that of a build from scratch; two packagings with and without the cache
+  gave the same archive.
 - *How it was checked:* v0.2.0, built on the host, differed between CI
   (GCC 11) and a developer machine (GCC 13) and in the directory modes (the
   packager's umask). With the binary built in the container, v0.3.0's
