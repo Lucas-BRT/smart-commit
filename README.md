@@ -79,6 +79,7 @@ downloaded, after listing it.
 | `smart-commit context` / `prompt` | show the detected style and the exact prompt |
 | `smart-commit --trace FILE` / `replay FILE` | record and replay a generation |
 | `smart-commit setup` | install drivers and models, then benchmark |
+| `smart-commit doctor` | check the installation (model, llama.cpp, device, hook, ...) and say how to fix what is wrong |
 | `smart-commit hardware` | list the CPU, GPUs and NPU, and the devices each gives |
 | `smart-commit server status` / `stop` | the model kept loaded between commits (`model.keep_loaded`) |
 

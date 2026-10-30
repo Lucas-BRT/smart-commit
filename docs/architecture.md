@@ -40,7 +40,8 @@ Everything except the model is deterministic and tested without hardware.
 
 The binary (`cli/src/main.rs` and the `cli/src/cli/` modules: `args`, `suggest`,
 `inspect`, `git_hook`, `configure`, `benchmark`, `model`, `guided_setup`,
-`keep_loaded` and `install` for the commands, and `session`, `load`,
+`keep_loaded`, `doctor` (each check a function of the inputs it is given, so
+tests build the installations) and `install` for the commands, and `session`, `load`,
 `logging` and `settings`, which they share) only parses
 arguments and wires these together; `update` and `uninstall` run the `install.sh` the release
 installed in `share/smart-commit/scripts`.
