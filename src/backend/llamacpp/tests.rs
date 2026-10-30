@@ -440,3 +440,34 @@ fn types_and_a_chosen_start_go_through_the_socket() {
     let last = body["messages"].as_array().unwrap().last().unwrap().clone();
     assert_eq!(last, json!({"role": "assistant", "content": "fix"}));
 }
+
+#[test]
+fn a_frozen_server_is_not_healthy_and_does_not_hang_the_check() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let socket = dir.path().join("server.sock");
+    // Accepts the connection and never replies, like a hung GPU driver.
+    let listener = UnixListener::bind(&socket).unwrap();
+    let held = std::thread::spawn(move || listener.accept().map(|(stream, _)| stream));
+    let started = std::time::Instant::now();
+    assert!(!healthy_within(&socket, Duration::from_millis(200)));
+    assert!(started.elapsed() >= Duration::from_millis(150));
+    assert!(started.elapsed() < Duration::from_secs(5));
+    drop(held);
+}
+
+#[test]
+fn a_server_that_answers_is_healthy_and_a_missing_one_is_not() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let socket = dir.path().join("server.sock");
+    assert!(!healthy_within(&socket, HEALTH_TIMEOUT));
+    let listener = UnixListener::bind(&socket).unwrap();
+    std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut buf = [0; 1024];
+        let _ = stream.read(&mut buf);
+        stream
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}")
+            .unwrap();
+    });
+    assert!(healthy_within(&socket, HEALTH_TIMEOUT));
+}

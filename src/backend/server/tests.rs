@@ -397,3 +397,31 @@ fn a_spec_written_before_the_share_existed_still_reads() {
     assert_eq!(read, spec);
     assert_eq!(read.share.max_percent, 15);
 }
+
+#[test]
+fn a_frozen_server_is_replaced_and_does_not_hang_the_commit() {
+    let runtime = tempfile::TempDir::new().unwrap();
+    let options = options(runtime.path());
+    let dir = runtime.path().join(key(&options));
+    std::fs::create_dir_all(&dir).unwrap();
+    // Accepts connections and never answers.
+    let listener = UnixListener::bind(dir.join("server.sock")).unwrap();
+    let held = std::thread::spawn(move || listener.accept().map(|(stream, _)| stream));
+    let started = Instant::now();
+    // `false` stands for a supervisor that cannot start: the frozen server
+    // was judged unhealthy, so a new one was tried.
+    let err = connect(
+        runtime.path(),
+        &options,
+        Duration::from_secs(60),
+        &roomy(runtime.path()),
+        Path::new("/bin/false"),
+    )
+    .unwrap_err()
+    .to_string();
+    assert!(err.contains("exited"), "{err}");
+    // It waited for the health check, and not for a generation's 300 s.
+    assert!(started.elapsed() >= llamacpp::HEALTH_TIMEOUT);
+    assert!(started.elapsed() < Duration::from_secs(60));
+    drop(held);
+}
