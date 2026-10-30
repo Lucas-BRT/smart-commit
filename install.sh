@@ -24,7 +24,9 @@
 # The download is checked against the release's SHA256SUMS.
 # SMART_COMMIT_RELEASE_BASE overrides where releases are downloaded from;
 # SMART_COMMIT_SYSTEM_ROOT (a directory standing for /) and
-# SMART_COMMIT_SUDO (the command instead of sudo) are for tests.
+# SMART_COMMIT_SUDO (the command instead of sudo), SMART_COMMIT_OS_RELEASE
+# (the os-release file the git hint reads) and SMART_COMMIT_GETCONF (the
+# command that reports the C library) are for tests.
 set -euo pipefail
 
 BASE=${SMART_COMMIT_RELEASE_BASE:-https://github.com/Lucas-BRT/smart-commit/releases}
@@ -38,6 +40,13 @@ PURGE=0
 SYSTEM=0
 ASSUME_YES=0
 setup_args=()
+
+# The oldest glibc the release runs on: the one of the Ubuntu 22.04 container
+# that builds it (scripts/build/Dockerfile).
+MIN_GLIBC=2.35
+# Free space the setup wants, in KiB: the default model (1.1 GB), llama.cpp
+# unpacked (about 0.1 GB) and a margin.
+MIN_FREE_KB=1500000
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -170,6 +179,57 @@ fi
 for tool in curl tar sha256sum; do
     command -v "$tool" >/dev/null || die "$tool is required"
 done
+
+# preflight: what the release and the setup need, said before downloading.
+preflight() {
+    local id='' id_like='' hint='install git' line libc found free dir
+    local osr=${SMART_COMMIT_OS_RELEASE:-/etc/os-release}
+    if ! command -v git >/dev/null; then
+        if [ "$UPDATE" = 1 ]; then
+            echo "warning: git is not installed; smart-commit needs it to read repositories." >&2
+        else
+            if [ -r "$osr" ]; then
+                line=$(grep '^ID=' "$osr" || true)
+                id=${line#ID=}
+                line=$(grep '^ID_LIKE=' "$osr" || true)
+                id_like=${line#ID_LIKE=}
+            fi
+            id=${id//\"/}
+            id_like=${id_like//\"/}
+            case " $id $id_like " in
+                *" debian "* | *" ubuntu "*) hint='run: sudo apt install git' ;;
+                *" fedora "* | *" rhel "* | *" centos "*) hint='run: sudo dnf install git' ;;
+                *" arch "*) hint='run: sudo pacman -S git' ;;
+                *suse*) hint='run: sudo zypper install git' ;;
+            esac
+            die "git is required (smart-commit reads your repository with it); $hint"
+        fi
+    fi
+
+    libc=$(${SMART_COMMIT_GETCONF:-getconf} GNU_LIBC_VERSION 2>/dev/null || true)
+    case $libc in
+        "glibc "*)
+            found=${libc#glibc }
+            if [ "$(printf '%s\n%s\n' "$MIN_GLIBC" "$found" | sort -V | head -n 1)" != "$MIN_GLIBC" ]; then
+                die "smart-commit's release needs glibc $MIN_GLIBC or newer (Ubuntu 22.04+, Debian 12+, Fedora 36+...); this system has glibc $found."
+            fi
+            ;;
+        *)
+            die "smart-commit's release needs glibc $MIN_GLIBC or newer (Ubuntu 22.04+, Debian 12+, Fedora 36+...); this system does not use glibc (musl, Alpine?)."
+            ;;
+    esac
+
+    if [ "$SETUP" = 1 ]; then
+        dir=${XDG_DATA_HOME:-$HOME/.local/share}
+        while [ ! -d "$dir" ] && [ "$dir" != / ] && [ "$dir" != . ]; do dir=$(dirname "$dir"); done
+        free=$(df -Pk "$dir" 2>/dev/null | awk 'NR==2 {print $4}')
+        if [ -n "$free" ] && [ "$free" -lt "$MIN_FREE_KB" ]; then
+            echo "warning: only $((free / 1024)) MB free in $dir; the default model needs about 1.5 GB." >&2
+            echo "         Free some space first, or the setup may fail part way." >&2
+        fi
+    fi
+}
+preflight
 
 if [ "$VERSION" = latest ]; then
     url=$BASE/latest/download
