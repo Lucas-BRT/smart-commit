@@ -105,6 +105,31 @@ when llama.cpp is installed it follows the build the new release pins (no
 for installs made by `install.sh` from 0.7.0 on; 0.6.0 and older update once
 with `install.sh` itself, and a build from source with git and cargo.
 
+### Update notice
+
+Nothing tells you that a release is out unless you ask for it:
+
+```bash
+smart-commit config set update.check true
+```
+
+`update.check` is off by default, because smart-commit makes no request by
+itself otherwise. When it is on, at most once in 24 hours, `smart-commit`
+(bare or with `--commit`), `setup`, `device` and `model` run `curl` with a 2
+second limit against
+`https://api.github.com/repos/Lucas-BRT/smart-commit/releases/latest` and,
+if the release is newer than the one running, print one line on stderr:
+`note: smart-commit X.Y.Z is available (you have A.B.C); run smart-commit update`.
+GitHub sees the request over HTTPS (so your IP address) and the user agent
+`smart-commit/<version>`; nothing else is sent, no token or cookie. The
+answer and the time are kept in `$XDG_CACHE_HOME/smart-commit/update-check`.
+It never runs in the git hook, with `--trace`, `replay`, `eval` or `prompt`,
+or when stderr is not a terminal. A failure (no network, no `curl`, a reply
+that is not a release) is silent, shown as a `debug:` line with `-v`, never
+changes the exit code, and counts as a check, so an offline machine does not
+retry at every run. `SMART_COMMIT_UPDATE_CHECK=false` turns it off for one
+command.
+
 ## Everyday use
 
 ```bash

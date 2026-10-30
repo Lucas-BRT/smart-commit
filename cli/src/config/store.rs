@@ -224,6 +224,11 @@ impl Resolved {
         }
     }
 
+    /// `update.check`: whether to look for a newer release once a day.
+    pub fn update_check(&self) -> bool {
+        self.text("update.check") == Some("true")
+    }
+
     pub fn settings(&self) -> Settings {
         let choice = |name| self.text(name).expect("choices have defaults");
         Settings {
@@ -296,6 +301,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
         ("model.ask_type_below", Value::Count(50)),
         ("model.threads_batch", Value::Count(0)),
         ("model.keep_loaded", Value::Count(10)),
+        ("update.check", text("false")),
         (
             "model.npu_prefill_chunk",
             Value::Count(NpuTuning::default().prefill_chunk),

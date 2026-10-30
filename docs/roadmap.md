@@ -42,7 +42,8 @@
   subject or stops mid-sentence, and never a message the user turned down.
 - A file list with what the line counts do not say (status, renames,
   whitespace-only and comment-only changes), on by default.
-- `smart-commit update` and `smart-commit uninstall`.
+- `smart-commit update` and `smart-commit uninstall`, and an opt-in notice of
+  a newer release (`update.check`, off by default).
 - The binary in modules (`cli/`, and the library's `backend/`, `diff/`,
   `models/`...), with `anyhow` and `tracing`, and `-v` for debug output.
 - The setup, the hardware inventory and the llama.cpp install in the binary

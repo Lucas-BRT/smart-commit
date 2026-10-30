@@ -58,6 +58,7 @@ value, for example when an environment variable is set.
 | `style.default_convention` | `conventional`, `gitmoji`, `free` | `conventional` | | global or repository |
 | `style.history_depth` | 1–500 | 30 | | global or repository |
 | `style.subject_max` | 40–200 | 72 | | global or repository |
+| `update.check` | `false`, `true` | `false` | `SMART_COMMIT_UPDATE_CHECK` | global |
 
 - `backend = auto` uses whichever backend the device needs: OpenVINO for
   `npu`, `intel-gpu` and `openvino-cpu`, llama.cpp for `vulkan` and `cpu`.
@@ -116,6 +117,10 @@ value, for example when an environment variable is set.
   keeps none (16% and 31%), and 20 would keep the 0.5B. 100 removes the share,
   not the tenth that stays available. Without a readable `/proc/meminfo` nothing stops a
   model from being kept.
+- `update.check` set to `true` lets the commands a person runs by hand ask
+  GitHub whether a newer release is out, at most once in 24 hours, and print
+  a line on stderr if so. It is off by default; see the
+  [update notice](usage.md#update-notice) for what is sent and when.
 - `model.ask_type` set to `low_confidence` makes `smart-commit --commit` in a
   terminal ask which type the message should have when the model is unsure:
   the model's first token is where it picks the type, and its probability
