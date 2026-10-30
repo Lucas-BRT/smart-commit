@@ -44,6 +44,17 @@ pinned and how each guarantee is checked.
   container's `ca-certificates` come from Ubuntu's live archive, since the
   snapshot service needs HTTPS; they never reach the binary.
 
+## Provenance
+
+`SHA256SUMS` is published beside the archive, so it detects a corrupted
+download, not a replaced one. The release workflow also attests every asset
+with `actions/attest-build-provenance` (keyless, signed by GitHub's OIDC
+identity, no key to manage): the attestation says which repository, workflow
+and commit built the file. `gh attestation verify FILE --repo
+Lucas-BRT/smart-commit` or `install.sh --verify` checks it
+([usage](usage.md#verify-a-download)). Combined with the byte-identical build
+above, anyone can also rebuild the commit and compare hashes.
+
 ## The model
 
 `scripts/export-model.sh` exports Qwen2.5-Coder-1.5B-Instruct for OpenVINO,

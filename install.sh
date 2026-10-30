@@ -12,6 +12,9 @@
 #                    installed, without the setup; llama.cpp, if installed,
 #                    follows the build the new release pins (no sudo).
 #                    `smart-commit update` runs this
+#   --verify         also verify the build provenance (a GitHub attestation)
+#                    with `gh attestation verify`; needs the GitHub CLI, and
+#                    releases up to 0.14.0 have none
 #   --yes            answer yes to the setup's questions
 #   --uninstall      remove smart-commit (models, caches and config are kept)
 #   --purge          --uninstall, and also the models, llama.cpp, the
@@ -37,6 +40,7 @@ UNINSTALL=0
 PURGE=0
 SYSTEM=0
 ASSUME_YES=0
+VERIFY=0
 setup_args=()
 
 while [ $# -gt 0 ]; do
@@ -51,6 +55,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         --no-setup) SETUP=0 ;;
+        --verify) VERIFY=1 ;;
         --update) UPDATE=1 SETUP=0 ;;
         --yes)
             setup_args+=(--yes)
@@ -184,6 +189,17 @@ curl -fL --retry 3 -o "$work/$ASSET" "$url/$ASSET"
 curl -fsL --retry 3 -o "$work/SHA256SUMS" "$url/SHA256SUMS"
 (cd "$work" && grep " $ASSET\$" SHA256SUMS | sha256sum --check --quiet -) ||
     die "the download does not match the release's SHA256SUMS"
+if [ "$VERIFY" = 1 ]; then
+    command -v gh >/dev/null || die "--verify needs the GitHub CLI: https://cli.github.com"
+    say "verifying the build provenance"
+    if ! attestation=$(gh attestation verify "$work/$ASSET" --repo Lucas-BRT/smart-commit 2>&1); then
+        printf '%s\n' "$attestation" >&2
+        case $attestation in
+            *[Nn]o\ attestation*) die "no attestation: releases up to 0.14.0 have none" ;;
+            *) die "the build provenance of the download could not be verified" ;;
+        esac
+    fi
+fi
 
 tar -xzf "$work/$ASSET" -C "$work"
 src=$work/smart-commit-x86_64-unknown-linux-gnu
