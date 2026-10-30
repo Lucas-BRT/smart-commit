@@ -1,39 +1,18 @@
 [workspace]
-members = [".", "tools", "training/tools"]
-# What `cargo build` and the release build make: the tools stay out of it.
-default-members = ["."]
+members = ["cli", "tools", "training/tools", "website"]
+# What `cargo build` and the release build make: the tools and the website
+# stay out of it.
+default-members = ["cli"]
 resolver = "3"
-
-[package]
-name = "smart-commit"
-version = "0.14.0"
-edition = "2024"
-rust-version = "1.99"
-description = "Commit messages in your repository's style, from a small LLM running locally (NPU, GPU or CPU)"
-license = "MIT"
-repository = "https://github.com/Lucas-BRT/smart-commit"
-readme = "README.md"
-keywords = ["git", "commit", "llm", "npu", "openvino"]
-categories = ["command-line-utilities", "development-tools"]
-
-[dependencies]
-anyhow = "1"
-clap = { version = "4", features = ["derive", "env"] }
-openvino-genai = { version = "=0.11.1", features = ["runtime-linking"] }
-ratatui = { version = "0.30.2", default-features = false, features = ["crossterm", "layout-cache"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-sha2 = "0.10"
-thiserror = "2"
-toml = "0.9"
-toml_edit = "0.23"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "std"] }
-
-[dev-dependencies]
-insta = "1.49.0"
-tempfile = "3"
 
 [profile.release]
 # No debug info: smaller, and no build paths in the binary (reproducible).
 strip = true
+
+# The website's release build: a small, self-contained binary; the server is
+# I/O-bound, so size beats speed. `cargo build --profile website`.
+[profile.website]
+inherits = "release"
+opt-level = "s"
+lto = "fat"
+codegen-units = 1

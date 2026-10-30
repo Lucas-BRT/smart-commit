@@ -23,7 +23,7 @@ pinned and how each guarantee is checked.
   22.04) and the developer machine (24.04) have different `tar` and `gzip`.
   With the archive made in the container too, a developer machine
   reproduces the published v0.3.0 tarball exactly. CI packages every commit
-  twice and prints the hash (`tests/scripts/test-install.sh`).
+  twice and prints the hash (`cli/tests/scripts/test-install.sh`).
 - `SMART_COMMIT_PACKAGE_HOST=1` builds on the host, without Docker, at the
   cost of cross-machine reproducibility.
 - **CI pins what it runs on and with.** Every job names its runner image
@@ -81,7 +81,7 @@ it, to check that it reproduces on another machine. How long it takes
 is in [measurements](measurements.md#model-export).
 
 The GGUF models for llama.cpp are files on Hugging Face, each pinned in
-`src/models/registry.rs` to a repository commit and to the file's SHA-256 at that
+`cli/src/models/registry.rs` to a repository commit and to the file's SHA-256 at that
 commit: `smart-commit model use` refuses any other file. They are the
 publishers' own files (Qwen's for the `qwen2.5-coder-*` models), or for
 smart-commit's fine-tunes (`smart-commit-*`) the project's own, published
@@ -106,7 +106,7 @@ sources):
 | Level Zero loader (`libze1`) | 1.32.0, from the PPA snapshot the driver release names |
 | OpenVINO GenAI archive | 2026.3.1, the version the NPU driver was validated with |
 | Intel GPU compute runtime | intel-opencl-icd 26.27.39122.14, IGC 2.38.5, gmmlib 22.10.0, same snapshot |
-| llama.cpp | b11381, Vulkan build (it runs the `cpu` device too), in `src/backend/llamacpp/install.rs` |
+| llama.cpp | b11381, Vulkan build (it runs the `cpu` device too), in `cli/src/backend/llamacpp/install.rs` |
 | Qwen2.5-Coder-1.5B-Instruct | revision `2e1fd397` (OpenVINO export), `f86cb2c1` (GGUF) |
 
 To change one, change its version and hash together.
@@ -120,7 +120,7 @@ quota and the sessions are in [training](training.md#kaggles-quota).
 | Component | How it is pinned |
 |---|---|
 | llama.cpp for the mining | b11381, the CUDA 12.8 build and its runtime libraries (`llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz` and `cudart-llama-b11381-bin-ubuntu-cuda-12.8-x64.tar.gz`), each by SHA-256 in `training/tools/src/kaggle.rs`, checked by the notebook before it unpacks them |
-| The models it samples from | `smart-commit-0.5b-v0.1` and `smart-commit-1.5b-v0.1`, read from the registry (`src/models/registry.rs`) by `sc-training kaggle-bundle` (repository commit and SHA-256), downloaded and checked by size and SHA-256 |
+| The models it samples from | `smart-commit-0.5b-v0.1` and `smart-commit-1.5b-v0.1`, read from the registry (`cli/src/models/registry.rs`) by `sc-training kaggle-bundle` (repository commit and SHA-256), downloaded and checked by size and SHA-256 |
 | The base models of the training | the Qwen2.5-Coder revisions of `training/tools/src/kaggle.rs` (those `scripts/export-model.sh` pins) |
 | Python packages | the versions of `training/uv.lock` (`requirements.txt` of the bundle), except torch: Kaggle's own CUDA build is kept, and `run.json` records its version. Kaggle's `torchao` is removed, as the pinned `peft` refuses it |
 | The inputs of a run | the bundle holds them and the notebook checks them: the SHA-256 of each shard's prompts (mining), of the pairs and of the SFT adapter (DPO) |
@@ -173,9 +173,9 @@ with it). It leaves out the repository's path. `replay` rebuilds
 everything from it and reports any difference in prompts, rejections or
 message.
 
-`tests/fixtures/traces/` holds traces made by `tests/fixtures/make-traces.sh`
+`cli/tests/fixtures/traces/` holds traces made by `cli/tests/fixtures/make-traces.sh`
 in repositories with a fixed identity, dates and config, and
-`tests/replay_fixtures.rs` requires them all to replay. The script must be
+`cli/tests/replay_fixtures.rs` requires them all to replay. The script must be
 the only way they change, and their diff is reviewed. A bad message found in
 real use becomes a new fixture.
 
@@ -183,11 +183,11 @@ real use becomes a new fixture.
 
 - `cargo test` needs no hardware, network, clock or randomness, and ignores
   the machine's git config, smart-commit config, models and `SMART_COMMIT_*`
-  variables (see `tests/common::isolate`). Test repositories have fixed
+  variables (see `cli/tests/common::isolate`). Test repositories have fixed
   authors and dates, so even commit hashes are stable.
-- `tests/scripts/` runs the shell scripts against fake sysfs trees, fake
+- `cli/tests/scripts/` runs the shell scripts against fake sysfs trees, fake
   releases and stub binaries.
-- `tests/hardware.rs` (ignored by default) runs the real model on the fixture
+- `cli/tests/hardware.rs` (ignored by default) runs the real model on the fixture
   prompts: replies are non-empty and stable, the token estimate never
   undercounts, the NPU tuning does not change replies, and neither does a
   model kept loaded (`model.keep_loaded`).

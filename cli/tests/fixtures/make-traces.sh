@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Regenerates tests/fixtures/traces from deterministic throwaway
+# Regenerates cli/tests/fixtures/traces from deterministic throwaway
 # repositories (fixed identity, dates and config), so the output is the same
 # on every machine. Run from the repository root:
 #
-#   tests/fixtures/make-traces.sh
+#   cli/tests/fixtures/make-traces.sh
 #
 # then review the diff: a changed fixture means the pipeline changed.
 set -euo pipefail
 ROOT="$(pwd)"
 cargo build --quiet --locked
 BIN="$ROOT/target/debug/smart-commit"
-OUT="$ROOT/tests/fixtures/traces"
+OUT="$ROOT/cli/tests/fixtures/traces"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1

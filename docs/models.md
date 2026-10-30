@@ -125,7 +125,7 @@ How long each takes is in [measurements](measurements.md#per-message-by-model).
 
 ## Where they come from
 
-Each recommended model is pinned in `src/models/registry.rs` to a Hugging Face
+Each recommended model is pinned in `cli/src/models/registry.rs` to a Hugging Face
 repository, a commit of it (never a branch) and the SHA-256 and size of the
 file at that commit. `smart-commit model use` downloads it with `curl`
 into `$XDG_DATA_HOME/smart-commit/models/`, resumes an interrupted
@@ -187,6 +187,6 @@ and `auto` uses `vulkan` or `cpu`.
    "Where models come from").
 2. Its repository commit, file size and SHA-256 (the Hugging Face API lists
    them: `https://huggingface.co/api/models/<repo>?blobs=true`), in
-   `src/models/registry.rs`.
+   `cli/src/models/registry.rs`.
 3. `smart-commit model use <id>` and `smart-commit bench` on real hardware,
    with the numbers above updated from the benchmark.

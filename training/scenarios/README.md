@@ -121,4 +121,4 @@ is replaced only in cases with variants, so code keeps its own braces.
 | `git` | `args`, [`check`] | any git command; `{{commit:subject}}` is the hash of the commit with that subject; `check = false` tolerates a failure (a merge conflict) |
 
 A bad message found in real use that a case can reproduce becomes a case
-here, as well as a trace fixture in `tests/fixtures/traces/`.
+here, as well as a trace fixture in `cli/tests/fixtures/traces/`.

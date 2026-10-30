@@ -3,14 +3,14 @@
 # fake release on disk (file:// URLs), refuses a tampered download and
 # uninstalls. No network or sudo.
 #
-#   tests/scripts/test-install.sh
+#   cli/tests/scripts/test-install.sh
 set -euo pipefail
 
-ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 ASSET=smart-commit-x86_64-unknown-linux-gnu.tar.gz
-VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$ROOT/Cargo.toml" | head -1)
+VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$ROOT/cli/Cargo.toml" | head -1)
 
 "$ROOT/scripts/package.sh" "$work/dist1" >/dev/null
 "$ROOT/scripts/package.sh" "$work/dist2" >/dev/null

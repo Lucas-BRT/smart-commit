@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 # The models of the registry, which the Kaggle bundles pin their downloads to.
-smart-commit = { path = "../.." }
+smart-commit = { path = "../../cli" }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 fancy-regex = "0.20"

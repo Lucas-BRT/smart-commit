@@ -257,7 +257,7 @@ The same mining on two T4s, when the local GPU is busy: the prompts are built
 here, without a GPU, and only the sampling runs there. `sc-training kaggle-bundle mine`
 splits the inputs into shards (every Nth input to each), pins what the
 notebook downloads (llama.cpp's CUDA 12.8 build by SHA-256, the models by the
-revision and SHA-256 of `src/models/registry.rs`) and orders the jobs, a model
+revision and SHA-256 of `cli/src/models/registry.rs`) and orders the jobs, a model
 and a shard each, the longest first.
 
 The inputs of the second run are mostly Conventional (the first had 7%), from

@@ -2,10 +2,10 @@
 # Runs scripts/setup-gpu.sh --dry-run against fake /sys trees, one per
 # hardware scenario, and checks what it would do. No GPU, network or sudo.
 #
-#   tests/scripts/test-setup-gpu.sh
+#   cli/tests/scripts/test-setup-gpu.sh
 set -euo pipefail
 
-ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 SCRIPT=$ROOT/scripts/setup-gpu.sh
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
