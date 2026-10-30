@@ -3,6 +3,22 @@ use std::os::unix::net::UnixStream;
 use std::path::Path;
 use std::time::Duration;
 
+/// How long a reply may take: a generation on a slow CPU is the longest.
+const REPLY_TIMEOUT: Duration = Duration::from_secs(300);
+
+/// How long `/health` may take. A loaded server answers at once, and one
+/// that is frozen (a hung GPU driver) accepts the connection and never
+/// replies: waiting as long as for a reply would hang every commit.
+pub const HEALTH_TIMEOUT: Duration = Duration::from_secs(3);
+
+/// Whether the server at `socket` answers `/health` with 200 within `timeout`.
+pub fn healthy_within(socket: &Path, timeout: Duration) -> bool {
+    matches!(
+        request(socket, "GET", "/health", None, timeout),
+        Ok((200, _))
+    )
+}
+
 /// One HTTP/1.1 request over the UNIX socket; returns status and body.
 pub fn http(
     socket: &Path,
@@ -10,8 +26,18 @@ pub fn http(
     path: &str,
     body: Option<&str>,
 ) -> std::io::Result<(u16, String)> {
+    request(socket, method, path, body, REPLY_TIMEOUT)
+}
+
+fn request(
+    socket: &Path,
+    method: &str,
+    path: &str,
+    body: Option<&str>,
+    timeout: Duration,
+) -> std::io::Result<(u16, String)> {
     let mut stream = UnixStream::connect(socket)?;
-    stream.set_read_timeout(Some(Duration::from_secs(300)))?;
+    stream.set_read_timeout(Some(timeout))?;
     let body = body.unwrap_or("");
     write!(
         stream,

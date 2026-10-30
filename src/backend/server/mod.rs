@@ -177,7 +177,7 @@ pub fn connect(
 }
 
 fn healthy(socket: &Path) -> bool {
-    matches!(llamacpp::http(socket, "GET", "/health", None), Ok((200, _)))
+    llamacpp::healthy_within(socket, llamacpp::HEALTH_TIMEOUT)
 }
 
 /// Starts the supervisor in a clean `dir` and waits for its server.

@@ -16,7 +16,7 @@ pub mod install;
 #[cfg(test)]
 mod tests;
 
-pub use http::{http, parse_http_response};
+pub use http::{HEALTH_TIMEOUT, healthy_within, http, parse_http_response};
 
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -272,7 +272,7 @@ impl LlamaCppBackend {
                     log_tail(log)
                 )));
             }
-            if let Ok((200, _)) = http(&self.socket, "GET", "/health", None) {
+            if healthy_within(&self.socket, HEALTH_TIMEOUT) {
                 return Ok(());
             }
             if Instant::now() > deadline {
