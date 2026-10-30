@@ -1,0 +1,6 @@
+# Read by `docker compose up` next to compose.yaml; a deployment that names
+# compose.yaml with -f (Dokploy) does not read it.
+services:
+  web:
+    ports:
+      - "${PORT:-3000}:3000"

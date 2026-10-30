@@ -21,6 +21,11 @@ Topcoat's own dev server (rebuild and reload on change) is optional:
 docker compose up -d --build     # http://localhost:3000 (PORT=8080 docker compose up -d for another port)
 ```
 
+`compose.yaml` publishes no port, for a deployment behind a reverse proxy
+(Dokploy: point the domain at the service `web`, container port 3000);
+`compose.override.yaml` publishes it on the host for local use, and only
+`docker compose up` without `-f` reads it.
+
 The image is a static musl binary on `scratch` (about 4.5 MB): no shell, no root
 user, read-only filesystem, all capabilities dropped. The binary doubles as its
 own healthcheck (`/server --health`). Compression and TLS belong to the CDN or
