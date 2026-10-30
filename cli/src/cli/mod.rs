@@ -124,6 +124,10 @@ enum Command {
         /// Skip the benchmark.
         #[arg(long)]
         no_bench: bool,
+        /// Print the plan (what would be installed, what needs sudo, what
+        /// is downloaded) and change nothing.
+        #[arg(long, conflicts_with = "llamacpp_only")]
+        dry_run: bool,
         /// Only install the llama.cpp build this release pins (what an update
         /// runs).
         #[arg(long, hide = true)]
@@ -219,8 +223,9 @@ pub fn run() -> ExitCode {
             yes,
             no_drivers,
             no_bench,
+            dry_run,
             llamacpp_only,
-        }) => guided_setup::run(yes, no_drivers, no_bench, llamacpp_only),
+        }) => guided_setup::run(yes, no_drivers, no_bench, llamacpp_only, dry_run),
         Some(Command::Server(command)) => keep_loaded::run(command),
         Some(Command::Update) => install::update(),
         Some(Command::Uninstall { yes, system }) => install::uninstall(yes, system),

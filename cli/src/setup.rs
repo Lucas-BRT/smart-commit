@@ -8,8 +8,18 @@
 //!   Intel NPU or GPU    the model exported for OpenVINO, here
 //!   always              the benchmark
 
+use crate::backend::llamacpp;
 use crate::hardware::{Hardware, Npu};
 use crate::models::{self, Model};
+
+/// What a step downloads, for `setup --dry-run`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Download {
+    Nothing,
+    Bytes(u64),
+    /// It downloads, but how much depends on the machine or the mirror.
+    Unknown,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepKind {
@@ -31,6 +41,9 @@ pub struct Step {
     pub detail: String,
     /// Asks for the password, outside the full-screen interface.
     pub sudo: bool,
+    /// What the sudo commands touch (empty without sudo).
+    pub sudo_what: &'static str,
+    pub download: Download,
     /// Already set up: listed, but off unless the user turns it on.
     pub installed: bool,
     pub enabled: bool,
@@ -43,13 +56,21 @@ impl Step {
             title: title.into(),
             detail: detail.into(),
             sudo: false,
+            sudo_what: "",
+            download: Download::Nothing,
             installed: false,
             enabled: true,
         }
     }
 
-    fn sudo(mut self) -> Self {
+    fn sudo(mut self, what: &'static str) -> Self {
         self.sudo = true;
+        self.sudo_what = what;
+        self
+    }
+
+    fn download(mut self, download: Download) -> Self {
+        self.download = download;
         self
     }
 
@@ -85,6 +106,7 @@ pub fn plan(hw: &Hardware, facts: &Facts) -> Vec<Step> {
             "llama.cpp b11381",
             "the cpu device, and vulkan on the GPUs; no sudo",
         )
+        .download(Download::Bytes(llamacpp::install::ARCHIVE_SIZE))
         .installed(facts.llama_installed),
         model_step(facts.model, facts.model_installed),
     ];
@@ -96,7 +118,8 @@ pub fn plan(hw: &Hardware, facts: &Facts) -> Vec<Step> {
                     "GPU drivers",
                     facts.gpu_plan.join("; "),
                 )
-                .sudo(),
+                .sudo("apt packages (the plan above lists them) and the render group")
+                .download(Download::Unknown),
             );
         }
         if hw.npu == Npu::Intel {
@@ -106,7 +129,11 @@ pub fn plan(hw: &Hardware, facts: &Facts) -> Vec<Step> {
                     "Intel NPU driver and OpenVINO",
                     "NPU driver 1.38.0, Level Zero 1.32.0, OpenVINO GenAI 2026.3.1",
                 )
-                .sudo()
+                .sudo(
+                    "apt packages, dpkg installs, files in /opt/intel and \
+                     /etc/ld.so.conf.d, and the render group",
+                )
+                .download(Download::Unknown)
                 .installed(facts.npu_ready),
             );
         } else if hw.has_intel_gpu() && !hw.openvino_installed {
@@ -116,7 +143,8 @@ pub fn plan(hw: &Hardware, facts: &Facts) -> Vec<Step> {
                     "OpenVINO",
                     "OpenVINO GenAI 2026.3.1, for the intel-gpu device",
                 )
-                .sudo(),
+                .sudo("apt packages, files in /opt/intel and /etc/ld.so.conf.d")
+                .download(Download::Unknown),
             );
         }
     }
@@ -127,6 +155,7 @@ pub fn plan(hw: &Hardware, facts: &Facts) -> Vec<Step> {
                 "the model for OpenVINO",
                 "exported here from Hugging Face; about 10 GB of disk while it runs",
             )
+            .download(Download::Unknown)
             .installed(facts.exported),
         );
     }
@@ -151,6 +180,7 @@ pub fn model_step(model: &'static Model, installed: bool) -> Step {
             model.license
         ),
     )
+    .download(Download::Bytes(model.gguf.size))
     .installed(installed)
 }
 
@@ -160,6 +190,53 @@ pub fn not_needed(hw: &Hardware) -> Option<&'static str> {
         "Not needed: OpenVINO, the Intel NPU driver and Intel's GPU runtime, since there \
          is no Intel NPU or GPU here.",
     )
+}
+
+/// The plan as `smart-commit setup --dry-run` prints it: every step with its
+/// sudo and download, nothing applied.
+pub fn dry_run_text(inventory: &str, not_needed: Option<&str>, steps: &[Step]) -> String {
+    let mut out = format!(
+        "==> Hardware\n{}\n\n==> Plan (dry run)\n",
+        inventory.trim_end()
+    );
+    for (n, step) in steps.iter().enumerate() {
+        out.push_str(&format!(
+            "\n{}. {}\n   {}\n",
+            n + 1,
+            step.title,
+            step.detail
+        ));
+        if step.sudo {
+            out.push_str(&format!("   needs sudo: {}\n", step.sudo_what));
+        } else {
+            out.push_str("   needs sudo: no\n");
+        }
+        match step.download {
+            Download::Nothing => {}
+            Download::Bytes(bytes) => {
+                out.push_str(&format!("   downloads: {}\n", models::size(bytes)));
+            }
+            Download::Unknown => out.push_str("   downloads: yes, size not known here\n"),
+        }
+        if step.installed {
+            out.push_str("   already done, would be skipped\n");
+        }
+    }
+    if let Some(why) = not_needed {
+        out.push_str(&format!("\n{why}\n"));
+    }
+    let pending = || steps.iter().filter(|s| !s.installed);
+    if pending().all(|s| s.download != Download::Unknown) {
+        let total: u64 = pending()
+            .map(|s| match s.download {
+                Download::Bytes(bytes) => bytes,
+                _ => 0,
+            })
+            .sum();
+        out.push_str(&format!("\nTotal download: {}\n", models::size(total)));
+    }
+    out.push_str("\nNothing was changed. Run `smart-commit setup` to apply it.\n");
+    out
 }
 
 #[cfg(test)]
@@ -306,5 +383,66 @@ mod tests {
             [StepKind::LlamaCpp, StepKind::Model, StepKind::Bench],
             "no GPU, an unsupported NPU"
         );
+    }
+
+    fn text(build: fn(&Path), facts: &Facts) -> String {
+        let hw = machine(build);
+        dry_run_text(&hw.inventory(), not_needed(&hw), &plan(&hw, facts))
+    }
+
+    #[test]
+    fn the_dry_run_of_an_nvidia_machine_has_one_sudo_step_and_a_total() {
+        let out = text(fake::amd_nvidia, &facts());
+        assert!(out.contains("1. llama.cpp b11381"), "{out}");
+        assert!(out.contains("downloads: 31 MB"), "{out}");
+        assert!(out.contains("needs sudo: apt packages"), "{out}");
+        assert_eq!(out.matches("needs sudo: no").count(), 3, "{out}");
+        // The GPU drivers' size is not known here, so there is no total.
+        assert!(!out.contains("Total download"), "{out}");
+        assert!(out.contains("Not needed: OpenVINO"), "{out}");
+        assert!(out.ends_with("Nothing was changed. Run `smart-commit setup` to apply it.\n"));
+    }
+
+    #[test]
+    fn the_dry_run_of_an_intel_npu_lists_its_system_files() {
+        let out = text(fake::all_intel, &facts());
+        assert!(out.contains("Intel NPU driver and OpenVINO"), "{out}");
+        assert!(out.contains("/opt/intel"), "{out}");
+        assert!(out.contains("the model for OpenVINO"), "{out}");
+        assert!(!out.contains("Not needed"), "{out}");
+    }
+
+    #[test]
+    fn the_dry_run_of_a_cpu_only_machine_adds_up_the_download() {
+        let out = text(fake::amd_only, &facts());
+        assert!(!out.contains("sudo: apt"), "{out}");
+        let size = llamacpp::install::ARCHIVE_SIZE + facts().model.gguf.size;
+        assert!(out.contains(&format!("Total download: {}", models::size(size))));
+    }
+
+    #[test]
+    fn the_dry_run_without_drivers_has_no_sudo_step() {
+        let no_drivers = Facts {
+            drivers: false,
+            ..facts()
+        };
+        let out = text(fake::all_intel, &no_drivers);
+        assert_eq!(
+            out.matches("needs sudo:").count(),
+            out.matches("needs sudo: no").count(),
+            "{out}"
+        );
+    }
+
+    #[test]
+    fn the_dry_run_marks_what_is_done_and_leaves_it_out_of_the_total() {
+        let done = Facts {
+            llama_installed: true,
+            model_installed: true,
+            ..facts()
+        };
+        let out = text(fake::amd_only, &done);
+        assert_eq!(out.matches("already done, would be skipped").count(), 2);
+        assert!(out.contains("Total download: 0 MB"), "{out}");
     }
 }

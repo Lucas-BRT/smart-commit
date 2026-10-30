@@ -30,7 +30,7 @@ Everything except the model is deterministic and tested without hardware.
 | `backend::device` | candidate devices and loading the first that works |
 | `bench` | measures every device the machine has on four embedded prompts sized like real ones |
 | `hardware` | the CPU, GPUs and NPU from sysfs, and the devices each gives |
-| `setup` | the steps the hardware needs, for the setup screen |
+| `setup` | the steps the hardware needs (with their sudo and download), for the setup screen and `setup --dry-run` |
 | `models` | the recommended models, pinned on Hugging Face, and installing them |
 | `tui` | the full-screen screens (ratatui), shown only when stdin and stdout are terminals |
 | `config` | settings from flags, environment, repository and global files |
