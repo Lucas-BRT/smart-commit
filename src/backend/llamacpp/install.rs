@@ -46,25 +46,46 @@ pub fn install(
     std::fs::create_dir_all(dir).map_err(io(dir))?;
     let archive = dir.join(format!("llama-{LLAMA_CPP_BUILD}.tar.gz"));
     fetch("llama.cpp", url, sha256, &archive, progress)?;
+    // Unpacked beside the build and renamed into place, so that an
+    // interrupted `tar` never leaves a `llama-server` without its libraries
+    // that the check above would take for an installed build.
+    let build = dir.join(format!("llama-{LLAMA_CPP_BUILD}"));
+    let unpacking = dir.join(".unpacking");
+    let _ = std::fs::remove_dir_all(&unpacking);
+    std::fs::create_dir_all(&unpacking).map_err(io(&unpacking))?;
     let status = Command::new("tar")
         .arg("-xzf")
         .arg(&archive)
         .arg("-C")
-        .arg(dir)
+        .arg(&unpacking)
         .stdin(Stdio::null())
         .status()
-        .map_err(io(&archive))?;
+        .map_err(io(&archive));
     let _ = std::fs::remove_file(&archive);
-    if !status.success() {
-        return Err(ModelError::Io(format!("cannot unpack {url}: tar {status}")));
-    }
-    if !server.is_file() {
-        return Err(ModelError::Io(format!(
+    let status = status.inspect_err(|_| {
+        let _ = std::fs::remove_dir_all(&unpacking);
+    })?;
+    let unpacked = unpacking.join(format!("llama-{LLAMA_CPP_BUILD}"));
+    let problem = if !status.success() {
+        Some(format!("cannot unpack {url}: tar {status}"))
+    } else if !unpacked.join("llama-server").is_file() {
+        Some(format!(
             "{} has no {}",
             url,
             server.strip_prefix(dir).unwrap_or(&server).display()
-        )));
+        ))
+    } else {
+        None
+    };
+    if let Some(problem) = problem {
+        let _ = std::fs::remove_dir_all(&unpacking);
+        return Err(ModelError::Io(problem));
     }
+    // A half-built directory of an earlier attempt would make the rename fail.
+    let _ = std::fs::remove_dir_all(&build);
+    let moved = std::fs::rename(&unpacked, &build).map_err(io(&build));
+    let _ = std::fs::remove_dir_all(&unpacking);
+    moved?;
     Ok(server)
 }
 
@@ -180,6 +201,64 @@ mod tests {
                 .join(format!("llama-{LLAMA_CPP_BUILD}.tar.gz.partial"))
                 .exists()
         );
+    }
+
+    #[test]
+    fn an_interrupted_unpacking_leaves_no_server_behind() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let root = dir.path().join("stage");
+        let inner = root.join(format!("llama-{LLAMA_CPP_BUILD}"));
+        std::fs::create_dir_all(&inner).unwrap();
+        std::fs::write(inner.join("llama-server"), "#!/bin/sh\n").unwrap();
+        // Incompressible, so that cutting the end leaves the server unpacked.
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        let noise: Vec<u8> = (0..400_000)
+            .map(|_| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                (state >> 24) as u8
+            })
+            .collect();
+        std::fs::write(inner.join("libggml.so"), noise).unwrap();
+        let tarball = dir.path().join("release.tar.gz");
+        let status = Command::new("tar")
+            .arg("-czf")
+            .arg(&tarball)
+            .arg("-C")
+            .arg(&root)
+            .arg(format!("llama-{LLAMA_CPP_BUILD}/llama-server"))
+            .arg(format!("llama-{LLAMA_CPP_BUILD}/libggml.so"))
+            .status()
+            .unwrap();
+        assert!(status.success());
+        let mut bytes = std::fs::read(&tarball).unwrap();
+        bytes.truncate(bytes.len() - 200_000);
+        std::fs::write(&tarball, &bytes).unwrap();
+        let sha: &'static str = Box::leak(hex(&bytes).into_boxed_str());
+
+        let target = dir.path().join("llama.cpp");
+        let err = install(&target, &url(&tarball), sha, |_| {}).unwrap_err();
+        assert!(err.to_string().contains("cannot unpack"), "{err}");
+        // Nothing the next run could take for an installed build.
+        assert!(!server_in(&target).exists());
+        assert!(!target.join(format!("llama-{LLAMA_CPP_BUILD}")).exists());
+        assert!(!target.join(".unpacking").exists());
+    }
+
+    #[test]
+    fn a_half_built_directory_of_an_earlier_attempt_is_replaced() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let (tarball, sha) = archive(dir.path(), true);
+        let target = dir.path().join("llama.cpp");
+        let build = target.join(format!("llama-{LLAMA_CPP_BUILD}"));
+        std::fs::create_dir_all(&build).unwrap();
+        std::fs::write(build.join("stale"), "").unwrap();
+        std::fs::create_dir_all(target.join(".unpacking/old")).unwrap();
+        let server = install(&target, &url(&tarball), sha, |_| {}).unwrap();
+        assert!(server.is_file());
+        assert!(!build.join("stale").exists());
+        assert!(!target.join(".unpacking").exists());
     }
 
     #[test]
