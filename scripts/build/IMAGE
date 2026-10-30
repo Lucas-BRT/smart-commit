@@ -9,3 +9,5 @@
 # which needs snapshot.ubuntu.com. SMART_COMMIT_BUILD_IMAGE overrides this file
 # with any image, local or not. See docs/reproducibility.md for how the image
 # is published and this line updated.
+
+ghcr.io/lucas-brt/smart-commit-build@sha256:81fa76d5f7d81bcd193a122c17894ea8d14ccfa7e254ac94dc365f138bcc2eab
