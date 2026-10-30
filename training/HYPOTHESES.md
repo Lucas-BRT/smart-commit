@@ -198,7 +198,7 @@ even rewards that: `training` is a known scope, just the wrong one.
   `style.history_depth` commits, deterministic and cheap. A change touching
   none of them should get no scope, as the rule already says. It changes
   the prompt: snapshots, the trace fixtures regenerated with
-  `tests/fixtures/make-traces.sh`, `trace::Inputs` extended (old traces
+  `cli/tests/fixtures/make-traces.sh`, `trace::Inputs` extended (old traces
   must still read), and eval-v1 before and after on the base models.
 - **Training data.** CommitChronicle has the files of every commit, so the
   same map can be built for the history of each example.

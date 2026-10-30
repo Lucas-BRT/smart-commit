@@ -62,7 +62,7 @@ $ smart-commit device          # the last benchmark and the current choice
   reason for each. A device set by hand in `model.device` is tried even when
   it is not there, and the error says why it failed.
 - **`smart-commit bench`** measures the devices the machine has (up to five) on four prompts
-  embedded in the binary (`tests/fixtures/traces/bench-*.json`), so every
+  embedded in the binary (`cli/tests/fixtures/traces/bench-*.json`), so every
   machine is measured on the same inputs. They are sized like real prompts,
   about 300 to 900 tokens (the quartiles and 90th percentile of eval-v1's),
   since reading the prompt is most of the time on the CPU: with the ~250-token

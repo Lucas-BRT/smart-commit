@@ -327,7 +327,7 @@ fn npu_chunk_must_divide_the_prompt_length() {
 
 #[test]
 fn every_key_is_documented() {
-    let page = include_str!("../../docs/configuration.md");
+    let page = include_str!("../../../docs/configuration.md");
     for key in KEYS {
         assert!(
             page.contains(&format!("| `{}` |", key.name)),

@@ -20,7 +20,7 @@ TARGET=x86_64-unknown-linux-gnu
 NAME=smart-commit-$TARGET
 cd "$ROOT"
 
-VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' cli/Cargo.toml | head -1)
 SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 export SOURCE_DATE_EPOCH
 

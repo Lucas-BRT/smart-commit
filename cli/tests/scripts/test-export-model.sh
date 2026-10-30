@@ -4,10 +4,10 @@
 # --check, --keep and the cleanup, and that a uv download with another
 # checksum is refused. No network, Python or model.
 #
-#   tests/scripts/test-export-model.sh
+#   cli/tests/scripts/test-export-model.sh
 set -euo pipefail
 
-ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 NAME=qwen2.5-coder-1.5b-instruct-int4-sym-g128

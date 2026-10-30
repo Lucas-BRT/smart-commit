@@ -9,7 +9,7 @@ was measured, what was decided, and what is left to do. Read
 
 Fine-tune a small model for smart-commit's exact task and prompt format,
 publish it on Hugging Face, and add it to the recommended models
-(`src/models/registry.rs`), pinned by revision and SHA-256 like the others.
+(`cli/src/models/registry.rs`), pinned by revision and SHA-256 like the others.
 
 Two expected gains:
 
@@ -108,7 +108,7 @@ v0.1 was trained on English only.
 ### From a commit to a training example
 
 smart-commit's traces already record everything the prompt is built from,
-as `trace::Inputs` (`src/trace.rs`):
+as `trace::Inputs` (`cli/src/trace.rs`):
 
 ```json
 {
@@ -139,7 +139,7 @@ JSON Lines of `{"system", "user"}`, with `prompt::build` and
 `XDG_CONFIG_HOME` so the user's config does not leak into the dataset, and
 record the `PromptOptions` used.
 
-The diff fitting (`src/diff/`) uses one line of context (`-U1`), while
+The diff fitting (`cli/src/diff/`) uses one line of context (`-U1`), while
 CommitChronicle diffs have more. Either trim the context to one line when
 converting, or accept the difference; trimming keeps training closer to run
 time.
@@ -297,7 +297,7 @@ What is published is one model per size smart-commit offers, named
    (revision `5fd076e`), says the training commits come from repositories
    under those licences, and points to the dataset's per-commit provenance
    (its `repo` and `license` fields).
-4. Add it to `REGISTRY` in `src/models/registry.rs` with the repository, the commit
+4. Add it to `REGISTRY` in `cli/src/models/registry.rs` with the repository, the commit
    revision (never a branch), the size and the SHA-256, initially as
    `Status::Experimental`; update the pages that say models come only from
    their publishers (`docs/models.md`, `docs/usage.md`, README) and
@@ -317,7 +317,7 @@ What is published is one model per size smart-commit offers, named
    of H3, published as
    [smart-commit-1.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-1.5b-v0.1)
    and [smart-commit-0.5b-v0.1](https://huggingface.co/LucasBRT/smart-commit-0.5b-v0.1),
-   experimental models in `src/models/registry.rs`.
+   experimental models in `cli/src/models/registry.rs`.
 6. ~~v0.2: H5 (young repositories), H6 (the rules in the weights), H7's
    release bumps and no type cap (H8) in one bundle of about 20k examples
    (b3).~~ Done: `smart-commit-0.5b-v0.2` and `smart-commit-1.5b-v0.2`,

@@ -105,7 +105,7 @@ fn own_fine_tunes_follow_the_naming_rule() {
 #[test]
 fn the_default_model_is_the_one_the_export_script_makes() {
     let model = find(DEFAULT).unwrap();
-    let export = include_str!("../../scripts/export-model.sh");
+    let export = include_str!("../../../scripts/export-model.sh");
     assert!(export.contains(&format!("NAME={}\n", model.openvino.unwrap())));
 }
 

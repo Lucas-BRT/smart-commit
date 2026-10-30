@@ -7,7 +7,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const ROOT: &str = env!("CARGO_MANIFEST_DIR");
+/// The repository root, one level above this crate.
+const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/..");
 
 /// Directories that are not documentation: build output, ignored data and
 /// the synthetic repositories of the training scenarios.
@@ -21,7 +22,7 @@ const SKIPPED: &[&str] = &[
 ];
 
 /// The first directory of a path that a page may name from the root.
-const ROOT_DIRS: &[&str] = &["src/", "tests/", "scripts/", "docs/", ".github/"];
+const ROOT_DIRS: &[&str] = &["cli/", "scripts/", "docs/", ".github/"];
 
 fn pages(dir: &Path, found: &mut Vec<PathBuf>) {
     let mut entries: Vec<_> = fs::read_dir(dir).unwrap().flatten().collect();

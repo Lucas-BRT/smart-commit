@@ -38,7 +38,7 @@ Everything except the model is deterministic and tested without hardware.
 | `hook` | the `prepare-commit-msg` script and how it fills the message file |
 | `paths` | XDG locations of config, models, caches and the benchmark |
 
-The binary (`src/main.rs` and the `src/cli/` modules: `args`, `suggest`,
+The binary (`cli/src/main.rs` and the `cli/src/cli/` modules: `args`, `suggest`,
 `inspect`, `git_hook`, `configure`, `benchmark`, `model`, `guided_setup`,
 `keep_loaded` and `install` for the commands, and `session`, `load`,
 `logging` and `settings`, which they share) only parses
@@ -59,7 +59,7 @@ would not say what failed, and prints the whole chain after `error:`. Problems a
 diagnostics use `tracing` (`warn!`, `debug!` in the pipeline); the binary
 prints them as `warning:` and, with `-v`, `debug:` lines on stderr. Notes (what
 a command chose, what overrides what) are part of its result, not logs: they
-are printed with `note!` (`cli/ui.rs`).
+are printed with `note!` (`cli/src/cli/ui.rs`).
 
 ## Repository style
 

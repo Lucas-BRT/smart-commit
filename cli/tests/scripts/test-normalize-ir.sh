@@ -2,10 +2,10 @@
 # The same graph written with different node counters must normalize to the
 # same bytes, and names OpenVINO did not generate must stay as they are.
 #
-#   tests/scripts/test-normalize-ir.sh
+#   cli/tests/scripts/test-normalize-ir.sh
 set -euo pipefail
 
-ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 

@@ -126,7 +126,7 @@ impl Machine {
             prefix.join("bin/smart-commit"),
         )
         .unwrap();
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts");
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../scripts");
         std::fs::copy(root.join("setup-gpu.sh"), scripts.join("setup-gpu.sh")).unwrap();
         let stub = |name: &str, body: &str| {
             use std::os::unix::fs::PermissionsExt;

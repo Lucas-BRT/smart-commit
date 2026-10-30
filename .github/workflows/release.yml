@@ -1,6 +1,6 @@
 name: Release
 
-# Releases happen by bumping `version` in Cargo.toml: on every push to main,
+# Releases happen by bumping `version` in cli/Cargo.toml: on every push to main,
 # if there is no tag v<version> yet, this tests, packages (reproducibly, see
 # scripts/package.sh) and publishes the release with notes from the commits.
 on:
@@ -29,7 +29,7 @@ jobs:
       - name: Version
         id: version
         run: |
-          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' cli/Cargo.toml | head -1)
           echo "version=$version" >>"$GITHUB_OUTPUT"
           if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
             echo "new=false" >>"$GITHUB_OUTPUT"
