@@ -181,7 +181,7 @@ fi
 
 [ "$(uname -s)" = Linux ] || die "smart-commit runs on Linux only"
 [ "$(uname -m)" = x86_64 ] || die "smart-commit releases are built for x86_64 only"
-for tool in curl tar sha256sum; do
+for tool in curl tar gzip sha256sum; do
     command -v "$tool" >/dev/null || die "$tool is required"
 done
 

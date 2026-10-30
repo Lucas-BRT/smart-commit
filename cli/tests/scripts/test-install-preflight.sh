@@ -122,6 +122,14 @@ check "--no-setup does not check the disk" not said "warning:"
 FREE=100000 run --update
 check "--update does not check the disk" not said "warning:"
 
+# gzip: tar needs it to unpack the release, and fails with a cryptic message
+# without it, so the installer asks for it up front.
+rm -f "$bin/gzip"
+fails --no-setup
+check "no gzip: fails and says so" said "gzip is required"
+check "no gzip: installs nothing" not installed
+ln -sf "$(command -v gzip)" "$bin/gzip"
+
 if [ "$failures" -gt 0 ]; then
     echo "$failures failure(s)"
     exit 1
