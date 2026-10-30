@@ -1,0 +1,1602 @@
+{
+  "format": 1,
+  "tool_version": "0.13.0",
+  "backend": "mock",
+  "options": {
+    "max_prompt_tokens": 1024,
+    "default_convention": "conventional",
+    "diff": "annotated"
+  },
+  "config": {
+    "max_new_tokens": 128
+  },
+  "inputs": {
+    "branch": "main",
+    "subjects": [
+      "parent of 6af6697",
+      "Merge branch 'feat/h15-type-fusion'",
+      "feat(training): build a blind pairwise judge of commit messages, H18",
+      "feat(training): build an audit set of the acceptable types, and record H17",
+      "docs(training): record H16, a names line in the prompt does not help",
+      "feat(prompt): list the names a change declares and the comments it adds",
+      "feat(training): add a cascade benchmark, and record H15"
+    ],
+    "history_files": [
+      [
+        "README.md",
+        "docs/architecture.md",
+        "docs/configuration.md",
+        "docs/measurements.md",
+        "docs/roadmap.md",
+        "docs/training.md",
+        "docs/usage.md",
+        "src/cli/inspect.rs",
+        "src/config/keys.rs",
+        "src/config/store.rs",
+        "src/config/tests.rs",
+        "src/generate/ask.rs",
+        "src/generate/mod.rs",
+        "src/generate/notes.rs",
+        "src/generate/retry.rs",
+        "src/generate/tests.rs",
+        "src/message/fallback.rs",
+        "src/message/mod.rs",
+        "src/message/tests.rs",
+        "src/prompt/mod.rs"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "staged": [
+      {
+        "status": "modified",
+        "path": "README.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/architecture.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/configuration.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/measurements.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/roadmap.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/training.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "docs/usage.md",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/cli/inspect.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/keys.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/store.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/config/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/ask.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/notes.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/retry.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/generate/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/message/fallback.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/message/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/message/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "renamed",
+        "path": "src/prompt/snapshots/smart_commit__prompt__tests__conventional_repository.snap",
+        "old_path": "src/prompt/snapshots/smart_commit__prompt__tests__conventional_portuguese_repository.snap"
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/system.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/prompt/types.rs",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "src/style/description.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/detect.rs",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "src/style/language.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/mod.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/tests.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/ticket.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "src/style/types.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/cli.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/config_cli.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/make-traces.sh",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p25.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p50.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p75.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/bench-p90.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-balance-fix-as-trace.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-bench-prompts.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-build-inputs-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-closed-types.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-compare-fix-as-trace.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-conformal-sets-as-cut-off.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-copied-twice.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-copied.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-dense.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-deps-incomplete.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-links-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-measurements.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-only.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-paths-as-typos.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-roadmap-as-typos.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-docs-test-as-docs.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-dpo-validation-as-loss.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-empty-diff.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-eval-keep-loaded-as-keep-option.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-examples-option-as-add-examples.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-feat-as-refactor.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-file-scope.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-first-token-inverted.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-fix-as-feat-budget.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-fix-as-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-fixtures-of-splits.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-group-backend.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-invented-backend.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-lockfile.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-map-cap-as-copy.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-merge.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-mining-bundle-as-pairs.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-move-annotate.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-move-to-tools-crate.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-notebook-fix-as-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-partial-copy.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-refactor-as-feat.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-release-notes-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-release.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-remove-experiments.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-remove-python-tools.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-results-as-h12.json",
+        "old_path": null
+      },
+      {
+        "status": "added",
+        "path": "tests/fixtures/traces/conventional-en-retry.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-scenarios-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-scopes.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-script-fix-as-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-server-flag-as-test.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-setting-as-docs.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-setup-in-rust.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-annotate.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-as-feat.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-bench.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-diff.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-hardware.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-llamacpp.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-models.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-split-server.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-too-long.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-tools-option-as-docs.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-training-as-mining.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-training-fixes-as-refactor.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-training-tools-deps.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-two-subjects.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-type-groups-as-docs.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-type-review-as-fallback.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/conventional-en-vague-refactor.json",
+        "old_path": null
+      },
+      {
+        "status": "deleted",
+        "path": "tests/fixtures/traces/conventional-pt-retry.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/free-en-chatty.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/fixtures/traces/gitmoji-fallback.json",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/git_context.rs",
+        "old_path": null
+      },
+      {
+        "status": "modified",
+        "path": "tests/hook.rs",
+        "old_path": null
+      }
+    ],
+    "files": [
+      {
+        "path": "README.md",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -22,4 +22,4 @@ feat(diff): share the token budget between files by priority\n - **Follows your repository's style.** It learns the convention\n-  (Conventional Commits, gitmoji or free form), the language, the scopes and\n-  the ticket format from the history.\n+  (Conventional Commits, gitmoji or free form), the scopes and the ticket\n+  format from the history. Messages are in English.\n - **Runs on the hardware you have.** OpenVINO drives Intel NPUs and Intel\n"
+      },
+      {
+        "path": "docs/architecture.md",
+        "old_path": null,
+        "lines": [
+          7,
+          15
+        ],
+        "hunks": "@@ -18,3 +18,3 @@ Everything except the model is deterministic and tested without hardware.\n | `git` | `Repo`: runs the `git` binary (so the user's config applies) with machine-readable output (`-z`, `--format`) |\n-| `style` | infers convention, language, types, scopes, ticket style and examples from commit subjects |\n+| `style` | infers convention, types, scopes, ticket style and examples from commit subjects |\n | `context` | `RepoContext`: branch, ticket, subjects, style and staged files, rebuildable from recorded data |\n@@ -70,5 +70,2 @@ From the last `style.history_depth` (30) subjects, merges excluded:\n   follow it; otherwise `Free`; `Unknown` without history.\n-- **Language:** counts common Portuguese and English words in the\n-  description (after the `type(scope):` or emoji prefix, so a `fix:` does not\n-  count as English). It needs at least 2 hits, and a tie is `Unknown`.\n - **Types and scopes:** ranked by use; the prompt lists the 8 most used.\n@@ -134,3 +131,3 @@ off is in [measurements](measurements.md#token-estimate).\n The instructions are in English, which small models follow best, and ask for\n-the repository's language. They state the 72-column subject limit, the\n+a message in English. They state the 72-column subject limit, the\n convention with its types and scopes, the ticket when the repository cites\n@@ -156,3 +153,3 @@ A model trained to follow the fixed instructions without being told\n what varies by repository (types, scopes, examples) and what its training\n-lacks (a ticket, Portuguese, gitmoji). The rules follow the model file that\n+lacks (a ticket, gitmoji). The rules follow the model file that\n runs, from its entry in `models::REGISTRY` and the checked SHA-256 next to\n@@ -189,10 +186,5 @@ word of its description, four or more, is in one history subject and\n covers 60% of it; a reply with words of its own is kept), the same for a\n-message the user turned down in the review, or clearly in\n-another language than the repository's (all its known words English in a\n-Portuguese repository, or the reverse; a mix is kept, as such\n-repositories often write; a language that is only the default, with no\n-history to tell, is not enforced), or cut off: its\n+message the user turned down in the review, or cut off: its\n last word is an article, a preposition or a conjunction (`the`, `of`, `to`,\n-`for`, `and`, in Portuguese also `de`, `para`, `e`), as when the model stops\n-mid-sentence; `in`, `off` and a word in backticks end real subjects and are\n+`for`, `and`), as when the model stops mid-sentence; `in`, `off` and a word in backticks end real subjects and are\n not counted. With greedy\n@@ -201,4 +193,4 @@ is rejected too, the message is built from the file list (for example\n `chore: update 3 files in src/`, with the files in the body), in the\n-repository's language and convention, and a warning says so. When the last\n-reply was rejected for what it said (a copy, another language, a cut-off) rather than\n+repository's convention, and a warning says so. When the last\n+reply was rejected for what it said (a copy, a cut-off) rather than\n its form, the fallback keeps its scope, and its type unless the files tell\n"
+      },
+      {
+        "path": "docs/configuration.md",
+        "old_path": null,
+        "lines": [
+          10,
+          8
+        ],
+        "hunks": "@@ -9,3 +9,3 @@ $ smart-commit config set model.device cpu          # global\n $ smart-commit config set --repo style.convention conventional   # .smart-commit.toml, shared through git\n-$ smart-commit config get style.language\n+$ smart-commit config get style.convention\n $ smart-commit config list --show-origin\n@@ -57,5 +57,3 @@ value, for example when an environment variable is set.\n | `style.convention` | `auto`, `conventional`, `gitmoji`, `free` | `auto` | | global or repository |\n-| `style.language` | `auto`, `english`, `portuguese` | `auto` | | global or repository |\n | `style.default_convention` | `conventional`, `gitmoji`, `free` | `conventional` | | global or repository |\n-| `style.default_language` | `english`, `portuguese` | `english` | | global or repository |\n | `style.history_depth` | 1–500 | 30 | | global or repository |\n@@ -140,7 +138,11 @@ value, for example when an environment variable is set.\n   recompiles the model once (see [measurements](measurements.md#the-npu)).\n-- `style.convention` and `style.language` other than `auto` override what\n-  the history says. With a forced convention, history examples that\n-  contradict it are left out of the prompt.\n-- `style.default_*` apply when `auto` has nothing to go on: no history, or a\n-  history whose language cannot be told.\n+- `style.convention` other than `auto` overrides what the history says. With\n+  a forced convention, history examples that contradict it are left out of\n+  the prompt.\n+- `style.default_convention` applies when `auto` has nothing to go on: no\n+  history, or one that follows no convention.\n+- Messages are written in English. `style.language` and\n+  `style.default_language`, which asked for Portuguese, were removed. A\n+  configuration file that still has them keeps working (they are read and\n+  ignored), but they can no longer be set, and the lines can be deleted.\n - `style.subject_max` is the longest subject, in columns. 72 follows git's\n"
+      },
+      {
+        "path": "docs/measurements.md",
+        "old_path": null,
+        "lines": [
+          2,
+          1
+        ],
+        "hunks": "@@ -243,3 +243,4 @@ defaults; a flag after `--` comes last, so it wins.\n The prompts depend on the history at each commit (older commits were in\n-Portuguese, so those prompts ask for Portuguese).\n+Portuguese, so those prompts, built by a version that asked for it, ask for\n+Portuguese).\n \n"
+      },
+      {
+        "path": "docs/roadmap.md",
+        "old_path": null,
+        "lines": [
+          4,
+          4
+        ],
+        "hunks": "@@ -38,4 +38,4 @@\n   cherry-pick in progress, a subject cut where it still reads\n-  (`style.subject_max`), a retry for a reply in the wrong language or nearly\n-  a copy, and never a message the user turned down.\n+  (`style.subject_max`), a retry for a reply that nearly copies an earlier\n+  subject or stops mid-sentence, and never a message the user turned down.\n - A file list with what the line counts do not say (status, renames,\n@@ -64,3 +64,3 @@ then the largest gains for their cost.\n | 4 | **Fine-tunes and more models on the OpenVINO devices** | The NPU and the Intel GPU run only `qwen2.5-coder-1.5b`, the one model with a pinned export. Export the fine-tunes' published safetensors, and other [recommended models](models.md), with the pinned pipeline: two identical exports, `MANIFEST.sha256` and the **Model** workflow for each. |\n-| 5 | **Evaluation coverage** | eval-v1 and eval-short are English, Conventional or free; the scenarios add Portuguese and git states, by hand. Add gitmoji and Portuguese cases from permissively licensed repositories, pinned by commit, and an LLM judge for faithfulness with a pinned prompt, validated against a sample rated by hand (`score.py` has only cheap checks). |\n+| 5 | **Evaluation coverage** | eval-v1 and eval-short are English, Conventional or free; the scenarios add git states, by hand (some of them in Portuguese, which the product no longer supports). Add gitmoji cases from permissively licensed repositories, pinned by commit, and an LLM judge for faithfulness with a pinned prompt, validated against a sample rated by hand (`score.py` has only cheap checks). |\n | 6 | **GBNF grammar for the conventions** | A grammar in the request makes `type(scope): description` (or a gitmoji) the only possible shape, so the format retry, which doubles the time when it happens, goes away for every model. Less pressing with the fine-tunes, whose first reply passes 95–98% of the time on eval-v1 (91–93% for the base 1.5B). |\n@@ -93,3 +93,3 @@ INT4:\n | LFM2.5-1.2B-Instruct | LFM 1.0 (revenue threshold for commercial use) | new in 2026.3 (export with `--backup-precision int8_sym`) | the smallest; built for edge devices |\n-| SmolLM3-3B | Apache-2.0 | new in 2026.3 | Portuguese among its 6 languages; weak on code in published numbers |\n+| SmolLM3-3B | Apache-2.0 | new in 2026.3 | weak on code in published numbers |\n | Phi-4-mini-instruct (3.8B) | MIT | not listed (Phi-3.5 has an official example) | strong on code |\n"
+      },
+      {
+        "path": "docs/training.md",
+        "old_path": null,
+        "lines": [
+          6,
+          8
+        ],
+        "hunks": "@@ -78,4 +78,3 @@ shorten the prompt or speed up prefill barely matters. The measurements\n   442 examples) and that the base model answered `feat` 95.5% of the time.\n-  It does not know smart-commit's prompt (history examples, language,\n-  scopes), so it is a baseline, not a drop-in.\n+  It does not know smart-commit's prompt (history examples, scopes), so it is a baseline, not a drop-in.\n - [Elib27/qwen2.5-coder-1.5b-commit-msg-lora](https://huggingface.co/Elib27/qwen2.5-coder-1.5b-commit-msg-lora)\n@@ -105,6 +104,4 @@ under MIT, Apache-2.0 and BSD-3-Clause; how the fine-tunes credit it is in\n \n-Portuguese is scarce there, and v0.1 was trained on English only. Options:\n-repositories with Portuguese history collected separately, or labels\n-written by a larger model (check that model's terms allow training on its\n-outputs).\n+The product writes in English only (support for Portuguese was removed), and\n+v0.1 was trained on English only.\n \n@@ -174,3 +171,4 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with\n   repositories (Python in Portuguese with free style, TypeScript with\n-  Conventional Commits), by level of complexity from a typo to a merge in\n+  Conventional Commits; the Portuguese cases no longer test a goal of the\n+  product, they show what a model does by itself), by level of complexity from a typo to a merge in\n   progress, each with its target; `sc-training score` reports them per level and\n@@ -196,3 +194,3 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with\n   of cases either way.\n-- Not covered yet: gitmoji, Portuguese beyond the scenarios, and an LLM\n+- Not covered yet: gitmoji, and an LLM\n   judge for faithfulness validated against a sample rated by hand.\n"
+      },
+      {
+        "path": "docs/usage.md",
+        "old_path": null,
+        "lines": [
+          3,
+          5
+        ],
+        "hunks": "@@ -140,5 +140,4 @@ see [configuration](configuration.md) and\n The message follows the repository's style: its convention (Conventional\n-Commits, gitmoji or free), its language (English or Portuguese), the scopes\n-it uses, and the ticket in the branch name (`ABC-123`) when the history cites\n-tickets.\n+Commits, gitmoji or free), the scopes it uses, and the ticket in the branch\n+name (`ABC-123`) when the history cites tickets. The message is in English.\n \n@@ -228,3 +227,3 @@ pinned to a revision and checked against a SHA-256. See [models](models.md).\n smart-commit config list --show-origin                         # everything, and where it comes from\n-smart-commit config set style.language english\n+smart-commit config set style.default_convention conventional\n smart-commit config set --repo style.convention conventional   # .smart-commit.toml, shared through git\n@@ -235,3 +234,2 @@ smart-commit config init                                       # a file with eve\n |---|---|\n-| always write in English | `smart-commit config set style.language english` |\n | enforce Conventional Commits for a team | `smart-commit config set --repo style.convention conventional` |\n"
+      },
+      {
+        "path": "src/cli/inspect.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          4
+        ],
+        "hunks": "@@ -177,6 +177,2 @@ fn print_context(ctx: &RepoContext, settings: &Settings) {\n     }\n-    println!(\"language:    {:?}\", style.language);\n-    if let Some(forced) = settings.language {\n-        println!(\"             forced to {forced:?} by style.language\");\n-    }\n     println!(\"tickets:     {:?}\", style.tickets);\n"
+      },
+      {
+        "path": "src/config/keys.rs",
+        "old_path": null,
+        "lines": [
+          6,
+          14
+        ],
+        "hunks": "@@ -211,9 +211,2 @@ pub const KEYS: &[Key] = &[\n     },\n-    Key {\n-        name: \"style.language\",\n-        kind: Kind::Choice(&[\"auto\", \"english\", \"portuguese\"]),\n-        scope: Scope::Any,\n-        env: None,\n-        description: \"Message language; `auto` follows the history.\",\n-    },\n     Key {\n@@ -225,9 +218,2 @@ pub const KEYS: &[Key] = &[\n     },\n-    Key {\n-        name: \"style.default_language\",\n-        kind: Kind::Choice(&[\"english\", \"portuguese\"]),\n-        scope: Scope::Any,\n-        env: None,\n-        description: \"Language when `auto` cannot tell from the history.\",\n-    },\n     Key {\n@@ -258,2 +244,8 @@ pub fn key(name: &str) -> Result<&'static Key, ConfigError> {\n \n+/// Keys earlier versions had, which a file may still hold: they are read and\n+/// ignored, so that a configuration written by one of them still works.\n+/// `style.language` and `style.default_language` asked for Portuguese; the\n+/// messages are in English now.\n+pub const RETIRED: &[&str] = &[\"style.language\", \"style.default_language\"];\n+\n /// The names of every key, for the error that reports an unknown one.\n"
+      },
+      {
+        "path": "src/config/store.rs",
+        "old_path": null,
+        "lines": [
+          5,
+          18
+        ],
+        "hunks": "@@ -19,5 +19,5 @@ use crate::prompt::{\n };\n-use crate::style::{Convention, Language};\n+use crate::style::Convention;\n \n-use super::keys::{KEYS, Key, Scope, key, parse, parse_item, renamed};\n+use super::keys::{KEYS, Key, RETIRED, Scope, key, parse, parse_item, renamed};\n use super::{ConfigError, Origin, Value};\n@@ -58,2 +58,5 @@ pub fn parse_file(\n     for (name, item) in flatten(doc.as_table()) {\n+        if RETIRED.contains(&name.as_str()) {\n+            continue;\n+        }\n         let key = KEYS\n@@ -264,5 +267,3 @@ impl Resolved {\n             convention: convention(choice(\"style.convention\")),\n-            language: language(choice(\"style.language\")),\n             default_convention: convention(choice(\"style.default_convention\")).expect(\"not auto\"),\n-            default_language: language(choice(\"style.default_language\")).expect(\"not auto\"),\n             history_depth: self.count(\"style.history_depth\"),\n@@ -282,10 +283,2 @@ fn convention(text: &str) -> Option<Convention> {\n \n-fn language(text: &str) -> Option<Language> {\n-    match text {\n-        \"english\" => Some(Language::English),\n-        \"portuguese\" => Some(Language::Portuguese),\n-        _ => None,\n-    }\n-}\n-\n /// Built-in values. Paths have no default without `$HOME`.\n@@ -319,5 +312,3 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)>\n         (\"style.convention\", text(\"auto\")),\n-        (\"style.language\", text(\"auto\")),\n         (\"style.default_convention\", text(\"conventional\")),\n-        (\"style.default_language\", text(\"english\")),\n         (\n@@ -411,5 +402,3 @@ pub struct Settings {\n     pub convention: Option<Convention>,\n-    pub language: Option<Language>,\n     pub default_convention: Convention,\n-    pub default_language: Language,\n     pub history_depth: usize,\n@@ -428,5 +417,3 @@ impl Settings {\n             default_convention: self.default_convention,\n-            default_language: self.default_language,\n             convention: self.convention,\n-            language: self.language,\n             // The rules follow the model file that runs, never a setting.\n"
+      },
+      {
+        "path": "src/config/tests.rs",
+        "old_path": null,
+        "lines": [
+          26,
+          7
+        ],
+        "hunks": "@@ -11,3 +11,3 @@ use crate::paths;\n use crate::prompt::PromptOptions;\n-use crate::style::Language;\n+use crate::style::Convention;\n \n@@ -74,4 +74,4 @@ fn the_model_is_kept_loaded_for_ten_minutes_unless_set() {\n fn layers_override_in_order() {\n-    let global = \"backend = \\\"mock\\\"\\n[model]\\ndevice = \\\"gpu\\\"\\n[style]\\nlanguage = \\\"english\\\"\\nhistory_depth = 10\\n\";\n-    let repo = \"[style]\\nlanguage = \\\"portuguese\\\"\\n\";\n+    let global = \"backend = \\\"mock\\\"\\n[model]\\ndevice = \\\"gpu\\\"\\n[style]\\ndefault_convention = \\\"free\\\"\\nhistory_depth = 10\\n\";\n+    let repo = \"[style]\\ndefault_convention = \\\"gitmoji\\\"\\n\";\n     let vars = [(\"HOME\", \"/home/me\"), (\"SMART_COMMIT_DEVICE\", \"cpu\")];\n@@ -86,3 +86,6 @@ fn layers_override_in_order() {\n     assert!(matches!(origin(\"style.history_depth\"), Origin::Global(_)));\n-    assert!(matches!(origin(\"style.language\"), Origin::Repo(_)));\n+    assert!(matches!(\n+        origin(\"style.default_convention\"),\n+        Origin::Repo(_)\n+    ));\n     assert_eq!(origin(\"model.device\"), Origin::Env(\"SMART_COMMIT_DEVICE\"));\n@@ -94,3 +97,3 @@ fn layers_override_in_order() {\n     assert_eq!(settings.device, DeviceSetting::Fixed(Target::Cpu));\n-    assert_eq!(settings.language, Some(Language::Portuguese));\n+    assert_eq!(settings.default_convention, Convention::Gitmoji);\n     assert_eq!(settings.history_depth, 10);\n@@ -98,2 +101,18 @@ fn layers_override_in_order() {\n \n+#[test]\n+fn keys_earlier_versions_had_are_read_and_ignored() {\n+    // `style.language` asked for Portuguese; a file that still has it must keep working.\n+    let text =\n+        \"[style]\\nlanguage = \\\"portuguese\\\"\\ndefault_language = \\\"english\\\"\\nhistory_depth = 7\\n\";\n+    let path = PathBuf::from(\"config.toml\");\n+    let values = parse_file(text, &path, &Origin::Global(path.clone()), None).unwrap();\n+    let names: Vec<_> = values.iter().map(|(key, _)| key.name).collect();\n+    assert_eq!(names, [\"style.history_depth\"]);\n+    // They are not keys: setting or reading one is still an unknown key.\n+    assert!(matches!(\n+        key(\"style.language\"),\n+        Err(ConfigError::UnknownKey { .. })\n+    ));\n+}\n+\n #[test]\n@@ -365,3 +384,3 @@ fn set_aside_invalid_removes_only_values_this_version_cannot_read() {\n         \"# mine\\n[model]\\ndevice = \\\"vulkan\\\"\\nname = \\\"smart-commit-9b-v9\\\"\\n\\\n-             max_new_tokens = 5000\\n[style]\\nlanguage = \\\"english\\\"\\n\",\n+             max_new_tokens = 5000\\n[style]\\ndefault_convention = \\\"free\\\"\\n\",\n     )\n@@ -376,3 +395,3 @@ fn set_aside_invalid_removes_only_values_this_version_cannot_read() {\n         text,\n-        \"# mine\\n[model]\\ndevice = \\\"vulkan\\\"\\n[style]\\nlanguage = \\\"english\\\"\\n\"\n+        \"# mine\\n[model]\\ndevice = \\\"vulkan\\\"\\n[style]\\ndefault_convention = \\\"free\\\"\\n\"\n     );\n"
+      },
+      {
+        "path": "src/generate/ask.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -74,3 +74,3 @@ pub fn offer_types(\n ) -> Option<Vec<TypeChoice>> {\n-    let (convention, _) = prompt::effective_style(&ctx.style, options);\n+    let convention = prompt::effective_convention(&ctx.style, options);\n     if convention != Convention::Conventional {\n"
+      },
+      {
+        "path": "src/generate/mod.rs",
+        "old_path": null,
+        "lines": [
+          5,
+          19
+        ],
+        "hunks": "@@ -19,3 +19,2 @@ use crate::message::{self, CommitMessage, SanitizeError};\n use crate::prompt::{self, PromptOptions};\n-use crate::style::Language;\n \n@@ -23,3 +22,3 @@ pub use ask::{MAX_OFFERED, TypeAsk, offer_types, types_to_offer};\n pub use notes::{avoid_note, retry_note};\n-pub use retry::{copied_from, cut_off, in_other_language, prepared_message};\n+pub use retry::{copied_from, cut_off, prepared_message};\n pub use rules::by_rules;\n@@ -108,3 +107,3 @@ pub fn generate_asked(\n ) -> Result<Generation, BackendError> {\n-    let (convention, language) = prompt::effective_style(&ctx.style, options);\n+    let convention = prompt::effective_convention(&ctx.style, options);\n     // Turned down, git's or the file list's message goes to the model for\n@@ -123,9 +122,3 @@ pub fn generate_asked(\n         return Ok(Generation {\n-            message: message::fallback_after(\n-                &ctx.staged,\n-                convention,\n-                language,\n-                None,\n-                options.subject_max,\n-            ),\n+            message: message::fallback_after(&ctx.staged, convention, None, options.subject_max),\n             source: Source::Rules,\n@@ -145,3 +138,3 @@ pub fn generate_asked(\n             .and_then(|a| a.rejected.as_ref())\n-            .map(|error| notes::retry_note(error, convention, language));\n+            .map(|error| notes::retry_note(error, convention));\n         let note = match (&avoid_note_val, retry) {\n@@ -163,8 +156,3 @@ pub fn generate_asked(\n                 }\n-                // A default language, with no history to tell, is not enforced.\n-                let known = options.language.is_some() || ctx.style.language != Language::Unknown;\n-                if known && retry::in_other_language(&message.subject, language, &ctx.subjects) {\n-                    return Err(SanitizeError::WrongLanguage(message.subject));\n-                }\n-                if retry::cut_off(&message.subject, language) {\n+                if retry::cut_off(&message.subject) {\n                     return Err(SanitizeError::CutOff(message.subject));\n@@ -206,3 +194,2 @@ pub fn generate_asked(\n             SanitizeError::CopiedHistory(_)\n-            | SanitizeError::WrongLanguage(_)\n             | SanitizeError::TurnedDown(_)\n@@ -218,3 +205,2 @@ pub fn generate_asked(\n             convention,\n-            language,\n             reply.as_deref(),\n"
+      },
+      {
+        "path": "src/generate/notes.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          10
+        ],
+        "hunks": "@@ -3,3 +3,3 @@\n use crate::message;\n-use crate::style::{Convention, Language};\n+use crate::style::Convention;\n \n@@ -38,3 +38,3 @@ pub fn avoid_note(messages: &[String]) -> Option<String> {\n /// Tells the model why its previous reply was rejected.\n-pub fn retry_note(error: &SanitizeError, convention: Convention, language: Language) -> String {\n+pub fn retry_note(error: &SanitizeError, convention: Convention) -> String {\n     let reason = match error {\n@@ -60,10 +60,2 @@ pub fn retry_note(error: &SanitizeError, convention: Convention, language: Langu\n         }\n-        SanitizeError::WrongLanguage(subject) => {\n-            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();\n-            let language = match language {\n-                Language::Portuguese => \"Brazilian Portuguese\",\n-                _ => \"English\",\n-            };\n-            format!(\"\\\"{subject}\\\" is not in {language}; write it in {language}\")\n-        }\n     };\n"
+      },
+      {
+        "path": "src/generate/retry.rs",
+        "old_path": null,
+        "lines": [
+          6,
+          25
+        ],
+        "hunks": "@@ -3,3 +3,3 @@\n use crate::message::CommitMessage;\n-use crate::style::{self, Language};\n+use crate::style;\n \n@@ -12,3 +12,3 @@ const NEAR_COPY_SHARE: f64 = 0.6;\n /// off\"), and so do pronouns, so they are not here.\n-const DANGLING_ENGLISH: &[&str] = &[\n+const DANGLING: &[&str] = &[\n     \"the\", \"a\", \"an\", \"of\", \"to\", \"for\", \"with\", \"from\", \"by\", \"and\", \"or\", \"into\", \"than\", \"that\",\n@@ -16,6 +16,2 @@ const DANGLING_ENGLISH: &[&str] = &[\n ];\n-const DANGLING_PORTUGUESE: &[&str] = &[\n-    \"o\", \"a\", \"os\", \"as\", \"um\", \"uma\", \"de\", \"do\", \"da\", \"dos\", \"das\", \"em\", \"no\", \"na\", \"nos\",\n-    \"nas\", \"para\", \"com\", \"por\", \"e\", \"ou\", \"que\", \"ao\", \"aos\",\n-];\n \n@@ -57,19 +53,6 @@ pub fn copied_from<'a>(subject: &str, history: &'a [String]) -> Option<&'a str>\n \n-/// Whether `subject` is clearly in another language than `language`, the\n-/// repository's: only when its words are all of the other one, and no\n-/// history subject is in that one (a repository that sometimes writes it\n-/// accepts it).\n-pub fn in_other_language(subject: &str, language: Language, history: &[String]) -> bool {\n-    let theirs = style::language_of(subject);\n-    matches!(\n-        (language, theirs),\n-        (Language::Portuguese, Language::English) | (Language::English, Language::Portuguese)\n-    ) && !history.iter().any(|h| style::language_of(h) == theirs)\n-}\n-\n /// Whether `subject` stops in the middle of a sentence: its last word is an\n-/// article, a preposition or a conjunction of `language` (or of English,\n-/// which commits mix in). A word in backticks or quotes, or with a digit, is\n-/// a name and not one of them.\n-pub fn cut_off(subject: &str, language: Language) -> bool {\n+/// article, a preposition or a conjunction. A word in backticks or quotes,\n+/// or with a digit, is a name and not one of them.\n+pub fn cut_off(subject: &str) -> bool {\n     let description = subject\n@@ -84,5 +67,3 @@ pub fn cut_off(subject: &str, language: Language) -> bool {\n     }\n-    let last = last.to_lowercase();\n-    DANGLING_ENGLISH.contains(&last.as_str())\n-        || (language == Language::Portuguese && DANGLING_PORTUGUESE.contains(&last.as_str()))\n+    DANGLING.contains(&last.to_lowercase().as_str())\n }\n"
+      },
+      {
+        "path": "src/generate/tests.rs",
+        "old_path": null,
+        "lines": [
+          7,
+          66
+        ],
+        "hunks": "@@ -13,3 +13,3 @@ mod tests {\n     use crate::prompt::{Prompt, PromptOptions};\n-    use crate::style::{Convention, Language};\n+    use crate::style::Convention;\n \n@@ -161,45 +161,2 @@ mod tests {\n \n-    #[test]\n-    fn a_reply_in_another_language_is_retried() {\n-        let history = [\n-            \"adiciona pedidos\",\n-            \"corrige o total do pedido\",\n-            \"cria o cardápio\",\n-        ];\n-        let mock = MockBackend::new([\"add main\", \"torna o script principal executável\"]);\n-        let generation = run(&history, &mock);\n-        assert_eq!(generation.source, Source::Model);\n-        assert_eq!(\n-            generation.message.subject,\n-            \"torna o script principal executável\"\n-        );\n-        assert_eq!(\n-            generation.attempts[0].rejected,\n-            Some(SanitizeError::WrongLanguage(\"add main\".into()))\n-        );\n-        assert!(\n-            mock.prompts()[1]\n-                .user\n-                .ends_with(\"\\\"add main\\\" is not in Brazilian Portuguese; write it in Brazilian Portuguese. Reply again with only the commit message.\\n\"),\n-            \"{}\",\n-            mock.prompts()[1].user\n-        );\n-        // Mixed, as the history itself may be: kept.\n-        let mock = MockBackend::new([\"fix do teclado\"]);\n-        assert_eq!(run(&history, &mock).attempts.len(), 1);\n-        // A repository that also writes English accepts an English reply\n-        // (found on eval-v1).\n-        let mixed = [\n-            \"adiciona pedidos\",\n-            \"corrige o total do pedido\",\n-            \"add the CLI\",\n-        ];\n-        let mock = MockBackend::new([\"add smtpSecure and smtpRequireTLS\"]);\n-        assert_eq!(run(&mixed, &mock).attempts.len(), 1);\n-        // Without history the language is only the default (English): a\n-        // first commit written in Portuguese is kept.\n-        let mock = MockBackend::new([\"feat: adiciona o sistema de pedidos\"]);\n-        assert_eq!(run(&[], &mock).attempts.len(), 1);\n-    }\n-\n     #[test]\n@@ -265,3 +222,3 @@ mod tests {\n     #[test]\n-    fn what_ends_a_sentence_depends_on_the_language() {\n+    fn what_ends_a_sentence_is_not_cut_off() {\n         use crate::generate::cut_off;\n@@ -277,3 +234,3 @@ mod tests {\n         ] {\n-            assert!(cut_off(dangling, Language::English), \"{dangling}\");\n+            assert!(cut_off(dangling), \"{dangling}\");\n         }\n@@ -291,23 +248,7 @@ mod tests {\n         ] {\n-            assert!(!cut_off(whole, Language::English), \"{whole}\");\n+            assert!(!cut_off(whole), \"{whole}\");\n         }\n-        // \"de\", \"e\" or \"o\" end a Portuguese sentence only when it is cut.\n-        assert!(cut_off(\n-            \"fix: corrige o total do pedido de\",\n-            Language::Portuguese\n-        ));\n-        assert!(cut_off(\"feat: adiciona suporte a\", Language::Portuguese));\n-        assert!(!cut_off(\n-            \"fix: corrige o total do pedido\",\n-            Language::Portuguese\n-        ));\n-        assert!(!cut_off(\n-            \"fix: corrige o total do pedido de\",\n-            Language::English\n-        ));\n-        // English words still count in a Portuguese repository.\n-        assert!(cut_off(\"fix: corrige the\", Language::Portuguese));\n         // A colon inside the description is not the type's.\n-        assert!(!cut_off(\"fix: handle the case: foo\", Language::English));\n-        assert!(cut_off(\"Update the thing: and\", Language::English));\n+        assert!(!cut_off(\"fix: handle the case: foo\"));\n+        assert!(cut_off(\"Update the thing: and\"));\n     }\n@@ -676,3 +617,3 @@ mod tests {\n         assert_eq!(\n-            generate::retry_note(&SanitizeError::Empty, Convention::Free, Language::English),\n+            generate::retry_note(&SanitizeError::Empty, Convention::Free),\n             \"Your previous reply was rejected because it contained no commit message. \\\n"
+      },
+      {
+        "path": "src/message/fallback.rs",
+        "old_path": null,
+        "lines": [
+          20,
+          39
+        ],
+        "hunks": "@@ -4,3 +4,3 @@ use crate::diff::FileKind;\n use crate::git::{ChangeStatus, FileChange};\n-use crate::style::{self, Convention, Language};\n+use crate::style::{self, Convention};\n \n@@ -55,8 +55,4 @@ impl Category {\n /// output is still unusable after a retry.\n-pub fn fallback(\n-    changes: &[FileChange],\n-    convention: Convention,\n-    language: Language,\n-) -> CommitMessage {\n-    fallback_after(changes, convention, language, None, super::SUBJECT_MAX)\n+pub fn fallback(changes: &[FileChange], convention: Convention) -> CommitMessage {\n+    fallback_after(changes, convention, None, super::SUBJECT_MAX)\n }\n@@ -65,3 +61,3 @@ pub fn fallback(\n /// subject, when it was rejected for what it said (a copy of the history,\n-/// another language) rather than its form, and its type when the files do\n+/// a cut-off) rather than its form, and its type when the files do\n /// not tell one: the model often picks the right type even when it copies,\n@@ -72,3 +68,2 @@ pub fn fallback_after(\n     convention: Convention,\n-    language: Language,\n     reply: Option<&str>,\n@@ -76,4 +71,3 @@ pub fn fallback_after(\n ) -> CommitMessage {\n-    let pt = language == Language::Portuguese;\n-    let description = describe_changes(changes, pt);\n+    let description = describe_changes(changes);\n     let category = Category::of(changes);\n@@ -99,3 +93,3 @@ pub fn fallback_after(\n         subject: super::format::truncate_subject(&subject, subject_max),\n-        body: (changes.len() > 1).then(|| list_files(changes, pt)),\n+        body: (changes.len() > 1).then(|| list_files(changes)),\n     }\n@@ -103,28 +97,17 @@ pub fn fallback_after(\n \n-fn describe_changes(changes: &[FileChange], pt: bool) -> String {\n+fn describe_changes(changes: &[FileChange]) -> String {\n     let [one] = changes else {\n-        let (verb, files, within) = if pt {\n-            (\"atualiza\", \"arquivos\", \"em\")\n-        } else {\n-            (\"update\", \"files\", \"in\")\n-        };\n         return match common_dir(changes) {\n-            Some(dir) => format!(\"{verb} {} {files} {within} {dir}\", changes.len()),\n-            None => format!(\"{verb} {} {files}\", changes.len()),\n+            Some(dir) => format!(\"update {} files in {dir}\", changes.len()),\n+            None => format!(\"update {} files\", changes.len()),\n         };\n     };\n-    let verb = match (one.status, pt) {\n-        (ChangeStatus::Added, false) => \"add\",\n-        (ChangeStatus::Added, true) => \"adiciona\",\n-        (ChangeStatus::Deleted, _) => \"remove\",\n-        (ChangeStatus::Renamed, false) => \"rename\",\n-        (ChangeStatus::Renamed, true) => \"renomeia\",\n-        (_, false) => \"update\",\n-        (_, true) => \"atualiza\",\n+    let verb = match one.status {\n+        ChangeStatus::Added => \"add\",\n+        ChangeStatus::Deleted => \"remove\",\n+        ChangeStatus::Renamed => \"rename\",\n+        _ => \"update\",\n     };\n     match (&one.old_path, one.status) {\n-        (Some(old), ChangeStatus::Renamed) => {\n-            let to = if pt { \"para\" } else { \"to\" };\n-            format!(\"{verb} {old} {to} {}\", one.path)\n-        }\n+        (Some(old), ChangeStatus::Renamed) => format!(\"{verb} {old} to {}\", one.path),\n         _ => format!(\"{verb} {}\", one.path),\n@@ -133,3 +116,3 @@ fn describe_changes(changes: &[FileChange], pt: bool) -> String {\n \n-fn list_files(changes: &[FileChange], pt: bool) -> String {\n+fn list_files(changes: &[FileChange]) -> String {\n     let mut lines: Vec<String> = changes\n@@ -140,8 +123,6 @@ fn list_files(changes: &[FileChange], pt: bool) -> String {\n     if changes.len() > FALLBACK_LISTED {\n-        let more = changes.len() - FALLBACK_LISTED;\n-        lines.push(if pt {\n-            format!(\"- ... e mais {more}\")\n-        } else {\n-            format!(\"- ... and {more} more\")\n-        });\n+        lines.push(format!(\n+            \"- ... and {} more\",\n+            changes.len() - FALLBACK_LISTED\n+        ));\n     }\n"
+      },
+      {
+        "path": "src/message/mod.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          4
+        ],
+        "hunks": "@@ -52,6 +52,2 @@ pub enum SanitizeError {\n     CopiedHistory(String),\n-    /// The subject is clearly in another language than the repository's,\n-    /// as small models trained on English write in Portuguese ones.\n-    #[error(\"subject is in another language than the repository's: {0:?}\")]\n-    WrongLanguage(String),\n     /// The subject repeats, or nearly, a message the user asked to replace:\n"
+      },
+      {
+        "path": "src/message/tests.rs",
+        "old_path": null,
+        "lines": [
+          17,
+          38
+        ],
+        "hunks": "@@ -3,3 +3,3 @@ use super::*;\n use crate::git::{ChangeStatus, FileChange};\n-use crate::style::{Convention, Language};\n+use crate::style::Convention;\n \n@@ -157,9 +157,3 @@ fn the_limit_is_the_configured_one() {\n     )];\n-    let fallback = fallback_after(\n-        &changes,\n-        Convention::Conventional,\n-        Language::English,\n-        None,\n-        40,\n-    );\n+    let fallback = fallback_after(&changes, Convention::Conventional, None, 40);\n     assert!(\n@@ -239,10 +233,3 @@ fn fallback_after_a_rejected_reply() {\n     let after = |changes: &[FileChange], reply| {\n-        fallback_after(\n-            changes,\n-            Convention::Conventional,\n-            Language::English,\n-            reply,\n-            SUBJECT_MAX,\n-        )\n-        .subject\n+        fallback_after(changes, Convention::Conventional, reply, SUBJECT_MAX).subject\n     };\n@@ -268,10 +255,3 @@ fn fallback_after_a_rejected_reply() {\n     assert_eq!(\n-        fallback_after(\n-            &code,\n-            Convention::Free,\n-            Language::English,\n-            Some(\"fix(git): x\"),\n-            SUBJECT_MAX,\n-        )\n-        .subject,\n+        fallback_after(&code, Convention::Free, Some(\"fix(git): x\"), SUBJECT_MAX,).subject,\n         \"Update src/git.rs\"\n@@ -284,3 +264,3 @@ fn fallback_for_a_single_file() {\n     assert_eq!(\n-        fallback(&added, Convention::Conventional, Language::English).to_string(),\n+        fallback(&added, Convention::Conventional).to_string(),\n         \"chore: add src/diff.rs\"\n@@ -288,4 +268,4 @@ fn fallback_for_a_single_file() {\n     assert_eq!(\n-        fallback(&added, Convention::Free, Language::Portuguese).to_string(),\n-        \"Adiciona src/diff.rs\"\n+        fallback(&added, Convention::Free).to_string(),\n+        \"Add src/diff.rs\"\n     );\n@@ -296,4 +276,4 @@ fn fallback_for_a_single_file() {\n     assert_eq!(\n-        fallback(&renamed, Convention::Gitmoji, Language::Portuguese).to_string(),\n-        \"📝 renomeia a.md para docs/b.md\"\n+        fallback(&renamed, Convention::Gitmoji).to_string(),\n+        \"📝 rename a.md to docs/b.md\"\n     );\n@@ -306,7 +286,7 @@ fn fallback_for_many_files_lists_them() {\n         .collect();\n-    let message = fallback(&changes, Convention::Conventional, Language::Portuguese);\n-    assert_eq!(message.subject, \"test: atualiza 12 arquivos em tests/\");\n+    let message = fallback(&changes, Convention::Conventional);\n+    assert_eq!(message.subject, \"test: update 12 files in tests/\");\n     let body = message.body.unwrap();\n     assert_eq!(body.lines().count(), 11);\n-    assert!(body.ends_with(\"- ... e mais 2\"));\n+    assert!(body.ends_with(\"- ... and 2 more\"));\n }\n@@ -320,3 +300,3 @@ fn fallback_picks_type_and_emoji_from_the_files() {\n     assert_eq!(\n-        fallback(&config, Convention::Gitmoji, Language::English).subject,\n+        fallback(&config, Convention::Gitmoji).subject,\n         \"🔧 update 2 files\"\n@@ -324,3 +304,3 @@ fn fallback_picks_type_and_emoji_from_the_files() {\n     assert_eq!(\n-        fallback(&config, Convention::Conventional, Language::English).subject,\n+        fallback(&config, Convention::Conventional).subject,\n         \"chore: update 2 files\"\n@@ -332,3 +312,3 @@ fn fallback_picks_type_and_emoji_from_the_files() {\n     assert_eq!(\n-        fallback(&mixed, Convention::Gitmoji, Language::English).subject,\n+        fallback(&mixed, Convention::Gitmoji).subject,\n         \"🚧 update 2 files\"\n@@ -336,3 +316,3 @@ fn fallback_picks_type_and_emoji_from_the_files() {\n     assert_eq!(\n-        fallback(&mixed, Convention::Free, Language::English).to_string(),\n+        fallback(&mixed, Convention::Free).to_string(),\n         \"Update 2 files\\n\\n- src/a.rs\\n- docs/b.md\"\n@@ -341,3 +321,3 @@ fn fallback_picks_type_and_emoji_from_the_files() {\n     assert_eq!(\n-        fallback(&deleted, Convention::Unknown, Language::Unknown).subject,\n+        fallback(&deleted, Convention::Unknown).subject,\n         \"docs: remove docs/old.md\"\n@@ -352,3 +332,2 @@ fn fallback_subject_fits_72_columns() {\n         Convention::Conventional,\n-        Language::English,\n     );\n"
+      },
+      {
+        "path": "src/prompt/mod.rs",
+        "old_path": null,
+        "lines": [
+          7,
+          12
+        ],
+        "hunks": "@@ -3,3 +3,3 @@\n //! Instructions are written in English, which small models follow best,\n-//! and ask for the message in the repository's own language.\n+//! and the message is in English too.\n \n@@ -21,3 +21,3 @@ use crate::context::RepoContext;\n use crate::diff::{self, CompactDiff, FileDiff};\n-use crate::style::{Convention, Language, Style};\n+use crate::style::{Convention, Style};\n \n@@ -25,14 +25,9 @@ use self::types::TEMPLATE_OVERHEAD_TOKENS;\n \n-/// The convention and language the message must follow: forced ones\n-/// first, then the detected ones, then the defaults.\n-pub fn effective_style(style: &Style, options: &PromptOptions) -> (Convention, Language) {\n-    let convention = options.convention.unwrap_or(match style.convention {\n+/// The convention the message must follow: the forced one first, then the\n+/// detected one, then the default.\n+pub fn effective_convention(style: &Style, options: &PromptOptions) -> Convention {\n+    options.convention.unwrap_or(match style.convention {\n         Convention::Unknown => options.default_convention,\n         known => known,\n-    });\n-    let language = options.language.unwrap_or(match style.language {\n-        Language::Unknown => options.default_language,\n-        known => known,\n-    });\n-    (convention, language)\n+    })\n }\n"
+      },
+      {
+        "path": "src/prompt/snapshots/smart_commit__prompt__tests__conventional_repository.snap",
+        "old_path": "src/prompt/snapshots/smart_commit__prompt__tests__conventional_portuguese_repository.snap",
+        "lines": [
+          4,
+          4
+        ],
+        "hunks": "@@ -8,3 +8,3 @@ Rules:\n - Subject line of at most 72 characters, without a trailing period.\n-- Write in Brazilian Portuguese.\n+- Write in English, in the imperative mood (\"Add\", not \"Added\").\n - Use Conventional Commits: `type(scope): description`.\n@@ -15,5 +15,5 @@ Rules:\n Recent subjects from this repository, follow their style:\n-feat(cli): adiciona o comando context\n-fix(git): corrige a leitura da branch\n-docs: atualiza a documentação da fase 1\n+feat(cli): add the context command\n+fix(git): correct the branch reading\n+docs: update the documentation of phase 1\n \n"
+      },
+      {
+        "path": "src/prompt/system.rs",
+        "old_path": null,
+        "lines": [
+          5,
+          7
+        ],
+        "hunks": "@@ -6,5 +6,5 @@ use crate::context::RepoContext;\n use crate::message;\n-use crate::style::{self, Convention, Language, Style, TicketStyle};\n+use crate::style::{self, Convention, Style, TicketStyle};\n \n-use super::effective_style;\n+use super::effective_convention;\n use super::types::{\n@@ -63,3 +63,3 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri\n     let style = &ctx.style;\n-    let (convention, language) = effective_style(style, options);\n+    let convention = effective_convention(style, options);\n     let full = options.rules.is_full();\n@@ -85,6 +85,4 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri\n     }\n-    match language {\n-        Language::Portuguese => rule(\"Write in Brazilian Portuguese.\"),\n-        _ if full => rule(\"Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\"),\n-        _ => {}\n+    if full {\n+        rule(\"Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\");\n     }\n"
+      },
+      {
+        "path": "src/prompt/tests.rs",
+        "old_path": null,
+        "lines": [
+          16,
+          29
+        ],
+        "hunks": "@@ -99,8 +99,8 @@ fn annotated_file_list() {\n #[test]\n-fn conventional_portuguese_repository() {\n+fn conventional_repository() {\n     let ctx = context(\n         &[\n-            \"feat(cli): adiciona o comando context\",\n-            \"fix(git): corrige a leitura da branch\",\n-            \"docs: atualiza a documentação da fase 1\",\n+            \"feat(cli): add the context command\",\n+            \"fix(git): correct the branch reading\",\n+            \"docs: update the documentation of phase 1\",\n         ],\n@@ -159,3 +159,3 @@ fn omitted_rules_keep_only_what_varies_by_repository() {\n fn omitted_rules_keep_what_training_does_not_teach() {\n-    // Tickets, Portuguese and gitmoji are absent from the training data,\n+    // Tickets and gitmoji are absent from the training data,\n     // so the model still needs to be told.\n@@ -172,10 +172,3 @@ fn omitted_rules_keep_what_training_does_not_teach() {\n     );\n-    let portuguese = context(&[\"feat(cli): adiciona o comando context\"], None);\n-    let options = PromptOptions {\n-        language: Some(Language::Portuguese),\n-        ..omitted()\n-    };\n-    let prompt = build(&portuguese, &files(), &options);\n-    assert!(prompt.system.contains(\"- Write in Brazilian Portuguese.\\n\"));\n-    // An English, Conventional repository without history needs no list.\n+    // A Conventional repository without history needs no list.\n     let prompt = build(&context(&[], None), &files(), &omitted());\n@@ -231,12 +224,12 @@ fn ticket_prefix_and_mention_in_free_style() {\n #[test]\n-fn forced_style_overrides_the_detected_one() {\n+fn a_forced_convention_overrides_the_detected_one() {\n     let options = PromptOptions {\n         convention: Some(Convention::Conventional),\n-        language: Some(Language::Portuguese),\n         ..PromptOptions::default()\n     };\n-    let english_free = style::detect(&[\"Add the parser\", \"Fix the crash\"]);\n+    let free = style::detect(&[\"Add the parser\", \"Fix the crash\"]);\n+    assert_eq!(free.convention, Convention::Free);\n     assert_eq!(\n-        effective_style(&english_free, &options),\n-        (Convention::Conventional, Language::Portuguese)\n+        effective_convention(&free, &options),\n+        Convention::Conventional\n     );\n@@ -322,2 +315,3 @@ fn unset_overrides_are_left_out_of_traces() {\n     assert!(!json.contains(\"\\\"convention\\\"\"), \"{json}\");\n+    // A trace from before the language setting was removed has a field that is ignored now.\n     let old: PromptOptions = serde_json::from_str(\n@@ -341,6 +335,5 @@ fn unset_overrides_are_left_out_of_traces() {\n #[test]\n-fn known_style_overrides_the_defaults() {\n+fn a_known_style_overrides_the_default() {\n     let options = PromptOptions {\n         default_convention: Convention::Gitmoji,\n-        default_language: Language::Portuguese,\n         ..PromptOptions::default()\n@@ -348,11 +341,5 @@ fn known_style_overrides_the_defaults() {\n     let empty = style::detect::<&str>(&[]);\n-    assert_eq!(\n-        effective_style(&empty, &options),\n-        (Convention::Gitmoji, Language::Portuguese)\n-    );\n-    let english = style::detect(&[\"Add the parser\", \"Fix the crash\"]);\n-    assert_eq!(\n-        effective_style(&english, &options),\n-        (Convention::Free, Language::English)\n-    );\n+    assert_eq!(effective_convention(&empty, &options), Convention::Gitmoji);\n+    let free = style::detect(&[\"Add the parser\", \"Fix the crash\"]);\n+    assert_eq!(effective_convention(&free, &options), Convention::Free);\n }\n"
+      },
+      {
+        "path": "src/prompt/types.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          8
+        ],
+        "hunks": "@@ -5,3 +5,3 @@ use serde::{Deserialize, Serialize};\n use crate::message;\n-use crate::style::{Convention, Language};\n+use crate::style::Convention;\n \n@@ -35,3 +35,3 @@ pub enum PromptRules {\n     /// Only what varies by repository (types, scopes, examples) and what\n-    /// training does not teach (a ticket, Portuguese, gitmoji), for a model\n+    /// training does not teach (a ticket, gitmoji), for a model\n     /// trained to follow the rest without being told: a shorter prompt is\n@@ -138,3 +138,2 @@ pub struct PromptOptions {\n     pub default_convention: Convention,\n-    pub default_language: Language,\n     /// Forces a convention instead of the detected one. Left out of traces\n@@ -143,5 +142,2 @@ pub struct PromptOptions {\n     pub convention: Option<Convention>,\n-    /// Forces a language instead of the detected one.\n-    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n-    pub language: Option<Language>,\n     /// Left out of traces when full, so older traces still read the same.\n@@ -179,5 +175,3 @@ impl Default for PromptOptions {\n             default_convention: Convention::Conventional,\n-            default_language: Language::English,\n             convention: None,\n-            language: None,\n             rules: PromptRules::Full,\n"
+      },
+      {
+        "path": "src/style/description.rs",
+        "old_path": null,
+        "lines": [
+          29,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,29 @@\n+//! The words of a commit subject's description.\n+\n+use super::{is_gitmoji, parse_conventional};\n+\n+/// The lowercase words of a subject's description.\n+pub fn words(subject: &str) -> Vec<String> {\n+    description_of(subject)\n+        .split(|c: char| !c.is_alphanumeric())\n+        .filter(|w| !w.is_empty())\n+        .map(str::to_lowercase)\n+        .collect()\n+}\n+\n+/// The human-written part of a subject, without convention prefixes, so a\n+/// conventional `fix:` does not count as a word of the description.\n+pub fn description_of(subject: &str) -> &str {\n+    if let Some(header) = parse_conventional(subject) {\n+        return header.description;\n+    }\n+    if is_gitmoji(subject) {\n+        let rest = match subject.strip_prefix(':') {\n+            Some(rest) => rest.split_once(':').map_or(\"\", |(_, after)| after),\n+            None => subject\n+                .trim_start_matches(|c: char| super::gitmoji::is_emoji_char(c) || c == '\\u{FE0F}'),\n+        };\n+        return rest.trim_start();\n+    }\n+    subject\n+}\n"
+      },
+      {
+        "path": "src/style/detect.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          2
+        ],
+        "hunks": "@@ -5,3 +5,2 @@ use std::collections::HashMap;\n use super::gitmoji::is_gitmoji;\n-use super::language::detect_language_for_subjects;\n use super::parse::parse_conventional;\n@@ -30,3 +29,2 @@ pub fn detect<S: AsRef<str>>(subjects: &[S]) -> Style {\n         convention,\n-        language: detect_language_for_subjects(&subjects),\n         tickets: detect_tickets_for_subjects(&subjects),\n"
+      },
+      {
+        "path": "src/style/language.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          157
+        ],
+        "hunks": "@@ -1,157 +0,0 @@\n-//! Language detection for commit messages.\n-\n-use super::{Language, is_gitmoji, parse_conventional};\n-\n-// Ambiguous words (\"a\", \"no\", \"remove\") are left out on purpose.\n-const PORTUGUESE_WORDS: &[&str] = &[\n-    \"de\",\n-    \"da\",\n-    \"do\",\n-    \"das\",\n-    \"dos\",\n-    \"para\",\n-    \"com\",\n-    \"em\",\n-    \"na\",\n-    \"nas\",\n-    \"nos\",\n-    \"não\",\n-    \"nao\",\n-    \"e\",\n-    \"o\",\n-    \"os\",\n-    \"as\",\n-    \"um\",\n-    \"uma\",\n-    \"ao\",\n-    \"adiciona\",\n-    \"adicionar\",\n-    \"adicionado\",\n-    \"corrige\",\n-    \"corrigir\",\n-    \"correção\",\n-    \"correcao\",\n-    \"atualiza\",\n-    \"atualizar\",\n-    \"ajusta\",\n-    \"ajuste\",\n-    \"melhora\",\n-    \"cria\",\n-    \"criar\",\n-    \"implementa\",\n-    \"remove\",\n-    \"removido\",\n-    \"versão\",\n-    \"versao\",\n-    \"configuração\",\n-    \"arquivo\",\n-    \"testes\",\n-    \"quando\",\n-];\n-const ENGLISH_WORDS: &[&str] = &[\n-    \"the\",\n-    \"to\",\n-    \"for\",\n-    \"with\",\n-    \"and\",\n-    \"of\",\n-    \"in\",\n-    \"on\",\n-    \"from\",\n-    \"into\",\n-    \"when\",\n-    \"add\",\n-    \"adds\",\n-    \"added\",\n-    \"fix\",\n-    \"fixes\",\n-    \"fixed\",\n-    \"update\",\n-    \"updates\",\n-    \"updated\",\n-    \"use\",\n-    \"implement\",\n-    \"improve\",\n-    \"create\",\n-    \"removed\",\n-    \"tests\",\n-    \"file\",\n-    \"version\",\n-    \"support\",\n-];\n-\n-fn detect_language(subjects: &[&str]) -> Language {\n-    let (mut pt, mut en) = (0usize, 0usize);\n-    for subject in subjects {\n-        for word in description_of(subject)\n-            .split(|c: char| !c.is_alphanumeric())\n-            .filter(|w| !w.is_empty())\n-            .map(str::to_lowercase)\n-        {\n-            pt += usize::from(PORTUGUESE_WORDS.contains(&word.as_str()));\n-            en += usize::from(ENGLISH_WORDS.contains(&word.as_str()));\n-        }\n-    }\n-    match pt.cmp(&en) {\n-        std::cmp::Ordering::Greater if pt >= 2 => Language::Portuguese,\n-        std::cmp::Ordering::Less if en >= 2 => Language::English,\n-        _ => Language::Unknown,\n-    }\n-}\n-\n-/// Words of [`PORTUGUESE_WORDS`] that English subjects use too (\"remove\n-/// unused exports\", \"use X as Y\"): harmless summed over a history,\n-/// misleading in one subject. \"do\" stays Portuguese: \"fix do teclado\" is\n-/// how Portuguese repositories write, and \"do not ...\" mixes with English\n-/// words anyway.\n-const AMBIGUOUS_ALONE: &[&str] = &[\"remove\", \"as\", \"e\", \"o\", \"os\"];\n-\n-/// The language of one subject, from the same words as the history's:\n-/// known only when it has words of one language and none of the other, so\n-/// a subject mixing them, as many repositories do, is unknown.\n-pub fn language_of(subject: &str) -> Language {\n-    let (mut pt, mut en) = (0usize, 0usize);\n-    for word in words(subject) {\n-        if AMBIGUOUS_ALONE.contains(&word.as_str()) {\n-            continue;\n-        }\n-        pt += usize::from(PORTUGUESE_WORDS.contains(&word.as_str()));\n-        en += usize::from(ENGLISH_WORDS.contains(&word.as_str()));\n-    }\n-    match (pt, en) {\n-        (0, 0) => Language::Unknown,\n-        (_, 0) => Language::Portuguese,\n-        (0, _) => Language::English,\n-        _ => Language::Unknown,\n-    }\n-}\n-\n-/// The lowercase words of a subject's description.\n-pub fn words(subject: &str) -> Vec<String> {\n-    description_of(subject)\n-        .split(|c: char| !c.is_alphanumeric())\n-        .filter(|w| !w.is_empty())\n-        .map(str::to_lowercase)\n-        .collect()\n-}\n-\n-/// The human-written part of a subject, without convention prefixes, so a\n-/// conventional `fix:` does not count as English.\n-pub fn description_of(subject: &str) -> &str {\n-    if let Some(header) = parse_conventional(subject) {\n-        return header.description;\n-    }\n-    if is_gitmoji(subject) {\n-        let rest = match subject.strip_prefix(':') {\n-            Some(rest) => rest.split_once(':').map_or(\"\", |(_, after)| after),\n-            None => subject\n-                .trim_start_matches(|c: char| super::gitmoji::is_emoji_char(c) || c == '\\u{FE0F}'),\n-        };\n-        return rest.trim_start();\n-    }\n-    subject\n-}\n-\n-pub(crate) fn detect_language_for_subjects(subjects: &[&str]) -> Language {\n-    detect_language(subjects)\n-}\n"
+      },
+      {
+        "path": "src/style/mod.rs",
+        "old_path": null,
+        "lines": [
+          3,
+          3
+        ],
+        "hunks": "@@ -9,5 +9,5 @@ mod tests;\n \n+mod description;\n mod detect;\n mod gitmoji;\n-mod language;\n mod parse;\n@@ -16,7 +16,7 @@ mod types;\n \n+pub use description::words;\n pub use detect::{detect, scope_areas, similar_examples};\n pub use gitmoji::is_gitmoji;\n-pub use language::{language_of, words};\n pub use parse::parse_conventional;\n pub use ticket::{find_ticket_fn as find_ticket, ticket_span_fn as ticket_span};\n-pub use types::{Convention, ConventionalHeader, Language, Style, TicketStyle};\n+pub use types::{Convention, ConventionalHeader, Style, TicketStyle};\n"
+      },
+      {
+        "path": "src/style/tests.rs",
+        "old_path": null,
+        "lines": [
+          16,
+          51
+        ],
+        "hunks": "@@ -2,4 +2,4 @@\n mod tests {\n+    use crate::style::description::description_of;\n     use crate::style::detect::is_noise;\n-    use crate::style::language::description_of;\n     use crate::style::*;\n@@ -272,3 +272,2 @@ mod tests {\n         assert_eq!(style.convention, Convention::Unknown);\n-        assert_eq!(style.language, Language::Unknown);\n         assert_eq!(style.sample_size, 0);\n@@ -316,30 +315,10 @@ mod tests {\n     #[test]\n-    fn detects_portuguese_ignoring_conventional_prefix() {\n-        let style = detect(&[\n-            \"fix: corrige o parser de diff\",\n-            \"feat: adiciona suporte para gitmoji\",\n-            \"docs: atualiza a documentação da fase 1\",\n-        ]);\n-        assert_eq!(style.language, Language::Portuguese);\n-    }\n-\n-    #[test]\n-    fn detects_english() {\n-        let style = detect(&[\n-            \"Add support for renames\",\n-            \"Fix crash when the diff is empty\",\n-        ]);\n-        assert_eq!(style.language, Language::English);\n-    }\n-\n-    #[test]\n-    fn type_words_alone_do_not_make_english() {\n-        let style = detect(&[\"fix: parser\", \"feat: gitmoji\"]);\n-        assert_eq!(style.language, Language::Unknown);\n-    }\n-\n-    #[test]\n-    fn gitmoji_prefix_is_stripped_for_language() {\n-        assert_eq!(description_of(\":bug: corrige crash\"), \"corrige crash\");\n-        assert_eq!(description_of(\"♻️ refatora parser\"), \"refatora parser\");\n+    fn the_description_leaves_out_the_convention_prefix() {\n+        assert_eq!(description_of(\":bug: fix the crash\"), \"fix the crash\");\n+        assert_eq!(\n+            description_of(\"♻️ refactor the parser\"),\n+            \"refactor the parser\"\n+        );\n+        assert_eq!(description_of(\"fix(cli)!: parse -C\"), \"parse -C\");\n+        assert_eq!(description_of(\"Update the docs\"), \"Update the docs\");\n     }\n@@ -347,23 +326,9 @@ mod tests {\n     #[test]\n-    fn language_of_one_subject() {\n-        for (subject, language) in [\n-            (\"add main\", Language::English),\n-            (\"Add basic 3D shapes\", Language::English),\n-            (\"update requirements\", Language::English),\n-            (\"feat(cli): add the eval command\", Language::English),\n-            (\"adiciona contagem de itens ao pedido\", Language::Portuguese),\n-            (\"fix: corrige o total do pedido\", Language::Portuguese),\n-            // Mixed, as Portuguese repositories often write: unknown.\n-            (\"fix do keyboard\", Language::Unknown),\n-            (\"add paletas de cores\", Language::Unknown),\n-            (\"zoom em 0.05 até 10\", Language::Portuguese),\n-            (\"chore: bump typescript\", Language::Unknown),\n-            // Found on eval-v1: English subjects with words Portuguese has too.\n-            (\"refactor: remove unused exports\", Language::Unknown),\n-            (\"fix: do not crash on empty input\", Language::Unknown),\n-            (\"feat: use a Set as the cache\", Language::English),\n-            (\"fix do desktop\", Language::Unknown),\n-        ] {\n-            assert_eq!(language_of(subject), language, \"{subject}\");\n-        }\n+    fn words_are_the_lowercase_words_of_the_description() {\n+        assert_eq!(\n+            words(\"fix(core): Handle HEAD~1 in hooks\"),\n+            [\"handle\", \"head\", \"1\", \"in\", \"hooks\"]\n+        );\n+        assert_eq!(words(\":sparkles: Add login page\"), [\"add\", \"login\", \"page\"]);\n+        assert!(words(\"\").is_empty());\n     }\n"
+      },
+      {
+        "path": "src/style/ticket.rs",
+        "old_path": null,
+        "lines": [
+          1,
+          1
+        ],
+        "hunks": "@@ -3,3 +3,3 @@\n use super::TicketStyle;\n-use super::language::description_of;\n+use super::description::description_of;\n \n"
+      },
+      {
+        "path": "src/style/types.rs",
+        "old_path": null,
+        "lines": [
+          0,
+          9
+        ],
+        "hunks": "@@ -16,10 +16,2 @@ pub enum Convention {\n \n-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\n-#[serde(rename_all = \"snake_case\")]\n-pub enum Language {\n-    Unknown,\n-    English,\n-    Portuguese,\n-}\n-\n /// Whether and how subjects cite an issue key such as `ABC-123`.\n@@ -39,3 +31,2 @@ pub struct Style {\n     pub convention: Convention,\n-    pub language: Language,\n     pub tickets: TicketStyle,\n"
+      },
+      {
+        "path": "tests/cli.rs",
+        "old_path": null,
+        "lines": [
+          7,
+          6
+        ],
+        "hunks": "@@ -120,4 +120,4 @@ fn context_reports_the_detected_style() {\n     repo.git(&[\"checkout\", \"--quiet\", \"-b\", \"feature/NPU-7-x\"]);\n-    repo.commit(\"feat(cli): adiciona o comando context\");\n-    repo.commit(\"fix(git): corrige a leitura da branch\");\n+    repo.commit(\"feat(cli): add the context command\");\n+    repo.commit(\"fix(git): correct the branch reading\");\n \n@@ -129,3 +129,3 @@ fn context_reports_the_detected_style() {\n     assert!(out.contains(\"convention:  Conventional (from 2 commits)\"));\n-    assert!(out.contains(\"language:    Portuguese\"));\n+    assert!(!out.contains(\"language:\"), \"{out}\");\n     assert!(out.contains(\"scopes:      cli (1), git (1)\"));\n@@ -356,3 +356,3 @@ fn prompt_from_inputs_reads_stdin_and_global_settings() {\n     std::fs::create_dir_all(config.parent().unwrap()).unwrap();\n-    std::fs::write(&config, \"[style]\\nlanguage = \\\"portuguese\\\"\\n\").unwrap();\n+    std::fs::write(&config, \"[style]\\nconvention = \\\"gitmoji\\\"\\n\").unwrap();\n \n@@ -374,2 +374,3 @@ fn prompt_from_inputs_reads_stdin_and_global_settings() {\n     let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();\n+    // The global setting forces a convention the history does not follow.\n     assert!(\n@@ -378,3 +379,3 @@ fn prompt_from_inputs_reads_stdin_and_global_settings() {\n             .unwrap()\n-            .contains(\"Brazilian Portuguese\")\n+            .contains(\"one gitmoji for the change\")\n     );\n@@ -1200,3 +1201,3 @@ fn changing_a_model_setting_stops_the_model_kept_loaded() {\n     let output = smart_commit_with(\n-        &[\"config\", \"set\", \"style.language\", \"english\"],\n+        &[\"config\", \"set\", \"style.convention\", \"free\"],\n         dir.path(),\n"
+      },
+      {
+        "path": "tests/config_cli.rs",
+        "old_path": null,
+        "lines": [
+          35,
+          9
+        ],
+        "hunks": "@@ -161,5 +161,5 @@ fn repository_settings_override_global_ones_inside_it() {\n     let elsewhere = TempDir::new().unwrap();\n-    env.ok(&[\"config\", \"set\", \"style.language\", \"english\"], repo.path());\n+    env.ok(&[\"config\", \"set\", \"style.convention\", \"free\"], repo.path());\n     let out = env.ok(\n-        &[\"config\", \"set\", \"--repo\", \"style.language\", \"portuguese\"],\n+        &[\"config\", \"set\", \"--repo\", \"style.convention\", \"gitmoji\"],\n         repo.path(),\n@@ -170,8 +170,8 @@ fn repository_settings_override_global_ones_inside_it() {\n     assert_eq!(\n-        env.ok(&[\"config\", \"get\", \"style.language\"], repo.path()),\n-        \"portuguese\\n\"\n+        env.ok(&[\"config\", \"get\", \"style.convention\"], repo.path()),\n+        \"gitmoji\\n\"\n     );\n     assert_eq!(\n-        env.ok(&[\"config\", \"get\", \"style.language\"], elsewhere.path()),\n-        \"english\\n\"\n+        env.ok(&[\"config\", \"get\", \"style.convention\"], elsewhere.path()),\n+        \"free\\n\"\n     );\n@@ -180,6 +180,6 @@ fn repository_settings_override_global_ones_inside_it() {\n         env.ok(\n-            &[\"config\", \"get\", \"style.language\", \"-C\", path],\n+            &[\"config\", \"get\", \"style.convention\", \"-C\", path],\n             elsewhere.path()\n         ),\n-        \"portuguese\\n\"\n+        \"gitmoji\\n\"\n     );\n@@ -187,5 +187,31 @@ fn repository_settings_override_global_ones_inside_it() {\n     // A global change the repository overrides is pointed out.\n+    let output = env.run(&[\"config\", \"set\", \"style.convention\", \"free\"], repo.path());\n+    assert!(\n+        stderr(&output).contains(\"note: style.convention is still gitmoji, from the repository\"),\n+        \"{}\",\n+        stderr(&output)\n+    );\n+}\n+\n+#[test]\n+fn a_file_with_the_language_keys_of_an_earlier_version_still_works() {\n+    let env = Env::new();\n+    let repo = TestRepo::new();\n+    std::fs::create_dir_all(env.global_file().parent().unwrap()).unwrap();\n+    std::fs::write(\n+        env.global_file(),\n+        \"[style]\\nlanguage = \\\"portuguese\\\"\\ndefault_language = \\\"english\\\"\\n\",\n+    )\n+    .unwrap();\n+    assert_eq!(\n+        env.ok(&[\"config\", \"get\", \"style.convention\"], repo.path()),\n+        \"auto\\n\"\n+    );\n+    let listing = env.ok(&[\"config\", \"list\"], repo.path());\n+    assert!(!listing.contains(\"language\"), \"{listing}\");\n+    // The keys are gone: they cannot be set again.\n     let output = env.run(&[\"config\", \"set\", \"style.language\", \"english\"], repo.path());\n+    assert!(!output.status.success());\n     assert!(\n-        stderr(&output).contains(\"note: style.language is still portuguese, from the repository\"),\n+        stderr(&output).contains(\"unknown key `style.language`\"),\n         \"{}\",\n"
+      },
+      {
+        "path": "tests/fixtures/make-traces.sh",
+        "old_path": null,
+        "lines": [
+          4,
+          4
+        ],
+        "hunks": "@@ -23,3 +23,3 @@ commit() { git commit -q --allow-empty -m \"$1\"; }\n fresh conventional\n-for s in \"feat(git): coleta o histórico de commits\" \"fix(diff): corrige o parse de renomeações\" \"docs: atualiza a documentação da fase 2\"; do commit \"$s\"; done\n+for s in \"feat(git): collect the commit history\" \"fix(diff): correct the parsing of renames\" \"docs: update the documentation of phase 2\"; do commit \"$s\"; done\n git checkout -q -b feature/NPU-12-retry\n@@ -27,5 +27,5 @@ printf 'pub fn retry() -> usize {\\n    2\\n}\\n' > retry.rs; git add retry.rs\n \"$BIN\" --backend mock \\\n-  --mock-response $'Aqui está a mensagem:\\n\\nAdiciona a nova tentativa' \\\n-  --mock-response $'```\\nfeat(generate): adiciona a nova tentativa\\n```' \\\n-  --trace \"$OUT/conventional-pt-retry.json\" >/dev/null\n+  --mock-response $'Here is the message:\\n\\nAdd the new retry' \\\n+  --mock-response $'```\\nfeat(generate): add the new retry\\n```' \\\n+  --trace \"$OUT/conventional-en-retry.json\" >/dev/null\n \n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p25.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p50.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p75.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/bench-p90.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-balance-fix-as-trace.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-bench-prompts.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-build-inputs-in-rust.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-closed-types.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-compare-fix-as-trace.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-conformal-sets-as-cut-off.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.12.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-copied-twice.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-copied.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-dense.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-deps-incomplete.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-links-test.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-measurements.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-only.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-paths-as-typos.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-roadmap-as-typos.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-docs-test-as-docs.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-dpo-validation-as-loss.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-empty-diff.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-eval-keep-loaded-as-keep-option.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.11.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-examples-option-as-add-examples.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.12.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-feat-as-refactor.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-file-scope.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-first-token-inverted.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-fix-as-feat-budget.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-fix-as-test.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-fixtures-of-splits.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-group-backend.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-invented-backend.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-lockfile.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"none\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-map-cap-as-copy.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.12.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-merge.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"none\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-mining-bundle-as-pairs.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-move-annotate.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-move-to-tools-crate.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-notebook-fix-as-test.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-partial-copy.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-refactor-as-feat.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-release-notes-in-rust.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-release.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-remove-experiments.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-remove-python-tools.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-results-as-h12.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-retry.json",
+        "old_path": null,
+        "lines": [
+          71,
+          0
+        ],
+        "hunks": "@@ -0,0 +1,71 @@\n+{\n+  \"format\": 1,\n+  \"tool_version\": \"0.13.0\",\n+  \"backend\": \"mock\",\n+  \"options\": {\n+    \"max_prompt_tokens\": 1024,\n+    \"default_convention\": \"conventional\",\n+    \"diff\": \"annotated\"\n+  },\n+  \"config\": {\n+    \"max_new_tokens\": 128\n+  },\n+  \"inputs\": {\n+    \"branch\": \"feature/NPU-12-retry\",\n+    \"subjects\": [\n+      \"docs: update the documentation of phase 2\",\n+      \"fix(diff): correct the parsing of renames\",\n+      \"feat(git): collect the commit history\"\n+    ],\n+    \"history_files\": [\n+      [],\n+      [],\n+      []\n+    ],\n+    \"staged\": [\n+      {\n+        \"status\": \"added\",\n+        \"path\": \"retry.rs\",\n+        \"old_path\": null\n+      }\n+    ],\n+    \"files\": [\n+      {\n+        \"path\": \"retry.rs\",\n+        \"old_path\": null,\n+        \"lines\": [\n+          3,\n+          0\n+        ],\n+        \"hunks\": \"@@ -0,0 +1,3 @@\\n+pub fn retry() -> usize {\\n+    2\\n+}\\n\"\n+      }\n+    ]\n+  },\n+  \"generation\": {\n+    \"message\": {\n+      \"subject\": \"feat(generate): add the new retry\",\n+      \"body\": null\n+    },\n+    \"source\": \"model\",\n+    \"attempts\": [\n+      {\n+        \"prompt\": {\n+          \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, feat, fix, refactor.\\n- Scopes used here: diff, git. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: update the documentation of phase 2\\nfix(diff): correct the parsing of renames\\nfeat(git): collect the commit history\\n\",\n+          \"user\": \"Files changed:\\nretry.rs | new, +3 -0\\n\\nDiff:\\n--- retry.rs\\n@@ -0,0 +1,3 @@\\n+pub fn retry() -> usize {\\n+    2\\n+}\\n\"\n+        },\n+        \"raw\": \"Here is the message:\\n\\nAdd the new retry\",\n+        \"rejected\": {\n+          \"not_conventional\": \"Add the new retry\"\n+        }\n+      },\n+      {\n+        \"prompt\": {\n+          \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in English, in the imperative mood (\\\"Add\\\", not \\\"Added\\\").\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, feat, fix, refactor.\\n- Scopes used here: diff, git. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: update the documentation of phase 2\\nfix(diff): correct the parsing of renames\\nfeat(git): collect the commit history\\n\",\n+          \"user\": \"Files changed:\\nretry.rs | new, +3 -0\\n\\nDiff:\\n--- retry.rs\\n@@ -0,0 +1,3 @@\\n+pub fn retry() -> usize {\\n+    2\\n+}\\n\\nYour previous reply was rejected because \\\"Add the new retry\\\" does not follow `type(scope): description`. Reply again with only the commit message in the `type(scope): description` format.\\n\"\n+        },\n+        \"raw\": \"```\\nfeat(generate): add the new retry\\n```\",\n+        \"rejected\": null\n+      }\n+    ]\n+  }\n+}\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-scenarios-in-rust.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-scopes.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-script-fix-as-test.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-server-flag-as-test.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-setting-as-docs.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-setup-in-rust.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-annotate.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-as-feat.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-bench.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-diff.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-hardware.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-llamacpp.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-models.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-split-server.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-too-long.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-tools-option-as-docs.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.12.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-training-as-mining.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-training-fixes-as-refactor.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-training-tools-deps.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-two-subjects.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-type-groups-as-docs.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.12.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-type-review-as-fallback.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.12.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-en-vague-refactor.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/conventional-pt-retry.json",
+        "old_path": null,
+        "lines": [
+          0,
+          72
+        ],
+        "hunks": "@@ -1,72 +0,0 @@\n-{\n-  \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n-  \"backend\": \"mock\",\n-  \"options\": {\n-    \"max_prompt_tokens\": 1024,\n-    \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n-    \"diff\": \"annotated\"\n-  },\n-  \"config\": {\n-    \"max_new_tokens\": 128\n-  },\n-  \"inputs\": {\n-    \"branch\": \"feature/NPU-12-retry\",\n-    \"subjects\": [\n-      \"docs: atualiza a documentação da fase 2\",\n-      \"fix(diff): corrige o parse de renomeações\",\n-      \"feat(git): coleta o histórico de commits\"\n-    ],\n-    \"history_files\": [\n-      [],\n-      [],\n-      []\n-    ],\n-    \"staged\": [\n-      {\n-        \"status\": \"added\",\n-        \"path\": \"retry.rs\",\n-        \"old_path\": null\n-      }\n-    ],\n-    \"files\": [\n-      {\n-        \"path\": \"retry.rs\",\n-        \"old_path\": null,\n-        \"lines\": [\n-          3,\n-          0\n-        ],\n-        \"hunks\": \"@@ -0,0 +1,3 @@\\n+pub fn retry() -> usize {\\n+    2\\n+}\\n\"\n-      }\n-    ]\n-  },\n-  \"generation\": {\n-    \"message\": {\n-      \"subject\": \"feat(generate): adiciona a nova tentativa\",\n-      \"body\": null\n-    },\n-    \"source\": \"model\",\n-    \"attempts\": [\n-      {\n-        \"prompt\": {\n-          \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in Brazilian Portuguese.\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, feat, fix, refactor.\\n- Scopes used here: diff, git. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: atualiza a documentação da fase 2\\nfix(diff): corrige o parse de renomeações\\nfeat(git): coleta o histórico de commits\\n\",\n-          \"user\": \"Files changed:\\nretry.rs | new, +3 -0\\n\\nDiff:\\n--- retry.rs\\n@@ -0,0 +1,3 @@\\n+pub fn retry() -> usize {\\n+    2\\n+}\\n\"\n-        },\n-        \"raw\": \"Aqui está a mensagem:\\n\\nAdiciona a nova tentativa\",\n-        \"rejected\": {\n-          \"not_conventional\": \"Adiciona a nova tentativa\"\n-        }\n-      },\n-      {\n-        \"prompt\": {\n-          \"system\": \"You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\\n\\nRules:\\n- Subject line of at most 72 characters, without a trailing period.\\n- Write in Brazilian Portuguese.\\n- Use Conventional Commits: `type(scope): description`.\\n- Types used here: docs, feat, fix, refactor.\\n- Scopes used here: diff, git. Omit the scope if none fits.\\n- Add a body only if the reason for the change is not obvious.\\n\\nRecent subjects from this repository, follow their style:\\ndocs: atualiza a documentação da fase 2\\nfix(diff): corrige o parse de renomeações\\nfeat(git): coleta o histórico de commits\\n\",\n-          \"user\": \"Files changed:\\nretry.rs | new, +3 -0\\n\\nDiff:\\n--- retry.rs\\n@@ -0,0 +1,3 @@\\n+pub fn retry() -> usize {\\n+    2\\n+}\\n\\nYour previous reply was rejected because \\\"Adiciona a nova tentativa\\\" does not follow `type(scope): description`. Reply again with only the commit message in the `type(scope): description` format.\\n\"\n-        },\n-        \"raw\": \"```\\nfeat(generate): adiciona a nova tentativa\\n```\",\n-        \"rejected\": null\n-      }\n-    ]\n-  }\n-}\n"
+      },
+      {
+        "path": "tests/fixtures/traces/free-en-chatty.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/fixtures/traces/gitmoji-fallback.json",
+        "old_path": null,
+        "lines": [
+          1,
+          2
+        ],
+        "hunks": "@@ -2,3 +2,3 @@\n   \"format\": 1,\n-  \"tool_version\": \"0.9.0\",\n+  \"tool_version\": \"0.13.0\",\n   \"backend\": \"mock\",\n@@ -7,3 +7,2 @@\n     \"default_convention\": \"conventional\",\n-    \"default_language\": \"english\",\n     \"diff\": \"annotated\"\n"
+      },
+      {
+        "path": "tests/git_context.rs",
+        "old_path": null,
+        "lines": [
+          12,
+          12
+        ],
+        "hunks": "@@ -8,3 +8,3 @@ use smart_commit::git::{ChangeStatus, FileChange, GitError, Repo};\n use smart_commit::prompt::{self, PromptOptions};\n-use smart_commit::style::{Convention, Language};\n+use smart_commit::style::Convention;\n use tempfile::TempDir;\n@@ -131,5 +131,5 @@ fn learns_style_from_history_most_recent_first() {\n         \"chore: initial commit\",\n-        \"feat(git): coleta o histórico de commits\",\n-        \"fix(style): corrige a detecção de escopo\",\n-        \"feat(git): adiciona suporte para renomeação\",\n+        \"feat(git): collect the commit history\",\n+        \"fix(style): correct the scope detection\",\n+        \"feat(git): add support for renames\",\n     ] {\n@@ -140,8 +140,4 @@ fn learns_style_from_history_most_recent_first() {\n     assert_eq!(style.convention, Convention::Conventional);\n-    assert_eq!(style.language, Language::Portuguese);\n     assert_eq!(style.scopes[0], (\"git\".into(), 2));\n-    assert_eq!(\n-        style.examples[0],\n-        \"feat(git): adiciona suporte para renomeação\"\n-    );\n+    assert_eq!(style.examples[0], \"feat(git): add support for renames\");\n     assert_eq!(style.sample_size, 4);\n@@ -270,4 +266,4 @@ fn prompt_from_a_real_repository_fits_the_budget() {\n     let repo = TestRepo::new();\n-    repo.commit(\"feat(git): coleta o histórico de commits\");\n-    repo.commit(\"fix(style): corrige a detecção de escopo\");\n+    repo.commit(\"feat(git): collect the commit history\");\n+    repo.commit(\"fix(style): correct the scope detection\");\n     for n in 0..40 {\n@@ -283,3 +279,7 @@ fn prompt_from_a_real_repository_fits_the_budget() {\n \n-    assert!(prompt.system.contains(\"Write in Brazilian Portuguese.\"));\n+    assert!(\n+        prompt\n+            .system\n+            .contains(\"Write in English, in the imperative mood\")\n+    );\n     assert!(prompt.user.contains(\"m0.rs | new, +80 -0\"));\n"
+      },
+      {
+        "path": "tests/hook.rs",
+        "old_path": null,
+        "lines": [
+          2,
+          2
+        ],
+        "hunks": "@@ -256,3 +256,3 @@ fn broken_config_warns_but_never_blocks_the_commit() {\n     let repo = repo_with_hook();\n-    repo.write(\".smart-commit.toml\", \"[style]\\nlanguage = \\\"klingon\\\"\\n\");\n+    repo.write(\".smart-commit.toml\", \"[style]\\nconvention = \\\"klingon\\\"\\n\");\n     let output = repo.git_with(\n@@ -267,3 +267,3 @@ fn broken_config_warns_but_never_blocks_the_commit() {\n     assert!(\n-        stderr(&output).contains(\"`style.language`\") && stderr(&output).contains(\"klingon\"),\n+        stderr(&output).contains(\"`style.convention`\") && stderr(&output).contains(\"klingon\"),\n         \"{}\",\n"
+      }
+    ]
+  },
+  "generation": {
+    "message": {
+      "subject": "refactor: move language detection to style module",
+      "body": null
+    },
+    "source": "model",
+    "attempts": [
+      {
+        "prompt": {
+          "system": "You write git commit messages from a diff. Reply with the commit message only: no code fences, no quotes, no explanation.\n\nRules:\n- Subject line of at most 72 characters, without a trailing period.\n- Write in English, in the imperative mood (\"Add\", not \"Added\").\n- Use Conventional Commits: `type(scope): description`.\n- Types used here: feat, docs, refactor.\n- Scopes used here: training, prompt. Omit the scope if none fits.\n- Add a body only if the reason for the change is not obvious.\n\nRecent subjects from this repository, follow their style:\nfeat(training): build a blind pairwise judge of commit messages, H18\nfeat(training): build an audit set of the acceptable types, and record H17\ndocs(training): record H16, a names line in the prompt does not help\nfeat(prompt): list the names a change declares and the comments it adds\nfeat(training): add a cascade benchmark, and record H15\n",
+          "user": "Files changed:\nREADME.md | +2 -2\ndocs/architecture.md | +7 -15\ndocs/configuration.md | +10 -8\ndocs/measurements.md | +2 -1\ndocs/roadmap.md | +4 -4\ndocs/training.md | +6 -8\ndocs/usage.md | +3 -5\nsrc/cli/inspect.rs | +0 -4\nsrc/config/keys.rs | +6 -14\nsrc/config/store.rs | +5 -18\nsrc/config/tests.rs | +26 -7\nsrc/generate/ask.rs | +1 -1\nsrc/generate/mod.rs | +5 -19\nsrc/generate/notes.rs | +2 -10\nsrc/generate/retry.rs | +6 -25\nsrc/generate/tests.rs | +7 -66\nsrc/message/fallback.rs | +20 -39\nsrc/message/mod.rs | +0 -4\nsrc/message/tests.rs | +17 -38\nsrc/prompt/mod.rs | +7 -12\nsrc/prompt/snapshots/{smart_commit__prompt__tests__conventional_portuguese_repository.snap => smart_commit__prompt__tests__conventional_repository.snap} | renamed, +4 -4\nsrc/prompt/system.rs | +5 -7\n... and 87 more files\n\nDiff:\n--- src/cli/inspect.rs\n@@ -177,6 +177,2 @@ fn print_context(ctx: &RepoContext, settings: &Settings) {\n     }\n-    println!(\"language:    {:?}\", style.language);\n-    if let Some(forced) = settings.language {\n[... 3 more lines]\n--- src/generate/ask.rs\n@@ -74,3 +74,3 @@ pub fn offer_types(\n ) -> Option<Vec<TypeChoice>> {\n-    let (convention, _) = prompt::effective_style(&ctx.style, options);\n+    let convention = prompt::effective_convention(&ctx.style, options);\n[... 1 more lines]\n--- src/style/detect.rs\n@@ -5,3 +5,2 @@ use std::collections::HashMap;\n use super::gitmoji::is_gitmoji;\n-use super::language::detect_language_for_subjects;\n use super::parse::parse_conventional;\n[... 4 more lines]\n--- src/style/ticket.rs\n@@ -3,3 +3,3 @@\n use super::TicketStyle;\n-use super::language::description_of;\n+use super::description::description_of;\n \n\n(108 files are only partly shown; rely on the file list.)\n"
+        },
+        "raw": "refactor: move language detection to style module",
+        "rejected": null
+      }
+    ]
+  }
+}

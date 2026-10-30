@@ -453,3 +453,7 @@ real_change conventional-en-conformal-sets-as-cut-off e3907a1 'feat(training): m
 # A prompt option that picks which history subjects are shown as examples, with its tests and docs: the reply
 # said examples were added.
 real_change conventional-en-examples-option-as-add-examples 08c6b2c 'feat(prompt): add examples to the prompt'
+
+# Language support removed from the style, prompt, retry and config code (and its tests, fixtures and docs): the
+# reply said the detection was moved.
+real_change conventional-en-language-removal-as-move 6af6697 'refactor: move language detection to style module'
