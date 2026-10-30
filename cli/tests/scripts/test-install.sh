@@ -17,10 +17,16 @@ VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$ROOT/cli/Cargo.toml" | head -1)
 cmp "$work/dist1/SHA256SUMS" "$work/dist2/SHA256SUMS"
 echo "ok    packaging twice gives the same tarball: $(cut -c1-16 "$work/dist1/SHA256SUMS")"
 
+# The installer is a release asset of its own, and SHA256SUMS lists it.
+cmp "$ROOT/install.sh" "$work/dist1/install.sh"
+grep -q " install.sh\$" "$work/dist1/SHA256SUMS"
+(cd "$work/dist1" && sha256sum --check --quiet SHA256SUMS)
+echo "ok    install.sh is published beside the tarball, covered by SHA256SUMS"
+
 # GitHub's layout: latest/download/ and download/v<version>/.
 for dir in latest/download "download/v$VERSION"; do
     mkdir -p "$work/releases/$dir"
-    cp "$work/dist1/$ASSET" "$work/dist1/SHA256SUMS" "$work/releases/$dir/"
+    cp "$work/dist1/$ASSET" "$work/dist1/install.sh" "$work/dist1/SHA256SUMS" "$work/releases/$dir/"
 done
 
 install() {
