@@ -58,6 +58,9 @@ fn facts() {
         "pub const DEVICES: &[[&str; 3]] = &{:?};\n",
         devices_table(&devices)
     );
+    let (machine, bench) = bench_example(&devices);
+    out += &format!("pub const BENCH_MACHINE: &str = {machine:?};\n");
+    out += &format!("pub const BENCH: &[(&str, &str, bool)] = &{bench:?};\n");
     out += &format!("pub const NEXT: &[&str] = &{:?};\n", next_items(&roadmap));
     let dest = Path::new(&env::var("OUT_DIR").unwrap()).join("facts.rs");
     fs::write(dest, out).unwrap();
@@ -118,6 +121,35 @@ fn devices_table(devices: &str) -> Vec<[String; 3]> {
         .collect();
     assert!(!rows.is_empty(), "docs/devices.md has no device table");
     rows
+}
+
+/// The machine of the guide's `smart-commit bench` example ("Ryzen 5 5500
+/// with an RTX 3050") and its rows: device, time per message and whether it
+/// was selected.
+fn bench_example(devices: &str) -> (String, Vec<(String, String, bool)>) {
+    let machine = devices
+        .lines()
+        .find_map(|line| line.strip_prefix("On a ")?.split_once(" (").map(|(m, _)| m))
+        .expect("docs/devices.md has no benchmark example machine")
+        .to_owned();
+    let rows: Vec<(String, String, bool)> = devices
+        .lines()
+        .skip_while(|line| !line.starts_with("  device "))
+        .skip(1)
+        .take_while(|line| !line.is_empty())
+        .map(|line| {
+            let mut words = line.split_whitespace();
+            let device = words.next().unwrap();
+            let time = words.next().unwrap();
+            (
+                device.to_owned(),
+                format!("{time} s"),
+                line.contains("<- selected"),
+            )
+        })
+        .collect();
+    assert!(!rows.is_empty(), "docs/devices.md has no benchmark example");
+    (machine, rows)
 }
 
 /// The titles (the bold part) of the first rows of the roadmap's `Next` table.
