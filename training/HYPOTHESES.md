@@ -1252,6 +1252,62 @@ models, `word_f1` rises by at least 0.015 with the 95% bootstrap interval of the
   on them, which is a project of its own (and of the prompt budget: 1024 tokens leave little room for a second
   diff).
 
+### H15. Three ways to sharpen the type without training — a cascade between the two sizes holds the quality; the other two do not
+
+**Where they come from.** The [Alien Space of Science](https://github.com/alejandrohdez00/alien-space-of-science)
+(Artiles et al., [arXiv 2603.01092](https://arxiv.org/abs/2603.01092)) scores combinations of the ideas ("atoms") of
+16,068 papers on LLMs by how coherent they are and how little the community explores them; we scored the 11,480
+triplets of 42 atoms close to our problem with the project's released models (CPU, no LLM, with a script of ours that
+is not kept: the combinations only suggested what to try, they are not a result), and searched [Lacuna](https://lacuna.tiptreesystems.com) (a read-only map of ML research,
+its MCP) for generated hypotheses on ambiguous labels, noisy targets and calibration. Combinations that repeat what we
+had done (conformal sets, calibration, DPO) came first; three were new, and cheap to try on the type distributions
+collected for H13 (`type_confidence.py collect`, first token of the reply, 250 Conventional commits of `val1-h4`
+to choose the weight and of `eval-v1` to read it, the v0.3 models, `vulkan`). The weights are chosen on `val1-h4`;
+`eval-v1` is read once. `type_fusion.py` has the three.
+
+**Criteria fixed before the numbers.** *Prior* and *fusion*: worth it if, for both models, `type_match` rises by at
+least 0.016 (4 commits of 250) over weight 0, the negative log-likelihood does not worsen and the ECE rises by at
+most 0.02. *Cascade*: the `tau` chosen on `val1-h4` as the one that makes the big model answer least while keeping
+`type_match` within 0.008 and `word_f1` within 0.010 of the big model alone; worth it if on `eval-v1` the big model
+answers at most half of the commits within the same margins.
+
+**1. The repository's use of each type as a prior** (`p(t) * ((count_t + 1) / (n + K)) ** lam`, the counts of the
+types in the history's subjects): not worth it. The 1.5B's best weight is 0 (`val1-h4`: 0.644, 0.632, 0.616, 0.624,
+0.608, 0.600 for 0, 0.25, 0.5, 0.75, 1, 1.5): the model already reads the history. The 0.5B chooses 0.25 and gains
+0.012 on `eval-v1` (0.668 to 0.680, +6/−3; NLL 1.030 to 1.019, ECE 0.046 to 0.036), under the 0.016.
+
+**2. A product of experts with a plain classifier** (`p(t) * (clf(t) + 0.001) ** w`, the classifier of H13, 0.612 on
+`val1-h4` and 0.628 on `eval-v1`): not worth it. On `eval-v1` the 1.5B (w = 1) falls from 0.692 to 0.680 (+8/−11),
+NLL 0.958 to 1.039, ECE 0.059 to 0.131; the 0.5B (w = 0.75) rises from 0.668 to 0.676 (+12/−10), NLL 1.030 to 1.048,
+ECE 0.046 to 0.090. The product is too sure of itself, and the choice on `val1-h4` does not carry over. The ranking of
+the confidence rises (AUROC 0.738 to 0.781 and 0.723 to 0.751), within the noise of 250 commits, and is not what was
+asked.
+
+**3. A cascade, the 0.5B v0.3 answering when it is at least `tau` sure of its type and the 1.5B v0.3 otherwise**:
+**passes**. `tau` = 0.5 on `val1-h4`. On `eval-v1`:
+
+| | the big model answers | `type_match` | `word_f1` |
+|---|---|---|---|
+| 0.5B alone (tau 0) | 0 | 0.676 | 0.354 |
+| cascade, tau 0.4 | 0.116 | 0.692 | 0.360 |
+| **cascade, tau 0.5 (chosen)** | **0.264** | **0.692** | **0.366** |
+| cascade, tau 0.6 | 0.400 | 0.692 | 0.370 |
+| cascade, tau 0.7 | 0.552 | 0.696 | 0.369 |
+| 1.5B alone | 1.000 | 0.696 | 0.366 |
+
+- **The loss is one commit and the words are the same**: 0.004 under the 1.5B in `type_match` and no difference in
+  `word_f1`, with the 1.5B answering 26% of the commits. With 250 commits a difference of 0.03 cannot be excluded,
+  and `tau` = 0.5 is on the edge of the margin on `val1-h4` (0.644 against 0.652).
+- **What it would save** (an estimate, not a measurement of the cascade): with the times of `docs/measurements.md`
+  (the v0.1 models, `smart-commit bench`), on the RTX 3050 `vulkan` 1.2 s for the 0.5B and 2.3 s for the 1.5B, so
+  1.2 + 0.264 × 2.3 = 1.8 s against 2.3 s (21% less); on the `cpu` 1.9 s and 3.8 s, 2.9 s against 3.8 s (24% less).
+- **What it costs**: both models in memory (or a model load when the 1.5B is needed, which the estimate leaves
+  out), a first-token read of every commit by the small model, and a second reply with the same prompt (the server's
+  prompt cache should make it cheap, not measured). The Intel NPU and GPU, with only the base 1.5B exported, cannot
+  do it.
+- **Next**: measure the cascade on the machine (`smart-commit bench` with both servers, the second pass and the
+  load of the 1.5B), and `tau` on a third set; only then a product change.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
