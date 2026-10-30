@@ -144,6 +144,31 @@ impl Machine {
         Self { dir }
     }
 
+    /// Puts llama.cpp and the default model where the setup finds them, so
+    /// that it has nothing to download (the model is a sparse file of the
+    /// pinned size, with the sidecar that names the pinned hash).
+    fn install_everything(&self) {
+        let data = self.dir.path().join("data");
+        let server = smart_commit::paths::default_llama_server(|name| {
+            (name == "XDG_DATA_HOME").then(|| data.display().to_string())
+        })
+        .unwrap();
+        std::fs::create_dir_all(server.parent().unwrap()).unwrap();
+        std::fs::write(&server, "").unwrap();
+        let model = smart_commit::models::find(smart_commit::models::DEFAULT).unwrap();
+        let file = data.join("smart-commit/models").join(model.gguf.file);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::File::create(&file)
+            .unwrap()
+            .set_len(model.gguf.size)
+            .unwrap();
+        std::fs::write(
+            smart_commit::models::sidecar(&file),
+            format!("{}  {}\n", model.gguf.sha256, model.gguf.file),
+        )
+        .unwrap();
+    }
+
     fn binary(&self) -> PathBuf {
         self.dir.path().join("prefix/bin/smart-commit")
     }
@@ -318,6 +343,27 @@ fn steps_that_fail_are_reported_and_the_setup_goes_on() {
 }
 
 #[test]
+fn a_setup_that_worked_says_what_to_do_next() {
+    let _serial = serial();
+    let machine = Machine::new(amd_only);
+    machine.install_everything();
+    let out = machine.setup(&["--no-drivers", "--no-bench"]);
+    in_order(&out, "==> Done", "Next:");
+    has(&out, "git add -p");
+    has(&out, "smart-commit --commit");
+    has(&out, "smart-commit hook install");
+}
+
+#[test]
+fn a_setup_with_a_failed_step_does_not_say_what_to_do_next() {
+    let _serial = serial();
+    let out = Machine::new(amd_nvidia).setup(&["--no-bench", "--no-drivers"]);
+    has(&out, "==> Done");
+    lacks(&out, "Next:");
+    lacks(&out, "smart-commit hook install");
+}
+
+#[test]
 fn the_benchmark_runs_last_unless_the_render_group_is_pending() {
     let _serial = serial();
     let out = Machine::new(amd_only).setup(&["--no-drivers"]);
@@ -328,7 +374,6 @@ fn the_benchmark_runs_last_unless_the_render_group_is_pending() {
     );
     in_order(&out, "==> llama.cpp", "==> Benchmark");
     in_order(&out, "==> Benchmark", "==> Done");
-    has(&out, "smart-commit hook install");
 }
 
 #[test]

@@ -19,6 +19,12 @@ without `sudo`. It then runs `smart-commit setup`, which:
    download against its hash;
 4. benchmarks the devices and says which one will be used.
 
+When every step worked, the setup ends with a `Next:` block: `git add -p`,
+`smart-commit`, `smart-commit --commit` and `smart-commit hook install`. It
+is left out when a step failed. With `--no-setup`, the installer tells you to
+run `smart-commit setup` (with the full path when `~/.local/bin` is not on
+`PATH`).
+
 In a terminal, `smart-commit setup` is a full-screen interface: the hardware,
 then the plan, where Space turns each step on or off and `m` chooses another
 [model](models.md), then each step's output, with a progress bar for
