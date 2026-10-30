@@ -329,5 +329,12 @@ if [ "$SETUP" = 1 ]; then
         "$PREFIX/bin/smart-commit" setup "${setup_args[@]}"
     fi
 elif [ "$UPDATE" = 0 ]; then
-    echo "Run \`smart-commit setup\` to set up the devices and models."
+    # The name that works in this shell: the bare one only when it is the
+    # binary just installed.
+    if [ "$(command -v smart-commit 2>/dev/null)" = "$PREFIX/bin/smart-commit" ]; then
+        next=smart-commit
+    else
+        next=$PREFIX/bin/smart-commit
+    fi
+    echo "Next: run \`$next setup\` to set up the devices and models."
 fi

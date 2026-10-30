@@ -92,6 +92,12 @@ run --no-setup
 check "upgrades" upgraded 1.1.0
 check "an upgrade keeps the models, llama.cpp and the benchmark" data_kept
 
+# --no-setup says what to run next, with the full path when the prefix is
+# not on PATH.
+check "--no-setup prints the full path off PATH" grep -qF "Next: run \`$prefix/bin/smart-commit setup\`" "$work/out"
+PATH=$prefix/bin:$PATH run --no-setup
+check "--no-setup prints the bare command on PATH" grep -qxF "Next: run \`smart-commit setup\` to set up the devices and models." "$work/out"
+
 # --update: only a different version is installed, without the setup, and
 # llama.cpp follows the build of the new release.
 llamacpp_calls() { [ "$(cat "$work/llamacpp-calls" 2>/dev/null)" = "$1" ]; }

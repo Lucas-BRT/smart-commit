@@ -1117,7 +1117,7 @@ fn setup_runs_the_guided_setup_next_to_the_binary() {
     assert!(out.contains("Not needed: OpenVINO"), "{out}");
     assert!(out.contains("Could not install llama.cpp"), "{out}");
     assert!(!out.contains("OpenVINO model"), "{out}");
-    assert!(out.contains("smart-commit hook install"), "{out}");
+    assert!(!out.contains("Next:"), "{out}");
 }
 
 // Found in real use: a model a newer build added, in the global config,
