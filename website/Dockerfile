@@ -15,23 +15,34 @@ ENV TAILWIND_CLI=/usr/local/bin/tailwindcss
 WORKDIR /app
 # The context is the repository root; the other members are only read by
 # Cargo to resolve the shared lock file (see Dockerfile.dockerignore).
+#
+# The dependencies come first, built from the manifests and empty sources, so
+# this layer (the slow one, about three minutes) is rebuilt only when a
+# manifest or the lock file changes, not for every edit of a page.
 COPY Cargo.toml Cargo.lock ./
 COPY cli/Cargo.toml cli/Cargo.toml
-COPY cli/src cli/src
-# The product's files that build.rs takes the site's facts from.
-COPY docs/devices.md docs/roadmap.md docs/usage.md docs/
 COPY tools/Cargo.toml tools/Cargo.toml
-COPY tools/src tools/src
 COPY training/tools/Cargo.toml training/tools/Cargo.toml
+COPY website/Cargo.toml website/Cargo.toml
+RUN mkdir -p cli/src tools/src training/tools/src website/src \
+    && for main in cli/src/main.rs tools/src/main.rs training/tools/src/main.rs website/src/main.rs website/build.rs; do \
+        echo 'fn main() {}' >"$main"; \
+    done \
+    && : >cli/src/lib.rs && : >website/src/lib.rs \
+    && cargo build --profile website --locked -p smart-commit-website
+
+# The sources. Their modification times can be older than the stubs above, so
+# they are touched, or Cargo would keep the stubs' build.
+# The product's files that build.rs takes the site's facts from:
+COPY docs/devices.md docs/roadmap.md docs/usage.md docs/
+COPY cli/src cli/src
+COPY tools/src tools/src
 COPY training/tools/src training/tools/src
-COPY website/Cargo.toml website/build.rs website/styles.css website/
+COPY website/build.rs website/styles.css website/
 COPY website/src website/src
 COPY website/assets website/assets
-# The cache mounts keep crates and compiled dependencies between builds;
-# the binary is copied out because the target cache is not part of the layer.
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/app/target \
-    cargo build --profile website --locked -p smart-commit-website \
+RUN find cli/src tools/src training/tools/src website/src website/build.rs -name '*.rs' -exec touch {} + \
+    && cargo build --profile website --locked -p smart-commit-website \
     && cp target/website/smart-commit-website /server
 
 FROM scratch
