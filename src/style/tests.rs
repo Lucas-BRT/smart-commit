@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use crate::style::description::description_of;
     use crate::style::detect::is_noise;
-    use crate::style::language::description_of;
     use crate::style::*;
 
     fn paths(lists: &[&[&str]]) -> Vec<Vec<String>> {
@@ -270,7 +270,6 @@ mod tests {
     fn empty_history_is_unknown() {
         let style = detect::<&str>(&[]);
         assert_eq!(style.convention, Convention::Unknown);
-        assert_eq!(style.language, Language::Unknown);
         assert_eq!(style.sample_size, 0);
         assert!(style.examples.is_empty());
     }
@@ -314,58 +313,24 @@ mod tests {
     }
 
     #[test]
-    fn detects_portuguese_ignoring_conventional_prefix() {
-        let style = detect(&[
-            "fix: corrige o parser de diff",
-            "feat: adiciona suporte para gitmoji",
-            "docs: atualiza a documentação da fase 1",
-        ]);
-        assert_eq!(style.language, Language::Portuguese);
+    fn the_description_leaves_out_the_convention_prefix() {
+        assert_eq!(description_of(":bug: fix the crash"), "fix the crash");
+        assert_eq!(
+            description_of("♻️ refactor the parser"),
+            "refactor the parser"
+        );
+        assert_eq!(description_of("fix(cli)!: parse -C"), "parse -C");
+        assert_eq!(description_of("Update the docs"), "Update the docs");
     }
 
     #[test]
-    fn detects_english() {
-        let style = detect(&[
-            "Add support for renames",
-            "Fix crash when the diff is empty",
-        ]);
-        assert_eq!(style.language, Language::English);
-    }
-
-    #[test]
-    fn type_words_alone_do_not_make_english() {
-        let style = detect(&["fix: parser", "feat: gitmoji"]);
-        assert_eq!(style.language, Language::Unknown);
-    }
-
-    #[test]
-    fn gitmoji_prefix_is_stripped_for_language() {
-        assert_eq!(description_of(":bug: corrige crash"), "corrige crash");
-        assert_eq!(description_of("♻️ refatora parser"), "refatora parser");
-    }
-
-    #[test]
-    fn language_of_one_subject() {
-        for (subject, language) in [
-            ("add main", Language::English),
-            ("Add basic 3D shapes", Language::English),
-            ("update requirements", Language::English),
-            ("feat(cli): add the eval command", Language::English),
-            ("adiciona contagem de itens ao pedido", Language::Portuguese),
-            ("fix: corrige o total do pedido", Language::Portuguese),
-            // Mixed, as Portuguese repositories often write: unknown.
-            ("fix do keyboard", Language::Unknown),
-            ("add paletas de cores", Language::Unknown),
-            ("zoom em 0.05 até 10", Language::Portuguese),
-            ("chore: bump typescript", Language::Unknown),
-            // Found on eval-v1: English subjects with words Portuguese has too.
-            ("refactor: remove unused exports", Language::Unknown),
-            ("fix: do not crash on empty input", Language::Unknown),
-            ("feat: use a Set as the cache", Language::English),
-            ("fix do desktop", Language::Unknown),
-        ] {
-            assert_eq!(language_of(subject), language, "{subject}");
-        }
+    fn words_are_the_lowercase_words_of_the_description() {
+        assert_eq!(
+            words("fix(core): Handle HEAD~1 in hooks"),
+            ["handle", "head", "1", "in", "hooks"]
+        );
+        assert_eq!(words(":sparkles: Add login page"), ["add", "login", "page"]);
+        assert!(words("").is_empty());
     }
 
     #[test]

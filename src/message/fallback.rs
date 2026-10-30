@@ -2,7 +2,7 @@
 
 use crate::diff::FileKind;
 use crate::git::{ChangeStatus, FileChange};
-use crate::style::{self, Convention, Language};
+use crate::style::{self, Convention};
 
 use super::CommitMessage;
 
@@ -53,29 +53,23 @@ impl Category {
 
 /// A plain message built from the file list alone, for when the model's
 /// output is still unusable after a retry.
-pub fn fallback(
-    changes: &[FileChange],
-    convention: Convention,
-    language: Language,
-) -> CommitMessage {
-    fallback_after(changes, convention, language, None, super::SUBJECT_MAX)
+pub fn fallback(changes: &[FileChange], convention: Convention) -> CommitMessage {
+    fallback_after(changes, convention, None, super::SUBJECT_MAX)
 }
 
 /// Like [`fallback`], keeping the scope of `reply`, the model's last
 /// subject, when it was rejected for what it said (a copy of the history,
-/// another language) rather than its form, and its type when the files do
+/// a cut-off) rather than its form, and its type when the files do
 /// not tell one: the model often picks the right type even when it copies,
 /// and the file list's guess for code (`chore`) is worse. Files that are
 /// all docs, tests or config keep their type (`docs`, `test`, `chore`).
 pub fn fallback_after(
     changes: &[FileChange],
     convention: Convention,
-    language: Language,
     reply: Option<&str>,
     subject_max: usize,
 ) -> CommitMessage {
-    let pt = language == Language::Portuguese;
-    let description = describe_changes(changes, pt);
+    let description = describe_changes(changes);
     let category = Category::of(changes);
     let borrowed = reply.and_then(style::parse_conventional);
     let subject = match (convention, borrowed) {
@@ -97,53 +91,40 @@ pub fn fallback_after(
     };
     CommitMessage {
         subject: super::format::truncate_subject(&subject, subject_max),
-        body: (changes.len() > 1).then(|| list_files(changes, pt)),
+        body: (changes.len() > 1).then(|| list_files(changes)),
     }
 }
 
-fn describe_changes(changes: &[FileChange], pt: bool) -> String {
+fn describe_changes(changes: &[FileChange]) -> String {
     let [one] = changes else {
-        let (verb, files, within) = if pt {
-            ("atualiza", "arquivos", "em")
-        } else {
-            ("update", "files", "in")
-        };
         return match common_dir(changes) {
-            Some(dir) => format!("{verb} {} {files} {within} {dir}", changes.len()),
-            None => format!("{verb} {} {files}", changes.len()),
+            Some(dir) => format!("update {} files in {dir}", changes.len()),
+            None => format!("update {} files", changes.len()),
         };
     };
-    let verb = match (one.status, pt) {
-        (ChangeStatus::Added, false) => "add",
-        (ChangeStatus::Added, true) => "adiciona",
-        (ChangeStatus::Deleted, _) => "remove",
-        (ChangeStatus::Renamed, false) => "rename",
-        (ChangeStatus::Renamed, true) => "renomeia",
-        (_, false) => "update",
-        (_, true) => "atualiza",
+    let verb = match one.status {
+        ChangeStatus::Added => "add",
+        ChangeStatus::Deleted => "remove",
+        ChangeStatus::Renamed => "rename",
+        _ => "update",
     };
     match (&one.old_path, one.status) {
-        (Some(old), ChangeStatus::Renamed) => {
-            let to = if pt { "para" } else { "to" };
-            format!("{verb} {old} {to} {}", one.path)
-        }
+        (Some(old), ChangeStatus::Renamed) => format!("{verb} {old} to {}", one.path),
         _ => format!("{verb} {}", one.path),
     }
 }
 
-fn list_files(changes: &[FileChange], pt: bool) -> String {
+fn list_files(changes: &[FileChange]) -> String {
     let mut lines: Vec<String> = changes
         .iter()
         .take(FALLBACK_LISTED)
         .map(|c| format!("- {}", c.path))
         .collect();
     if changes.len() > FALLBACK_LISTED {
-        let more = changes.len() - FALLBACK_LISTED;
-        lines.push(if pt {
-            format!("- ... e mais {more}")
-        } else {
-            format!("- ... and {more} more")
-        });
+        lines.push(format!(
+            "- ... and {} more",
+            changes.len() - FALLBACK_LISTED
+        ));
     }
     lines.join("\n")
 }

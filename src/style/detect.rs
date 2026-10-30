@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 
 use super::gitmoji::is_gitmoji;
-use super::language::detect_language_for_subjects;
 use super::parse::parse_conventional;
 use super::ticket::detect_tickets_for_subjects;
 use super::{Convention, Style};
@@ -28,7 +27,6 @@ pub fn detect<S: AsRef<str>>(subjects: &[S]) -> Style {
 
     Style {
         convention,
-        language: detect_language_for_subjects(&subjects),
         tickets: detect_tickets_for_subjects(&subjects),
         types,
         scopes,

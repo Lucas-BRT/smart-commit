@@ -21,13 +21,13 @@ fresh() { rm -rf "${WORK:?}/${1:?}"; git init -q --initial-branch=main "$WORK/$1
 commit() { git commit -q --allow-empty -m "$1"; }
 
 fresh conventional
-for s in "feat(git): coleta o histórico de commits" "fix(diff): corrige o parse de renomeações" "docs: atualiza a documentação da fase 2"; do commit "$s"; done
+for s in "feat(git): collect the commit history" "fix(diff): correct the parsing of renames" "docs: update the documentation of phase 2"; do commit "$s"; done
 git checkout -q -b feature/NPU-12-retry
 printf 'pub fn retry() -> usize {\n    2\n}\n' > retry.rs; git add retry.rs
 "$BIN" --backend mock \
-  --mock-response $'Aqui está a mensagem:\n\nAdiciona a nova tentativa' \
-  --mock-response $'```\nfeat(generate): adiciona a nova tentativa\n```' \
-  --trace "$OUT/conventional-pt-retry.json" >/dev/null
+  --mock-response $'Here is the message:\n\nAdd the new retry' \
+  --mock-response $'```\nfeat(generate): add the new retry\n```' \
+  --trace "$OUT/conventional-en-retry.json" >/dev/null
 
 fresh gitmoji
 for s in "✨ add login page" "🐛 fix crash on logout" ":memo: update the readme"; do commit "$s"; done
@@ -453,3 +453,7 @@ real_change conventional-en-conformal-sets-as-cut-off e3907a1 'feat(training): m
 # A prompt option that picks which history subjects are shown as examples, with its tests and docs: the reply
 # said examples were added.
 real_change conventional-en-examples-option-as-add-examples 08c6b2c 'feat(prompt): add examples to the prompt'
+
+# Language support removed from the style, prompt, retry and config code (and its tests, fixtures and docs): the
+# reply said the detection was moved.
+real_change conventional-en-language-removal-as-move 6af6697 'refactor: move language detection to style module'

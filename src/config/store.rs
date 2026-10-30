@@ -17,9 +17,9 @@ use crate::prompt::{
     DEFAULT_MAX_PROMPT_TOKENS, DiffFormat, PromptExamples, PromptNames, PromptOptions, PromptRules,
     PromptScopes,
 };
-use crate::style::{Convention, Language};
+use crate::style::Convention;
 
-use super::keys::{KEYS, Key, Scope, key, parse, parse_item, renamed};
+use super::keys::{KEYS, Key, RETIRED, Scope, key, parse, parse_item, renamed};
 use super::{ConfigError, Origin, Value};
 
 /// The values of one config file, checked against [`KEYS`].
@@ -56,6 +56,9 @@ pub fn parse_file(
             })?;
     let mut values = Vec::new();
     for (name, item) in flatten(doc.as_table()) {
+        if RETIRED.contains(&name.as_str()) {
+            continue;
+        }
         let key = KEYS
             .iter()
             .find(|k| k.name == name)
@@ -262,9 +265,7 @@ impl Resolved {
             max_prompt_tokens: self.count("model.max_prompt_tokens"),
             max_new_tokens: self.count("model.max_new_tokens"),
             convention: convention(choice("style.convention")),
-            language: language(choice("style.language")),
             default_convention: convention(choice("style.default_convention")).expect("not auto"),
-            default_language: language(choice("style.default_language")).expect("not auto"),
             history_depth: self.count("style.history_depth"),
             subject_max: self.count("style.subject_max"),
         }
@@ -276,14 +277,6 @@ fn convention(text: &str) -> Option<Convention> {
         "conventional" => Some(Convention::Conventional),
         "gitmoji" => Some(Convention::Gitmoji),
         "free" => Some(Convention::Free),
-        _ => None,
-    }
-}
-
-fn language(text: &str) -> Option<Language> {
-    match text {
-        "english" => Some(Language::English),
-        "portuguese" => Some(Language::Portuguese),
         _ => None,
     }
 }
@@ -317,9 +310,7 @@ fn defaults(env: &dyn Fn(&str) -> Option<String>) -> Vec<(&'static str, Value)> 
             Value::Count(GenerationConfig::default().max_new_tokens),
         ),
         ("style.convention", text("auto")),
-        ("style.language", text("auto")),
         ("style.default_convention", text("conventional")),
-        ("style.default_language", text("english")),
         (
             "style.history_depth",
             Value::Count(crate::context::HISTORY_DEPTH),
@@ -409,9 +400,7 @@ pub struct Settings {
     pub max_prompt_tokens: usize,
     pub max_new_tokens: usize,
     pub convention: Option<Convention>,
-    pub language: Option<Language>,
     pub default_convention: Convention,
-    pub default_language: Language,
     pub history_depth: usize,
     pub subject_max: usize,
 }
@@ -426,9 +415,7 @@ impl Settings {
         PromptOptions {
             max_prompt_tokens: self.max_prompt_tokens,
             default_convention: self.default_convention,
-            default_language: self.default_language,
             convention: self.convention,
-            language: self.language,
             // The rules follow the model file that runs, never a setting.
             rules: self
                 .gguf

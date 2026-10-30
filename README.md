@@ -20,8 +20,8 @@ feat(diff): share the token budget between files by priority
 ## Features
 
 - **Follows your repository's style.** It learns the convention
-  (Conventional Commits, gitmoji or free form), the language, the scopes and
-  the ticket format from the history.
+  (Conventional Commits, gitmoji or free form), the scopes and the ticket
+  format from the history. Messages are in English.
 - **Runs on the hardware you have.** OpenVINO drives Intel NPUs and Intel
   GPUs; llama.cpp drives AMD and NVIDIA GPUs through Vulkan, with proprietary
   or open-source drivers, and the CPU of any x86_64 machine. The setup lists

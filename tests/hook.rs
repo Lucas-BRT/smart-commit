@@ -254,7 +254,7 @@ fn install_honours_core_hooks_path() {
 #[test]
 fn broken_config_warns_but_never_blocks_the_commit() {
     let repo = repo_with_hook();
-    repo.write(".smart-commit.toml", "[style]\nlanguage = \"klingon\"\n");
+    repo.write(".smart-commit.toml", "[style]\nconvention = \"klingon\"\n");
     let output = repo.git_with(
         &["commit", "--quiet"],
         &[
@@ -265,7 +265,7 @@ fn broken_config_warns_but_never_blocks_the_commit() {
     );
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(
-        stderr(&output).contains("`style.language`") && stderr(&output).contains("klingon"),
+        stderr(&output).contains("`style.convention`") && stderr(&output).contains("klingon"),
         "{}",
         stderr(&output)
     );

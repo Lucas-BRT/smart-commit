@@ -1,7 +1,7 @@
 //! Turns the repository context and the staged diff into a chat prompt.
 //!
 //! Instructions are written in English, which small models follow best,
-//! and ask for the message in the repository's own language.
+//! and the message is in English too.
 
 mod names;
 mod system;
@@ -19,22 +19,17 @@ pub use types::{
 
 use crate::context::RepoContext;
 use crate::diff::{self, CompactDiff, FileDiff};
-use crate::style::{Convention, Language, Style};
+use crate::style::{Convention, Style};
 
 use self::types::TEMPLATE_OVERHEAD_TOKENS;
 
-/// The convention and language the message must follow: forced ones
-/// first, then the detected ones, then the defaults.
-pub fn effective_style(style: &Style, options: &PromptOptions) -> (Convention, Language) {
-    let convention = options.convention.unwrap_or(match style.convention {
+/// The convention the message must follow: the forced one first, then the
+/// detected one, then the default.
+pub fn effective_convention(style: &Style, options: &PromptOptions) -> Convention {
+    options.convention.unwrap_or(match style.convention {
         Convention::Unknown => options.default_convention,
         known => known,
-    });
-    let language = options.language.unwrap_or(match style.language {
-        Language::Unknown => options.default_language,
-        known => known,
-    });
-    (convention, language)
+    })
 }
 
 pub fn build(ctx: &RepoContext, files: &[FileDiff], options: &PromptOptions) -> Prompt {

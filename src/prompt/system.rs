@@ -4,9 +4,9 @@ use std::fmt::Write as _;
 
 use crate::context::RepoContext;
 use crate::message;
-use crate::style::{self, Convention, Language, Style, TicketStyle};
+use crate::style::{self, Convention, Style, TicketStyle};
 
-use super::effective_style;
+use super::effective_convention;
 use super::types::{
     MAX_AREAS, MAX_LISTED, MAX_MAP_CHARS, PromptExamples, PromptOptions, PromptScopes,
 };
@@ -61,7 +61,7 @@ pub fn listed_types(style: &Style) -> Vec<String> {
 
 pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> String {
     let style = &ctx.style;
-    let (convention, language) = effective_style(style, options);
+    let convention = effective_convention(style, options);
     let full = options.rules.is_full();
     let mut text = if full {
         String::from(
@@ -83,10 +83,8 @@ pub(super) fn system_message(ctx: &RepoContext, options: &PromptOptions) -> Stri
             options.subject_max
         ));
     }
-    match language {
-        Language::Portuguese => rule("Write in Brazilian Portuguese."),
-        _ if full => rule("Write in English, in the imperative mood (\"Add\", not \"Added\")."),
-        _ => {}
+    if full {
+        rule("Write in English, in the imperative mood (\"Add\", not \"Added\").");
     }
     match convention {
         Convention::Conventional => {

@@ -16,7 +16,7 @@ Everything except the model is deterministic and tested without hardware.
 | Module | Responsibility |
 |---|---|
 | `git` | `Repo`: runs the `git` binary (so the user's config applies) with machine-readable output (`-z`, `--format`) |
-| `style` | infers convention, language, types, scopes, ticket style and examples from commit subjects |
+| `style` | infers convention, types, scopes, ticket style and examples from commit subjects |
 | `context` | `RepoContext`: branch, ticket, subjects, style and staged files, rebuildable from recorded data |
 | `diff` | parses `--numstat -z` and the patch, classifies files, fits them into a token budget |
 | `diff::annotate` | the annotated file list: status, renames as `dir/{old => new}`, whitespace-only and comment-only changes |
@@ -68,9 +68,6 @@ From the last `style.history_depth` (30) subjects, merges excluded:
 - **Convention:** Conventional Commits (`type(scope)!: description`) or
   gitmoji (an emoji or `:shortcode:` first) when at least 60% of the subjects
   follow it; otherwise `Free`; `Unknown` without history.
-- **Language:** counts common Portuguese and English words in the
-  description (after the `type(scope):` or emoji prefix, so a `fix:` does not
-  count as English). It needs at least 2 hits, and a tie is `Unknown`.
 - **Types and scopes:** ranked by use; the prompt lists the 8 most used.
   The paths each history commit touched are recorded too (traces keep
   them), for the evaluation's `scope_fits` and for a model trained to use
@@ -132,7 +129,7 @@ off is in [measurements](measurements.md#token-estimate).
 ## Prompt
 
 The instructions are in English, which small models follow best, and ask for
-the repository's language. They state the 72-column subject limit, the
+a message in English. They state the 72-column subject limit, the
 convention with its types and scopes, the ticket when the repository cites
 them, and the history examples. The user message has the file list, the diff
 and, when files were cut, a note saying so. A forced convention
@@ -154,7 +151,7 @@ deleted one, below git's rename threshold.
 A model trained to follow the fixed instructions without being told
 (training H6) gets a shorter system message, `PromptRules::Omitted`: only
 what varies by repository (types, scopes, examples) and what its training
-lacks (a ticket, Portuguese, gitmoji). The rules follow the model file that
+lacks (a ticket, gitmoji). The rules follow the model file that
 runs, from its entry in `models::REGISTRY` and the checked SHA-256 next to
 it, and are recorded in traces; any other file gets every rule.
 
@@ -187,20 +184,15 @@ when it must be, a subject repeated from the history (as small models do
 when the history is short or the diff says little), or nearly so (every
 word of its description, four or more, is in one history subject and
 covers 60% of it; a reply with words of its own is kept), the same for a
-message the user turned down in the review, or clearly in
-another language than the repository's (all its known words English in a
-Portuguese repository, or the reverse; a mix is kept, as such
-repositories often write; a language that is only the default, with no
-history to tell, is not enforced), or cut off: its
+message the user turned down in the review, or cut off: its
 last word is an article, a preposition or a conjunction (`the`, `of`, `to`,
-`for`, `and`, in Portuguese also `de`, `para`, `e`), as when the model stops
-mid-sentence; `in`, `off` and a word in backticks end real subjects and are
+`for`, `and`), as when the model stops mid-sentence; `in`, `off` and a word in backticks end real subjects and are
 not counted. With greedy
 decoding, repeating the same prompt would give the same reply. If the retry
 is rejected too, the message is built from the file list (for example
 `chore: update 3 files in src/`, with the files in the body), in the
-repository's language and convention, and a warning says so. When the last
-reply was rejected for what it said (a copy, another language, a cut-off) rather than
+repository's convention, and a warning says so. When the last
+reply was rejected for what it said (a copy, a cut-off) rather than
 its form, the fallback keeps its scope, and its type unless the files tell
 one (all docs, tests or config): models often pick the right type even
 when they copy, and the file list's guess for code is `chore`. Backend errors

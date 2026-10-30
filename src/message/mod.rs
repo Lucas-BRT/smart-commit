@@ -50,10 +50,6 @@ pub enum SanitizeError {
     /// the history is short or the diff says little.
     #[error("subject repeats an earlier commit: {0:?}")]
     CopiedHistory(String),
-    /// The subject is clearly in another language than the repository's,
-    /// as small models trained on English write in Portuguese ones.
-    #[error("subject is in another language than the repository's: {0:?}")]
-    WrongLanguage(String),
     /// The subject repeats, or nearly, a message the user asked to replace:
     /// with greedy decoding the note asking for another is not always
     /// enough.

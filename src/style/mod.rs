@@ -7,16 +7,16 @@
 #[cfg(test)]
 mod tests;
 
+mod description;
 mod detect;
 mod gitmoji;
-mod language;
 mod parse;
 mod ticket;
 mod types;
 
+pub use description::words;
 pub use detect::{detect, scope_areas, similar_examples};
 pub use gitmoji::is_gitmoji;
-pub use language::{language_of, words};
 pub use parse::parse_conventional;
 pub use ticket::{find_ticket_fn as find_ticket, ticket_span_fn as ticket_span};
-pub use types::{Convention, ConventionalHeader, Language, Style, TicketStyle};
+pub use types::{Convention, ConventionalHeader, Style, TicketStyle};

@@ -17,11 +17,10 @@ use crate::context::RepoContext;
 use crate::diff::FileDiff;
 use crate::message::{self, CommitMessage, SanitizeError};
 use crate::prompt::{self, PromptOptions};
-use crate::style::Language;
 
 pub use ask::{MAX_OFFERED, TypeAsk, offer_types, types_to_offer};
 pub use notes::{avoid_note, retry_note};
-pub use retry::{copied_from, cut_off, in_other_language, prepared_message};
+pub use retry::{copied_from, cut_off, prepared_message};
 pub use rules::by_rules;
 
 /// The first try plus one retry that says what was wrong.
@@ -106,7 +105,7 @@ pub fn generate_asked(
     avoid: &[String],
     asked: Option<&TypeAsk>,
 ) -> Result<Generation, BackendError> {
-    let (convention, language) = prompt::effective_style(&ctx.style, options);
+    let convention = prompt::effective_convention(&ctx.style, options);
     // Turned down, git's or the file list's message goes to the model for
     // another.
     if let (true, Some(prepared)) = (avoid.is_empty(), &ctx.prepared) {
@@ -121,13 +120,7 @@ pub fn generate_asked(
     if avoid.is_empty() && rules::by_rules(ctx, files) {
         tracing::debug!("the changes need no model; using a message built from the rules");
         return Ok(Generation {
-            message: message::fallback_after(
-                &ctx.staged,
-                convention,
-                language,
-                None,
-                options.subject_max,
-            ),
+            message: message::fallback_after(&ctx.staged, convention, None, options.subject_max),
             source: Source::Rules,
             attempts: Vec::new(),
             asked: None,
@@ -143,7 +136,7 @@ pub fn generate_asked(
         let retry = attempts
             .last()
             .and_then(|a| a.rejected.as_ref())
-            .map(|error| notes::retry_note(error, convention, language));
+            .map(|error| notes::retry_note(error, convention));
         let note = match (&avoid_note_val, retry) {
             (Some(avoid), Some(retry)) => Some(format!("{avoid}\n{retry}")),
             (avoid, retry) => retry.or_else(|| avoid.clone()),
@@ -161,12 +154,7 @@ pub fn generate_asked(
                 if let Some(subject) = retry::copied_from(&message.subject, &turned_down) {
                     return Err(SanitizeError::TurnedDown(subject.to_owned()));
                 }
-                // A default language, with no history to tell, is not enforced.
-                let known = options.language.is_some() || ctx.style.language != Language::Unknown;
-                if known && retry::in_other_language(&message.subject, language, &ctx.subjects) {
-                    return Err(SanitizeError::WrongLanguage(message.subject));
-                }
-                if retry::cut_off(&message.subject, language) {
+                if retry::cut_off(&message.subject) {
                     return Err(SanitizeError::CutOff(message.subject));
                 }
                 Ok(message)
@@ -204,7 +192,6 @@ pub fn generate_asked(
     let reply = attempts.iter().rev().find_map(|a| match a.rejected {
         Some(
             SanitizeError::CopiedHistory(_)
-            | SanitizeError::WrongLanguage(_)
             | SanitizeError::TurnedDown(_)
             | SanitizeError::CutOff(_),
         ) => message::sanitize_within(&a.raw, convention, options.subject_max)
@@ -216,7 +203,6 @@ pub fn generate_asked(
         message: message::fallback_after(
             &ctx.staged,
             convention,
-            language,
             reply.as_deref(),
             options.subject_max,
         ),

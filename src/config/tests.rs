@@ -9,7 +9,7 @@ use crate::backend::llamacpp::LlamaDevice;
 use crate::models;
 use crate::paths;
 use crate::prompt::PromptOptions;
-use crate::style::Language;
+use crate::style::Convention;
 
 fn env<'a>(vars: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String> + 'a {
     move |name| {
@@ -72,8 +72,8 @@ fn the_model_is_kept_loaded_for_ten_minutes_unless_set() {
 
 #[test]
 fn layers_override_in_order() {
-    let global = "backend = \"mock\"\n[model]\ndevice = \"gpu\"\n[style]\nlanguage = \"english\"\nhistory_depth = 10\n";
-    let repo = "[style]\nlanguage = \"portuguese\"\n";
+    let global = "backend = \"mock\"\n[model]\ndevice = \"gpu\"\n[style]\ndefault_convention = \"free\"\nhistory_depth = 10\n";
+    let repo = "[style]\ndefault_convention = \"gitmoji\"\n";
     let vars = [("HOME", "/home/me"), ("SMART_COMMIT_DEVICE", "cpu")];
     let resolved = resolve(
         Some(global),
@@ -84,7 +84,10 @@ fn layers_override_in_order() {
     .unwrap();
     let origin = |name| resolved.get(name).unwrap().1.clone();
     assert!(matches!(origin("style.history_depth"), Origin::Global(_)));
-    assert!(matches!(origin("style.language"), Origin::Repo(_)));
+    assert!(matches!(
+        origin("style.default_convention"),
+        Origin::Repo(_)
+    ));
     assert_eq!(origin("model.device"), Origin::Env("SMART_COMMIT_DEVICE"));
     assert_eq!(origin("backend"), Origin::Flag);
     assert_eq!(origin("style.convention"), Origin::Default);
@@ -92,8 +95,24 @@ fn layers_override_in_order() {
     let settings = resolved.settings();
     assert_eq!(settings.backend, BackendKind::Openvino);
     assert_eq!(settings.device, DeviceSetting::Fixed(Target::Cpu));
-    assert_eq!(settings.language, Some(Language::Portuguese));
+    assert_eq!(settings.default_convention, Convention::Gitmoji);
     assert_eq!(settings.history_depth, 10);
+}
+
+#[test]
+fn keys_earlier_versions_had_are_read_and_ignored() {
+    // `style.language` asked for Portuguese; a file that still has it must keep working.
+    let text =
+        "[style]\nlanguage = \"portuguese\"\ndefault_language = \"english\"\nhistory_depth = 7\n";
+    let path = PathBuf::from("config.toml");
+    let values = parse_file(text, &path, &Origin::Global(path.clone()), None).unwrap();
+    let names: Vec<_> = values.iter().map(|(key, _)| key.name).collect();
+    assert_eq!(names, ["style.history_depth"]);
+    // They are not keys: setting or reading one is still an unknown key.
+    assert!(matches!(
+        key("style.language"),
+        Err(ConfigError::UnknownKey { .. })
+    ));
 }
 
 #[test]
@@ -363,7 +382,7 @@ fn set_aside_invalid_removes_only_values_this_version_cannot_read() {
     std::fs::write(
         &path,
         "# mine\n[model]\ndevice = \"vulkan\"\nname = \"smart-commit-9b-v9\"\n\
-             max_new_tokens = 5000\n[style]\nlanguage = \"english\"\n",
+             max_new_tokens = 5000\n[style]\ndefault_convention = \"free\"\n",
     )
     .unwrap();
     let removed = set_aside_invalid(&path, None).unwrap();
@@ -374,7 +393,7 @@ fn set_aside_invalid_removes_only_values_this_version_cannot_read() {
     let text = std::fs::read_to_string(&path).unwrap();
     assert_eq!(
         text,
-        "# mine\n[model]\ndevice = \"vulkan\"\n[style]\nlanguage = \"english\"\n"
+        "# mine\n[model]\ndevice = \"vulkan\"\n[style]\ndefault_convention = \"free\"\n"
     );
     assert!(set_aside_invalid(&path, None).unwrap().is_empty());
 }

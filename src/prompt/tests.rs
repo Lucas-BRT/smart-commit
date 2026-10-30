@@ -97,12 +97,12 @@ fn annotated_file_list() {
 }
 
 #[test]
-fn conventional_portuguese_repository() {
+fn conventional_repository() {
     let ctx = context(
         &[
-            "feat(cli): adiciona o comando context",
-            "fix(git): corrige a leitura da branch",
-            "docs: atualiza a documentação da fase 1",
+            "feat(cli): add the context command",
+            "fix(git): correct the branch reading",
+            "docs: update the documentation of phase 1",
         ],
         Some("feature/login"),
     );
@@ -157,7 +157,7 @@ fn omitted_rules_keep_only_what_varies_by_repository() {
 
 #[test]
 fn omitted_rules_keep_what_training_does_not_teach() {
-    // Tickets, Portuguese and gitmoji are absent from the training data,
+    // Tickets and gitmoji are absent from the training data,
     // so the model still needs to be told.
     let gitmoji = context(
         &["✨ ABC-1 add login page", "🐛 ABC-2 fix crash on logout"],
@@ -170,14 +170,7 @@ fn omitted_rules_keep_what_training_does_not_teach() {
             .system
             .contains("Start the description with ABC-3, right after the gitmoji.")
     );
-    let portuguese = context(&["feat(cli): adiciona o comando context"], None);
-    let options = PromptOptions {
-        language: Some(Language::Portuguese),
-        ..omitted()
-    };
-    let prompt = build(&portuguese, &files(), &options);
-    assert!(prompt.system.contains("- Write in Brazilian Portuguese.\n"));
-    // An English, Conventional repository without history needs no list.
+    // A Conventional repository without history needs no list.
     let prompt = build(&context(&[], None), &files(), &omitted());
     assert_eq!(prompt.system, "- Use Conventional Commits.\n");
 }
@@ -229,16 +222,16 @@ fn ticket_prefix_and_mention_in_free_style() {
 }
 
 #[test]
-fn forced_style_overrides_the_detected_one() {
+fn a_forced_convention_overrides_the_detected_one() {
     let options = PromptOptions {
         convention: Some(Convention::Conventional),
-        language: Some(Language::Portuguese),
         ..PromptOptions::default()
     };
-    let english_free = style::detect(&["Add the parser", "Fix the crash"]);
+    let free = style::detect(&["Add the parser", "Fix the crash"]);
+    assert_eq!(free.convention, Convention::Free);
     assert_eq!(
-        effective_style(&english_free, &options),
-        (Convention::Conventional, Language::Portuguese)
+        effective_convention(&free, &options),
+        Convention::Conventional
     );
 }
 
@@ -320,6 +313,7 @@ fn the_subject_limit_is_told() {
 fn unset_overrides_are_left_out_of_traces() {
     let json = serde_json::to_string(&PromptOptions::default()).unwrap();
     assert!(!json.contains("\"convention\""), "{json}");
+    // A trace from before the language setting was removed has a field that is ignored now.
     let old: PromptOptions = serde_json::from_str(
         r#"{"max_prompt_tokens":1024,"default_convention":"conventional","default_language":"english"}"#,
     )
@@ -339,22 +333,15 @@ fn unset_overrides_are_left_out_of_traces() {
 }
 
 #[test]
-fn known_style_overrides_the_defaults() {
+fn a_known_style_overrides_the_default() {
     let options = PromptOptions {
         default_convention: Convention::Gitmoji,
-        default_language: Language::Portuguese,
         ..PromptOptions::default()
     };
     let empty = style::detect::<&str>(&[]);
-    assert_eq!(
-        effective_style(&empty, &options),
-        (Convention::Gitmoji, Language::Portuguese)
-    );
-    let english = style::detect(&["Add the parser", "Fix the crash"]);
-    assert_eq!(
-        effective_style(&english, &options),
-        (Convention::Free, Language::English)
-    );
+    assert_eq!(effective_convention(&empty, &options), Convention::Gitmoji);
+    let free = style::detect(&["Add the parser", "Fix the crash"]);
+    assert_eq!(effective_convention(&free, &options), Convention::Free);
 }
 
 #[test]

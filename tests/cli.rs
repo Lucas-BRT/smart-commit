@@ -118,8 +118,8 @@ fn context_outside_a_repository_fails() {
 fn context_reports_the_detected_style() {
     let repo = TestRepo::new();
     repo.git(&["checkout", "--quiet", "-b", "feature/NPU-7-x"]);
-    repo.commit("feat(cli): adiciona o comando context");
-    repo.commit("fix(git): corrige a leitura da branch");
+    repo.commit("feat(cli): add the context command");
+    repo.commit("fix(git): correct the branch reading");
 
     let output = smart_commit(&["context"], repo.path());
     assert!(output.status.success(), "{}", stderr(&output));
@@ -127,7 +127,7 @@ fn context_reports_the_detected_style() {
     assert!(out.contains("branch:      feature/NPU-7-x"));
     assert!(out.contains("ticket:      NPU-7"));
     assert!(out.contains("convention:  Conventional (from 2 commits)"));
-    assert!(out.contains("language:    Portuguese"));
+    assert!(!out.contains("language:"), "{out}");
     assert!(out.contains("scopes:      cli (1), git (1)"));
 }
 
@@ -354,7 +354,7 @@ fn prompt_from_inputs_reads_stdin_and_global_settings() {
     let config_home = tempfile::TempDir::new().unwrap();
     let config = config_home.path().join("smart-commit/config.toml");
     std::fs::create_dir_all(config.parent().unwrap()).unwrap();
-    std::fs::write(&config, "[style]\nlanguage = \"portuguese\"\n").unwrap();
+    std::fs::write(&config, "[style]\nconvention = \"gitmoji\"\n").unwrap();
 
     let mut child = common::isolate(
         std::process::Command::new(env!("CARGO_BIN_EXE_smart-commit"))
@@ -372,11 +372,12 @@ fn prompt_from_inputs_reads_stdin_and_global_settings() {
     assert!(output.status.success());
     assert_eq!(stderr(&output), "");
     let prompt: serde_json::Value = serde_json::from_str(stdout(&output).trim()).unwrap();
+    // The global setting forces a convention the history does not follow.
     assert!(
         prompt["system"]
             .as_str()
             .unwrap()
-            .contains("Brazilian Portuguese")
+            .contains("one gitmoji for the change")
     );
 }
 
@@ -1198,7 +1199,7 @@ fn changing_a_model_setting_stops_the_model_kept_loaded() {
     ];
     let kept = fake_kept_model(&runtime.path().join("smart-commit"));
     let output = smart_commit_with(
-        &["config", "set", "style.language", "english"],
+        &["config", "set", "style.convention", "free"],
         dir.path(),
         &env,
     );

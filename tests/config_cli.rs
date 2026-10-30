@@ -159,35 +159,61 @@ fn repository_settings_override_global_ones_inside_it() {
     let env = Env::new();
     let repo = TestRepo::new();
     let elsewhere = TempDir::new().unwrap();
-    env.ok(&["config", "set", "style.language", "english"], repo.path());
+    env.ok(&["config", "set", "style.convention", "free"], repo.path());
     let out = env.ok(
-        &["config", "set", "--repo", "style.language", "portuguese"],
+        &["config", "set", "--repo", "style.convention", "gitmoji"],
         repo.path(),
     );
     assert!(out.contains("(repository "), "{out}");
     assert!(repo.path().join(".smart-commit.toml").exists());
 
     assert_eq!(
-        env.ok(&["config", "get", "style.language"], repo.path()),
-        "portuguese\n"
+        env.ok(&["config", "get", "style.convention"], repo.path()),
+        "gitmoji\n"
     );
     assert_eq!(
-        env.ok(&["config", "get", "style.language"], elsewhere.path()),
-        "english\n"
+        env.ok(&["config", "get", "style.convention"], elsewhere.path()),
+        "free\n"
     );
     let path = repo.path().to_str().unwrap();
     assert_eq!(
         env.ok(
-            &["config", "get", "style.language", "-C", path],
+            &["config", "get", "style.convention", "-C", path],
             elsewhere.path()
         ),
-        "portuguese\n"
+        "gitmoji\n"
     );
 
     // A global change the repository overrides is pointed out.
-    let output = env.run(&["config", "set", "style.language", "english"], repo.path());
+    let output = env.run(&["config", "set", "style.convention", "free"], repo.path());
     assert!(
-        stderr(&output).contains("note: style.language is still portuguese, from the repository"),
+        stderr(&output).contains("note: style.convention is still gitmoji, from the repository"),
+        "{}",
+        stderr(&output)
+    );
+}
+
+#[test]
+fn a_file_with_the_language_keys_of_an_earlier_version_still_works() {
+    let env = Env::new();
+    let repo = TestRepo::new();
+    std::fs::create_dir_all(env.global_file().parent().unwrap()).unwrap();
+    std::fs::write(
+        env.global_file(),
+        "[style]\nlanguage = \"portuguese\"\ndefault_language = \"english\"\n",
+    )
+    .unwrap();
+    assert_eq!(
+        env.ok(&["config", "get", "style.convention"], repo.path()),
+        "auto\n"
+    );
+    let listing = env.ok(&["config", "list"], repo.path());
+    assert!(!listing.contains("language"), "{listing}");
+    // The keys are gone: they cannot be set again.
+    let output = env.run(&["config", "set", "style.language", "english"], repo.path());
+    assert!(!output.status.success());
+    assert!(
+        stderr(&output).contains("unknown key `style.language`"),
         "{}",
         stderr(&output)
     );

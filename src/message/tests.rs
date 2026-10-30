@@ -1,7 +1,7 @@
 use super::*;
 
 use crate::git::{ChangeStatus, FileChange};
-use crate::style::{Convention, Language};
+use crate::style::Convention;
 
 fn clean(raw: &str) -> String {
     sanitize(raw, Convention::Free).unwrap().to_string()
@@ -155,13 +155,7 @@ fn the_limit_is_the_configured_one() {
         ChangeStatus::Modified,
         "src/a/very/long/path/to/some/module/file.rs",
     )];
-    let fallback = fallback_after(
-        &changes,
-        Convention::Conventional,
-        Language::English,
-        None,
-        40,
-    );
+    let fallback = fallback_after(&changes, Convention::Conventional, None, 40);
     assert!(
         fallback.subject.chars().count() <= 40,
         "{}",
@@ -237,14 +231,7 @@ fn fallback_after_a_rejected_reply() {
     let code = [change(ChangeStatus::Modified, "src/git.rs")];
     let docs = [change(ChangeStatus::Modified, "AGENTS.md")];
     let after = |changes: &[FileChange], reply| {
-        fallback_after(
-            changes,
-            Convention::Conventional,
-            Language::English,
-            reply,
-            SUBJECT_MAX,
-        )
-        .subject
+        fallback_after(changes, Convention::Conventional, reply, SUBJECT_MAX).subject
     };
     // Code: the reply's type and scope beat the file list's `chore`.
     assert_eq!(
@@ -266,14 +253,7 @@ fn fallback_after_a_rejected_reply() {
     );
     // Free style has no type to keep.
     assert_eq!(
-        fallback_after(
-            &code,
-            Convention::Free,
-            Language::English,
-            Some("fix(git): x"),
-            SUBJECT_MAX,
-        )
-        .subject,
+        fallback_after(&code, Convention::Free, Some("fix(git): x"), SUBJECT_MAX,).subject,
         "Update src/git.rs"
     );
 }
@@ -282,20 +262,20 @@ fn fallback_after_a_rejected_reply() {
 fn fallback_for_a_single_file() {
     let added = [change(ChangeStatus::Added, "src/diff.rs")];
     assert_eq!(
-        fallback(&added, Convention::Conventional, Language::English).to_string(),
+        fallback(&added, Convention::Conventional).to_string(),
         "chore: add src/diff.rs"
     );
     assert_eq!(
-        fallback(&added, Convention::Free, Language::Portuguese).to_string(),
-        "Adiciona src/diff.rs"
+        fallback(&added, Convention::Free).to_string(),
+        "Add src/diff.rs"
     );
     let renamed = [FileChange {
         old_path: Some("a.md".into()),
         ..change(ChangeStatus::Renamed, "docs/b.md")
     }];
     assert_eq!(
-        fallback(&renamed, Convention::Gitmoji, Language::Portuguese).to_string(),
-        "📝 renomeia a.md para docs/b.md"
+        fallback(&renamed, Convention::Gitmoji).to_string(),
+        "📝 rename a.md to docs/b.md"
     );
 }
 
@@ -304,11 +284,11 @@ fn fallback_for_many_files_lists_them() {
     let changes: Vec<FileChange> = (0..12)
         .map(|n| change(ChangeStatus::Modified, &format!("tests/case_{n}.rs")))
         .collect();
-    let message = fallback(&changes, Convention::Conventional, Language::Portuguese);
-    assert_eq!(message.subject, "test: atualiza 12 arquivos em tests/");
+    let message = fallback(&changes, Convention::Conventional);
+    assert_eq!(message.subject, "test: update 12 files in tests/");
     let body = message.body.unwrap();
     assert_eq!(body.lines().count(), 11);
-    assert!(body.ends_with("- ... e mais 2"));
+    assert!(body.ends_with("- ... and 2 more"));
 }
 
 #[test]
@@ -318,11 +298,11 @@ fn fallback_picks_type_and_emoji_from_the_files() {
         change(ChangeStatus::Modified, "Cargo.lock"),
     ];
     assert_eq!(
-        fallback(&config, Convention::Gitmoji, Language::English).subject,
+        fallback(&config, Convention::Gitmoji).subject,
         "🔧 update 2 files"
     );
     assert_eq!(
-        fallback(&config, Convention::Conventional, Language::English).subject,
+        fallback(&config, Convention::Conventional).subject,
         "chore: update 2 files"
     );
     let mixed = [
@@ -330,16 +310,16 @@ fn fallback_picks_type_and_emoji_from_the_files() {
         change(ChangeStatus::Deleted, "docs/b.md"),
     ];
     assert_eq!(
-        fallback(&mixed, Convention::Gitmoji, Language::English).subject,
+        fallback(&mixed, Convention::Gitmoji).subject,
         "🚧 update 2 files"
     );
     assert_eq!(
-        fallback(&mixed, Convention::Free, Language::English).to_string(),
+        fallback(&mixed, Convention::Free).to_string(),
         "Update 2 files\n\n- src/a.rs\n- docs/b.md"
     );
     let deleted = [change(ChangeStatus::Deleted, "docs/old.md")];
     assert_eq!(
-        fallback(&deleted, Convention::Unknown, Language::Unknown).subject,
+        fallback(&deleted, Convention::Unknown).subject,
         "docs: remove docs/old.md"
     );
 }
@@ -350,7 +330,6 @@ fn fallback_subject_fits_72_columns() {
     let message = fallback(
         &[change(ChangeStatus::Added, &path)],
         Convention::Conventional,
-        Language::English,
     );
     assert!(message.subject.chars().count() <= SUBJECT_MAX);
 }

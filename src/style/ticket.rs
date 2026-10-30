@@ -1,7 +1,7 @@
 //! Ticket detection and classification.
 
 use super::TicketStyle;
-use super::language::description_of;
+use super::description::description_of;
 
 pub fn find_ticket(text: &str) -> Option<&str> {
     ticket_span(text).map(|(start, end)| &text[start..end])

@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::message;
-use crate::style::{Convention, Language};
+use crate::style::Convention;
 
 /// The NPU pipeline's default `MAX_PROMPT_LEN`.
 pub const DEFAULT_MAX_PROMPT_TOKENS: usize = 1024;
@@ -33,7 +33,7 @@ pub enum PromptRules {
     #[default]
     Full,
     /// Only what varies by repository (types, scopes, examples) and what
-    /// training does not teach (a ticket, Portuguese, gitmoji), for a model
+    /// training does not teach (a ticket, gitmoji), for a model
     /// trained to follow the rest without being told: a shorter prompt is
     /// read faster. Never for an untrained model, which would lose the
     /// format (training H6).
@@ -136,14 +136,10 @@ pub struct PromptOptions {
     pub max_prompt_tokens: usize,
     /// Used when the history is too short or mixed to tell.
     pub default_convention: Convention,
-    pub default_language: Language,
     /// Forces a convention instead of the detected one. Left out of traces
     /// when unset, so older traces still read the same.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub convention: Option<Convention>,
-    /// Forces a language instead of the detected one.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub language: Option<Language>,
     /// Left out of traces when full, so older traces still read the same.
     #[serde(default, skip_serializing_if = "PromptRules::is_full")]
     pub rules: PromptRules,
@@ -177,9 +173,7 @@ impl Default for PromptOptions {
         Self {
             max_prompt_tokens: DEFAULT_MAX_PROMPT_TOKENS,
             default_convention: Convention::Conventional,
-            default_language: Language::English,
             convention: None,
-            language: None,
             rules: PromptRules::Full,
             scopes: PromptScopes::List,
             examples: PromptExamples::Recent,

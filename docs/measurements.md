@@ -241,7 +241,8 @@ smart-commit already passes `--threads-batch` (one per physical core) and
 defaults; a flag after `--` comes last, so it wins.
 
 The prompts depend on the history at each commit (older commits were in
-Portuguese, so those prompts ask for Portuguese).
+Portuguese, so those prompts, built by a version that asked for it, ask for
+Portuguese).
 
 ## Token estimate
 

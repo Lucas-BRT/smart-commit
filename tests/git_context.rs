@@ -6,7 +6,7 @@ use smart_commit::context::RepoContext;
 use smart_commit::diff;
 use smart_commit::git::{ChangeStatus, FileChange, GitError, Repo};
 use smart_commit::prompt::{self, PromptOptions};
-use smart_commit::style::{Convention, Language};
+use smart_commit::style::Convention;
 use tempfile::TempDir;
 
 mod common;
@@ -129,21 +129,17 @@ fn learns_style_from_history_most_recent_first() {
     let repo = TestRepo::new();
     for subject in [
         "chore: initial commit",
-        "feat(git): coleta o histórico de commits",
-        "fix(style): corrige a detecção de escopo",
-        "feat(git): adiciona suporte para renomeação",
+        "feat(git): collect the commit history",
+        "fix(style): correct the scope detection",
+        "feat(git): add support for renames",
     ] {
         repo.commit(subject);
     }
 
     let style = repo.context().style;
     assert_eq!(style.convention, Convention::Conventional);
-    assert_eq!(style.language, Language::Portuguese);
     assert_eq!(style.scopes[0], ("git".into(), 2));
-    assert_eq!(
-        style.examples[0],
-        "feat(git): adiciona suporte para renomeação"
-    );
+    assert_eq!(style.examples[0], "feat(git): add support for renames");
     assert_eq!(style.sample_size, 4);
 }
 
@@ -268,8 +264,8 @@ fn staged_diff_before_first_commit() {
 #[test]
 fn prompt_from_a_real_repository_fits_the_budget() {
     let repo = TestRepo::new();
-    repo.commit("feat(git): coleta o histórico de commits");
-    repo.commit("fix(style): corrige a detecção de escopo");
+    repo.commit("feat(git): collect the commit history");
+    repo.commit("fix(style): correct the scope detection");
     for n in 0..40 {
         let contents: String = (0..80).map(|l| format!("let v{l} = {n};\n")).collect();
         repo.write(&format!("m{n}.rs"), &contents);
@@ -281,7 +277,11 @@ fn prompt_from_a_real_repository_fits_the_budget() {
     let options = PromptOptions::default();
     let prompt = prompt::build(&ctx, &files, &options);
 
-    assert!(prompt.system.contains("Write in Brazilian Portuguese."));
+    assert!(
+        prompt
+            .system
+            .contains("Write in English, in the imperative mood")
+    );
     assert!(prompt.user.contains("m0.rs | new, +80 -0"));
     let used = diff::estimate_tokens(&prompt.system) + diff::estimate_tokens(&prompt.user);
     assert!(used < options.max_prompt_tokens, "{used}");
