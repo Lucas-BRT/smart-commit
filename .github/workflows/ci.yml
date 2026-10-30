@@ -31,7 +31,7 @@ jobs:
           echo "$SHELLCHECK_SHA256  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum --check --quiet -
           tar -xJf "$RUNNER_TEMP/shellcheck.tar.xz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/shellcheck-v$SHELLCHECK_VERSION" >>"$GITHUB_PATH"
-      - run: shellcheck --version && shellcheck install.sh scripts/*.sh cli/tests/fixtures/make-traces.sh cli/tests/scripts/*.sh
+      - run: shellcheck --version && shellcheck install.sh scripts/*.sh scripts/build/*.sh cli/tests/fixtures/make-traces.sh cli/tests/scripts/*.sh
       - run: cli/tests/scripts/test-setup-gpu.sh
       - run: cli/tests/scripts/test-export-model.sh
       - run: cli/tests/scripts/test-install-data.sh
@@ -40,6 +40,8 @@ jobs:
       - run: cli/tests/scripts/test-normalize-ir.sh
       - run: cli/tests/scripts/test-install-verify.sh
       - run: cli/tests/scripts/test-workflows.sh
+      - run: cli/tests/scripts/test-build-env.sh
+      - run: cli/tests/scripts/test-build-image.sh
 
   # Packages in the pinned build container (twice: the bytes must match)
   # and installs the result; the printed hash is the one any machine gets

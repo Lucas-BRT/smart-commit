@@ -6,16 +6,24 @@
 # owner, modes and dates (the commit's).
 #
 #   scripts/package.sh [OUT_DIR]     (default: dist/)
+#   scripts/package.sh --check-env   (does this machine build the same bytes?)
 #
-# Needs Docker. SMART_COMMIT_PACKAGE_HOST=1 builds on the host instead: the
-# result is then only reproducible on machines with the same C toolchain.
+# Needs Docker. The image is the one in scripts/build/IMAGE (pulled, by
+# digest), or SMART_COMMIT_BUILD_IMAGE, or built from scripts/build/Dockerfile
+# when neither is set. SMART_COMMIT_PACKAGE_HOST=1 builds on the host instead:
+# the result is then only reproducible on a machine whose C toolchain
+# `--check-env` finds the same as the image's.
 #
 # Writes OUT_DIR/smart-commit-x86_64-unknown-linux-gnu.tar.gz, a copy of
-# install.sh (the installer of this very commit, a release asset of its own)
-# and OUT_DIR/SHA256SUMS, which lists both.
+# install.sh (the installer of this very commit, a release asset of its own),
+# OUT_DIR/BUILDINFO (what it was built with) and OUT_DIR/SHA256SUMS, which
+# lists all three.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+if [ "${1:-}" = --check-env ]; then
+    exec sh "$ROOT/scripts/build/check-env.sh"
+fi
 OUT=$(realpath -m "${1:-$ROOT/dist}")
 TARGET=x86_64-unknown-linux-gnu
 NAME=smart-commit-$TARGET
@@ -31,7 +39,9 @@ if [ "${SMART_COMMIT_PACKAGE_HOST:-0}" = 1 ]; then
         cargo build --release --locked --target "$TARGET" --quiet
     cp "target/$TARGET/release/smart-commit" "$binary/"
 else
-    docker build --quiet --tag smart-commit-build scripts/build >/dev/null
+    # shellcheck source=scripts/build/image.sh
+    . "$ROOT/scripts/build/image.sh"
+    resolve_image
     # The sources are mounted read-only at /src; the toolchain, the crates
     # and the build go in volumes, reused between runs. With
     # SMART_COMMIT_BUILD_CACHE=DIR the toolchain and the crates are in DIR
@@ -44,17 +54,24 @@ else
         rustup=$(realpath "$SMART_COMMIT_BUILD_CACHE/rustup")
         cargo=$(realpath "$SMART_COMMIT_BUILD_CACHE/cargo")
     fi
-    docker run --rm \
-        --volume "$ROOT:/src:ro" \
+    build_volumes=(
+        --volume "$ROOT:/src:ro"
+        --volume "$rustup:/root/.rustup"
+        --volume "$cargo:/root/.cargo/registry"
+        --volume smart-commit-target:/target
+        --workdir /src
+        --env CARGO_TARGET_DIR=/target
+    )
+    # The network is for what the build needs to get (the toolchain, from
+    # rust-toolchain.toml, and the crates of Cargo.lock) and nothing else: the
+    # build itself runs without it, so nothing can be fetched into the binary
+    # behind the lock file's back.
+    docker run --rm "${build_volumes[@]}" "$IMAGE" sh -c "cargo fetch --locked --quiet"
+    docker run --rm --network none "${build_volumes[@]}" \
         --volume "$binary:/out" \
-        --volume "$rustup:/root/.rustup" \
-        --volume "$cargo:/root/.cargo/registry" \
-        --volume smart-commit-target:/target \
-        --workdir /src \
-        --env CARGO_TARGET_DIR=/target \
         --env RUSTFLAGS="--remap-path-prefix=/src=. --remap-path-prefix=/root/.cargo=/cargo" \
         --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" \
-        smart-commit-build sh -c "cargo build --release --locked --target $TARGET --quiet \
+        "$IMAGE" sh -c "cargo build --release --locked --offline --target $TARGET --quiet \
             && cp /target/$TARGET/release/smart-commit /out/ \
             && chown \$HOST_UID:\$HOST_GID /out/smart-commit"
 fi
@@ -93,12 +110,25 @@ else
         --volume "$OUT:/out" \
         --env SOURCE_DATE_EPOCH \
         --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" \
-        smart-commit-build sh -c "$PACK && chown \$HOST_UID:\$HOST_GID /out/\$3.tar.gz" \
+        "$IMAGE" sh -c "$PACK && chown \$HOST_UID:\$HOST_GID /out/\$3.tar.gz" \
         pack /work /out "$NAME"
 fi
 # The installer is published beside the tarball, not in it (it is in the
 # tarball too, for `update`): the script and the binary of a release match.
 install -m 755 install.sh "$OUT/install.sh"
-(cd "$OUT" && sha256sum "$NAME.tar.gz" install.sh >SHA256SUMS)
+# What it was built with, so that anyone can see whether their machine does the
+# same (`scripts/package.sh --check-env`) and where a difference would come from.
+{
+    echo "smart-commit $VERSION, commit $(git rev-parse HEAD)"
+    if [ "${SMART_COMMIT_PACKAGE_HOST:-0}" = 1 ]; then
+        echo "built on the host"
+        sh scripts/build/env-report.sh
+    else
+        echo "built in the image $IMAGE"
+        docker run --rm --volume "$ROOT/scripts/build:/build:ro" "$IMAGE" sh /build/env-report.sh
+    fi
+    sed -n 's/^channel = "\(.*\)"$/rust \1/p' rust-toolchain.toml
+} >"$OUT/BUILDINFO"
+(cd "$OUT" && sha256sum "$NAME.tar.gz" install.sh BUILDINFO >SHA256SUMS)
 echo "smart-commit $VERSION: $OUT/$NAME.tar.gz"
 cat "$OUT/SHA256SUMS"

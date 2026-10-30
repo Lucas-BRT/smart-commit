@@ -32,6 +32,10 @@
 - Installer, guided setup that lists the hardware first and installs only
   what each vendor's CPU, GPU and NPU need, reproducible model export and
   release packaging, automatic releases.
+- The release is built in a registry image pinned by digest (no `apt` or
+  package snapshot on the way), compiled offline, with a `BUILDINFO` of the
+  toolchain used, and `scripts/package.sh --check-env` tells anyone who builds
+  their own package whether their machine matches it.
 - `smart-commit eval` and `prompt --inputs`, which run the pipeline on
   recorded inputs; the eval-v1 and eval-short sets built with them
   (`training/`), and the paths of each history commit in traces.

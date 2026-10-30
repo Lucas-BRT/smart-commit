@@ -3,7 +3,9 @@
 # libc6-dev, whose C runtime objects end up in the binary) by an Ubuntu
 # snapshot date, rustup by SHA-256, and the Rust toolchain by
 # rust-toolchain.toml. Ubuntu 22.04's glibc makes the binary run on 22.04
-# and newer.
+# and newer. The image is built from this file once, published to the
+# registry by the Build image workflow and pulled by digest from
+# scripts/build/IMAGE; this file is its recipe.
 FROM ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
 
 ARG SNAPSHOT=20261001T000000Z

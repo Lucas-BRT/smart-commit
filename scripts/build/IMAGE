@@ -1,0 +1,11 @@
+# The build image `scripts/package.sh` builds the release in, as a registry
+# reference fixed by digest, for example
+#
+#   ghcr.io/lucas-brt/smart-commit-build@sha256:...
+#
+# With a reference here, package.sh pulls that image: no `apt`, no package
+# snapshot, the same C toolchain for everyone. Without one (as long as the
+# image has not been published) it builds the image from scripts/build/Dockerfile,
+# which needs snapshot.ubuntu.com. SMART_COMMIT_BUILD_IMAGE overrides this file
+# with any image, local or not. See docs/reproducibility.md for how the image
+# is published and this line updated.
