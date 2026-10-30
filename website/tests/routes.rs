@@ -40,7 +40,7 @@ async fn home_names_the_tool_and_shows_the_install_and_the_demo() {
         "/",
         &[
             "<title>smart-commit",
-            "Commit messages in your repo's style, offline.",
+            "Commit messages in your repo's style, on your own machine.",
             "install.sh | bash",
             "git status -s",
             "refactor(auth): move session handling into its own module",
@@ -78,25 +78,16 @@ async fn tutorial_covers_staging_review_and_the_hook() {
 }
 
 #[tokio::test]
-async fn devices_lists_every_device() {
-    let body = page(
-        "/devices",
-        &["OpenVINO GenAI", "llama.cpp", "AMD, NVIDIA, Intel"],
-    )
-    .await;
-    for device in ["npu", "intel-gpu", "vulkan", "cpu", "openvino-cpu"] {
-        assert!(body.contains(&format!("<code>{device}</code>")), "{device}");
-    }
-}
-
-#[tokio::test]
 async fn how_it_works_describes_the_pipeline() {
-    page("/how-it-works", &["Infer the style", "one retry"]).await;
+    let body = page("/how-it-works", &["Infer the style", "one retry"]).await;
+    // Messages are English only; the style no longer includes a language.
+    assert!(!body.contains("language"), "the style has no language");
 }
 
 #[tokio::test]
 async fn roadmap_lists_what_is_next() {
-    page("/roadmap", &["Next", "Publish v0.2"]).await;
+    let body = page("/roadmap", &["Next"]).await;
+    assert!(!body.contains("Publish v0.2"), "v0.2 is published");
 }
 
 #[tokio::test]
@@ -182,4 +173,97 @@ async fn unknown_paths_get_a_404_page_with_the_layout() {
     assert!(content_type.starts_with("text/html"));
     assert!(body.contains("Page not found"));
     assert!(body.contains("site-nav"));
+}
+
+// The site takes its facts from the product's files; these tests read the
+// same files on their own, so a wrong parse in build.rs cannot hide.
+
+fn product(name: &str) -> String {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join(name);
+    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
+}
+
+fn value(text: &str, key: &str) -> String {
+    let prefix = format!("{key} = \"");
+    text.lines()
+        .find_map(|line| line.strip_prefix(&prefix)?.strip_suffix('"'))
+        .unwrap()
+        .to_owned()
+}
+
+#[tokio::test]
+async fn every_page_names_the_version_of_the_product() {
+    let version = value(&product("cli/Cargo.toml"), "version");
+    for path in [
+        "/",
+        "/install",
+        "/tutorial",
+        "/devices",
+        "/how-it-works",
+        "/roadmap",
+    ] {
+        page(path, &[&format!("smart-commit {version}")]).await;
+    }
+}
+
+#[tokio::test]
+async fn the_repository_and_the_installer_are_the_products() {
+    let repository = value(&product("cli/Cargo.toml"), "repository");
+    let usage = product("docs/usage.md");
+    let install = usage.lines().find(|l| l.starts_with("curl -fsSL")).unwrap();
+    page("/", &[&format!("href=\"{repository}\""), install]).await;
+    page("/install", &[install]).await;
+    assert!(install.contains(&repository.replace("github.com", "raw.githubusercontent.com")));
+}
+
+#[tokio::test]
+async fn install_names_the_default_model_and_its_size() {
+    let registry = product("cli/src/models/registry.rs");
+    let id = registry
+        .lines()
+        .find_map(|l| {
+            l.strip_prefix("pub const DEFAULT: &str = \"")?
+                .strip_suffix("\";")
+        })
+        .unwrap();
+    let entry = registry.split_once(&format!("id: \"{id}\",")).unwrap().1;
+    let bytes: f64 = entry
+        .lines()
+        .find_map(|l| l.trim().strip_prefix("size: ")?.strip_suffix(','))
+        .unwrap()
+        .replace('_', "")
+        .parse()
+        .unwrap();
+    page("/install", &[id, &format!("{:.1} GB", bytes / 1e9)]).await;
+}
+
+#[tokio::test]
+async fn devices_are_the_ones_in_the_devices_guide() {
+    let guide = product("docs/devices.md");
+    let table: Vec<&str> = guide
+        .lines()
+        .skip_while(|l| !l.starts_with("| Device |"))
+        .skip(2)
+        .take_while(|l| l.starts_with('|'))
+        .collect();
+    assert!(table.len() >= 5, "the guide lists the devices");
+    let body = page("/devices", &["OpenVINO GenAI", "llama.cpp"]).await;
+    for row in table {
+        let device = row.split('|').nth(1).unwrap().trim().replace('`', "");
+        assert!(body.contains(&format!("<code>{device}</code>")), "{device}");
+    }
+}
+
+#[tokio::test]
+async fn the_roadmap_page_starts_with_the_first_item_of_the_roadmap() {
+    let roadmap = product("docs/roadmap.md");
+    let first = roadmap
+        .lines()
+        .skip_while(|l| *l != "## Next")
+        .find(|l| l.starts_with("| 1 |"))
+        .unwrap();
+    let title = first.split("**").nth(1).unwrap();
+    page("/roadmap", &[title]).await;
 }

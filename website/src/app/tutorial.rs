@@ -36,7 +36,7 @@ pub async fn page() -> Result<impl View> {
 git add -p"
                 )
                 <p>"Use what you already use. " <code>"-p"</code> " is handy to keep each commit focused, but it is not required."</p>
-                <p>"smart-commit only reads what is staged. With nothing staged it stops with an error."</p>
+                <p>"smart-commit only reads what is staged. With nothing staged it stops with an error. During a merge, a revert or a cherry-pick it keeps the message git prepared."</p>
             </section>
 
             <section class="rail" aria-labelledby="preview">

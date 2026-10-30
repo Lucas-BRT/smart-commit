@@ -4,7 +4,7 @@ use topcoat::{
     view::{View, view},
 };
 
-use crate::ui::{doc_link, docs, page_head, table, terminal};
+use crate::ui::{doc_link, docs, facts::DEVICES, page_head, table, terminal};
 
 #[page]
 pub async fn page() -> Result<impl View> {
@@ -16,15 +16,13 @@ pub async fn page() -> Result<impl View> {
         )
 
         <section class="rail" aria-labelledby="table">
-            <h2 id="table">"Five devices"</h2>
+            <h2 id="table">"Devices"</h2>
             table(label: "Devices, backends and hardware",
                 <thead><tr><th scope="col">"Device"</th><th scope="col">"Backend"</th><th scope="col">"Hardware"</th></tr></thead>
                 <tbody>
-                    <tr><td data-label="Device"><code>"npu"</code></td><td data-label="Backend">"OpenVINO GenAI"</td><td data-label="Hardware">"Intel NPU (Core Ultra)"</td></tr>
-                    <tr><td data-label="Device"><code>"intel-gpu"</code></td><td data-label="Backend">"OpenVINO GenAI"</td><td data-label="Hardware">"Intel GPU (integrated or Arc)"</td></tr>
-                    <tr><td data-label="Device"><code>"vulkan"</code></td><td data-label="Backend">"llama.cpp"</td><td data-label="Hardware">"any GPU with Vulkan: AMD, NVIDIA, Intel"</td></tr>
-                    <tr><td data-label="Device"><code>"cpu"</code></td><td data-label="Backend">"llama.cpp"</td><td data-label="Hardware">"any x86_64 CPU"</td></tr>
-                    <tr><td data-label="Device"><code>"openvino-cpu"</code></td><td data-label="Backend">"OpenVINO GenAI"</td><td data-label="Hardware">"any x86_64 CPU"</td></tr>
+                    for [device, backend, hardware] in DEVICES {
+                        <tr><td data-label="Device"><code>(*device)</code></td><td data-label="Backend">(*backend)</td><td data-label="Hardware">(*hardware)</td></tr>
+                    }
                 </tbody>
             )
             <p>"OpenVINO is only needed for Intel's NPU and GPUs. AMD and NVIDIA go through llama.cpp."</p>

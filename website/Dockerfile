@@ -18,6 +18,8 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY cli/Cargo.toml cli/Cargo.toml
 COPY cli/src cli/src
+# The product's files that build.rs takes the site's facts from.
+COPY docs/devices.md docs/roadmap.md docs/usage.md docs/
 COPY tools/Cargo.toml tools/Cargo.toml
 COPY tools/src tools/src
 COPY training/tools/Cargo.toml training/tools/Cargo.toml

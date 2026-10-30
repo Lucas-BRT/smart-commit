@@ -16,7 +16,7 @@ use topcoat::{
 };
 
 use crate::components::button::{ButtonSize, ButtonVariant, button_variants};
-use crate::ui::{INSTALL_CMD, REPO};
+use crate::ui::{INSTALL_CMD, REPO, facts::VERSION};
 
 pub fn router() -> Router {
     module_router!().discover().build()
@@ -60,8 +60,8 @@ async fn logo() -> Result<impl topcoat::router::response::IntoResponse> {
 fn meta(path: &str) -> (&'static str, &'static str) {
     match path {
         "/" => (
-            "smart-commit: offline commit messages in your repo's style",
-            "Commit messages in your repo's style, from a small model that runs offline on your own hardware.",
+            "smart-commit: commit messages in your repo's style, run locally",
+            "Commit messages in your repo's style, from a small model that runs on your own hardware: no account, no API key, nothing sent anywhere.",
         ),
         "/install" => (
             "Install and use smart-commit",
@@ -152,7 +152,7 @@ async fn root_layout(cx: &Cx, slot: Slot<'_>) -> Result<impl View> {
                 </main>
                 <footer class="site-footer">
                     <div class="wrap">
-                        <p>"smart-commit is released under the MIT License. Models are downloaded from their publishers under their own licences."</p>
+                        <p>"smart-commit " (VERSION) ". Released under the MIT License. Models are downloaded from their publishers under their own licences."</p>
                     </div>
                 </footer>
             </body>
@@ -168,7 +168,7 @@ pub async fn page() -> Result<impl View> {
                 "smart-commit"
                 <span class="ml-[0.12em] inline-block h-[0.8em] w-[0.45em] bg-primary align-[-0.06em]" aria-hidden="true"></span>
             </h1>
-            <p class="mx-auto mt-5 max-w-none text-[clamp(1.2rem,2.8vw,1.75rem)] leading-snug text-balance text-muted-foreground">"Commit messages in your repo's style, offline."</p>
+            <p class="mx-auto mt-5 max-w-none text-[clamp(1.2rem,2.8vw,1.75rem)] leading-snug text-balance text-muted-foreground">"Commit messages in your repo's style, on your own machine."</p>
 
             <div class="mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-(--term-bg) px-5 py-4 text-left font-mono text-[0.9375rem] leading-relaxed text-(--term-ink)">
                 <span class="min-w-0 select-all [overflow-wrap:anywhere]"><span class="text-(--term-green)">"$ "</span>(INSTALL_CMD)</span>

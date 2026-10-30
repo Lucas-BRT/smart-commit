@@ -4,7 +4,11 @@ use topcoat::{
     view::{View, view},
 };
 
-use crate::ui::{INSTALL_CMD, doc_link, docs, page_head, terminal};
+use crate::ui::{
+    INSTALL_CMD, doc_link, docs,
+    facts::{DEFAULT_MODEL, DEFAULT_MODEL_SIZE, VERSION},
+    page_head, terminal,
+};
 
 #[page]
 pub async fn page() -> Result<impl View> {
@@ -20,7 +24,8 @@ pub async fn page() -> Result<impl View> {
             terminal(title: "install", label: "Install command",
                 <span class="p">"$ "</span>(INSTALL_CMD)
             )
-            <p>"It lists your hardware, asks before anything that needs " <code>"sudo"</code> ", downloads the model and ends with a benchmark that picks the fastest device."</p>
+            <p>"This installs version " (VERSION) ". It lists your hardware, asks before anything that needs " <code>"sudo"</code> ", downloads the model and ends with a benchmark that picks the fastest device."</p>
+            <p>"The default model is " <code>(DEFAULT_MODEL)</code> ", " (DEFAULT_MODEL_SIZE) ". Installing, updating and downloading models use the network; writing a message does not."</p>
             <p>"For a walkthrough, see the " <a href=(href!(super::tutorial::page))>"tutorial"</a> "."</p>
             <p class="dim">"Drivers are installed with " <code>"apt"</code> "; Ubuntu 24.04 and derivatives are tested."</p>
         </section>
@@ -44,7 +49,7 @@ smart-commit --commit"
 "<span class="dim">"# the editor opens with the message written"</span>"
 git commit"
             )
-            <p>"It works from any git client, and never blocks a commit."</p>
+            <p>"It works from any git client, and never blocks a commit: once the binary is gone, it does nothing."</p>
         </section>
 
         <section class="rail" aria-labelledby="more">

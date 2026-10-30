@@ -4,7 +4,7 @@ use topcoat::{
     view::{View, view},
 };
 
-use crate::ui::{doc_link, docs, page_head};
+use crate::ui::{doc_link, docs, facts::NEXT, page_head};
 
 #[page]
 pub async fn page() -> Result<impl View> {
@@ -18,12 +18,11 @@ pub async fn page() -> Result<impl View> {
         <section class="rail" aria-labelledby="next">
             <h2 id="next">"Next"</h2>
             <ol>
-                <li><strong>"Publish v0.2, then train v0.3."</strong> " The v0.2 fine-tunes are trained, but their repositories are private."</li>
-                <li><strong>"A model that stays loaded."</strong> " Today most of a commit is loading the model. Started, off by default."</li>
-                <li><strong>"A fine-tune as the default model."</strong></li>
-                <li><strong>"Fine-tunes on the NPU and Intel GPU."</strong> " They run one model today."</li>
+                for item in NEXT {
+                    <li>(*item)</li>
+                }
             </ol>
-            <p>"The full roadmap, with the reasoning behind each item, is in the " doc_link(page: "roadmap.md", "repository") "."</p>
+            <p>"These are the first items of the roadmap. The whole list, with the reasoning behind each item, is in the " doc_link(page: "roadmap.md", "repository") "."</p>
         </section>
         )
     })

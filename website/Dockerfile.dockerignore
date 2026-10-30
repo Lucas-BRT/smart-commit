@@ -1,11 +1,15 @@
 # The build context is the repository root (see compose.yaml). Cargo needs
 # every workspace member's manifest and entry point to read the lock file;
-# only the website's own files are compiled.
+# only the website's own files are compiled. The three pages of docs/ are
+# the facts build.rs reads.
 *
 !Cargo.toml
 !Cargo.lock
 !cli/Cargo.toml
 !cli/src
+!docs/devices.md
+!docs/roadmap.md
+!docs/usage.md
 !tools/Cargo.toml
 !tools/src
 !training/tools/Cargo.toml

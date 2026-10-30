@@ -5,10 +5,18 @@ use topcoat::{
     view::{Child, View, component, view},
 };
 
-pub const REPO: &str = "https://github.com/Lucas-BRT/smart-commit";
-pub const DOCS: &str = "https://github.com/Lucas-BRT/smart-commit/blob/main/docs";
-pub const INSTALL_CMD: &str =
-    "curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash";
+/// What the site says about the product, read from the product's own files
+/// by `build.rs`: the version, the repository, the install command, the
+/// default model, the devices and the next roadmap items.
+pub mod facts {
+    include!(concat!(env!("OUT_DIR"), "/facts.rs"));
+}
+
+pub use facts::{INSTALL_CMD, REPO};
+
+pub fn docs_url(page: &str) -> String {
+    format!("{REPO}/blob/main/docs/{page}")
+}
 
 /// A dark terminal window around preformatted text. The `pre` can scroll
 /// sideways, so it takes the keyboard focus.
@@ -46,7 +54,7 @@ pub async fn page_head(title: &str, lede: &str) -> Result<impl View> {
 /// An external link to a page of the smart-commit documentation.
 #[component]
 pub async fn doc_link(page: &str, #[default] child: Child<'_>) -> Result<impl View> {
-    let url = format!("{DOCS}/{page}");
+    let url = docs_url(page);
     Ok(view! { <a href=(url)>(child)</a> })
 }
 
