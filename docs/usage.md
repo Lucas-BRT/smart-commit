@@ -295,5 +295,6 @@ What always stays: the driver packages (the Intel NPU driver, Level Zero,
 Intel's compute runtime, the Vulkan drivers), which other programs may use,
 and membership of the `render` group. Remove them with `apt` and `gpasswd`
 if nothing else needs them. The hook stays in the repositories where it was
-installed: remove `.git/hooks/prepare-commit-msg` there, or run
+installed, and does nothing once the binary is gone (commits are not
+blocked): remove `.git/hooks/prepare-commit-msg` there, or run
 `smart-commit hook uninstall` before uninstalling.

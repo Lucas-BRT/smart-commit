@@ -235,7 +235,8 @@ message in the review asks the model.
 
 `smart-commit hook install` writes `prepare-commit-msg`, honouring
 `core.hooksPath`. The script calls the binary by absolute path, because GUI
-clients often run hooks without the user's `PATH`.
+clients often run hooks without the user's `PATH`. If that binary is gone
+(uninstalled, moved), the script does nothing and the commit goes on.
 
 - It only acts on a plain `git commit`; with `-m`, `-F`, a template, a merge,
   a squash or an amend, git already has a message.
