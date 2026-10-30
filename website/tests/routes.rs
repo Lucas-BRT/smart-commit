@@ -247,6 +247,10 @@ async fn install_lists_the_platform_and_the_download_sizes() {
         .find_map(|l| l.strip_prefix("Requirements: ")?.split_once('.'))
         .unwrap()
         .0;
+    let glibc = product("install.sh")
+        .lines()
+        .find_map(|l| l.strip_prefix("MIN_GLIBC=").map(str::to_owned))
+        .unwrap();
     let install = product("cli/src/backend/llamacpp/install.rs");
     let bytes: f64 = install
         .lines()
@@ -262,7 +266,7 @@ async fn install_lists_the_platform_and_the_download_sizes() {
         "/install",
         &[
             "id=\"requirements\"",
-            &format!("Platform: {platform}."),
+            &format!("Platform: {platform}, with glibc {glibc} or newer, and git."),
             &format!("{:.1} MB", bytes / 1e6),
             "~/.local/share/smart-commit",
             "~/.cache/smart-commit",

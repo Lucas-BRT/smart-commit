@@ -6,10 +6,16 @@
 curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ```
 
-Requirements: Linux on x86_64. The setup downloads the default model
-(1.1 GB) and the pinned llama.cpp build (31.6 MB); the model sizes are in
-[models](models.md). Models and llama.cpp go to `~/.local/share/smart-commit`,
-and the caches to `~/.cache/smart-commit`.
+Requirements: Linux on x86_64. glibc 2.35 or newer (Ubuntu 22.04+,
+Debian 12+, Fedora 36+; not Alpine or other musl systems), `git`, and about
+1.5 GB free in `~/.local/share` for the default model. The setup downloads the
+default model (1.1 GB) and the pinned llama.cpp build (31.6 MB); the model sizes
+are in [models](models.md). Models and llama.cpp go to
+`~/.local/share/smart-commit`, and the caches to `~/.cache/smart-commit`.
+Before downloading, the installer stops with a message that names the package
+to install when `git` is missing, and stops when the C library is older than
+2.35 or is not glibc; with low free disk space it only warns and goes on.
+`--update` only warns about a missing `git`, and `--uninstall` checks nothing.
 
 The installer downloads the latest release, checks it against the release's
 `SHA256SUMS` and installs it in `~/.local/bin` and `~/.local/share/smart-commit`,
@@ -32,14 +38,6 @@ outside the full screen, where `sudo` can ask for the password. Steps
 already done are listed but off. With `--yes`, or without a terminal, the
 same plan runs as text, asking before each step that uses `sudo` (with
 `--yes`, without asking; without a terminal, those steps are skipped).
-
-Requirements: x86_64 Linux with glibc 2.35 or newer (Ubuntu 22.04+,
-Debian 12+, Fedora 36+; not Alpine or other musl systems), `git`, and about
-1.5 GB free in `~/.local/share` for the default model. Before downloading,
-the installer stops with a message that names the package to install when
-`git` is missing, and stops when the C library is older than 2.35 or is not
-glibc; with low free disk space it only warns and goes on. `--update` only
-warns about a missing `git`, and `--uninstall` checks nothing.
 
 Installer options (after `bash -s --` when piping):
 

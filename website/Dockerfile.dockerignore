@@ -7,6 +7,7 @@
 !Cargo.lock
 !cli/Cargo.toml
 !cli/src
+!install.sh
 !docs/devices.md
 !docs/roadmap.md
 !docs/usage.md

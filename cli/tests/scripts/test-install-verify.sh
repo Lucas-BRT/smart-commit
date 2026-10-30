@@ -42,7 +42,7 @@ GH
 
 # Only the tools install.sh needs, so that gh can be absent.
 mkdir -p "$work/tools"
-for tool in bash curl tar gzip sha256sum mktemp rm mkdir cp install cat grep sed head dirname uname sort tr date id ls mv ln chmod find readlink basename touch; do
+for tool in bash curl tar gzip sha256sum mktemp rm mkdir cp install cat grep sed head dirname uname sort tr date id ls mv ln chmod find readlink basename touch git getconf df awk; do
     path=$(command -v "$tool" 2>/dev/null || true)
     [ -n "$path" ] && ln -sf "$path" "$work/tools/$tool"
 done
