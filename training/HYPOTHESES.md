@@ -1423,6 +1423,55 @@ favoured. The audit says which types are defensible, not which one the author me
 where the labels are noisy: changes to dependencies and configuration written as `feat`, `fix` or `perf`. A filter of
 the training labels that reads those is the untested form of cleaning them (B).
 
+### H18. A blind judge of the messages — as good as the authors' on average, less specific in a head-to-head
+
+**Why.** `word_f1` compares a message with what the author wrote, and authors write "fix typo" (H13, H17). To know where
+the room is in the descriptions, annotators who do not know who wrote a message say which of two is better.
+
+**Design** (`pair_judge.py`, the instructions in `pair-judge-prompt.md`, the data in `pair-judgments-h18.json` and the
+messages in `pair-candidates-h18.json`). The 100 commits of the audit set (H17). For each, the 1.5B v0.3's message is
+compared with the author's, with the 0.5B v0.3's and with the 1.5B v0.1's (`compare-v04c`); identical messages are a
+tie and are not asked (11 with the 0.5B, 32 with the v0.1, none with the authors). Two passes, A and B, by Opus
+subagents in 4 batches each, the messages as `X` and `Y` on a side chosen at random for each pass, no repository name,
+hash or origin. For each pair: the better one (or a tie), a score of 1 to 5 for each, and whether it states a detail
+the diff does not support. The criteria, in order: accuracy, specificity, type and scope, clarity. One batch of pass A
+returned 44 of its 63 comparisons while reporting 63; the merge check found it and a fresh agent judged the 19.
+
+**The judge.** The two passes give the same outcome in 90% of the 257 comparisons asked and in 94% of those both
+decided; the side does not decide (`X` wins 52% of the 479 decided comparisons). Both passes are the same model, so
+this is consistency, not truth, and they judge the same 100 commits: **the numbers below are 200 judgments per
+pairing, but the sample is 100 commits from 8 repositories**.
+
+| 1.5B v0.3 against | wins / ties / losses | net [95%] | score, its and the other's | states what the diff lacks, its and the other's |
+|---|---|---|---|---|
+| the author | 84 / 3 / 113 | −0.14 [−0.28, −0.01] | 3.10 and 3.15 | 0.21 and 0.23 |
+| the 1.5B v0.1 | 67 / 86 / 47 | +0.10 [−0.01, +0.21] | 3.04 and 2.77 | 0.22 and 0.35 |
+| the 0.5B v0.3 | 82 / 32 / 86 | −0.02 [−0.14, +0.10] | 3.13 and 3.03 | 0.19 and 0.14 |
+
+- **Against the author, the author is preferred more often** (57% of the decided: pass A 41 wins to 57 losses, pass B
+  43 to 56), **but the scores are the same** (3.10 and 3.15). The model's scores gather in 3 and 4 (1: 10, 2: 45, 3: 76,
+  4: 52, 5: 17), the authors' spread (1: 18, 2: 40, 3: 62, 4: 53, 5: 27): the authors write both the best and the worst
+  messages. In 100 commits the difference is suggestive, not established (per pass, about 42 wins to 57 losses).
+- **Where it loses**: `feat` (21 wins to 36 losses; `fix` 29 to 35, `chore` 12 to 20, `docs` 12 to 12) and in
+  `deeppavlov/dream` (7 to 17), `dokku` (17 to 23) and `chakra-ui-vue` (9 to 15); it wins or ties in `zwavejs2mqtt`
+  (20 to 16) and `vben-admin` (10 to 9). The judges' reasons in the losses are alike: the author's message **names the
+  mechanism** ("deepcopy", "the safe `.get` access", "stopInclusion/Exclusion") where the model's is generic. In the wins
+  the author's message states something the diff does not show (a "revert", a "previewer title").
+- **Both state what the diff lacks at the same rate** (the model's 0.21, the authors' 0.23: 26 cases only the model, 30
+  only the author, 16 both of the 200): the diff does not hold the author's intent.
+- **The judge puts the DPO model above the v0.1** (59% of the decided, score 3.04 against 2.77, 22% against 35%
+  stating what the diff lacks), as the failures DPO removed (H12) would say; the interval just touches 0.
+- **The 0.5B v0.3 and the 1.5B v0.3 are not told apart** (net −0.02, scores 3.13 and 3.03): in the judged quality of this
+  sample the larger model buys nothing, which agrees with the cascade of H15 (the 0.5B answers three of four commits).
+
+**Limits.** 100 commits, 8 repositories, one judge model, diffs cut at 5,000 characters and no intent. A judge that
+reads like the models may favour them, and still it prefers the authors. The mean score is 3 for everyone: by this
+rubric typical commit messages, the authors' too, are "acceptable but vague".
+
+**Use.** The room in the descriptions is specificity, naming what the change does, which is what the names line of H16
+tried to give; H14 and H16 were judged only by `word_f1`, which does not see it. The next test is to put those arms
+before this judge.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
