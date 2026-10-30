@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use smart_commit::models::sha256_hex;
+
 use super::*;
 
 /// Inputs, meta and prompts of `count` cases, a number in each line.
@@ -173,7 +175,7 @@ fn an_sft_run_has_the_precision_flags_of_the_t4_and_its_own_arguments() {
     assert_eq!(first["base"]["repo"], "Qwen/Qwen2.5-Coder-0.5B-Instruct");
     assert_eq!(second["base"]["repo"], "Qwen/Qwen2.5-Coder-1.5B-Instruct");
     assert_eq!(first["val"], "val.examples.jsonl");
-    assert_eq!(first["sha256"], sha256_of(b"{}\n"));
+    assert_eq!(first["sha256"], sha256_hex(b"{}\n"));
     assert!(out.join("val.examples.jsonl").exists() && out.join("train.py").exists());
     // Without validation examples, no val; a base the bundle does not know is refused.
     let none = dir.path().join("n");
@@ -226,13 +228,13 @@ fn a_dpo_run_carries_what_it_reads_and_nothing_else() {
         json!(["--dtype", "fp16", "--beta", "0.3", "--lr", "1e-5"])
     );
     assert_eq!(runs["runs"][1]["args"], json!(["--dtype", "fp16"]));
-    assert_eq!(runs["runs"][0]["sft_sha256"], sha256_of(b"weights"));
+    assert_eq!(runs["runs"][0]["sft_sha256"], sha256_hex(b"weights"));
     assert_eq!(
         std::fs::read_to_string(out.join("b1.train.jsonl")).unwrap(),
         "{\"chosen\": \"a\"}\n"
     );
     let mut kept: Vec<String> =
-        std::fs::read_dir(out.join(format!("sft-{}", &sha256_of(b"weights")[..12])))
+        std::fs::read_dir(out.join(format!("sft-{}", &sha256_hex(b"weights")[..12])))
             .unwrap()
             .map(|e| e.unwrap().file_name().into_string().unwrap())
             .collect();
@@ -298,6 +300,6 @@ fn two_sft_adapters_with_the_same_directory_name_do_not_overwrite_each_other() {
         )
         .unwrap();
         assert_eq!(kept, weights.as_bytes());
-        assert_eq!(run["sft_sha256"], sha256_of(weights.as_bytes()));
+        assert_eq!(run["sft_sha256"], sha256_hex(weights.as_bytes()));
     }
 }

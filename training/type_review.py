@@ -37,11 +37,12 @@ reasonably have used the model's type), `N` (the type misdescribes the change) o
 import collections
 import json
 import random
-import re
 import sys
 from pathlib import Path
 
-TYPE = re.compile(r"^([A-Za-z]+)(\([^)]*\))?!?:")
+sys.path.insert(0, str(Path(__file__).parent))
+from common import bootstrap, bounds, type_of  # noqa: E402
+
 GROUPS = [{"chore", "build", "ci"}, {"refactor", "perf", "style"}, {"test", "tests"}]
 PLAUSIBLE = 0.15
 BOOTSTRAPS = 2000
@@ -49,11 +50,6 @@ CONTROL_DRAWS = 200
 SHEET_FILES = 4
 SHEET_HUNK = 350
 SEED = 7
-
-
-def type_of(subject: str | None) -> str | None:
-    match = TYPE.match(subject or "")
-    return match.group(1).lower() if match else None
 
 
 def group_of(kind: str | None, behaviour: bool = False) -> str | None:
@@ -73,9 +69,8 @@ def interval(flags: list[bool]) -> tuple[float, float, float]:
     n = len(flags)
     if n == 0:
         return 0.0, 0.0, 0.0
-    rng = random.Random(SEED)
-    shares = sorted(sum(flags[rng.randrange(n)] for _ in range(n)) / n for _ in range(BOOTSTRAPS))
-    return sum(flags) / n, shares[int(0.025 * BOOTSTRAPS)], shares[int(0.975 * BOOTSTRAPS) - 1]
+    lo, hi = bounds(bootstrap(flags, lambda sample: sum(sample) / n, SEED, BOOTSTRAPS))
+    return sum(flags) / n, lo, hi
 
 
 def shift(predicted: list[str | None], real: list[str]) -> float:

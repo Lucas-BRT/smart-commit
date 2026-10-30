@@ -18,15 +18,9 @@ use std::process::Command;
 
 use anyhow::{Context as _, Result, bail, ensure};
 use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
 
 use crate::pyjson;
-
-fn lines_of(path: &Path) -> Result<Vec<String>> {
-    let text =
-        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
-    Ok(text.lines().map(str::to_owned).collect())
-}
+use crate::pytext::read_lines as lines_of;
 
 /// Writes `DIR/examples.jsonl` from `DIR/inputs.jsonl` and `DIR/meta.jsonl`;
 /// how many examples.
@@ -100,10 +94,7 @@ pub fn nest(src: &Path, prefix: &str, sizes: &[usize]) -> Result<Vec<String>> {
         let hash = example["hash"]
             .as_str()
             .context("an example without a hash")?;
-        let rank: String = Sha256::digest(format!("nest:{hash}").as_bytes())
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect();
+        let rank = smart_commit::models::sha256_hex(format!("nest:{hash}").as_bytes());
         ranked.push((rank, line, example["set"] == "conventional"));
     }
     ranked.sort_by(|a, b| a.0.cmp(&b.0));

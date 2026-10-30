@@ -111,16 +111,7 @@ pub fn list_devices(server: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use sha2::{Digest, Sha256};
-
     use super::*;
-
-    fn hex(bytes: &[u8]) -> String {
-        Sha256::digest(bytes)
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect()
-    }
 
     /// A release archive holding a `llama-server`, and its hash.
     fn archive(dir: &Path, with_server: bool) -> (PathBuf, &'static str) {
@@ -142,7 +133,7 @@ mod tests {
             .status()
             .unwrap();
         assert!(status.success());
-        let sha = hex(&std::fs::read(&tarball).unwrap());
+        let sha = crate::models::sha256_hex(&std::fs::read(&tarball).unwrap());
         (tarball, Box::leak(sha.into_boxed_str()))
     }
 
@@ -235,7 +226,7 @@ mod tests {
         let mut bytes = std::fs::read(&tarball).unwrap();
         bytes.truncate(bytes.len() - 200_000);
         std::fs::write(&tarball, &bytes).unwrap();
-        let sha: &'static str = Box::leak(hex(&bytes).into_boxed_str());
+        let sha: &'static str = Box::leak(crate::models::sha256_hex(&bytes).into_boxed_str());
 
         let target = dir.path().join("llama.cpp");
         let err = install(&target, &url(&tarball), sha, |_| {}).unwrap_err();

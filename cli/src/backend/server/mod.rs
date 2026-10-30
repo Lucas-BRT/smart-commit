@@ -39,6 +39,7 @@ use sha2::{Digest, Sha256};
 use crate::backend::BackendError;
 use crate::backend::llamacpp::{self, LlamaCppBackend, LlamaCppOptions};
 use crate::memory::{self, Memory, Refusal};
+use crate::models;
 
 /// The hidden subcommand that runs the supervisor.
 pub const SUBCOMMAND: &str = "keep-server";
@@ -111,10 +112,7 @@ pub fn key(options: &LlamaCppOptions) -> String {
     for file in [&options.model, &options.server] {
         hash.update(identity(file).as_bytes());
     }
-    hash.finalize()[..8]
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    models::hex(&hash.finalize()[..8])
 }
 
 fn identity(file: &Path) -> String {

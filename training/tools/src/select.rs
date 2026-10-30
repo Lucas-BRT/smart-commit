@@ -12,12 +12,12 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context as _, Result, bail};
+use anyhow::{Result, bail};
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 
 use crate::build_inputs::keep_target;
 use crate::pyjson;
+use crate::pytext::read_lines as lines_of;
 use crate::score::{evidence, unsupported};
 
 pub struct Options {
@@ -60,21 +60,8 @@ impl<K: PartialEq + Clone> Counter<K> {
     }
 }
 
-fn lines_of(path: &Path) -> Result<Vec<String>> {
-    let text =
-        std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
-    let mut lines: Vec<String> = text.split('\n').map(str::to_owned).collect();
-    if lines.last().is_some_and(String::is_empty) {
-        lines.pop();
-    }
-    Ok(lines)
-}
-
 fn rank(hash: &str) -> String {
-    Sha256::digest(hash.as_bytes())
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    smart_commit::models::sha256_hex(hash.as_bytes())
 }
 
 /// The values of `key` in the `meta.jsonl` of each directory.

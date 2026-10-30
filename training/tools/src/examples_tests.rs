@@ -1,6 +1,7 @@
 use std::os::unix::fs::PermissionsExt as _;
 
 use serde_json::json;
+use sha2::{Digest, Sha256};
 
 use super::*;
 
@@ -218,12 +219,7 @@ fn each_size_holds_every_example_of_the_smaller_ones_whatever_the_order_of_the_f
 fn the_ranking_is_by_the_salted_hash_not_the_plain_one_and_a_size_too_big_is_refused() {
     let dir = tempfile::TempDir::new().unwrap();
     // Find two hashes whose order the salt reverses: the point of the salt.
-    let hex = |text: String| -> String {
-        Sha256::digest(text.as_bytes())
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect()
-    };
+    let hex = |text: String| smart_commit::models::sha256_hex(text.as_bytes());
     let (mut a, mut b) = (String::new(), String::new());
     for n in 0..200 {
         let (x, y) = (format!("c{n}"), format!("c{}", n + 1));

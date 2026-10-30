@@ -267,7 +267,7 @@ pub fn model_identity(model_dir: &Path) -> Result<String, BackendError> {
     match std::fs::read(model_dir.join("MANIFEST.sha256")) {
         Ok(manifest) => {
             let digest = Sha256::digest(&manifest);
-            Ok(digest[..8].iter().map(|b| format!("{b:02x}")).collect())
+            Ok(crate::models::hex(&digest[..8]))
         }
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok("unverified".to_owned()),
         Err(err) => Err(BackendError::Unavailable(format!(

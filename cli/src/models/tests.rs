@@ -297,3 +297,26 @@ fn local_models_say_what_they_are() {
     assert_eq!(ov.size(), None);
     assert_eq!(ov.devices(), "npu, intel-gpu and openvino-cpu");
 }
+
+#[test]
+fn hex_is_lowercase_and_keeps_leading_zeros() {
+    assert_eq!(hex(&[]), "");
+    assert_eq!(hex(&[0x00, 0x0a, 0xff]), "000aff");
+}
+
+#[test]
+fn sha256_hex_matches_the_known_digest_and_the_file_one() {
+    // The SHA-256 of the empty input, and of "abc" (FIPS 180-2).
+    assert_eq!(
+        sha256_hex(b""),
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    );
+    assert_eq!(
+        sha256_hex(b"abc"),
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("f");
+    std::fs::write(&file, b"abc").unwrap();
+    assert_eq!(sha256_file(&file).unwrap(), sha256_hex(b"abc"));
+}

@@ -24,14 +24,13 @@ Conventional commit, in order). Standard library only.
 
 import collections
 import json
-import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+from common import type_of as common_type_of  # noqa: E402
 from type_confidence import score  # noqa: E402
 
-TYPE = re.compile(r"^([A-Za-z]+)(\([^)]*\))?!?:")
 EPS = 1e-3
 LAMBDAS = [0.0, 0.25, 0.5, 0.75, 1.0, 1.5]
 WEIGHTS = [0.0, 0.25, 0.5, 0.75, 1.0, 1.5]
@@ -39,8 +38,7 @@ TAUS = [0.0, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.01]
 
 
 def type_of(subject: str | None) -> str | None:
-    match = TYPE.match(subject or "")
-    kind = match.group(1).lower() if match else None
+    kind = common_type_of(subject)
     return "test" if kind == "tests" else kind
 
 

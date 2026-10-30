@@ -34,12 +34,14 @@ and asks for one token of each Conventional commit's first prompt. Standard libr
 import json
 import math
 import os
-import random
 import subprocess
 import sys
 import time
 import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from common import bootstrap, bounds  # noqa: E402
 
 TYPES = ["feat", "fix", "docs", "chore", "refactor", "test", "perf", "build", "ci", "style", "revert"]
 TOP_LOGPROBS = 12
@@ -139,15 +141,13 @@ def score(cases: list[dict]) -> dict:
 
 def interval(cases: list[dict], measure: str) -> tuple[float, float]:
     """The 95% bootstrap interval of `ece` or `auroc` (resampling the commits)."""
-    rng = random.Random(SEED)
-    values = []
-    for _ in range(BOOTSTRAPS):
-        sample = [cases[rng.randrange(len(cases))] for _ in cases]
+
+    def measured(sample: list[dict]) -> float:
         conf = [c["dist"][0][1] if c["dist"] else 0.0 for c in sample]
         right = [bool(c["dist"]) and c["dist"][0][0] == c["real"] for c in sample]
-        values.append(ece(conf, right) if measure == "ece" else auroc(conf, right))
-    values.sort()
-    return values[int(0.025 * BOOTSTRAPS)], values[int(0.975 * BOOTSTRAPS) - 1]
+        return ece(conf, right) if measure == "ece" else auroc(conf, right)
+
+    return bounds(bootstrap(cases, measured, SEED, BOOTSTRAPS))
 
 
 def listed_types(system: str) -> list[str]:
