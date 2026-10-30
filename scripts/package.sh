@@ -10,8 +10,9 @@
 # Needs Docker. SMART_COMMIT_PACKAGE_HOST=1 builds on the host instead: the
 # result is then only reproducible on machines with the same C toolchain.
 #
-# Writes OUT_DIR/smart-commit-x86_64-unknown-linux-gnu.tar.gz and
-# OUT_DIR/SHA256SUMS.
+# Writes OUT_DIR/smart-commit-x86_64-unknown-linux-gnu.tar.gz, a copy of
+# install.sh (the installer of this very commit, a release asset of its own)
+# and OUT_DIR/SHA256SUMS, which lists both.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -95,6 +96,9 @@ else
         smart-commit-build sh -c "$PACK && chown \$HOST_UID:\$HOST_GID /out/\$3.tar.gz" \
         pack /work /out "$NAME"
 fi
-(cd "$OUT" && sha256sum "$NAME.tar.gz" >SHA256SUMS)
+# The installer is published beside the tarball, not in it (it is in the
+# tarball too, for `update`): the script and the binary of a release match.
+install -m 755 install.sh "$OUT/install.sh"
+(cd "$OUT" && sha256sum "$NAME.tar.gz" install.sh >SHA256SUMS)
 echo "smart-commit $VERSION: $OUT/$NAME.tar.gz"
 cat "$OUT/SHA256SUMS"

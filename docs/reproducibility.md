@@ -28,6 +28,11 @@ pinned and how each guarantee is checked.
   With the archive made in the container too, a developer machine
   reproduces the published v0.3.0 tarball exactly. CI packages every commit
   twice and prints the hash (`cli/tests/scripts/test-install.sh`).
+- **The installer is part of the release.** `scripts/package.sh` also writes
+  the commit's `install.sh` to the output directory, beside the tarball, and
+  `SHA256SUMS` lists both. The release workflow uploads everything in
+  `dist/`, so a release carries the installer that was tested with its
+  binary (the tarball has a copy too, which `smart-commit update` runs).
 - `SMART_COMMIT_PACKAGE_HOST=1` builds on the host, without Docker, at the
   cost of cross-machine reproducibility.
 - **CI pins what it runs on and with.** Every job names its runner image

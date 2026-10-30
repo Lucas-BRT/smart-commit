@@ -30,7 +30,8 @@ release() {
     echo licence >"$stage/share/doc/smart-commit/LICENSE"
     mkdir -p "$work/releases/latest/download"
     tar -C "$work/stage" -czf "$work/releases/latest/download/$ASSET" smart-commit-x86_64-unknown-linux-gnu
-    (cd "$work/releases/latest/download" && sha256sum "$ASSET" >SHA256SUMS)
+    cp "$ROOT/install.sh" "$work/releases/latest/download/install.sh"
+    (cd "$work/releases/latest/download" && sha256sum "$ASSET" install.sh >SHA256SUMS)
 }
 
 home=$work/home
