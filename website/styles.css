@@ -47,16 +47,16 @@
    file is installed at the project root, so `./src` is the crate's source. */
 @source "./src/**/*.rs";
 
-/* The site is dark only, like GitHub's default theme. */
+/* The site has one theme: dark, with one violet accent. */
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
 /* Expose the tokens as Tailwind utilities (`bg-background`, `text-primary`,
    `border-border`, ...). The indirection through plain variables on `:root`
    and `.dark` is what lets the values swap when the color scheme changes. */
 @theme inline {
-  --font-sans: var(--sans);
-  --font-serif: var(--serif);
-  --font-mono: var(--mono);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-serif: ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -70,6 +70,10 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
+  --color-terminal: var(--terminal);
+  --color-terminal-foreground: var(--terminal-foreground);
+  --color-terminal-dim: var(--terminal-dim);
+  --color-terminal-border: var(--terminal-border);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -83,29 +87,41 @@
 }
 
 :root {
-  --background: #0e100d;
-  --foreground: #ece7da;
-  --card: #181c15;
-  --card-foreground: #ece7da;
-  --popover: #181c15;
-  --popover-foreground: #ece7da;
-  --muted-foreground: #aaa492;
-  --primary: #f08c5e;
-  --primary-foreground: #1d1b17;
+  --background: #0c0b10;
+  --foreground: #efecf5;
+  --card: #14121b;
+  --card-foreground: #efecf5;
+  --popover: #14121b;
+  --popover-foreground: #efecf5;
+  --muted-foreground: #9b96a8;
+  --primary: #a371f7;
+  --primary-foreground: #150a26;
   --destructive: oklch(0.66 0.18 25);
   --destructive-foreground: oklch(0.14 0.02 25);
-  --border: #2d3328;
-  --ring: #8fb7ff;
-  --sidebar: #0e100d;
-  --sidebar-foreground: #ece7da;
-  --sidebar-primary: #f08c5e;
-  --sidebar-primary-foreground: #1d1b17;
-  --sidebar-accent: #2f2118;
-  --sidebar-accent-foreground: #ece7da;
-  --sidebar-border: #2d3328;
-  --sidebar-ring: #8fb7ff;
+  --border: #26222f;
+  --ring: #a371f7;
+  --sidebar: #0c0b10;
+  --sidebar-foreground: #efecf5;
+  --sidebar-primary: #a371f7;
+  --sidebar-primary-foreground: #150a26;
+  --sidebar-accent: #1b1824;
+  --sidebar-accent-foreground: #efecf5;
+  --sidebar-border: #26222f;
+  --sidebar-ring: #a371f7;
   --shadow-xs: 0 0 #0000;
   --shadow-sm: 0 0 #0000;
+
+  /* The terminal: the darkest surface of the page. */
+  --terminal: #08070c;
+  --terminal-foreground: #ebe8f2;
+  --terminal-dim: #8b869a;
+  --terminal-border: #26222f;
+}
+
+
+/* The display face (served by the site, see assets/style.css), as `font-display`. */
+@theme static {
+  --font-display: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 @layer base {

@@ -73,10 +73,10 @@ impl ButtonSize {
     /// Classes for the button dimensions. Text size stays the same across sizes.
     fn classes(self) -> StaticClass {
         match self {
-            Self::Sm => class!("h-8 gap-1.5 rounded-md px-3 text-sm"),
-            Self::Md => class!("h-9 gap-2 rounded-lg px-4 text-sm"),
-            Self::Lg => class!("h-13 gap-2 rounded-lg px-7 text-base"),
-            Self::Icon => class!("size-9 rounded-lg text-sm"),
+            Self::Sm => class!("h-8 gap-1.5 rounded-md px-3"),
+            Self::Md => class!("h-9 gap-2 rounded-lg px-4"),
+            Self::Lg => class!("h-10 gap-2 rounded-lg px-5"),
+            Self::Icon => class!("size-9 rounded-lg"),
         }
     }
 }
@@ -85,7 +85,7 @@ impl ButtonSize {
 /// every variant.
 const BASE: StaticClass = class!(
     "inline-flex shrink-0 items-center justify-center border",
-    "font-medium whitespace-nowrap transition-colors outline-none select-none",
+    "text-sm font-medium whitespace-nowrap transition-colors outline-none select-none",
     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
     "focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
 );
