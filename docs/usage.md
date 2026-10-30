@@ -330,6 +330,46 @@ smart-commit config init                                       # a file with eve
 
 Every key is described in [configuration](configuration.md).
 
+## Diagnose an installation
+
+```bash
+smart-commit doctor             # check this installation, offline
+smart-commit doctor --thorough  # also hash the model file (minutes for a big model)
+```
+
+One line per finding, tagged `ok`, `warn` or `fail`, with the fix after
+` - ` when there is one. The exit code is 1 if anything failed and 0 otherwise:
+warnings do not change it. It checks, in this order:
+
+| Check | Looks at |
+|---|---|
+| `path` | the directory of the running binary is on `PATH` |
+| `git` | git runs; a version older than 2.20 is a warning |
+| `config` | the global and the repository files read fine; retired keys and old names of values are warnings |
+| `model` | the model files of the device in use exist: for a recommended GGUF, its size and `.sha256` record are the pinned ones (`--thorough` hashes it); for OpenVINO, the exported directory |
+| `llama.cpp` | `llama-server` is installed, and is the build this release pins |
+| `device` | the device in use (`model.device`, or for `auto` the fastest of the last benchmark), that this machine has it, and that a benchmark exists |
+| `server` | the models kept loaded and how long each has been idle; a directory whose server no longer answers is a warning |
+| `hook` | inside a repository: the `prepare-commit-msg` hook is installed, runs this binary and is not ignored by `core.hooksPath` |
+
+A run on an installed machine, inside a repository (paths shortened):
+
+```text
+ok    path       /home/me/.local/bin is on PATH
+ok    git        git 2.43
+ok    config     no files: the defaults apply
+ok    model      qwen2.5-coder-1.5b-instruct-q4_k_m.gguf: size and record match (--thorough hashes the file)
+ok    llama.cpp  /home/me/.local/share/smart-commit/llama.cpp/llama-b11381/llama-server
+ok    device     cpu (auto: no benchmark, the default order)
+warn  device     no benchmark yet - run `smart-commit bench`
+ok    server     none running: the next commit starts one
+warn  hook       not installed in this repository - `smart-commit hook install`
+```
+
+On a machine where the model was never downloaded, the `model` line is
+`fail` (`no GGUF model at … - `smart-commit setup` downloads it`) and the
+command exits with 1.
+
 ## Report a bad message
 
 ```bash
@@ -353,6 +393,7 @@ it, the case can become a test fixture.
 | `model.device = gpu … is the old name of intel-gpu` | `smart-commit device use intel-gpu` (or `auto`) |
 | `cannot load the model on the NPU` | `~/.local/share/smart-commit/scripts/check-npu.sh`; after being added to the `render` group, log out and back in |
 | NVIDIA GPU `has no driver bound` | install a driver (`sudo ubuntu-drivers install`) or use nouveau, then `smart-commit setup` |
+| anything else, or you do not know what is wrong | `smart-commit doctor` checks the installation and says how to fix each problem |
 | the hook does nothing | it only acts on `git commit` without `-m`; `smart-commit hook install` reinstalls it |
 
 ## Uninstall

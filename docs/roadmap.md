@@ -46,6 +46,9 @@
   whitespace-only and comment-only changes), on by default.
 - `smart-commit update` and `smart-commit uninstall`, and an opt-in notice of
   a newer release (`update.check`, off by default).
+- `smart-commit doctor`: one offline command that checks the binary on
+  `PATH`, git, the settings files, the model, llama.cpp, the device, the model
+  kept loaded and the hook, and says how to fix each problem.
 - The binary in modules (`cli/`, and the library's `backend/`, `diff/`,
   `models/`...), with `anyhow` and `tracing`, and `-v` for debug output.
 - The setup, the hardware inventory and the llama.cpp install in the binary

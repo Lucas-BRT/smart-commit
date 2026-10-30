@@ -11,6 +11,7 @@ use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 mod args;
 mod benchmark;
 mod configure;
+mod doctor;
 mod git_hook;
 mod guided_setup;
 mod inspect;
@@ -108,6 +109,13 @@ enum Command {
     },
     /// The CPU, GPUs and NPU of this machine, and the devices each gives.
     Hardware,
+    /// Check this installation (binary, git, settings, model, llama.cpp,
+    /// device, kept model, hook) and say how to fix what is wrong; offline.
+    Doctor {
+        /// Also hash the model file (slow for a model of several GB).
+        #[arg(long)]
+        thorough: bool,
+    },
     /// List the recommended models, or switch to another one or to a file.
     Model {
         #[command(subcommand)]
@@ -222,6 +230,13 @@ pub fn run() -> ExitCode {
         Some(Command::Config(command)) => configure::run(command),
         Some(Command::Bench { json }) => benchmark::run_bench(json),
         Some(Command::Device { command }) => benchmark::run_device(command),
+        Some(Command::Doctor { thorough }) => {
+            return if doctor::run(thorough) {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            };
+        }
         Some(Command::Model { command }) => model::run(command),
         Some(Command::Hardware) => {
             inspect::hardware();
