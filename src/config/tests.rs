@@ -412,6 +412,47 @@ fn set_aside_invalid_leaves_other_errors_and_missing_files() {
 }
 
 #[test]
+fn a_write_that_fails_leaves_the_file_as_it_was() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let path = dir.path().join("config.toml");
+    let origin = Origin::Global(path.clone());
+    set_in_file(&path, &origin, "model.device", "cpu", None).unwrap();
+    let before = std::fs::read_to_string(&path).unwrap();
+    // The place the new text is written first cannot be a file.
+    std::fs::create_dir(dir.path().join("config.toml.tmp")).unwrap();
+    assert!(set_in_file(&path, &origin, "style.history_depth", "12", None).is_err());
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), before);
+}
+
+#[test]
+fn a_saved_file_leaves_nothing_beside_it() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let path = dir.path().join("config.toml");
+    let origin = Origin::Global(path.clone());
+    set_in_file(&path, &origin, "model.device", "cpu", None).unwrap();
+    set_in_file(&path, &origin, "style.history_depth", "12", None).unwrap();
+    let names: Vec<_> = std::fs::read_dir(dir.path())
+        .unwrap()
+        .map(|e| e.unwrap().file_name())
+        .collect();
+    assert_eq!(names, ["config.toml"]);
+}
+
+#[test]
+fn a_symlinked_config_is_written_through_not_replaced() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let real = dir.path().join("dotfiles/config.toml");
+    std::fs::create_dir_all(real.parent().unwrap()).unwrap();
+    std::fs::write(&real, "").unwrap();
+    let link = dir.path().join("config.toml");
+    std::os::unix::fs::symlink(&real, &link).unwrap();
+    let origin = Origin::Global(link.clone());
+    set_in_file(&link, &origin, "model.device", "cpu", None).unwrap();
+    assert!(std::fs::symlink_metadata(&link).unwrap().is_symlink());
+    assert!(std::fs::read_to_string(&real).unwrap().contains("device"));
+}
+
+#[test]
 fn set_uncomments_the_template_line() {
     let dir = tempfile::TempDir::new().unwrap();
     let path = dir.path().join("config.toml");
