@@ -14,7 +14,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 
 use crate::build_inputs::keep_target;
 use crate::pyjson;
@@ -71,10 +70,7 @@ fn lines_of(path: &Path) -> Result<Vec<String>> {
 }
 
 fn rank(hash: &str) -> String {
-    Sha256::digest(hash.as_bytes())
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    smart_commit::models::sha256_hex(hash.as_bytes())
 }
 
 /// The values of `key` in the `meta.jsonl` of each directory.

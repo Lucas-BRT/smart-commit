@@ -12,7 +12,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail, ensure};
 use serde_json::{Map, Value, json};
-use sha2::{Digest, Sha256};
 
 /// Kaggle's username, the owner of the datasets.
 const USER: &str = "lucasbrt";
@@ -65,17 +64,9 @@ pub fn training_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("..")
 }
 
-fn sha256_of(bytes: &[u8]) -> String {
-    Sha256::digest(bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
-}
-
 fn sha256_file(path: &Path) -> Result<String> {
-    Ok(sha256_of(&std::fs::read(path).with_context(|| {
-        format!("cannot read {}", path.display())
-    })?))
+    smart_commit::models::sha256_file(path)
+        .with_context(|| format!("cannot read {}", path.display()))
 }
 
 fn copy(from: &Path, to: &Path) -> Result<()> {

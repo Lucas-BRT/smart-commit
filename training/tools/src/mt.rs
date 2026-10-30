@@ -120,7 +120,5 @@ mod tests {
         assert_eq!(Mt::new(7).randbytes(3).len(), 3);
     }
 
-    fn hex(bytes: &[u8]) -> String {
-        bytes.iter().map(|b| format!("{b:02x}")).collect()
-    }
+    use smart_commit::models::hex;
 }
