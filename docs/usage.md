@@ -254,6 +254,7 @@ it, the case can become a test fixture.
 
 | Message | What to do |
 |---|---|
+| `smart-commit is not set up yet` | Nothing is installed yet (no model, no llama.cpp): `smart-commit setup`. `-v` shows what each device lacks |
 | `no device could run the model` | `smart-commit setup`; the message lists what each device lacks |
 | `no model in …`, `no GGUF model at …`, `no llama-server at …` | `smart-commit setup` downloads them; `smart-commit model use <id>` downloads a model |
 | `… has no OpenVINO version, which npu needs` | the model runs on `vulkan` and `cpu` only; `smart-commit model use qwen2.5-coder-1.5b` for the NPU |

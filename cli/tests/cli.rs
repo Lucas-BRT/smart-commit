@@ -772,30 +772,37 @@ fn on_machine(machine: &FakeMachine, args: &[&str], dir: &Path) -> Output {
 }
 
 #[test]
-fn auto_without_any_model_lists_every_device() {
+fn auto_without_any_model_says_once_that_it_is_not_set_up() {
     let repo = staged_repo();
     let machine = FakeMachine::all_intel();
     let output = on_machine(&machine, &[], repo.path());
     assert_eq!(output.status.code(), Some(1));
-    let env = |name: &str| (name == "XDG_DATA_HOME").then(|| common::DATA_HOME.to_owned());
-    let ir = smart_commit::paths::default_model_dir(env)
-        .unwrap()
-        .display()
-        .to_string();
-    let gguf = smart_commit::paths::default_gguf_file(env)
-        .unwrap()
-        .display()
-        .to_string();
-    let no_ir = format!("backend unavailable: no model in {ir}; `smart-commit setup` downloads it");
-    let no_gguf =
-        format!("backend unavailable: no GGUF model at {gguf}; `smart-commit setup` downloads it");
     assert_eq!(
         stderr(&output),
-        format!(
-            "error: no device could run the model:\n  intel-gpu: {no_ir}\n  npu: {no_ir}\n  \
-             vulkan: {no_gguf}\n  cpu: {no_gguf}\n  openvino-cpu: {no_ir}\n"
-        )
+        "error: smart-commit is not set up yet: no model or llama.cpp found.\n\
+         Run `smart-commit setup` to download them and pick the fastest device.\n"
     );
+}
+
+#[test]
+fn verbose_shows_why_each_device_was_skipped() {
+    let repo = staged_repo();
+    let machine = FakeMachine::all_intel();
+    let output = on_machine(&machine, &["-v"], repo.path());
+    assert_eq!(output.status.code(), Some(1));
+    let err = stderr(&output);
+    assert!(
+        err.contains("error: smart-commit is not set up yet"),
+        "{err}"
+    );
+    for device in ["intel-gpu", "npu", "vulkan", "cpu", "openvino-cpu"] {
+        assert!(
+            err.lines().any(|l| l.starts_with("debug:")
+                && l.contains(&format!("target={device} "))
+                && l.contains("`smart-commit setup`")),
+            "{device}: {err}"
+        );
+    }
 }
 
 #[test]
@@ -841,12 +848,13 @@ fn model_dir_can_be_given() {
     let repo = staged_repo();
     let empty = tempfile::TempDir::new().unwrap();
     let dir = empty.path().to_str().unwrap();
-    for (args, env) in [
+    for (mut args, env) in [
         (vec!["--model-dir", dir], vec![]),
         (vec![], vec![("SMART_COMMIT_MODEL_DIR", dir)]),
     ] {
         let machine = FakeMachine::all_intel();
         let mut env = env;
+        args.push("-v");
         let pinned = machine.env();
         env.extend(pinned.iter().map(|(name, value)| (*name, value.as_str())));
         let output = smart_commit_with(&args, repo.path(), &env);
@@ -876,7 +884,11 @@ fn replay_with_model_needs_the_model() {
         repo.path(),
     );
     let machine = FakeMachine::all_intel();
-    let output = on_machine(&machine, &["replay", path, "--with-model"], repo.path());
+    let output = on_machine(
+        &machine,
+        &["replay", path, "--with-model", "-v"],
+        repo.path(),
+    );
     assert_eq!(output.status.code(), Some(1));
     assert!(
         stderr(&output).contains("no model in"),

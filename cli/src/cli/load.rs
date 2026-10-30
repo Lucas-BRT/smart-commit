@@ -136,10 +136,12 @@ fn keep_loaded(settings: &Settings, options: &LlamaCppOptions) -> Option<LlamaCp
 /// and how to free it.
 fn with_kept_model_hint(err: BackendError) -> BackendError {
     let kept = paths::runtime_dir(env).is_some_and(|runtime| !server::status(&runtime).is_empty());
+    let hint = |text: String| {
+        format!("{text}; a model kept loaded holds memory too: `smart-commit server stop` frees it")
+    };
     match err {
-        BackendError::Unavailable(text) if kept => BackendError::Unavailable(format!(
-            "{text}; a model kept loaded holds memory too: `smart-commit server stop` frees it"
-        )),
+        BackendError::Unavailable(text) if kept => BackendError::Unavailable(hint(text)),
+        BackendError::NotInstalled(text) if kept => BackendError::NotInstalled(hint(text)),
         other => other,
     }
 }

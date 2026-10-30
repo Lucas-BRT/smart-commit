@@ -161,7 +161,7 @@ fn failures_warn_but_never_block_the_commit() {
     let output = repo.git_with(&["commit", "--quiet"], &env);
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(
-        stderr(&output).contains("smart-commit: no device could run the model:"),
+        stderr(&output).contains("smart-commit: smart-commit is not set up yet"),
         "{}",
         stderr(&output)
     );
