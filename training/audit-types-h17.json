@@ -1,0 +1,2544 @@
+[
+ {
+  "id": "c186",
+  "line": 1,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "5c15a4fa0c3e21284990b550eb032501a3916b15",
+  "real_subject": "fix: change default hass birth/will topic",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Changes default Hass birth/will topic to homeassistant/status and documents it; behaviour change aligning with Hass defaults."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Changes Hass birth/will topic default to homeassistant/status matching Hass 0.113, with README notes."
+  }
+ },
+ {
+  "id": "c126",
+  "line": 4,
+  "repo": "daybrush/moveable",
+  "hash": "31484cd1ecf9ae7ef27da62afd1b3945037b210b",
+  "real_subject": "feat: support multi state",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Only package.json and lock file of a package changed; dependency or version maintenance."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Package manifest and lockfile updates only."
+  }
+ },
+ {
+  "id": "c678",
+  "line": 6,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "46107eec193549531ac574eca468b2262eb3ac4d",
+  "real_subject": "build: setup install config",
+  "real_type": "build",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Docs nuxt build config cleanup and dependency changes in package files and yarn.lock."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Changes nuxt build config and dependencies with lockfile updates."
+  }
+ },
+ {
+  "id": "c460",
+  "line": 12,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "83c4e42b365a2631b7e5484f9a0dadc79b14f981",
+  "real_subject": "feat(ui): add cc version",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Exposes command class version and shows it in node details UI groups."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Exposes command class version and shows it in node details UI."
+  }
+ },
+ {
+  "id": "c343",
+  "line": 13,
+  "repo": "dokku/dokku",
+  "hash": "82a6dbf887d29677842ae921ec759622dc837626",
+  "real_subject": "fix: correct variable declaration",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Renames the declared argument to IMAGE, likely matching its use in the function body."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Renames parameter variable IMAGE_TAG to IMAGE, likely fixing a reference mismatch in the function."
+  }
+ },
+ {
+  "id": "c246",
+  "line": 14,
+  "repo": "dokku/dokku",
+  "hash": "70eb751868ea5acfd17446f53d2721a122b498ae",
+  "real_subject": "fix: correct ps-can-scale guard",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Corrects an argument-count condition in setScale."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Corrects an off-by-one argument count check in setScale."
+  }
+ },
+ {
+  "id": "c203",
+  "line": 15,
+  "repo": "dokku/dokku",
+  "hash": "82f13af166d147ee2c100595b8de671f1872a903",
+  "real_subject": "chore: return early",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "fix",
+    "style"
+   ],
+   "best": "style",
+   "ambiguous": true,
+   "reason": "Whitespace-only change in a log message format string; possibly fixing a double space in output."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "style"
+   ],
+   "best": "style",
+   "ambiguous": true,
+   "reason": "Whitespace-only change in a log message string."
+  }
+ },
+ {
+  "id": "c975",
+  "line": 16,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "513c51a7959b43c3816162516fb11febc612d41a",
+  "real_subject": "fix: Buffer support on write requests",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Parses raw Buffer payloads and catches parse errors instead of crashing."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Converts raw payloads to Buffers and catches parse errors."
+  }
+ },
+ {
+  "id": "c502",
+  "line": 17,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "c5c96bdc039bb5385dd69bd5bae0f781792f9d68",
+  "real_subject": "fix: prevent reset poll timers on node status updates",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Guards against initializing a ready node more than once with an inited flag."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Adds inited flag so ready-node handling runs only once, fixing repeated initialization."
+  }
+ },
+ {
+  "id": "c644",
+  "line": 20,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "22a3620bfa761483edc3b485ac794a4298516c6a",
+  "real_subject": "fix: use `isListening` node prop to distinguish battery from mains",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Replaces removed isBatteryPowered with isListening for battery detection in UI."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Replaces wrong isBatteryPowered property with isListening for battery display and sorting."
+  }
+ },
+ {
+  "id": "c506",
+  "line": 24,
+  "repo": "dokku/dokku",
+  "hash": "3b76b81edf73e9d7ecd3768a5410488c18846409",
+  "real_subject": "fix: set correct variable for app image repo",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Assigns trimmed value to the correct variable newImageRepo instead of newImageTag."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Assigns to the wrong variable corrected: newImageRepo instead of newImageTag."
+  }
+ },
+ {
+  "id": "c188",
+  "line": 28,
+  "repo": "daybrush/moveable",
+  "hash": "31e6acc4b6d2831ecb256126c31e1fcf75759e36",
+  "real_subject": "feat: add passDragArea prop",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds passDragArea prop; also reworks drag end handling."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds passDragArea prop letting events pass through drag area, with dragger end fixes."
+  }
+ },
+ {
+  "id": "c492",
+  "line": 29,
+  "repo": "deeppavlov/dream",
+  "hash": "68408d79e93e5f93e5e62229e03be1b8a0ce61a0",
+  "real_subject": "fix: skill selector turn on 5th turn",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Tunes an utterance-count threshold in the skill selector; behaviour tweak this repo files as fix."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Tweaks dialog length threshold in skill selector; behaviour adjustment, repo files such tweaks as fix."
+  }
+ },
+ {
+  "id": "c303",
+  "line": 31,
+  "repo": "dokku/dokku",
+  "hash": "d514ca0bb539a6c8981695fad2b4ad98db9899b2",
+  "real_subject": "fix: drop appName check in apps:report",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Removes an app-name validation from rename; likely an incorrect check, otherwise dead-code cleanup."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Removes an erroneous empty app name check from rename that used the wrong variable."
+  }
+ },
+ {
+  "id": "c470",
+  "line": 33,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "0066502846d4e018590032e6adb20946808b8b08",
+  "real_subject": "feat(accordion): allow multiple",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Accordion defaultIndex accepts arrays for multiple expanded items, with a new story."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Accordion accepts array index to expand multiple items, with a new story."
+  }
+ },
+ {
+  "id": "c909",
+  "line": 35,
+  "repo": "deeppavlov/dream",
+  "hash": "2ee9e0a06bc4555ba3df6bba209653d81d4b4f55",
+  "real_subject": "fix: list of segments with deepcopy",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Deep-copies segments and guards type check to avoid mutation and wrong-type bugs."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Deep-copies segments and guards with isinstance to avoid shared mutation and wrong-type replacement."
+  }
+ },
+ {
+  "id": "c271",
+  "line": 36,
+  "repo": "deeppavlov/dream",
+  "hash": "6c16d656236fb3ddb19b2714c08a6bed90e97909",
+  "real_subject": "fix: flags=re.IGNORECASE to compile",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "style",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Rewrites every spelling template line equally; likely regex correction, content not fully visible."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "style",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Rewrites all spelling templates; diff cut, likely regex adjustments to the replacement rules."
+  }
+ },
+ {
+  "id": "c201",
+  "line": 38,
+  "repo": "dokku/dokku",
+  "hash": "af626a51ccdadca79119ba465f45eefbbecb34f2",
+  "real_subject": "fix: set IMAGE variable correctly",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Defines missing IMAGE variable needed by tags deploy."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Defines a missing IMAGE variable used by tags deploy."
+  }
+ },
+ {
+  "id": "c260",
+  "line": 43,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "06e1d3879be187f99f5142e054884e1c09ac8dfa",
+  "real_subject": "fix: fix require error",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "refactor",
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Vite build plugin config switches require to import of package.json; build tooling change."
+  },
+  "B": {
+   "acceptable": [
+    "refactor",
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Switches require to import in the vite build plugin config."
+  }
+ },
+ {
+  "id": "c921",
+  "line": 44,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "2c9f8c5c0ad8074a321b873bc8e05752185ce40a",
+  "real_subject": "docs: add example api request",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Adds an MQTT scene execution example to the guide."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Adds an MQTT scene execution example to the guide."
+  }
+ },
+ {
+  "id": "c709",
+  "line": 49,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "6055834f341997b39560051d8c7cdcefa8649d1a",
+  "real_subject": "fix: prevent stopInclusion/Exclusion to throw",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Catches rejected stopInclusion/stopExclusion promises in timeouts."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Catches rejected promises from stopInclusion/stopExclusion timeouts."
+  }
+ },
+ {
+  "id": "c121",
+  "line": 50,
+  "repo": "deeppavlov/dream",
+  "hash": "e7c5e49e50f2d0b93e42b168017b02feff4b5b83",
+  "real_subject": "feat: reformat state schema",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Restructures state manager user/bot handling, removes bot.py; also adds dialog reset on start utterance."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Restructures state manager (bot creation, dialog by human id, renamed methods) and resets dialog on start utterance."
+  }
+ },
+ {
+  "id": "c333",
+  "line": 53,
+  "repo": "filebrowser/filebrowser",
+  "hash": "98dabff1e7bc1f6b9924ad2df7bd93418262465c",
+  "real_subject": "docs: update docker iamge",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Only README.md modified."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Only README changes."
+  }
+ },
+ {
+  "id": "c535",
+  "line": 54,
+  "repo": "dokku/dokku",
+  "hash": "97750f8b28e78e95dc9cc7f7bd9ef374b3df8a12",
+  "real_subject": "chore: minor updates to tests",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "test"
+   ],
+   "best": "test",
+   "ambiguous": false,
+   "reason": "Only updates bats test names, branch and commit references."
+  },
+  "B": {
+   "acceptable": [
+    "test"
+   ],
+   "best": "test",
+   "ambiguous": false,
+   "reason": "Updates test names, branches and commit hashes in bats tests only."
+  }
+ },
+ {
+  "id": "c692",
+  "line": 61,
+  "repo": "dokku/dokku",
+  "hash": "ea32544e37cd5da656ffbe751838b48b19f22b60",
+  "real_subject": "feat: set the debconf value for the global hostname",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Docker init now seeds debconf hostname from DOKKU_HOSTNAME, making the configured hostname apply."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Docker init now sets dokku hostname via debconf, likely fixing missing hostname configuration."
+  }
+ },
+ {
+  "id": "c781",
+  "line": 63,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "ea9355398fe89235bf2e657c291541bd79a41d98",
+  "real_subject": "fix(table): cell content does not wrap",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Table stylesheet changed with no visible diff; most likely a visual fix."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "style"
+   ],
+   "best": "style",
+   "ambiguous": true,
+   "reason": "Only a table less stylesheet changes, content not shown; UI style tweak or a visual fix."
+  }
+ },
+ {
+  "id": "c807",
+  "line": 64,
+  "repo": "dokku/dokku",
+  "hash": "ccbe2c719a089b2ea5c506a455281b8775884d2f",
+  "real_subject": "fix: correct test check",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "test"
+   ],
+   "best": "test",
+   "ambiguous": false,
+   "reason": "Updates an expected message in a unit test."
+  },
+  "B": {
+   "acceptable": [
+    "test"
+   ],
+   "best": "test",
+   "ambiguous": false,
+   "reason": "Updates an expected error message in a test."
+  }
+ },
+ {
+  "id": "c179",
+  "line": 68,
+  "repo": "filebrowser/filebrowser",
+  "hash": "1e5ced67370ce8b14d1f03fda31327d305450c77",
+  "real_subject": "fix: remove spaces before command output",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "style",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Search.vue modified with no visible diff; nature of the change cannot be determined."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "style"
+   ],
+   "best": "style",
+   "ambiguous": true,
+   "reason": "Search.vue changed with no visible line changes; likely formatting or a minor tweak."
+  }
+ },
+ {
+  "id": "c887",
+  "line": 70,
+  "repo": "deeppavlov/dream",
+  "hash": "c612cbe2d6229dd6d81ccff420b1c9ae05eb4ee2",
+  "real_subject": "fix: update links from friendship skill",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Changes skill link keywords to new dff skills, altering dialogue routing."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Changes which skills friendship skill links to, adding travel, animals, food, sport, music."
+  }
+ },
+ {
+  "id": "c967",
+  "line": 71,
+  "repo": "dokku/dokku",
+  "hash": "4ef260f57a9394dfa69599539de8ac6e9033a0b7",
+  "real_subject": "fix: ignore https mappings when no ssl certificate exists",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Ignores https port mappings without SSL certificate, with regression test."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Ignores https port mappings lacking an SSL certificate, with a warning and tests; corrects broken nginx config."
+  }
+ },
+ {
+  "id": "c831",
+  "line": 74,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "6df6493ec6de3987dd9c6cc56f8f9dc4c25b4977",
+  "real_subject": "docs: fix link in other-methods.md",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Only a documentation page changes."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Only a docs markdown page modified."
+  }
+ },
+ {
+  "id": "c241",
+  "line": 77,
+  "repo": "daybrush/moveable",
+  "hash": "db0c730be90c00d8d187445db26e0e42a08cedb2",
+  "real_subject": "fix: ignore document for firefox",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Optional chaining avoids crash when target lacks getAttribute."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Guards getAttribute with optional call to avoid errors on non-element targets."
+  }
+ },
+ {
+  "id": "c174",
+  "line": 78,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "35545332dd0af9633f2e031b608d212537f5fdd2",
+  "real_subject": "chore: improve Collapse",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "refactor",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Moves Collapse into own file and improves exports, matching the repository's export-improvement series."
+  },
+  "B": {
+   "acceptable": [
+    "refactor",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Moves Collapse into its own file with index export, like the repository's export improvements."
+  }
+ },
+ {
+  "id": "c244",
+  "line": 79,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "503bb13035287651c2733eb9ee77e7882da3133f",
+  "real_subject": "chore: remove title from issues template",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "docs",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Issue templates edited; repository housekeeping."
+  },
+  "B": {
+   "acceptable": [
+    "docs",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Edits GitHub issue templates only; repository housekeeping."
+  }
+ },
+ {
+  "id": "c206",
+  "line": 81,
+  "repo": "dokku/dokku",
+  "hash": "9d9b880f59c6d3669d008b631a73c02525e5a1e8",
+  "real_subject": "fix: correct counts",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "test"
+   ],
+   "best": "test",
+   "ambiguous": true,
+   "reason": "Only updates expected counts in a bats unit test."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "test"
+   ],
+   "best": "test",
+   "ambiguous": true,
+   "reason": "Adjusts expected output counts in a test file."
+  }
+ },
+ {
+  "id": "c753",
+  "line": 84,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "50f81e57d5f5a8fe0f5a27b17bca7fae1618f92c",
+  "real_subject": "feat(menu): added initial work on menu component",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Implements the Menu component, new icons and button styles."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds Menu component with context, icons and button styles."
+  }
+ },
+ {
+  "id": "c375",
+  "line": 85,
+  "repo": "dokku/dokku",
+  "hash": "94c06bbdd2e55afe42aeaec961256a3933b2737c",
+  "real_subject": "fix: correct issue in proxy:ports-set invocation",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "ports-set subcommand wrongly reported add; now uses set command and trigger argument."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "ports-set used the wrong command name and trigger argument (add instead of set)."
+  }
+ },
+ {
+  "id": "c590",
+  "line": 86,
+  "repo": "dokku/dokku",
+  "hash": "29e44260a0e63d5c4e61c19a2b6bff18305c2d45",
+  "real_subject": "docs: add links to migration guides",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Adds migration guide links to upgrading documentation."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Adds migration guide links to the upgrading doc."
+  }
+ },
+ {
+  "id": "c520",
+  "line": 89,
+  "repo": "filebrowser/filebrowser",
+  "hash": "d1d8e3e3405381b01317fe07ae729d70219415a7",
+  "real_subject": "feat: add disk usage information to the sidebar",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "New disk usage API endpoint and sidebar progress bar."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a disk usage API endpoint and a usage progress bar in the sidebar."
+  }
+ },
+ {
+  "id": "c207",
+  "line": 90,
+  "repo": "deeppavlov/dream",
+  "hash": "8201d8354987e150bff98075530bbe14cf8be2bf",
+  "real_subject": "fix: revert to dev version",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds cobotqa to the rule-based selector's default skills; new behaviour, possibly restoring it."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds cobotqa to rule-based selector skill list, plus trivial config tidy."
+  }
+ },
+ {
+  "id": "c830",
+  "line": 92,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "c90749313d8d4ba1586036ecab10af0a3f46349a",
+  "real_subject": "docs: Zwave events link",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "README gains a link to the list of events."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "README only: adds a link to the list of zwave events."
+  }
+ },
+ {
+  "id": "c694",
+  "line": 93,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "a143f8f67144680157139b7f698ed4a0c03ab593",
+  "real_subject": "docs: added docs for using Chakra UI Vue CLI plugin",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs",
+    "style"
+   ],
+   "best": "docs",
+   "ambiguous": true,
+   "reason": "Reformats code samples in getting-started documentation page."
+  },
+  "B": {
+   "acceptable": [
+    "docs",
+    "style"
+   ],
+   "best": "docs",
+   "ambiguous": true,
+   "reason": "Reformats code samples in a docs page; documentation only."
+  }
+ },
+ {
+  "id": "c914",
+  "line": 95,
+  "repo": "daybrush/moveable",
+  "hash": "333f8bdffe762a6be594dffa4c2926fbd1086e6e",
+  "real_subject": "feat: add translateZ props",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a translateZ option to default props and types, with doc comment updates."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a new translateZ option to the default able and its types."
+  }
+ },
+ {
+  "id": "c895",
+  "line": 98,
+  "repo": "dokku/dokku",
+  "hash": "7fe2f8593c9ceac0e10c0b057b79d7e7ec09b442",
+  "real_subject": "refactor: remove unused IS_HEROKUISH_CONTAINER argument",
+  "real_type": "refactor",
+  "A": {
+   "acceptable": [
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": false,
+   "reason": "Removes unused isHerokuishContainer parameter from network-get-ipaddr trigger and callers."
+  },
+  "B": {
+   "acceptable": [
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": false,
+   "reason": "Drops an unused herokuish argument from the network-get-ipaddr trigger and its callers."
+  }
+ },
+ {
+  "id": "c775",
+  "line": 102,
+  "repo": "dokku/dokku",
+  "hash": "401ec40566853886e2c14bbec249a5e5e68e90cd",
+  "real_subject": "fix: intsall ci dependencies in correct job",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Moves the ci-dependencies step within the GitHub Actions workflow."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Moves the dependency install step within the GitHub Actions workflow."
+  }
+ },
+ {
+  "id": "c856",
+  "line": 103,
+  "repo": "dokku/dokku",
+  "hash": "5522cf63f717e02ff318ba8cbb491ddd069e1eb2",
+  "real_subject": "fix: revert guard and pass app arg to config_export",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Corrects inverted condition and missing argument in config_export guard."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Corrects inverted guard condition and missing argument in config_export call."
+  }
+ },
+ {
+  "id": "c989",
+  "line": 104,
+  "repo": "dokku/dokku",
+  "hash": "a95a69e6fc7c1242f3cdaf4674e1e2a9f58b6d9e",
+  "real_subject": "fix: ensure all the scheduler hooks are output in event logs",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "feat",
+    "chore"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds event plugin hooks for new scheduler and restore triggers."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds event plugin hooks for new scheduler and restore triggers."
+  }
+ },
+ {
+  "id": "c222",
+  "line": 106,
+  "repo": "filebrowser/filebrowser",
+  "hash": "4267ebf0b4d2c2466363a01b0bcf61221d5e3584",
+  "real_subject": "fix: error at first sign",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "build",
+    "ci",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Only build/release shell scripts change, with no visible diff; build tooling, release-related."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Modifies build and release shell scripts only."
+  }
+ },
+ {
+  "id": "c734",
+  "line": 107,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "6bffdb5c64aa139cf6119b50aeed42629a65f07b",
+  "real_subject": "fix: fix the disappearance of tab switching parameters",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Replaces addTab with router push for menu and error-log navigation, likely fixing tab behaviour."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Switches menu navigation from addTab to router push, likely fixing tab behaviour."
+  }
+ },
+ {
+  "id": "c307",
+  "line": 110,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "cf840e3e73b9572de0ba7bf7b32d83f6a353a8ad",
+  "real_subject": "perf: image compression configuration optimization",
+  "real_type": "perf",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Upgrades imagemin dependencies and adapts vite build plugin config."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Updates imagemin build plugin config and dependencies in lockfile."
+  }
+ },
+ {
+  "id": "c272",
+  "line": 121,
+  "repo": "dokku/dokku",
+  "hash": "abfb0d39772335824f4548e3e34548fb4f97824d",
+  "real_subject": "fix: do not require double quotes when issuing dokku run commands",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Reworks docker argument passing as arrays in scheduler run/deploy, likely fixing quoting issues."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Reworks docker argument passing to arrays, fixing argument quoting in scheduler run."
+  }
+ },
+ {
+  "id": "c007",
+  "line": 122,
+  "repo": "dokku/dokku",
+  "hash": "b36ab54b87abbd80e2b9faf06eec4df9e22c7579",
+  "real_subject": "fix: correct variable name",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "style",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Renames a misspelled local variable; no behaviour change."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Renames a misspelled local variable without behaviour change."
+  }
+ },
+ {
+  "id": "c351",
+  "line": 128,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "478af6566bec64d7dbde64e705f2b66bba518361",
+  "real_subject": "docs(VisibilityExampleUpdateOn): your description",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Typo fix in a docs example label."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Fixes a typo in a docs example label."
+  }
+ },
+ {
+  "id": "c416",
+  "line": 129,
+  "repo": "dokku/dokku",
+  "hash": "b44bc686a18295bdc37875d2aaef6025e477cb2b",
+  "real_subject": "docs: update docs for ps commands",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "fix",
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": true,
+   "reason": "Updates ps command help text and docs to match current commands and flags."
+  },
+  "B": {
+   "acceptable": [
+    "docs",
+    "chore"
+   ],
+   "best": "docs",
+   "ambiguous": true,
+   "reason": "Updates command help text and docs to list new ps options."
+  }
+ },
+ {
+  "id": "c226",
+  "line": 133,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "e1bcbcb00780372996057b824e79cfe21b2d4688",
+  "real_subject": "fix: writeValue logs undefined valueId",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Fixes log messages to use getValueID instead of undefined id; also JSDoc type tweaks."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Log messages now print correct value id via getValueID; JSDoc types adjusted."
+  }
+ },
+ {
+  "id": "c791",
+  "line": 134,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "15d7b5311aa2320faff9f9ce50ead6ce995342a8",
+  "real_subject": "feat: HRT4-ZW device from Hortmann.",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds Hass discovery support for a new thermostat device."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds Home Assistant discovery support for a new thermostat device."
+  }
+ },
+ {
+  "id": "c745",
+  "line": 136,
+  "repo": "daybrush/moveable",
+  "hash": "f84cc211dd6c9f0c7ae6d82eb03d2fc1526e24a1",
+  "real_subject": "feat: add snapContainer prop",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds snapContainer prop and css bound position, with new stories."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds snapContainer prop and css bound position, with new stories."
+  }
+ },
+ {
+  "id": "c946",
+  "line": 138,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "e8fe6a929be025a889ddec624ff9c2729313c818",
+  "real_subject": "perf(icon): icon and SvgIcon integration",
+  "real_type": "perf",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Icon component modified with no visible diff; content unknown, history suggests a fix."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "style",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Icon component changed but diff not shown; nature unclear, history mostly fixes."
+  }
+ },
+ {
+  "id": "c551",
+  "line": 141,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "ab1d223f01368a73f62f0c79f587f7ce7d1e3954",
+  "real_subject": "chore: drop serialport, use Driver.enumerateSerialPorts()",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "refactor",
+    "build",
+    "chore"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Replaces serialport dependency with Driver.enumerateSerialPorts and drops the package."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor",
+    "build"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Replaces serialport dependency with zwave-js port enumeration, likely fixing native binding issues; also a dependency removal."
+  }
+ },
+ {
+  "id": "c355",
+  "line": 142,
+  "repo": "filebrowser/filebrowser",
+  "hash": "f2f914221c550d57a4568ce1d692b6c77800779c",
+  "real_subject": "chore: bump go to 1.14.6",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "CircleCI config bumps Go image and trims steps; CI configuration only, history files CI under chore."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Bumps Go image version in CircleCI configuration."
+  }
+ },
+ {
+  "id": "c608",
+  "line": 143,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "a937e5e53df29f3c18e6f61de07eef15ef1ab9a3",
+  "real_subject": "chore: add missing `$`",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Fixes template expression and label in a GitHub workflow; history files workflow changes under chore."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Fixes template expression and label in a GitHub workflow."
+  }
+ },
+ {
+  "id": "c587",
+  "line": 146,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "f958a5aca4d11c0f6b9e19344ee4cac8bde2ea54",
+  "real_subject": "fix: docs deps",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Only docs package manifest changed; dependency or script maintenance."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Only docs package.json changed, likely dependency or script maintenance."
+  }
+ },
+ {
+  "id": "c540",
+  "line": 148,
+  "repo": "filebrowser/filebrowser",
+  "hash": "8142b32f3865eccd3331328e0d087f805d186ed5",
+  "real_subject": "feat: put selected files in the root of the archive (closes",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Archive entries now use paths relative to common prefix instead of full paths, correcting download structure."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Archive entries now named relative to common prefix instead of full path; adds test."
+  }
+ },
+ {
+  "id": "c279",
+  "line": 153,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "c748bfed99f692557ccdeb85ab2c1376409b397d",
+  "real_subject": "style(Form): convert component to stateless",
+  "real_type": "style",
+  "A": {
+   "acceptable": [
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": false,
+   "reason": "Form converted from class to stateless function component with same behaviour."
+  },
+  "B": {
+   "acceptable": [
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": false,
+   "reason": "Converts Form from class to stateless functional component without behaviour change."
+  }
+ },
+ {
+  "id": "c846",
+  "line": 154,
+  "repo": "deeppavlov/dream",
+  "hash": "9c9a08f794cfa62382d1840c9d4a79f66b32ef1c",
+  "real_subject": "fix: use get in common.utils",
+  "real_type": "fix",
+  "A": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Uses get_intents helper and safe text access, avoiding KeyErrors on missing text."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "refactor"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Safer text access and intent detection via get_intents, avoiding KeyErrors."
+  }
+ },
+ {
+  "id": "c277",
+  "line": 163,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "66b7e1470ca00360cb96109d377ab0c2a0d7a1e4",
+  "real_subject": "feat(numberinput): rouding to precision",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Rounds the returned value to the configured precision, correcting number input display; empty story file added alongside."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Rounds returned value to precision, correcting output; also adds NumberInput stories."
+  }
+ },
+ {
+  "id": "c615",
+  "line": 169,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "e83cb06bb93544369c8934d1065bf46835e3f003",
+  "real_subject": "feat: projectSetting add closeMessageOnSwitch and removeAllHttpPending",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix",
+    "refactor"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Makes pending-request cancellation configurable via project settings, adds errorResult constant, removes dead comments."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix",
+    "refactor"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Makes pending-request cancellation configurable via project settings, plus an error sentinel change and comment cleanup."
+  }
+ },
+ {
+  "id": "c726",
+  "line": 171,
+  "repo": "filebrowser/filebrowser",
+  "hash": "ecd0b2ee0da7a3fff20980919823829aef110121",
+  "real_subject": "chore: update Material Icons",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Updates frontend dependency (likely font/icon package) and fonts CSS; dependency maintenance."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Frontend dependency and font CSS changes with no visible diff; likely dependency maintenance."
+  }
+ },
+ {
+  "id": "c311",
+  "line": 174,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "31a2637162b36e842843ac04d725c8f98fbfcd73",
+  "real_subject": "docs: fixed typos in recent docs",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Typo and formatting fixes in documentation pages only."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Typo fixes and formatting in documentation pages."
+  }
+ },
+ {
+  "id": "c566",
+  "line": 175,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "2e2ec462b5861207b1d8a31bf924cbab55a5a602",
+  "real_subject": "feat: improve docker build performances",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "build"
+   ],
+   "best": "build",
+   "ambiguous": false,
+   "reason": "Dockerfile multi-stage restructure, pinned base image and dockerignore update."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Dockerfile multi-stage changes and pinned node image; build configuration, repo history may call it chore."
+  }
+ },
+ {
+  "id": "c118",
+  "line": 180,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "d677729acbe2c024ab13cf490b205528507c4823",
+  "real_subject": "perf(i18n): improve circular dependencies",
+  "real_type": "perf",
+  "A": {
+   "acceptable": [
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": false,
+   "reason": "Moves locale helper functions into helper.ts and updates imports; no behaviour change."
+  },
+  "B": {
+   "acceptable": [
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": false,
+   "reason": "Moves locale helper functions into helper.ts and updates imports; no behaviour change."
+  }
+ },
+ {
+  "id": "c289",
+  "line": 183,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "4428f885395df4886e476cc313652516307c018b",
+  "real_subject": "chore: fix ghcr.io",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "fix",
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Corrects the GHCR image name in GitHub workflow files; CI configuration fix."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Corrects ghcr image name in GitHub workflow files."
+  }
+ },
+ {
+  "id": "c489",
+  "line": 185,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "0af4d5631cab98fd9424cb8a76572f0b6815cc00",
+  "real_subject": "chore: delete automerge",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Deletes the GitHub automerge workflow."
+  },
+  "B": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Deletes the automerge GitHub workflow."
+  }
+ },
+ {
+  "id": "c582",
+  "line": 191,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "1e899ea02a86d0cf3625ae422cf4ecff600dadaa",
+  "real_subject": "feat(switch): add v-model implementation",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Switch component ported to Vue 2 API with v-model, defaults and change event."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds v-model support and prop defaults to Switch; also corrects value type."
+  }
+ },
+ {
+  "id": "c513",
+  "line": 194,
+  "repo": "zwave-js/zwavejs2mqtt",
+  "hash": "6349da47700b8083015fa00fee6642cf897cec8f",
+  "real_subject": "chore: try using nodejs 14 in release workflow",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Changes Node version in the release GitHub workflow; history uses chore for release tooling."
+  },
+  "B": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Changes node version in a GitHub release workflow; repo files release-it tweaks under chore."
+  }
+ },
+ {
+  "id": "c149",
+  "line": 196,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "7e644712e2333d22a848b68702fad75bd62925e1",
+  "real_subject": "chore: repository house cleaning",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Nuxt config trivia and package manifest changes; build and dependency maintenance."
+  },
+  "B": {
+   "acceptable": [
+    "style",
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Trivial nuxt config tweak and package.json changes; maintenance."
+  }
+ },
+ {
+  "id": "c508",
+  "line": 199,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "10442e9512469bd0a3860555c2189adb836c409e",
+  "real_subject": "docs(Dropdown): fix searchQuery example",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "fix",
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": true,
+   "reason": "Only a docs example changes, updating it to the corrected onSearchChange signature; it fixes a broken example, so fix is also defensible."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": true,
+   "reason": "Fixes a docs example to use the corrected onSearchChange signature."
+  }
+ },
+ {
+  "id": "c701",
+  "line": 200,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "e9e51b2fdc879a66d8df08504a0955c9c21e3e27",
+  "real_subject": "perf(scrollbar): scrollbar update when slot changed",
+  "real_type": "perf",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Bumps core-js dependency in package.json and yarn.lock."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Dependency version bump of core-js in package.json and lockfile."
+  }
+ },
+ {
+  "id": "c814",
+  "line": 202,
+  "repo": "daybrush/moveable",
+  "hash": "a560373b0ec89f3dcb64d414bafc6f9619eef089",
+  "real_subject": "feat: Add onClick event",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Moves drag-area logic into a general able, enabling click handling for single targets; restructuring plus new capability."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Moves drag area logic from Groupable into DragArea able, enabling click events for single targets."
+  }
+ },
+ {
+  "id": "c647",
+  "line": 205,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "830f5e23cd589389be0b3b4ea6d51e9c866cf8c9",
+  "real_subject": "chore: improve Box exports",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "refactor",
+    "chore"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Moves Box component into its own file and updates index exports; restructuring, history files it as chore."
+  },
+  "B": {
+   "acceptable": [
+    "refactor",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Moves Box into its own file with index export, matching the export-improvement series."
+  }
+ },
+ {
+  "id": "c813",
+  "line": 206,
+  "repo": "filebrowser/filebrowser",
+  "hash": "c2d8038c63de24136337b2cc44b8ee2032d17ca7",
+  "real_subject": "chore: add testing step to ci",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": false,
+   "reason": "Adds a test job to CircleCI configuration."
+  },
+  "B": {
+   "acceptable": [
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": false,
+   "reason": "Adds a test job to the CircleCI workflow."
+  }
+ },
+ {
+  "id": "c165",
+  "line": 208,
+  "repo": "chakra-ui/chakra-ui-vue",
+  "hash": "f9299c6c239fa90eeff1b1bce75bbb36c10eb300",
+  "real_subject": "ci: unfreeze lockfile",
+  "real_type": "ci",
+  "A": {
+   "acceptable": [
+    "build",
+    "ci"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Changes install step in GitHub workflow, with package.json tweak."
+  },
+  "B": {
+   "acceptable": [
+    "ci",
+    "chore"
+   ],
+   "best": "ci",
+   "ambiguous": true,
+   "reason": "Changes install step in GitHub Actions workflow."
+  }
+ },
+ {
+  "id": "c195",
+  "line": 213,
+  "repo": "daybrush/moveable",
+  "hash": "5c2b2fc479da1a97b8d4173af80aca64c9435f2a",
+  "real_subject": "feat: add origin info to getRect method",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix",
+    "refactor"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds origin and beforeOrigin to getRect and uses them in Rotatable."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds origin and beforeOrigin to the rect info and reuses it in Rotatable."
+  }
+ },
+ {
+  "id": "c212",
+  "line": 216,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "8168146d1a5fb34d1aa040a892d67a25fcbef31c",
+  "real_subject": "feat(Flag): include \"england\" as a valid value",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds England flag name to Flag component and docs example."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds England flag name to Flag component and its docs example."
+  }
+ },
+ {
+  "id": "c663",
+  "line": 217,
+  "repo": "daybrush/moveable",
+  "hash": "7e23782c45f86ecaae93a7298e0abba67be4fbdf",
+  "real_subject": "feat: add child rect info",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Group getRect now returns children rect info, a new API field."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Group getRect now returns children rect info, a new API capability."
+  }
+ },
+ {
+  "id": "c703",
+  "line": 220,
+  "repo": "deeppavlov/dream",
+  "hash": "0ca2b5a02bb9db9ea2f611bd927f6f2a338e01dd",
+  "real_subject": "feat: proxy to gpu1 + configs for proxy services",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Deployment compose files: proxy addresses, pinned commit, new GPU configs; infrastructure maintenance."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Deployment config: proxy addresses, pinned commit, new gpu compose files."
+  }
+ },
+ {
+  "id": "c826",
+  "line": 221,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "58dfe722740048d2fc130353070037506ad07f35",
+  "real_subject": "docs(src): update to card look",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Only docs site components restyled and ad added; repository files docs site changes under docs."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "Restyles the documentation site's example cards and icon page and adds an ad; docs site only."
+  }
+ },
+ {
+  "id": "c448",
+  "line": 222,
+  "repo": "deeppavlov/dream",
+  "hash": "b3181d523264912c7cb3380fcedf84937fcd73d2",
+  "real_subject": "chore: will use only cobot_qa_formatter",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "style",
+    "refactor",
+    "chore"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Only removes commented-out leftover code in config."
+  },
+  "B": {
+   "acceptable": [
+    "style",
+    "refactor",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Removes commented-out alternative formatter names; no behaviour change."
+  }
+ },
+ {
+  "id": "c135",
+  "line": 223,
+  "repo": "daybrush/moveable",
+  "hash": "45c89d5c9d92849418b7f870b3c6d86a4d6231a0",
+  "real_subject": "feat: Add Warpable",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a warpable option with new warp events and types."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a new warpable ability with warp events and types."
+  }
+ },
+ {
+  "id": "c417",
+  "line": 224,
+  "repo": "deeppavlov/dream",
+  "hash": "75cd66ad2192a799a9caa9119b4946e12423da02",
+  "real_subject": "feat: tests for lnsigo stand",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "test",
+    "chore"
+   ],
+   "best": "test",
+   "ambiguous": true,
+   "reason": "Adds a test compose file and points the test runner at it; test infrastructure."
+  },
+  "B": {
+   "acceptable": [
+    "test",
+    "chore"
+   ],
+   "best": "test",
+   "ambiguous": true,
+   "reason": "Adds test.yml compose override and uses it in test runner script."
+  }
+ },
+ {
+  "id": "c526",
+  "line": 226,
+  "repo": "deeppavlov/dream",
+  "hash": "eba24a6cf8bfc7225515ec3b0c29e89586faedb2",
+  "real_subject": "feat: add curiosity ackn to grounding",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds new acknowledgement responses when the user asks a question; new bot behaviour."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "feat",
+   "ambiguous": true,
+   "reason": "Adds new acknowledgement responses when the user asks a question."
+  }
+ },
+ {
+  "id": "c987",
+  "line": 227,
+  "repo": "filebrowser/filebrowser",
+  "hash": "8888b9f44640394df9e3583db4392472d7027a4b",
+  "real_subject": "feat: add gallery view mode",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a third mosaic gallery view mode with icons and larger previews."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds third mosaic gallery view mode and larger previews."
+  }
+ },
+ {
+  "id": "c588",
+  "line": 230,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "a821d9a3a279f0e6a5b7dbb316725d603ce30f74",
+  "real_subject": "perf: imporve axios logic",
+  "real_type": "perf",
+  "A": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Adds get/post helpers to VAxios and rewrites API calls to use them; renames hooks."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Adds get/post/put/delete helpers, rewrites API calls to use them and renames transform hooks."
+  }
+ },
+ {
+  "id": "c104",
+  "line": 232,
+  "repo": "anncwb/vben-admin-thin-next",
+  "hash": "aee613034fa13c986018ae11d23dcacc679a088f",
+  "real_subject": "refactor(mock): remove third-party images",
+  "real_type": "refactor",
+  "A": {
+   "acceptable": [
+    "feat",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Adds image fields to mock demo data; maintenance of demo mocks, arguably a demo feature."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Adds avatar and image fields to demo mock data only."
+  }
+ },
+ {
+  "id": "c722",
+  "line": 234,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "fa0b60555c630dbe8c00f1d3742c99bd27cb33b2",
+  "real_subject": "feat(Dropdown): add closeOnChange prop",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds closeOnChange prop to Dropdown with docs example and tests."
+  },
+  "B": {
+   "acceptable": [
+    "feat"
+   ],
+   "best": "feat",
+   "ambiguous": false,
+   "reason": "Adds a new closeOnChange prop to Dropdown with docs example and tests."
+  }
+ },
+ {
+  "id": "c960",
+  "line": 238,
+  "repo": "daybrush/moveable",
+  "hash": "f5327c561290e00810238979a9d7526a585a5483",
+  "real_subject": "feat: export getElementInfo function",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Renames matrix to allMatrix, consolidates state via getTargetInfo, changes exported helper and changelog."
+  },
+  "B": {
+   "acceptable": [
+    "feat",
+    "refactor"
+   ],
+   "best": "refactor",
+   "ambiguous": true,
+   "reason": "Renames matrix state to allMatrix and reshapes exports; changelog lists features, so feat also defensible."
+  }
+ },
+ {
+  "id": "c603",
+  "line": 239,
+  "repo": "semantic-org/semantic-ui-react",
+  "hash": "0dbf431f2add11e719ff539de56d1d4f75cb25e3",
+  "real_subject": "docs(readme): Add Netflix EDX as a user",
+  "real_type": "docs",
+  "A": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "README only: adds an entry to the list of users."
+  },
+  "B": {
+   "acceptable": [
+    "docs"
+   ],
+   "best": "docs",
+   "ambiguous": false,
+   "reason": "README list of users updated."
+  }
+ },
+ {
+  "id": "c266",
+  "line": 240,
+  "repo": "deeppavlov/dream",
+  "hash": "5e56d06641126b5502a65d099b9a0b9e2c3a38c5",
+  "real_subject": "feat: use memory reservation in docker-compose.yml",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "fix",
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "Deployment docker-compose memory reservations and placement constraints adjusted; infrastructure maintenance."
+  },
+  "B": {
+   "acceptable": [
+    "fix",
+    "build",
+    "chore"
+   ],
+   "best": "chore",
+   "ambiguous": true,
+   "reason": "docker-compose resource limits and placement constraints changed; deployment configuration, possibly fixing memory issues."
+  }
+ },
+ {
+  "id": "c548",
+  "line": 241,
+  "repo": "filebrowser/filebrowser",
+  "hash": "716396a726329f0ba42fc34167dd07497c5bf47c",
+  "real_subject": "feat: add previewer title and loading indicator",
+  "real_type": "feat",
+  "A": {
+   "acceptable": [
+    "feat",
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": true,
+   "reason": "Previewer now shows loading spinner styled for dark theme; small UI correction or minor addition."
+  },
+  "B": {
+   "acceptable": [
+    "fix"
+   ],
+   "best": "fix",
+   "ambiguous": false,
+   "reason": "Fixes previewer loading spinner styling in dark theme and missing loading state."
+  }
+ },
+ {
+  "id": "c865",
+  "line": 245,
+  "repo": "daybrush/moveable",
+  "hash": "be8c4dc19dbd6d6d7f782c73272cb9878ca21982",
+  "real_subject": "chore: update overlap-area",
+  "real_type": "chore",
+  "A": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Package manifests and yarn.lock dependency updates."
+  },
+  "B": {
+   "acceptable": [
+    "build",
+    "chore"
+   ],
+   "best": "build",
+   "ambiguous": true,
+   "reason": "Only package.json and yarn.lock dependency updates."
+  }
+ }
+]

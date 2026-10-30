@@ -1370,6 +1370,59 @@ passes, one read on `eval-v1`.
   keywords, hunk headers, comment markers), not a parser, and is English-centred in its comments.
 - **Verdict.** Not adopted; the product keeps the prompt as it is. The option stays for evaluation.
 
+### H17. An audit set of the acceptable types — the models are accepted as often as the repositories' own labels
+
+**Why.** `type_match` takes the repository's type as the only right one (H13). H13's hand rating of 60 mistakes was
+done by the model writing these notes, so it was an opinion. This builds a set that says, for a sample of commits,
+which types a reasonable maintainer would accept, written by two annotators who do not see the real subject.
+
+**Design** (`audit_types.py`, the annotators' instructions in `audit-annotator-prompt.md`, the result in
+`audit-types-h17.json`). 100 Conventional commits drawn at random (seed 17) from `data/val1-h4`: 33 `fix`, 29 `feat`,
+16 `chore`, 12 `docs`, 5 `perf`, 2 `refactor` and one each of `build`, `style` and `ci`, from **8 repositories**
+(`dokku` 20, `zwavejs2mqtt` 18, `chakra-ui-vue` 12, `dream` 12, `moveable` 11, `vben-admin` 10, `filebrowser` 10,
+`semantic-ui-react` 7). Two passes, A and B, by Opus subagents, each in 4 batches of 25 with another order and
+composition, the same instructions, and no repository name, hash, real subject or real type: only the 12 latest
+subjects of the history, the changed files and the diff (1,200 characters a file, 5,000 in all). For each case: the
+types they would accept, the best one, whether it is ambiguous, and a reason. One batch of pass A returned 24 of its 25
+cases and reported 25; the merge check found it, and a fresh agent with the same instructions annotated the case.
+
+**The annotators.**
+- They agree: the same accepted set in 78% of the cases, mean Jaccard 0.89, at least one type in common in all 100, the
+  same best type in 93% (kappa 0.92). Both are the same model, so the agreement says they are consistent, not that they
+  are right.
+- They find the change ambiguous in 62% (A) and 61% (B) of the cases and accept 1.72 and 1.70 types on average.
+
+**The repositories' own types.** The real type is in A's set in 77% of the cases and in B's in 75%; in either's in 79%
+[70%, 87%], in both's in 73%, and it is the best one in 58% and 59%. **In 21 of the 100 neither annotator accepts it.**
+In 12 of those the annotators read the change as `chore` or `build` and the author wrote `feat`, `fix`, `perf` or
+`refactor` (for example 3 `feat` and 2 `perf` for changes the annotators filed under build or chore).
+
+**The models** (their type is the first line of the reply in the traces of `compare-v04c`; 95% intervals by bootstrap
+of the cases):
+
+| model | `strict` (the real type) | `lenient` (one either accepts) | `agreed` (one both accept) |
+|---|---|---|---|
+| 1.5B v0.3 | 0.67 [0.57, 0.76] | **0.85** [0.78, 0.92] | 0.79 |
+| 0.5B v0.3 | 0.63 [0.53, 0.73] | 0.81 [0.74, 0.89] | 0.75 |
+| 1.5B v0.1 | 0.63 [0.53, 0.73] | 0.81 [0.73, 0.89] | 0.76 |
+| 0.5B S1 | 0.60 [0.50, 0.70] | 0.80 [0.72, 0.87] | 0.75 |
+
+- **The 1.5B v0.3's type is accepted in 85% of the commits, the repository's own in 79%.** In 21 cases the model's type
+  is accepted though it is not the real one; in 3 it is the real one and is not accepted. Of its 33 mistakes, 21 (64%)
+  are acceptable, as the 64% (67% weighted) of the 60 hand-rated mistakes of H13.
+- **The order of the models is the one of `type_match`** (the 1.5B v0.3 first, the S1 last), but the differences between
+  models are within the intervals, which the clustering in 8 repositories makes narrower than they should be.
+- **My ratings of H13 hold**: on the 20 cases that are in both, the 12 I rated `A` are all accepted by the annotators,
+  3 of my 4 `N` are rejected, and the `?` split 3 to 1: 15 of the 16 I could decide agree (94%).
+
+**Limits.** 100 commits from 8 repositories, and two annotators of one model that saw 12 subjects, the files and a cut
+diff, not the author's intent, the issue or the rest of the repository. A model that writes like the annotators may be
+favoured. The audit says which types are defensible, not which one the author meant.
+
+**Use.** Models are judged by `lenient` and `agreed` on this set beside `type_match`, and the 21 rejected labels say
+where the labels are noisy: changes to dependencies and configuration written as `feat`, `fix` or `perf`. A filter of
+the training labels that reads those is the untested form of cleaning them (B).
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
