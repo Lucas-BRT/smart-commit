@@ -13,12 +13,15 @@ pub const MARKER: &str = "# smart-commit prepare-commit-msg hook";
 /// The hook script, calling `binary` by absolute path: GUI git clients
 /// often run hooks without the user's shell `PATH`.
 pub fn script(binary: &Path) -> String {
+    let binary = shell_quote(&binary.to_string_lossy());
+    // Without the binary (uninstalled, moved) the hook must not stop the
+    // commit: `exec` of a missing file exits 127, and git aborts on that.
     format!(
         "#!/bin/sh\n\
          {MARKER}\n\
          # Fills in the commit message; `smart-commit hook uninstall` removes it.\n\
-         exec {} hook run \"$@\"\n",
-        shell_quote(&binary.to_string_lossy())
+         [ -x {binary} ] || exit 0\n\
+         exec {binary} hook run \"$@\"\n"
     )
 }
 
@@ -73,6 +76,7 @@ mod tests {
             "#!/bin/sh\n\
              # smart-commit prepare-commit-msg hook\n\
              # Fills in the commit message; `smart-commit hook uninstall` removes it.\n\
+             [ -x '/opt/npu commit/bin/smart-commit' ] || exit 0\n\
              exec '/opt/npu commit/bin/smart-commit' hook run \"$@\"\n"
         );
         assert!(is_ours(&script));

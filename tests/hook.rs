@@ -169,6 +169,33 @@ fn failures_warn_but_never_block_the_commit() {
 }
 
 #[test]
+fn a_missing_binary_never_blocks_the_commit() {
+    let repo = repo_with_hook();
+    // The binary was uninstalled or moved: the hook points at nothing.
+    let script = fs::read_to_string(hook_path(&repo)).unwrap();
+    let binary = PathBuf::from(env!("CARGO_BIN_EXE_smart-commit"))
+        .canonicalize()
+        .unwrap();
+    let gone = script.replace(&binary.display().to_string(), "/nonexistent/smart-commit");
+    assert_ne!(gone, script);
+    fs::write(hook_path(&repo), gone).unwrap();
+
+    let output = repo.git_with(&["commit", "--quiet", "-m", "by hand"], &[]);
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(last_message(&repo), "by hand");
+
+    // The editor path, where the hook has no message to leave alone.
+    repo.write("other.rs", "fn other() {}\n");
+    repo.git(&["add", "other.rs"]);
+    let output = repo.git_with(
+        &["commit", "--quiet"],
+        &[("GIT_EDITOR", "sh -c 'echo \"in the editor\" > \"$1\"' -")],
+    );
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(last_message(&repo), "in the editor");
+}
+
+#[test]
 fn hook_can_record_a_trace_that_replays() {
     let repo = repo_with_hook();
     let trace = repo.path().join("hook-trace.json");
