@@ -6,7 +6,7 @@ resolver = "3"
 
 [package]
 name = "smart-commit"
-version = "0.13.0"
+version = "0.14.0"
 edition = "2024"
 rust-version = "1.99"
 description = "Commit messages in your repository's style, from a small LLM running locally (NPU, GPU or CPU)"
