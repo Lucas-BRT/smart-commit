@@ -49,6 +49,27 @@ docs, so the models, llama.cpp and the benchmark stay.
 GPU; `smart-commit hardware` only prints the hardware list. `--no-drivers`
 skips everything that needs `sudo`, and `--no-bench` skips the benchmark.
 
+To see the plan before anything is installed, install without the setup and
+ask for a dry run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash -s -- --no-setup
+smart-commit setup --dry-run
+```
+
+`smart-commit setup --dry-run` prints the hardware and the plan as text, in a
+terminal too: each step, whether it needs `sudo` and for what (apt packages,
+files in `/opt/intel` and `/etc/ld.so.conf.d`, the render group), what it
+downloads and how big (the sizes it knows: llama.cpp and the model; the total
+is printed only when every pending download has a known size), and which
+steps are already done and would be skipped. It ends with `Nothing was
+changed. Run `smart-commit setup` to apply it.` and changes nothing: no
+download, no file or directory written, no `sudo`. It only runs the
+read-only checks the setup itself uses to plan (`check-npu.sh`,
+`export-model.sh --check`, `setup-gpu.sh --dry-run`). It combines with
+`--no-drivers` (the plan then has no `sudo` step) and `--no-bench`; `--yes`
+is accepted and ignored.
+
 To build from source instead:
 
 ```bash

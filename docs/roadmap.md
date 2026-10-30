@@ -25,6 +25,8 @@
 - Global and per-repository configuration; the setup removes global
   values a version cannot read (a model added by a newer build) instead of
   stopping.
+- `smart-commit setup --dry-run` prints the plan (sudo, downloads, steps
+  already done) without changing anything.
 - Installer, guided setup that lists the hardware first and installs only
   what each vendor's CPU, GPU and NPU need, reproducible model export and
   release packaging, automatic releases.

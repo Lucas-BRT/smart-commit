@@ -21,7 +21,18 @@ use smart_commit::tui::{self, Screen};
 use super::model::{self, Chosen};
 use super::settings::{env, hardware_sources, resolve};
 
-pub(super) fn run(yes: bool, no_drivers: bool, no_bench: bool, llamacpp_only: bool) -> Result<()> {
+pub(super) fn run(
+    yes: bool,
+    no_drivers: bool,
+    no_bench: bool,
+    llamacpp_only: bool,
+    dry_run: bool,
+) -> Result<()> {
+    if dry_run {
+        // Before anything that writes, such as setting invalid settings aside.
+        let exe = std::env::current_exe()?.canonicalize()?;
+        return dry_run_plan(&scripts_dir(&exe)?, no_drivers, no_bench);
+    }
     set_aside_invalid_settings()?;
     if llamacpp_only {
         let server = install_llamacpp(&mut |_| {})?;
@@ -51,6 +62,21 @@ fn install_llamacpp(progress: &mut dyn FnMut(u64)) -> Result<PathBuf> {
         llamacpp::install::ARCHIVE_SHA256,
         progress,
     )?)
+}
+
+/// `setup --dry-run`: the plan as text, in a terminal too, and nothing
+/// applied. Only the read-only checks run (`check-npu.sh`, `export-model.sh
+/// --check`, `setup-gpu.sh --dry-run`), the ones the real setup runs to plan.
+fn dry_run_plan(scripts: &Path, no_drivers: bool, no_bench: bool) -> Result<()> {
+    let hw = Hardware::detect(&hardware_sources());
+    let model = resolve(None, Vec::new())?.settings().model;
+    let facts = facts(scripts, &hw, model, !no_drivers, !no_bench)?;
+    let steps = setup::plan(&hw, &facts);
+    print!(
+        "{}",
+        setup::dry_run_text(&hw.inventory(), setup::not_needed(&hw), &steps)
+    );
+    Ok(())
 }
 
 /// `setup` without the full screen, for `--yes` and for output that is not a
