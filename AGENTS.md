@@ -16,11 +16,13 @@ The root is a virtual Cargo workspace; each member has its own directory:
 | Directory | Package | What it is |
 |---|---|---|
 | `cli/` | `smart-commit` | The released binary (`cli/src`, `cli/tests`); the only default member |
+| `website/` | `smart-commit-website` | The website, built with Topcoat; its own `AGENTS.md` has its rules |
 | `tools/` | `smart-commit-tools` | `sc-tools`, tools for working on the project |
 | `training/tools/` | `smart-commit-training` | `sc-training`, the data tools for the models (the rest of `training/` is Python) |
 
 `docs/`, `scripts/`, `install.sh` and the pinned toolchain belong to the
-whole repository and stay at the root. `cargo build` makes the CLI only.
+whole repository and stay at the root. `cargo build` makes the CLI only;
+`cargo build --profile website -p smart-commit-website` makes the site.
 
 ## Checks
 

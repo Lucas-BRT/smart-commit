@@ -15,6 +15,8 @@ const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/..");
 const SKIPPED: &[&str] = &[
     "target",
     ".git",
+    // The website is documented by its own pages, for its own tree.
+    "website",
     "training/data",
     "training/runs",
     "training/scenarios/repos",
