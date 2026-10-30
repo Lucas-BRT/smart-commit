@@ -99,7 +99,7 @@ impl fmt::Debug for LlamaCppBackend {
 
 /// The error of the model or the server not being where `options` say.
 pub fn missing_file(options: &LlamaCppOptions) -> Option<BackendError> {
-    let unavailable = BackendError::Unavailable;
+    let unavailable = BackendError::NotInstalled;
     if !options.model.is_file() {
         return Some(unavailable(format!(
             "no GGUF model at {}; `smart-commit setup` downloads it",

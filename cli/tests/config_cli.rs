@@ -295,7 +295,7 @@ fn global_backend_setting_reaches_generation() {
     let out = env.ok(&["--mock-response", "feat: add main"], repo.path());
     assert_eq!(out, "feat: add main\n");
     // A flag still wins.
-    let output = env.run(&["--backend", "openvino"], repo.path());
+    let output = env.run(&["-v", "--backend", "openvino"], repo.path());
     assert!(
         stderr(&output).contains("no model in"),
         "{}",
@@ -314,14 +314,20 @@ fn model_dir_setting_is_used_and_relative_flags_are_resolved() {
         repo.path(),
     );
     // OpenVINO's devices, whatever hardware the machine running the tests has.
-    let output = env.run(&["--backend", "openvino"], repo.path());
+    let output = env.run(&["-v", "--backend", "openvino"], repo.path());
     assert!(
         stderr(&output).contains(&format!("no model in {};", dir.display())),
         "{}",
         stderr(&output)
     );
     let output = env.run(
-        &["--backend", "openvino", "--model-dir", "relative/model"],
+        &[
+            "-v",
+            "--backend",
+            "openvino",
+            "--model-dir",
+            "relative/model",
+        ],
         repo.path(),
     );
     let expected = std::path::absolute(repo.path().join("relative/model")).unwrap();

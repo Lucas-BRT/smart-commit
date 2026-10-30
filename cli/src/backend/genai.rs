@@ -118,7 +118,7 @@ impl GenaiBackend {
     pub fn load(options: &GenaiOptions) -> Result<Self, BackendError> {
         let model_xml = options.model_dir.join("openvino_model.xml");
         if !model_xml.is_file() {
-            return Err(BackendError::Unavailable(format!(
+            return Err(BackendError::NotInstalled(format!(
                 "no model in {}; `smart-commit setup` downloads it",
                 options.model_dir.display()
             )));
@@ -416,7 +416,7 @@ mod tests {
             .expect("no model");
         assert_eq!(
             err,
-            BackendError::Unavailable(format!(
+            BackendError::NotInstalled(format!(
                 "no model in {}; `smart-commit setup` downloads it",
                 dir.path().display()
             ))
