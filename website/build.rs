@@ -70,13 +70,24 @@ fn facts() {
     out += &format!("pub const INSTALL_CMD: &str = {install:?};\n");
     out += &format!("pub const DEFAULT_MODEL: &str = {:?};\n", model.0);
     out += &format!("pub const DEFAULT_MODEL_SIZE: &str = {:?};\n", model.1);
-    out += &format!(
-        "pub const DEVICES: &[[&str; 3]] = &{:?};\n",
-        devices_table(&devices)
-    );
+    out += "pub struct Device {\n    pub name: &'static str,\n    pub backend: &'static str,\n    pub hardware: &'static str,\n}\n";
+    out += "pub struct BenchRow {\n    pub device: &'static str,\n    pub time: &'static str,\n    pub selected: bool,\n}\n";
+    out += "pub const DEVICES: &[Device] = &[\n";
+    for [name, backend, hardware] in devices_table(&devices) {
+        out += &format!(
+            "    Device {{ name: {name:?}, backend: {backend:?}, hardware: {hardware:?} }},\n"
+        );
+    }
+    out += "];\n";
     let (machine, bench) = bench_example(&devices);
     out += &format!("pub const BENCH_MACHINE: &str = {machine:?};\n");
-    out += &format!("pub const BENCH: &[(&str, &str, bool)] = &{bench:?};\n");
+    out += "pub const BENCH: &[BenchRow] = &[\n";
+    for (device, time, selected) in bench {
+        out += &format!(
+            "    BenchRow {{ device: {device:?}, time: {time:?}, selected: {selected} }},\n"
+        );
+    }
+    out += "];\n";
     out += &format!("pub const NEXT: &[&str] = &{:?};\n", next_items(&roadmap));
     let dest = Path::new(&env::var("OUT_DIR").unwrap()).join("facts.rs");
     fs::write(dest, out).unwrap();

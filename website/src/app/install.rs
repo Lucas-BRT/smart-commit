@@ -1,70 +1,38 @@
+//! Install and use: the installer, its options, updating and removing.
+
+mod everyday;
+mod getting;
+mod more;
+mod options;
+mod plan;
+mod requirements;
+mod uninstall;
+mod update;
+mod verify;
+
 use topcoat::{
     Result,
-    router::{href, page},
+    router::page,
     view::{View, view},
 };
 
-use crate::ui::{
-    INSTALL_CMD, doc_link, docs,
-    facts::{DEFAULT_MODEL, DEFAULT_MODEL_SIZE, LLAMACPP_SIZE, MIN_GLIBC, PLATFORM, VERSION},
-    page_head, terminal,
-};
+use crate::ui::docs::docs;
 
 #[page]
 pub async fn page() -> Result<impl View> {
     Ok(view! {
-        docs(current: "/install",
-        page_head(
+        docs(
             title: "Install and use",
-            lede: "Linux on x86_64. The installer does not need sudo; the setup asks before any step that does.",
-        )
-
-        <section class="rail" aria-labelledby="install">
-            <h2 id="install">"Install"</h2>
-            terminal(title: "install", label: "Install command",
-                <span class="p">"$ "</span>(INSTALL_CMD)
-            )
-            <p>"This installs version " (VERSION) ". It lists your hardware, asks before anything that needs " <code>"sudo"</code> ", downloads the model and ends with a benchmark that picks the fastest device."</p>
-            <p>"The default model is " <code>(DEFAULT_MODEL)</code> ", " (DEFAULT_MODEL_SIZE) ". Installing, updating and downloading models use the network; writing a message does not."</p>
-            <p>"For a walkthrough, see the " <a href=(href!(super::tutorial::page))>"tutorial"</a> "."</p>
-            <p class="dim">"Drivers are installed with " <code>"apt"</code> "; Ubuntu 24.04 and derivatives are tested."</p>
-        </section>
-
-        <section class="rail" aria-labelledby="requirements">
-            <h2 id="requirements">"Requirements"</h2>
-            <ul>
-                <li>"Platform: " (PLATFORM) ", with glibc " (MIN_GLIBC) " or newer, and git."</li>
-                <li>"Downloaded by the setup: the default model, " (DEFAULT_MODEL_SIZE) ", and the pinned llama.cpp build, " (LLAMACPP_SIZE) "."</li>
-                <li>"Models and llama.cpp go to " <code>"~/.local/share/smart-commit"</code> "; caches go to " <code>"~/.cache/smart-commit"</code> "."</li>
-            </ul>
-        </section>
-
-        <section class="rail" aria-labelledby="use">
-            <h2 id="use">"Use"</h2>
-            terminal(title: "everyday use", label: "Everyday commands",
-"git add -p
-"<span class="dim">"# print the message"</span>"
-smart-commit
-"<span class="dim">"# review it, then commit"</span>"
-smart-commit --commit"
-            )
-            <p>"The message follows the style of your history."</p>
-        </section>
-
-        <section class="rail" aria-labelledby="hook">
-            <h2 id="hook">"On every commit"</h2>
-            terminal(title: "hook", label: "Install the git hook",
-"smart-commit hook install
-"<span class="dim">"# the editor opens with the message written"</span>"
-git commit"
-            )
-            <p>"It works from any git client, and never blocks a commit: once the binary is gone, it does nothing."</p>
-        </section>
-
-        <section class="rail" aria-labelledby="more">
-            <h2 id="more">"More"</h2>
-            <p>"Devices, models, settings, troubleshooting and uninstalling are in the " doc_link(page: "usage.md", "usage guide") "."</p>
-        </section>
+            lede: "Linux on x86_64. The installer needs no sudo.",
+            getting::section()
+            requirements::section()
+            plan::section()
+            options::section()
+            verify::section()
+            everyday::section()
+            update::section()
+            uninstall::section()
+            more::section()
         )
     })
 }
