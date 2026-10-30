@@ -69,6 +69,8 @@ Routes come from the module tree (Topcoat's module router):
 |---|---|
 | version (footer, install page) and repository | `cli/Cargo.toml` |
 | default model and its size (install page) | `cli/src/models/registry.rs` |
+| platform (install page) | the `Requirements:` line of `docs/usage.md` |
+| llama.cpp download size (install page) | `ARCHIVE_SIZE` in `cli/src/backend/llamacpp/install.rs` |
 | devices table | the first table of `docs/devices.md` |
 | install command | the first `curl` line of `docs/usage.md` |
 | next items of the roadmap | the `Next` table of `docs/roadmap.md` |
