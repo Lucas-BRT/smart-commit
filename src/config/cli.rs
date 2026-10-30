@@ -177,7 +177,19 @@ fn save_document(path: &Path, doc: &DocumentMut) -> Result<(), ConfigError> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(io)?;
     }
-    std::fs::write(path, doc.to_string()).map_err(io)
+    // Written beside the file and renamed over it, so that a crash or a full
+    // disk leaves the old file whole instead of an empty or cut one. A
+    // symlink (a dotfiles repository) is followed, not replaced.
+    let target = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    let mut partial = target.clone().into_os_string();
+    partial.push(".tmp");
+    let partial = std::path::PathBuf::from(partial);
+    std::fs::write(&partial, doc.to_string())
+        .and_then(|()| std::fs::rename(&partial, &target))
+        .inspect_err(|_| {
+            let _ = std::fs::remove_file(&partial);
+        })
+        .map_err(io)
 }
 
 /// A file listing every key allowed in `scope`'s file, all commented out,
