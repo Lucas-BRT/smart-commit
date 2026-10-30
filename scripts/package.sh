@@ -32,12 +32,22 @@ if [ "${SMART_COMMIT_PACKAGE_HOST:-0}" = 1 ]; then
 else
     docker build --quiet --tag smart-commit-build scripts/build >/dev/null
     # The sources are mounted read-only at /src; the toolchain, the crates
-    # and the build go in volumes, reused between runs.
+    # and the build go in volumes, reused between runs. With
+    # SMART_COMMIT_BUILD_CACHE=DIR the toolchain and the crates are in DIR
+    # instead, which CI keeps between runs. The build (the target volume) is
+    # not: CI starts every run with a new one, so the tarball's hash is that of
+    # a build from scratch.
+    rustup=smart-commit-rustup cargo=smart-commit-cargo
+    if [ -n "${SMART_COMMIT_BUILD_CACHE:-}" ]; then
+        mkdir -p "$SMART_COMMIT_BUILD_CACHE/rustup" "$SMART_COMMIT_BUILD_CACHE/cargo"
+        rustup=$(realpath "$SMART_COMMIT_BUILD_CACHE/rustup")
+        cargo=$(realpath "$SMART_COMMIT_BUILD_CACHE/cargo")
+    fi
     docker run --rm \
         --volume "$ROOT:/src:ro" \
         --volume "$binary:/out" \
-        --volume smart-commit-rustup:/root/.rustup \
-        --volume smart-commit-cargo:/root/.cargo/registry \
+        --volume "$rustup:/root/.rustup" \
+        --volume "$cargo:/root/.cargo/registry" \
         --volume smart-commit-target:/target \
         --workdir /src \
         --env CARGO_TARGET_DIR=/target \

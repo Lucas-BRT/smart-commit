@@ -39,9 +39,21 @@ jobs:
           fi
       - if: steps.version.outputs.new == 'true'
         run: rustup toolchain install
+      # Only a release run restores and saves these, so the many pushes that
+      # release nothing do not wait for them.
+      - if: steps.version.outputs.new == 'true'
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - if: steps.version.outputs.new == 'true'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/build-cache
+          key: package-${{ hashFiles('rust-toolchain.toml', 'scripts/build/Dockerfile', 'Cargo.lock') }}
+          restore-keys: package-
       - if: steps.version.outputs.new == 'true'
         run: cargo test --locked
       - if: steps.version.outputs.new == 'true'
+        env:
+          SMART_COMMIT_BUILD_CACHE: ${{ runner.temp }}/build-cache
         run: scripts/package.sh dist
       - if: steps.version.outputs.new == 'true'
         run: cargo run --release --locked -q -p smart-commit-tools -- release-notes "v${{ steps.version.outputs.version }}" >notes.md

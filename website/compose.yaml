@@ -4,8 +4,12 @@ services:
       context: ..
       dockerfile: website/Dockerfile
     image: smart-commit-website
-    ports:
-      - "${PORT:-3000}:3000"
+    # No published port: behind a reverse proxy (Dokploy's Traefik) the domain
+    # points at the container's port 3000, and a host port would clash with
+    # whatever else listens there. `compose.override.yaml` publishes it for
+    # local use.
+    expose:
+      - "3000"
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
