@@ -240,6 +240,38 @@ async fn install_names_the_default_model_and_its_size() {
 }
 
 #[tokio::test]
+async fn install_lists_the_platform_and_the_download_sizes() {
+    let usage = product("docs/usage.md");
+    let platform = usage
+        .lines()
+        .find_map(|l| l.strip_prefix("Requirements: ")?.split_once('.'))
+        .unwrap()
+        .0;
+    let install = product("cli/src/backend/llamacpp/install.rs");
+    let bytes: f64 = install
+        .lines()
+        .find_map(|l| {
+            l.strip_prefix("pub const ARCHIVE_SIZE: u64 = ")?
+                .strip_suffix(';')
+        })
+        .unwrap()
+        .replace('_', "")
+        .parse()
+        .unwrap();
+    page(
+        "/install",
+        &[
+            "id=\"requirements\"",
+            &format!("Platform: {platform}."),
+            &format!("{:.1} MB", bytes / 1e6),
+            "~/.local/share/smart-commit",
+            "~/.cache/smart-commit",
+        ],
+    )
+    .await;
+}
+
+#[tokio::test]
 async fn devices_are_the_ones_in_the_devices_guide() {
     let guide = product("docs/devices.md");
     let table: Vec<&str> = guide

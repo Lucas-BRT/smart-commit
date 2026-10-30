@@ -6,6 +6,11 @@
 curl -fsSL https://raw.githubusercontent.com/Lucas-BRT/smart-commit/main/install.sh | bash
 ```
 
+Requirements: Linux on x86_64. The setup downloads the default model
+(1.1 GB) and the pinned llama.cpp build (31.6 MB); the model sizes are in
+[models](models.md). Models and llama.cpp go to `~/.local/share/smart-commit`,
+and the caches to `~/.cache/smart-commit`.
+
 The installer downloads the latest release, checks it against the release's
 `SHA256SUMS` and installs it in `~/.local/bin` and `~/.local/share/smart-commit`,
 without `sudo`. It then runs `smart-commit setup`, which:
