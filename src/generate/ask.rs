@@ -72,7 +72,7 @@ pub fn offer_types(
     options: &PromptOptions,
     below: f64,
 ) -> Option<Vec<TypeChoice>> {
-    let (convention, _) = prompt::effective_style(&ctx.style, options);
+    let convention = prompt::effective_convention(&ctx.style, options);
     if convention != Convention::Conventional {
         return None;
     }

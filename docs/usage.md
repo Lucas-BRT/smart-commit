@@ -138,9 +138,8 @@ see [configuration](configuration.md) and
 [measurements](measurements.md#asking-for-the-type) for what it gains.
 
 The message follows the repository's style: its convention (Conventional
-Commits, gitmoji or free), its language (English or Portuguese), the scopes
-it uses, and the ticket in the branch name (`ABC-123`) when the history cites
-tickets.
+Commits, gitmoji or free), the scopes it uses, and the ticket in the branch
+name (`ABC-123`) when the history cites tickets. The message is in English.
 
 ### On every `git commit`, from any client
 
@@ -226,14 +225,13 @@ pinned to a revision and checked against a SHA-256. See [models](models.md).
 
 ```bash
 smart-commit config list --show-origin                         # everything, and where it comes from
-smart-commit config set style.language english
+smart-commit config set style.default_convention conventional
 smart-commit config set --repo style.convention conventional   # .smart-commit.toml, shared through git
 smart-commit config init                                       # a file with every key commented out
 ```
 
 | To… | Run |
 |---|---|
-| always write in English | `smart-commit config set style.language english` |
 | enforce Conventional Commits for a team | `smart-commit config set --repo style.convention conventional` |
 | get faster NPU replies that see less of the diff | `smart-commit config set model.max_prompt_tokens 512` |
 | use another GPU on a multi-GPU machine | `smart-commit config set model.vulkan_device 1` |

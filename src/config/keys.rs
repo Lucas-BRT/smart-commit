@@ -210,25 +210,11 @@ pub const KEYS: &[Key] = &[
         description: "Commit convention; `auto` follows the history.",
     },
     Key {
-        name: "style.language",
-        kind: Kind::Choice(&["auto", "english", "portuguese"]),
-        scope: Scope::Any,
-        env: None,
-        description: "Message language; `auto` follows the history.",
-    },
-    Key {
         name: "style.default_convention",
         kind: Kind::Choice(&["conventional", "gitmoji", "free"]),
         scope: Scope::Any,
         env: None,
         description: "Convention when `auto` has no history to learn from.",
-    },
-    Key {
-        name: "style.default_language",
-        kind: Kind::Choice(&["english", "portuguese"]),
-        scope: Scope::Any,
-        env: None,
-        description: "Language when `auto` cannot tell from the history.",
     },
     Key {
         name: "style.history_depth",
@@ -255,6 +241,12 @@ pub fn key(name: &str) -> Result<&'static Key, ConfigError> {
             location: None,
         })
 }
+
+/// Keys earlier versions had, which a file may still hold: they are read and
+/// ignored, so that a configuration written by one of them still works.
+/// `style.language` and `style.default_language` asked for Portuguese; the
+/// messages are in English now.
+pub const RETIRED: &[&str] = &["style.language", "style.default_language"];
 
 /// The names of every key, for the error that reports an unknown one.
 pub(super) fn known_keys() -> String {

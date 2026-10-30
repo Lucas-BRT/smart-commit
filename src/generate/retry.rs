@@ -1,7 +1,7 @@
 //! Retry logic for generation.
 
 use crate::message::CommitMessage;
-use crate::style::{self, Language};
+use crate::style;
 
 /// The share of an earlier subject's words a reply must cover, with no
 /// word of its own, to count as a copy of it.
@@ -10,13 +10,9 @@ const NEAR_COPY_SHARE: f64 = 0.6;
 /// Words no subject ends with: a reply that stops after one was cut off.
 /// `in`, `on`, `up`, `off` and `out` end real subjects ("log in", "turn
 /// off"), and so do pronouns, so they are not here.
-const DANGLING_ENGLISH: &[&str] = &[
+const DANGLING: &[&str] = &[
     "the", "a", "an", "of", "to", "for", "with", "from", "by", "and", "or", "into", "than", "that",
     "which", "as", "at",
-];
-const DANGLING_PORTUGUESE: &[&str] = &[
-    "o", "a", "os", "as", "um", "uma", "de", "do", "da", "dos", "das", "em", "no", "na", "nos",
-    "nas", "para", "com", "por", "e", "ou", "que", "ao", "aos",
 ];
 
 /// Git's prepared message as subject and body.
@@ -55,23 +51,10 @@ pub fn copied_from<'a>(subject: &str, history: &'a [String]) -> Option<&'a str> 
         .map(String::as_str)
 }
 
-/// Whether `subject` is clearly in another language than `language`, the
-/// repository's: only when its words are all of the other one, and no
-/// history subject is in that one (a repository that sometimes writes it
-/// accepts it).
-pub fn in_other_language(subject: &str, language: Language, history: &[String]) -> bool {
-    let theirs = style::language_of(subject);
-    matches!(
-        (language, theirs),
-        (Language::Portuguese, Language::English) | (Language::English, Language::Portuguese)
-    ) && !history.iter().any(|h| style::language_of(h) == theirs)
-}
-
 /// Whether `subject` stops in the middle of a sentence: its last word is an
-/// article, a preposition or a conjunction of `language` (or of English,
-/// which commits mix in). A word in backticks or quotes, or with a digit, is
-/// a name and not one of them.
-pub fn cut_off(subject: &str, language: Language) -> bool {
+/// article, a preposition or a conjunction. A word in backticks or quotes,
+/// or with a digit, is a name and not one of them.
+pub fn cut_off(subject: &str) -> bool {
     let description = subject
         .split_once(':')
         .filter(|(head, _)| !head.contains(' '))
@@ -82,7 +65,5 @@ pub fn cut_off(subject: &str, language: Language) -> bool {
     if !last.chars().all(char::is_alphabetic) {
         return false;
     }
-    let last = last.to_lowercase();
-    DANGLING_ENGLISH.contains(&last.as_str())
-        || (language == Language::Portuguese && DANGLING_PORTUGUESE.contains(&last.as_str()))
+    DANGLING.contains(&last.to_lowercase().as_str())
 }

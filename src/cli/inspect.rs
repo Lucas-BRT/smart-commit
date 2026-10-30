@@ -175,10 +175,6 @@ fn print_context(ctx: &RepoContext, settings: &Settings) {
     if let Some(forced) = settings.convention {
         println!("             forced to {forced:?} by style.convention");
     }
-    println!("language:    {:?}", style.language);
-    if let Some(forced) = settings.language {
-        println!("             forced to {forced:?} by style.language");
-    }
     println!("tickets:     {:?}", style.tickets);
     println!("types:       {}", format_ranked(&style.types));
     println!("scopes:      {}", format_ranked(&style.scopes));

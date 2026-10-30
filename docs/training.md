@@ -76,8 +76,7 @@ shorten the prompt or speed up prefill barely matters. The measurements
   filtered CommitChronicle commits, single-file diffs, English, decoded with
   a GBNF grammar. Its card reports type accuracy 0.131 → 0.637 (LLM judge,
   442 examples) and that the base model answered `feat` 95.5% of the time.
-  It does not know smart-commit's prompt (history examples, language,
-  scopes), so it is a baseline, not a drop-in.
+  It does not know smart-commit's prompt (history examples, scopes), so it is a baseline, not a drop-in.
 - [Elib27/qwen2.5-coder-1.5b-commit-msg-lora](https://huggingface.co/Elib27/qwen2.5-coder-1.5b-commit-msg-lora)
   (and [0.5B](https://huggingface.co/Elib27/qwen2.5-coder-0.5b-commit-msg-lora)):
   PEFT LoRA (r=16, alpha=32) on our exact base model, ~11k pairs. No license
@@ -103,10 +102,8 @@ Its licence is listed as "other": it gathers commits from repositories
 under MIT, Apache-2.0 and BSD-3-Clause; how the fine-tunes credit it is in
 [Export and publication](#export-and-publication).
 
-Portuguese is scarce there, and v0.1 was trained on English only. Options:
-repositories with Portuguese history collected separately, or labels
-written by a larger model (check that model's terms allow training on its
-outputs).
+The product writes in English only (support for Portuguese was removed), and
+v0.1 was trained on English only.
 
 ### From a commit to a training example
 
@@ -172,7 +169,8 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
   How to rebuild both is in [training/README.md](../training/README.md).
 - **Scenarios**: hand-written cases of git operations on two synthetic
   repositories (Python in Portuguese with free style, TypeScript with
-  Conventional Commits), by level of complexity from a typo to a merge in
+  Conventional Commits; the Portuguese cases no longer test a goal of the
+  product, they show what a model does by itself), by level of complexity from a typo to a merge in
   progress, each with its target; `sc-training score` reports them per level and
   checks the words a right subject must have (`expected`). Each case is in
   the train or the eval split, never both; those whose target depends on
@@ -194,7 +192,7 @@ Every decision (fine-tune, 0.5B against 1.5B, prompt, data) is judged with
   which counts the cases each gets right that the other does not and gives
   McNemar's exact p. A change of 1–3 points on eval-v1 is often a handful
   of cases either way.
-- Not covered yet: gitmoji, Portuguese beyond the scenarios, and an LLM
+- Not covered yet: gitmoji, and an LLM
   judge for faithfulness validated against a sample rated by hand.
 
 ## Training

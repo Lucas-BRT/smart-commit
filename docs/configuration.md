@@ -7,7 +7,7 @@ style for a team, to pick a device, or to point at models in other places.
 $ smart-commit config init                          # ~/.config/smart-commit/config.toml, every key commented out
 $ smart-commit config set model.device cpu          # global
 $ smart-commit config set --repo style.convention conventional   # .smart-commit.toml, shared through git
-$ smart-commit config get style.language
+$ smart-commit config get style.convention
 $ smart-commit config list --show-origin
 backend = auto  (default)
 model.device = cpu  (global /home/me/.config/smart-commit/config.toml)
@@ -55,9 +55,7 @@ value, for example when an environment variable is set.
 | `model.max_prompt_tokens` | 256–8192 | 1024 | | global |
 | `model.max_new_tokens` | 16–1024 | 128 | | global |
 | `style.convention` | `auto`, `conventional`, `gitmoji`, `free` | `auto` | | global or repository |
-| `style.language` | `auto`, `english`, `portuguese` | `auto` | | global or repository |
 | `style.default_convention` | `conventional`, `gitmoji`, `free` | `conventional` | | global or repository |
-| `style.default_language` | `english`, `portuguese` | `english` | | global or repository |
 | `style.history_depth` | 1–500 | 30 | | global or repository |
 | `style.subject_max` | 40–200 | 72 | | global or repository |
 
@@ -138,11 +136,15 @@ value, for example when an environment variable is set.
   ([architecture](architecture.md#fitting-the-diff)).
   Shorter prompts are faster on the NPU but see less of the diff; changing it
   recompiles the model once (see [measurements](measurements.md#the-npu)).
-- `style.convention` and `style.language` other than `auto` override what
-  the history says. With a forced convention, history examples that
-  contradict it are left out of the prompt.
-- `style.default_*` apply when `auto` has nothing to go on: no history, or a
-  history whose language cannot be told.
+- `style.convention` other than `auto` overrides what the history says. With
+  a forced convention, history examples that contradict it are left out of
+  the prompt.
+- `style.default_convention` applies when `auto` has nothing to go on: no
+  history, or one that follows no convention.
+- Messages are written in English. `style.language` and
+  `style.default_language`, which asked for Portuguese, were removed. A
+  configuration file that still has them keeps working (they are read and
+  ignored), but they can no longer be set, and the lines can be deleted.
 - `style.subject_max` is the longest subject, in columns. 72 follows git's
   convention (GitHub cuts the subject about there, `git log --oneline` and
   patches by e-mail assume short lines); a team whose commitlint allows 100

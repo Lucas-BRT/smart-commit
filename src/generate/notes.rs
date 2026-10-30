@@ -1,7 +1,7 @@
 //! Notes added to prompts when retrying or avoiding messages.
 
 use crate::message;
-use crate::style::{Convention, Language};
+use crate::style::Convention;
 
 use super::SanitizeError;
 
@@ -36,7 +36,7 @@ pub fn avoid_note(messages: &[String]) -> Option<String> {
 }
 
 /// Tells the model why its previous reply was rejected.
-pub fn retry_note(error: &SanitizeError, convention: Convention, language: Language) -> String {
+pub fn retry_note(error: &SanitizeError, convention: Convention) -> String {
     let reason = match error {
         SanitizeError::Empty => "it contained no commit message".to_owned(),
         SanitizeError::NotConventional(subject) => {
@@ -57,14 +57,6 @@ pub fn retry_note(error: &SanitizeError, convention: Convention, language: Langu
         SanitizeError::CutOff(subject) => {
             let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
             format!("\"{subject}\" stops in the middle of a sentence; finish it")
-        }
-        SanitizeError::WrongLanguage(subject) => {
-            let subject: String = subject.chars().take(message::SUBJECT_MAX).collect();
-            let language = match language {
-                Language::Portuguese => "Brazilian Portuguese",
-                _ => "English",
-            };
-            format!("\"{subject}\" is not in {language}; write it in {language}")
         }
     };
     let format = match convention {

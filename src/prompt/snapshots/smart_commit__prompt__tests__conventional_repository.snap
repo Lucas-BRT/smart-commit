@@ -6,16 +6,16 @@ You write git commit messages from a diff. Reply with the commit message only: n
 
 Rules:
 - Subject line of at most 72 characters, without a trailing period.
-- Write in Brazilian Portuguese.
+- Write in English, in the imperative mood ("Add", not "Added").
 - Use Conventional Commits: `type(scope): description`.
 - Types used here: docs, feat, fix, refactor.
 - Scopes used here: cli, git. Omit the scope if none fits.
 - Add a body only if the reason for the change is not obvious.
 
 Recent subjects from this repository, follow their style:
-feat(cli): adiciona o comando context
-fix(git): corrige a leitura da branch
-docs: atualiza a documentação da fase 1
+feat(cli): add the context command
+fix(git): correct the branch reading
+docs: update the documentation of phase 1
 
 =====
 Files changed:

@@ -1,11 +1,10 @@
 {
   "format": 1,
-  "tool_version": "0.9.0",
+  "tool_version": "0.13.0",
   "backend": "none",
   "options": {
     "max_prompt_tokens": 1024,
     "default_convention": "conventional",
-    "default_language": "english",
     "diff": "annotated"
   },
   "config": {

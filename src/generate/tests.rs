@@ -11,7 +11,7 @@ mod tests {
     use crate::git::{ChangeStatus, FileChange};
     use crate::message::SanitizeError;
     use crate::prompt::{Prompt, PromptOptions};
-    use crate::style::{Convention, Language};
+    use crate::style::Convention;
 
     fn context(subjects: &[&str]) -> RepoContext {
         RepoContext::new(
@@ -160,49 +160,6 @@ mod tests {
     }
 
     #[test]
-    fn a_reply_in_another_language_is_retried() {
-        let history = [
-            "adiciona pedidos",
-            "corrige o total do pedido",
-            "cria o cardápio",
-        ];
-        let mock = MockBackend::new(["add main", "torna o script principal executável"]);
-        let generation = run(&history, &mock);
-        assert_eq!(generation.source, Source::Model);
-        assert_eq!(
-            generation.message.subject,
-            "torna o script principal executável"
-        );
-        assert_eq!(
-            generation.attempts[0].rejected,
-            Some(SanitizeError::WrongLanguage("add main".into()))
-        );
-        assert!(
-            mock.prompts()[1]
-                .user
-                .ends_with("\"add main\" is not in Brazilian Portuguese; write it in Brazilian Portuguese. Reply again with only the commit message.\n"),
-            "{}",
-            mock.prompts()[1].user
-        );
-        // Mixed, as the history itself may be: kept.
-        let mock = MockBackend::new(["fix do teclado"]);
-        assert_eq!(run(&history, &mock).attempts.len(), 1);
-        // A repository that also writes English accepts an English reply
-        // (found on eval-v1).
-        let mixed = [
-            "adiciona pedidos",
-            "corrige o total do pedido",
-            "add the CLI",
-        ];
-        let mock = MockBackend::new(["add smtpSecure and smtpRequireTLS"]);
-        assert_eq!(run(&mixed, &mock).attempts.len(), 1);
-        // Without history the language is only the default (English): a
-        // first commit written in Portuguese is kept.
-        let mock = MockBackend::new(["feat: adiciona o sistema de pedidos"]);
-        assert_eq!(run(&[], &mock).attempts.len(), 1);
-    }
-
-    #[test]
     fn a_subject_cut_off_in_the_middle_of_a_sentence_is_retried() {
         // Real use: a reply that stopped after an article and passed (the
         // trace conventional-en-conformal-sets-as-cut-off).
@@ -263,7 +220,7 @@ mod tests {
     }
 
     #[test]
-    fn what_ends_a_sentence_depends_on_the_language() {
+    fn what_ends_a_sentence_is_not_cut_off() {
         use crate::generate::cut_off;
         for dangling in [
             "fix: handle the",
@@ -275,7 +232,7 @@ mod tests {
             "Fix: HANDLE THE",
             "docs(readme): note that",
         ] {
-            assert!(cut_off(dangling, Language::English), "{dangling}");
+            assert!(cut_off(dangling), "{dangling}");
         }
         for whole in [
             "fix: handle detached HEAD",
@@ -289,27 +246,11 @@ mod tests {
             "fix:",
             "fix: ",
         ] {
-            assert!(!cut_off(whole, Language::English), "{whole}");
+            assert!(!cut_off(whole), "{whole}");
         }
-        // "de", "e" or "o" end a Portuguese sentence only when it is cut.
-        assert!(cut_off(
-            "fix: corrige o total do pedido de",
-            Language::Portuguese
-        ));
-        assert!(cut_off("feat: adiciona suporte a", Language::Portuguese));
-        assert!(!cut_off(
-            "fix: corrige o total do pedido",
-            Language::Portuguese
-        ));
-        assert!(!cut_off(
-            "fix: corrige o total do pedido de",
-            Language::English
-        ));
-        // English words still count in a Portuguese repository.
-        assert!(cut_off("fix: corrige the", Language::Portuguese));
         // A colon inside the description is not the type's.
-        assert!(!cut_off("fix: handle the case: foo", Language::English));
-        assert!(cut_off("Update the thing: and", Language::English));
+        assert!(!cut_off("fix: handle the case: foo"));
+        assert!(cut_off("Update the thing: and"));
     }
 
     #[test]
@@ -674,7 +615,7 @@ mod tests {
     #[test]
     fn retry_note_without_a_required_format() {
         assert_eq!(
-            generate::retry_note(&SanitizeError::Empty, Convention::Free, Language::English),
+            generate::retry_note(&SanitizeError::Empty, Convention::Free),
             "Your previous reply was rejected because it contained no commit message. \
              Reply again with only the commit message."
         );
