@@ -14,6 +14,7 @@ const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/..");
 /// the synthetic repositories of the training scenarios.
 const SKIPPED: &[&str] = &[
     "target",
+    ".worktrees",
     ".git",
     // The website is documented by its own pages, for its own tree.
     "website",
