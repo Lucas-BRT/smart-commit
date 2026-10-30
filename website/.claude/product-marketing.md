@@ -18,12 +18,14 @@ where the AI writes the code too.
 
 ## Position
 AI that is small, useful and affordable, not a large cost that erodes your own
-ability to think. A 1.1 GB model on the hardware you already have. 100% offline.
+ability to think. A 1.1 GB model on the hardware you already have, running on
+your machine: installing and downloading models use the network, writing a
+message does not.
 The tool stays out of the way: one command, one line, you decide.
 
 ## Differentiators (all stated in the project docs)
 - Entirely local: no account, no API key, nothing leaves the machine.
-- Follows the repository's style: convention, language, scopes, ticket format.
+- Follows the repository's style: convention, scopes, ticket format. Messages are in English only.
 - Runs on what you have: Intel NPU, Intel GPU, any GPU through Vulkan, or the CPU.
 - Works with any git client through a `prepare-commit-msg` hook; never blocks a commit.
 - Reproducible: toolchain, dependencies and models pinned by version and hash.
