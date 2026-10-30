@@ -1329,6 +1329,47 @@ asked.
   enough to keep two models loaded. If it is built it must be the single pass, with the confidence taken from the
   first token's probabilities of the reply, and `tau` confirmed on a third set.
 
+### H16. Naming what changed in the prompt helps the description — no gain without training
+
+**Claim.** The prompt cuts the diff to its budget, and what is cut can hold the names the message should use. The
+paper [Brevity is the Soul of Wit](https://lacuna.tiptreesystems.com/work/brevity-is-the-soul-of-wit-condensing-code)
+condenses a change into a template with the summarised changes, the developers' comments and the key identifiers, and
+fine-tunes on it (found with Lacuna, H15). A line with the names the change declares, and one with the comments it
+adds, read from every file and not only the hunks that fit, should give the model what the budget took.
+
+**Design.** `--names on` (`prompt` and `eval` only): `Names touched:` lists up to 8 functions, classes, structs and
+the like that the hunk headers name or the changed lines declare, and `Comments added:` up to 2 comments of the added
+lines (70 characters), from every source, config and test file; lockfiles, generated files, documents and binaries
+give none. The lines come between the file list and the diff and are extra: the diff keeps its room. The models and
+the rest of the prompt are as in `compare-v04c` (the 1.5B and 0.5B v0.3, annotated, full rules, `vulkan`, the 500
+commits of `data/val1-h4`), without retraining. Fixed before the numbers: worth it if, for both models, `word_f1`
+(all 500 commits) rises by at least 0.015 with the 95% interval of the paired difference (`paired_f1.py`) above 0,
+`ungrounded`, `unsupported` and `first_copied` rise by at most 0.01 and `type_match` falls by at most 0.01; if it
+passes, one read on `eval-v1`.
+
+**Result** (arm minus control):
+
+| model | `word_f1` all [95%] | Conventional | free | `type_match` | `ungrounded` | `unsupported` | `first_copied` |
+|---|---|---|---|---|---|---|---|
+| 1.5B v0.3 | +0.002 [−0.005, +0.010] | +0.003 | +0.002 | **−0.016** | −0.004 | −0.002 | 0 |
+| 0.5B v0.3 | +0.002 [−0.005, +0.008] | +0.002 | +0.002 | +0.004 | 0 | +0.002 | 0 |
+
+- **It fails.** The words do not move (+0.002 in both models, the interval holds 0), and the 1.5B loses 0.016 of
+  `type_match`, over the 0.010 allowed (`type_group` −0.016 and `type_behaviour` −0.012 with it). Nothing worsens.
+  `eval-v1` is not read.
+- **The line was there and was read.** 278 of the 499 prompts that reach the model (56%) got a `Names touched` line
+  and 85 a `Comments added` line. A subject uses one of the names listed in 27% of those with the line against 20% for
+  the control (1.5B), and 32% against 27% (0.5B): the models take the names, and some take the comment whole
+  (`fix: strip certain args from DOCKER_ARGS` after the comment "strip certain args from DOCKER_ARGS").
+- **The authors do not use them as much.** The real subject uses one of the listed names in 44 of the 278 (16%). The
+  models now name things more often than the authors do, so the words they add are not the words the author wrote.
+  Even on those 278 commits `word_f1` moves +0.002 [−0.012, +0.016] (1.5B) and +0.003 [−0.008, +0.016] (0.5B); the
+  headroom is small and the line does not reach it.
+- **Limits.** The models were not trained with the line, which is how the paper used it; training with it is the form
+  not tested, and given the 16% a large gain is not to be expected. The extraction is plain text (declaration
+  keywords, hunk headers, comment markers), not a parser, and is English-centred in its comments.
+- **Verdict.** Not adopted; the product keeps the prompt as it is. The option stays for evaluation.
+
 ## Ideas not tried yet
 
 - An LLM judge for faithfulness, validated against a sample rated by
