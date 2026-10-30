@@ -55,7 +55,11 @@ Installer options (after `bash -s --` when piping):
 | `--purge` | `--uninstall`, plus the models, llama.cpp, the benchmark, the caches and the config |
 | `--system` | `--uninstall`, plus the OpenVINO that the setup installed (asks before using `sudo`) |
 
-The installer warns if `~/.local/bin` is not on your `PATH`. Running it
+If `~/.local/bin` (or the `--prefix` directory's `bin`) is not on your
+`PATH`, the installer prints the line to add for your shell (`export PATH=...`
+in `~/.bashrc`, `~/.zshrc` or `~/.profile`, `fish_add_path` in fish's
+`config.fish`) and says to open a new terminal or run it now. It never edits
+your profile files. Running it
 again upgrades in place: it only replaces the binary, the scripts and the
 docs, so the models, llama.cpp and the benchmark stay.
 

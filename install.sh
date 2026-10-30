@@ -286,9 +286,37 @@ if [ "$UPDATE" = 1 ]; then
     fi
 fi
 
+# Tells how to put $PREFIX/bin on PATH: the line for the user's shell and the
+# file it goes in. The user's files are never edited.
+path_note() {
+    local dir=$PREFIX/bin file line
+    case $dir in
+        "$HOME"/*) dir=\$HOME/${dir#"$HOME"/} ;;
+    esac
+    case $(basename "${SHELL:-}") in
+        bash) file=$HOME/.bashrc ;;
+        zsh) file=${ZDOTDIR:-$HOME}/.zshrc ;;
+        fish) file=$HOME/.config/fish/config.fish ;;
+        *) file=$HOME/.profile ;;
+    esac
+    if [ "$(basename "${SHELL:-}")" = fish ]; then
+        line="fish_add_path $dir"
+    else
+        # shellcheck disable=SC2016  # the $PATH is for the profile, not for this shell
+        line="export PATH=\"$dir:"'$PATH"'
+    fi
+    case $file in
+        "$HOME"/*) file=\~/${file#"$HOME"/} ;;
+    esac
+    echo "note: $PREFIX/bin is not on your PATH, so \`smart-commit\` is not found yet."
+    echo "  Add this line to $file:"
+    echo "    $line"
+    echo "  Then open a new terminal, or run that line now."
+}
+
 case ":$PATH:" in
     *":$PREFIX/bin:"*) ;;
-    *) echo "note: $PREFIX/bin is not on your PATH; add it to your shell's profile." ;;
+    *) path_note ;;
 esac
 
 if [ "$SETUP" = 1 ]; then

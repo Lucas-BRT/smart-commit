@@ -36,6 +36,7 @@ jobs:
       - run: cli/tests/scripts/test-export-model.sh
       - run: cli/tests/scripts/test-install-data.sh
       - run: cli/tests/scripts/test-install-preflight.sh
+      - run: cli/tests/scripts/test-install-path.sh
       - run: cli/tests/scripts/test-normalize-ir.sh
       - run: cli/tests/scripts/test-install-verify.sh
       - run: cli/tests/scripts/test-workflows.sh
