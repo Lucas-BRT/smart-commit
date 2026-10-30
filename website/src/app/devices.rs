@@ -4,7 +4,11 @@ use topcoat::{
     view::{View, view},
 };
 
-use crate::ui::{doc_link, docs, facts::DEVICES, page_head, table, terminal};
+use crate::ui::{
+    doc_link, docs,
+    facts::{BENCH, BENCH_MACHINE, DEVICES},
+    page_head, table, terminal,
+};
 
 #[page]
 pub async fn page() -> Result<impl View> {
@@ -30,11 +34,16 @@ pub async fn page() -> Result<impl View> {
 
         <section class="rail" aria-labelledby="choosing">
             <h2 id="choosing">"Choosing a device"</h2>
-            <p>"Setup measures every device your machine has. On a Ryzen 5 5500 with an RTX 3050:"</p>
+            <p>"Setup measures every device your machine has. On a " (BENCH_MACHINE) ":"</p>
             terminal(title: "smart-commit bench (abridged)", label: "Example output of smart-commit bench",
-"  device   per message
-  vulkan         2.4 s  "<span class="sel">"<- selected"</span>"
-  cpu            4.0 s"
+    "  device   per message\n"
+                for (device, time, selected) in BENCH {
+                    (format!("  {device:<15}{time}"))
+                    if *selected {
+                        "  "<span class="sel">"<- selected"</span>
+                    }
+                    "\n"
+                }
             )
             <p>"Run " <code>"smart-commit bench"</code> " again after changing drivers. Force a device with " <code>"smart-commit device use npu"</code> "."</p>
             <p>"More numbers are in the " doc_link(page: "measurements.md", "measurements") " and the " doc_link(page: "devices.md", "devices guide") "."</p>

@@ -267,3 +267,32 @@ async fn the_roadmap_page_starts_with_the_first_item_of_the_roadmap() {
     let title = first.split("**").nth(1).unwrap();
     page("/roadmap", &[title]).await;
 }
+
+#[tokio::test]
+async fn the_benchmark_example_is_the_one_in_the_devices_guide() {
+    let guide = product("docs/devices.md");
+    let machine = guide
+        .lines()
+        .find_map(|l| l.strip_prefix("On a ")?.split_once(" (").map(|(m, _)| m))
+        .unwrap();
+    let body = page("/devices", &[&format!("On a {machine}:")]).await;
+    let rows: Vec<&str> = guide
+        .lines()
+        .skip_while(|l| !l.starts_with("  device "))
+        .skip(1)
+        .take_while(|l| !l.is_empty())
+        .collect();
+    for row in rows {
+        let mut words = row.split_whitespace();
+        let (device, time) = (words.next().unwrap(), words.next().unwrap());
+        assert!(
+            body.contains(&format!("  {device:<15}{time} s")),
+            "{device} {time}"
+        );
+        assert_eq!(
+            row.contains("<- selected"),
+            body.contains(&format!("{device:<15}{time} s  <span class=\"sel\">")),
+            "{device}"
+        );
+    }
+}
