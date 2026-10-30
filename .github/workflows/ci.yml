@@ -35,6 +35,7 @@ jobs:
       - run: cli/tests/scripts/test-setup-gpu.sh
       - run: cli/tests/scripts/test-export-model.sh
       - run: cli/tests/scripts/test-install-data.sh
+      - run: cli/tests/scripts/test-install-preflight.sh
       - run: cli/tests/scripts/test-normalize-ir.sh
 
   # Packages in the pinned build container (twice: the bytes must match)
