@@ -1298,15 +1298,36 @@ asked.
 - **The loss is one commit and the words are the same**: 0.004 under the 1.5B in `type_match` and no difference in
   `word_f1`, with the 1.5B answering 26% of the commits. With 250 commits a difference of 0.03 cannot be excluded,
   and `tau` = 0.5 is on the edge of the margin on `val1-h4` (0.644 against 0.652).
-- **What it would save** (an estimate, not a measurement of the cascade): with the times of `docs/measurements.md`
-  (the v0.1 models, `smart-commit bench`), on the RTX 3050 `vulkan` 1.2 s for the 0.5B and 2.3 s for the 1.5B, so
-  1.2 + 0.264 × 2.3 = 1.8 s against 2.3 s (21% less); on the `cpu` 1.9 s and 3.8 s, 2.9 s against 3.8 s (24% less).
-- **What it costs**: both models in memory (or a model load when the 1.5B is needed, which the estimate leaves
-  out), a first-token read of every commit by the small model, and a second reply with the same prompt (the server's
-  prompt cache should make it cheap, not measured). The Intel NPU and GPU, with only the base 1.5B exported, cannot
-  do it.
-- **Next**: measure the cascade on the machine (`smart-commit bench` with both servers, the second pass and the
-  load of the 1.5B), and `tau` on a third set; only then a product change.
+- **Measured on the machine** (`cascade_bench.py`: both servers loaded or started per message, the product's request
+  and flags; `eval-v1`'s Conventional commits, tau = 0.5; Ryzen 5 5500, RTX 3050 `vulkan` for 250 commits and the `cpu`
+  for the first 100; one round, so the differences of a few hundredths of a second are not claimed). The 1.5B answered
+  26.4% of the commits on `vulkan` and 27.0% on the `cpu`, as the offline count:
+
+| | `vulkan`, loaded | `vulkan`, started per message | `cpu`, loaded | `cpu`, started per message |
+|---|---|---|---|---|
+| 1.5B alone | 0.25 s | 2.37 s | 2.42 s | 2.93 s |
+| 0.5B alone | 0.13 s | | 1.16 s | |
+| cascade, single pass | **0.19 s (−23%)** | **1.96 s (−17%)**, p90 3.73 s against 2.45 s | **1.78 s (−27%)** | **2.32 s (−21%)** |
+| cascade, probe then reply | 0.24 s (−2%) | | 2.50 s (+3%) | |
+
+- **The single pass is the only form that pays**: the 0.5B writes the whole reply, asking for the probabilities of
+  its tokens (free: 0.126 s with and without), and the 1.5B is called only when the first token is under 0.5. The
+  probe-then-reply form, the way `model.ask_type` reads the confidence, reads the prompt twice (the product sends
+  `cache_prompt: false`) and saves nothing.
+- **On a GPU it does not matter**: with the model loaded a message takes 0.25 s and the cascade saves 0.06 s, which
+  no one notices. Started per message it saves 0.4 s on average but makes the escalated commits slower
+  (two loads), so the worst tenth gets worse. A first estimate, made from the "per message" times of
+  `docs/measurements.md` (2.3 s and 1.2 s on `vulkan`), gave 21% and 24% less; those times are mostly the model's
+  load (2.1 s of the 1.5B's 2.3 s), so the percentages came out alike but the seconds are not what a message takes.
+- **On the CPU it saves the most in seconds**: 0.64 s of 2.42 s with the models loaded (the prompt is read once, by the
+  0.5B, for 73% of the commits). The price is the 0.5B's memory beside the 1.5B's, and a second server.
+- **Quality, read from the replies' first lines**: the cascade's type matches 0.684 against the 1.5B's 0.692 and the
+  0.5B's 0.664 on `vulkan` (250 commits), as the offline 0.692 against 0.696; on the `cpu` subset (100) the three tie at
+  0.660.
+- **Verdict.** Not built. On the devices most people use (a GPU, or the NPU, where it cannot be done) there is
+  nothing to gain; on the `cpu` it is a 27% cut with the type held, and worth building only if that device matters
+  enough to keep two models loaded. If it is built it must be the single pass, with the confidence taken from the
+  first token's probabilities of the reply, and `tau` confirmed on a third set.
 
 ## Ideas not tried yet
 

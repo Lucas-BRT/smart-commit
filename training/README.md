@@ -23,6 +23,7 @@ python -I test_type_review.py                        # H13's measures of the typ
 python -I test_type_confidence.py                    # H13's calibration of the type's confidence; see its docstring
 python -I test_paired_f1.py                           # H14's paired word_f1 with an interval; see its docstring
 python -I test_type_fusion.py                          # H15's prior, fusion and cascade of the type; see its docstring
+python -I test_cascade_bench.py                        # H15's timing of the cascade (the pure parts); see its docstring
 cargo build --locked --release -p smart-commit-training   # sc-training: the data tools, in Rust
 cargo test --locked -p smart-commit-training              # -U1 trimming against git, scoring, the scenarios
 cargo build --locked && cargo test --locked -p smart-commit-training -- --ignored   # every scenario, built twice
