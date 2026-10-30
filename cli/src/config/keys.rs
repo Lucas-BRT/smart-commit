@@ -322,6 +322,15 @@ pub(super) fn parse_item(key: &Key, item: &Item, home: Option<&str>) -> Result<V
                 value.to_string().trim()
             )),
         },
+        // A switch written as a TOML boolean (`check = true`) is the choice
+        // of that name, so the file reads the way one would write it.
+        (Kind::Choice(choices), Some(value))
+            if value
+                .as_bool()
+                .is_some_and(|on| choices.contains(&on.to_string().as_str())) =>
+        {
+            parse(key, &value.as_bool().unwrap_or_default().to_string(), home)
+        }
         (_, Some(value)) => match value.as_str() {
             Some(text) => parse(key, text, home),
             None => Err(format!(

@@ -121,6 +121,7 @@ value, for example when an environment variable is set.
   GitHub whether a newer release is out, at most once in 24 hours, and print
   a line on stderr if so. It is off by default; see the
   [update notice](usage.md#update-notice) for what is sent and when.
+  In a file it is written `check = true` or `check = "true"`.
 - `model.ask_type` set to `low_confidence` makes `smart-commit --commit` in a
   terminal ask which type the message should have when the model is unsure:
   the model's first token is where it picks the type, and its probability
