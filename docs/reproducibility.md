@@ -38,9 +38,11 @@ pinned and how each guarantee is checked.
   `scripts/build/IMAGE`, and regenerate `scripts/build/ENV` with
   `docker run --rm -v $PWD/scripts/build:/b:ro IMAGE sh /b/env-report.sh`.
   CI keeps the container's toolchain and downloaded crates between runs
-  (`SMART_COMMIT_BUILD_CACHE`), never its build, so the hash it prints is
-  that of a build from scratch; two packagings with and without the cache
-  gave the same archive.
+  (`SMART_COMMIT_BUILD_CACHE`); the build itself is never kept (its target
+  directory is gone with the container), so every packaging compiles from
+  scratch, the hash CI prints is that of a build from scratch, and the two
+  packagings of `test-install.sh` compare two real builds. Two packagings with
+  and without the cache gave the same archive.
 - *How it was checked:* v0.2.0, built on the host, differed between CI
   (GCC 11) and a developer machine (GCC 13) and in the directory modes (the
   packager's umask). With the binary built in the container, v0.3.0's

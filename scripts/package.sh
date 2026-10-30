@@ -42,12 +42,12 @@ else
     # shellcheck source=scripts/build/image.sh
     . "$ROOT/scripts/build/image.sh"
     resolve_image
-    # The sources are mounted read-only at /src; the toolchain, the crates
-    # and the build go in volumes, reused between runs. With
-    # SMART_COMMIT_BUILD_CACHE=DIR the toolchain and the crates are in DIR
-    # instead, which CI keeps between runs. The build (the target volume) is
-    # not: CI starts every run with a new one, so the tarball's hash is that of
-    # a build from scratch.
+    # The sources are mounted read-only at /src; the toolchain and the crates
+    # go in volumes, reused between runs. With SMART_COMMIT_BUILD_CACHE=DIR
+    # they are in DIR instead, which CI keeps between runs. The build itself
+    # (the target directory) is an anonymous volume, gone with the container:
+    # every packaging compiles from scratch, so the tarball's hash is that of a
+    # build from scratch, and packaging twice really checks the bytes.
     rustup=smart-commit-rustup cargo=smart-commit-cargo
     if [ -n "${SMART_COMMIT_BUILD_CACHE:-}" ]; then
         mkdir -p "$SMART_COMMIT_BUILD_CACHE/rustup" "$SMART_COMMIT_BUILD_CACHE/cargo"
@@ -58,7 +58,7 @@ else
         --volume "$ROOT:/src:ro"
         --volume "$rustup:/root/.rustup"
         --volume "$cargo:/root/.cargo/registry"
-        --volume smart-commit-target:/target
+        --volume /target
         --workdir /src
         --env CARGO_TARGET_DIR=/target
     )
