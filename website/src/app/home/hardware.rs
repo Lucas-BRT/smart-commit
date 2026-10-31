@@ -84,7 +84,7 @@ pub async fn section() -> Result<impl View> {
                     device_card(
                         icon: NPU,
                         name: "NPU",
-                        summary: "The AI chip of Intel Core Ultra. Not support for keep the model loaded yet.",
+                        summary: "The AI chip of Intel Core Ultra. Does not keep the model loaded yet.",
                         measured(time: by_device("npu"), machine: "a Core Ultra 5 225H")
                     )
 

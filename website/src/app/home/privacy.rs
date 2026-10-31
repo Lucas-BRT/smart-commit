@@ -56,7 +56,7 @@ pub async fn section() -> Result<impl View> {
                             point(
                                 icon: OFFLINE,
                                 title: "Offline to write",
-                                "Download once, run anyware."
+                                "Download once, run anywhare."
                             )
                         </ul>
                     </div>
